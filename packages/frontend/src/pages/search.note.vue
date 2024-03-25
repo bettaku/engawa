@@ -118,7 +118,6 @@ async function search() {
 			query: searchQuery.value,
 			userId: user.value ? user.value.id : null,
 			origin: searchOrigin.value,
-			fileOption: isfileOnly.value,
 		},
 	};
 

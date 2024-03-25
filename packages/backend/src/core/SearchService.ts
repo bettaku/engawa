@@ -242,7 +242,13 @@ export class SearchService {
 					query.andWhere('user.host = :host', { host: opts.host });
 				}
 			}
-
+			if(opts.fileOption){
+				if(opts.fileOption === 'file-only'){
+					
+				}if(opts.fileOption === 'no-file'){
+					
+				}
+			}
 			this.queryService.generateVisibilityQuery(query, me);
 			if (me) this.queryService.generateMutedUserQuery(query, me);
 			if (me) this.queryService.generateBlockedUserQuery(query, me);
