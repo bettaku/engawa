@@ -242,11 +242,12 @@ export class SearchService {
 					query.andWhere('user.host = :host', { host: opts.host });
 				}
 			}
+
 			if (opts.fileOption) {
 				if (opts.fileOption === 'file-only') {
 					query.andWhere('note.fileIds != \'{}\'');
 				} else if (opts.fileOption === 'no-file') {
-					query.andWhere('note.fileIds == \'{}\'');
+					query.andWhere('note.fileIds = :fIds', { fIds: '{}' });
 				}
 			}
 			this.queryService.generateVisibilityQuery(query, me);
