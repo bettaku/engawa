@@ -245,7 +245,7 @@ export class SearchService {
 			if (opts.fileOption) {
 				if (opts.fileOption === 'file-only') {
 					query.andWhere('note.fileIds != \'{}\'');
-				} if (opts.fileOption === 'no-file') {
+				} else if (opts.fileOption === 'no-file') {
 					query.andWhere('note.fileIds == \'{}\'');
 				}
 			}
