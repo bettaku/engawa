@@ -244,9 +244,9 @@ export class SearchService {
 			}
 			if (opts.fileOption) {
 				if (opts.fileOption === 'file-only') {
-					query.andWhere('note.fileIds != \'{}\'')
+					query.andWhere('note.fileIds != \'{}\'');
 				} if (opts.fileOption === 'no-file') {
-					query.andWhere('note.fileIds == \'{}\'')
+					query.andWhere('note.fileIds == \'{}\'');
 				}
 			}
 			this.queryService.generateVisibilityQuery(query, me);
