@@ -121,10 +121,9 @@ async function search() {
 		},
 	};
 
-	if(isfileOnly.value !== 'combined')
-	{
-		notePagination.value.endpoint = 'notes/search-file'
-		notePagination.value.params.fileOption = isfileOnly.value
+	if (isfileOnly.value !== 'combined') {
+		notePagination.value.endpoint = 'notes/search-file';
+		notePagination.value.params.fileOption = isfileOnly.value;
 	}
 	if (isLocalOnly.value) notePagination.value.params.host = '.';
 
