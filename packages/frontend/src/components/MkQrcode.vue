@@ -81,4 +81,8 @@ const copyLink = () => {
 .gotIt {
 	margin: 8px 0 0 0;
 }
+
+.copyLink {
+	margin: 8px 0 0 0;
+}
 </style>
