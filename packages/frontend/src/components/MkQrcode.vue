@@ -12,10 +12,10 @@
 					color: '#DEC5E3',
 					gradient: {
 						type: 'linear',
-						rotation: 45,
+						rotation: 160,
 						colorStops: [
-							{ offset: 0, color: '#2B1F4A' },
-							{ offset: 1, color: '#4F3860' }
+							{ offset: 0, color: '#02129B' },
+							{ offset: 1, color: '#9E1FFC' }
 						]
 					}, }"
 			/>
