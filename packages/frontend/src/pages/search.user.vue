@@ -14,7 +14,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<option value="local">{{ i18n.ts.local }}</option>
 			<option value="remote">{{ i18n.ts.remote }}</option>
 		</MkRadios>
-		<MkButton large primary gradate rounded @click="search">{{ i18n.ts.search }}</MkButton>
+		<MkButton large primary gradate rounded style="margin: 0 auto;" @click="search">{{ i18n.ts.search }}</MkButton>
 	</div>
 
 	<MkFoldableSection v-if="userPagination">
