@@ -440,10 +440,6 @@ function toggleEvent() {
 	}
 }
 
-function addTag(tag: string) {
-	insertTextAtCursor(textareaEl.value, ` #${tag} `);
-}
-
 function focus() {
 	if (textareaEl.value) {
 		textareaEl.value.focus();
