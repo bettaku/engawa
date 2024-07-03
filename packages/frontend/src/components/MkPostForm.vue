@@ -951,11 +951,11 @@ function insertMention() {
 
 const toggleTag = () => {
 	withHashtags.value = !withHashtags.value;
-}
+};
 
 const toggleDisableRightClick = () => {
 	disableRightClick.value = !disableRightClick.value;
-}
+};
 
 async function insertEmoji(ev: MouseEvent) {
 	textAreaReadOnly.value = true;
