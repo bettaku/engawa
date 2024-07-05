@@ -75,6 +75,7 @@
 
 		const calcAfter = () => {
 			let base = parseInt(after.value.toString());
+			let now = new Date();
 			switch (unit.value) {
 				// @ts-expect-error fallthrough
 				case 'day': base *= 24;
@@ -85,7 +86,9 @@
 					// eslint-disable-next-line no-fallthrough
 				case 'second': return base *= 1000;
 				default: return null;
-			}
+			};
+			now.setTime(now.getTime() + base);
+			return now.getTime();
 		};
 
 		return {
