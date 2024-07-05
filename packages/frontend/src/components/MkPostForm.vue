@@ -825,7 +825,6 @@ async function post(ev?: MouseEvent) {
 		channelId: props.channel ? props.channel.id : undefined,
 		poll: poll.value,
 		event: event.value,
-		scheduledDelete: scheduledNoteDelete.value,
 		cw: useCw.value ? cw.value ?? '' : null,
 		localOnly: localOnly.value,
 		visibility: visibility.value,
@@ -833,6 +832,7 @@ async function post(ev?: MouseEvent) {
 		reactionAcceptance: reactionAcceptance.value,
 		disableRightClick: disableRightClick.value,
 		noteId: props.updateMode ? props.initialNote?.id : undefined,
+		scheduledDelete: scheduledNoteDelete.value,
 	};
 
 	if (withHashtags.value && hashtags.value && hashtags.value.trim() !== '') {
@@ -1008,7 +1008,7 @@ async function openMfmCheatSheet() {
 	os.popup(defineAsyncComponent(() => import('@/components/MkMfmCheatSheetDialog.vue')), {}, {}, 'closed');
 }
 
-async function toggleScheduledNoteDelete() {
+function toggleScheduledNoteDelete() {
 	if (scheduledNoteDelete.value) {
 		scheduledNoteDelete.value = null;
 	} else {

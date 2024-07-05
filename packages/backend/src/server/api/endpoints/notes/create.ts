@@ -137,7 +137,7 @@ export const meta = {
 			message: 'Cannot specify delete time earlier than now.',
 			code: 'CANNOT_SCHEDULE_DELETE_EARLIER_THAN_NOW',
 			id: '9f04994a-3aa2-11ef-a495-177eea74788f',
-		}
+		},
 	},
 } as const;
 
@@ -383,7 +383,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					if (ps.scheduledDelete.deleteAt < Date.now()) {
 						throw new ApiError(meta.errors.cannotScheduleDeleteEarlierThanNow);
 					} else if (typeof ps.scheduledDelete.deleteAfter === 'number') {
-						throw new ApiError(meta.errors.cannotScheduleDeleteEarlierThanNow);
+						ps.scheduledDelete.deleteAt = Date.now() + ps.scheduledDelete.deleteAfter;
 					}
 				}
 			}

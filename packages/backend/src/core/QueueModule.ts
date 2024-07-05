@@ -17,13 +17,13 @@ import {
 	RelationshipJobData,
 	UserWebhookDeliverJobData,
 	SystemWebhookDeliverJobData,
-	ScheduledNoteDeleteJobData,
+	ScheduledNoteDeleteJobData
 } from '../queue/types.js';
 import type { Provider } from '@nestjs/common';
 
 export type SystemQueue = Bull.Queue<Record<string, unknown>>;
 export type EndedPollNotificationQueue = Bull.Queue<EndedPollNotificationJobData>;
-export type ScheduledNoteDeleteQueue = Bull.Queue<ScheduledNoteDeleteJobData>
+export type ScheduledNoteDeleteQueue = Bull.Queue<ScheduledNoteDeleteJobData>;
 export type DeliverQueue = Bull.Queue<DeliverJobData>;
 export type InboxQueue = Bull.Queue<InboxJobData>;
 export type DbQueue = Bull.Queue;
@@ -44,7 +44,7 @@ const $endedPollNotification: Provider = {
 	inject: [DI.config, DI.redisForJobQueue],
 };
 
-const $scheduledNoteDelete: Provider = {
+const $scheduledNoteDeleted: Provider = {
 	provide: 'queue:scheduledNoteDelete',
 	useFactory: (config: Config, redisForJobQueue: Redis.Redis) => new Bull.Queue(QUEUE.SCHEDULED_NOTE_DELETE, baseQueueOptions(config, QUEUE.SCHEDULED_NOTE_DELETE, redisForJobQueue)),
 	inject: [DI.config, DI.redisForJobQueue],
@@ -98,7 +98,7 @@ const $systemWebhookDeliver: Provider = {
 	providers: [
 		$system,
 		$endedPollNotification,
-		$scheduledNoteDelete,
+		$scheduledNoteDeleted,
 		$deliver,
 		$inbox,
 		$db,
@@ -110,7 +110,7 @@ const $systemWebhookDeliver: Provider = {
 	exports: [
 		$system,
 		$endedPollNotification,
-		$scheduledNoteDelete,
+		$scheduledNoteDeleted,
 		$deliver,
 		$inbox,
 		$db,

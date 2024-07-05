@@ -540,6 +540,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 			this.relationshipQueueWorker.run(),
 			this.objectStorageQueueWorker.run(),
 			this.endedPollNotificationQueueWorker.run(),
+			this.scheduledNoteDeleteQueueWorker.run(),
 		]);
 	}
 
@@ -555,6 +556,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 			this.relationshipQueueWorker.close(),
 			this.objectStorageQueueWorker.close(),
 			this.endedPollNotificationQueueWorker.close(),
+			this.scheduledNoteDeleteQueueWorker.close(),
 		]);
 	}
 
