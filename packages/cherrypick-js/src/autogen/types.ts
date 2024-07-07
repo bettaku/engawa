@@ -22842,6 +22842,8 @@ export type operations = {
           withRenotes?: boolean;
           /** @default false */
           withCats?: boolean;
+          /** @default false */
+          withoutBots?: boolean;
           /** @default 10 */
           limit?: number;
           /** Format: misskey:id */

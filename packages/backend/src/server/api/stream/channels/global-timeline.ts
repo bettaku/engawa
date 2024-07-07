@@ -18,6 +18,7 @@ class GlobalTimelineChannel extends Channel {
 	public static requireCredential = false as const;
 	private withRenotes: boolean;
 	private withFiles: boolean;
+	private withoutBots: boolean;
 
 	constructor(
 		private metaService: MetaService,
@@ -38,6 +39,7 @@ class GlobalTimelineChannel extends Channel {
 
 		this.withRenotes = params.withRenotes ?? true;
 		this.withFiles = params.withFiles ?? false;
+		this.withoutBots = params.withoutBots ?? false;
 
 		// Subscribe events
 		this.subscriber.on('notesStream', this.onNote);

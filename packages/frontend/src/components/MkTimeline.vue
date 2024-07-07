@@ -41,11 +41,13 @@ const props = withDefaults(defineProps<{
 	withReplies?: boolean;
 	onlyFiles?: boolean;
   onlyCats?: boolean;
+	withoutBots?: boolean;
 }>(), {
 	withRenotes: true,
 	withReplies: false,
 	onlyFiles: false,
 	onlyCats: false,
+	withoutBots: false,
 });
 
 const emit = defineEmits<{
@@ -62,6 +64,7 @@ type TimelineQueryType = {
   withReplies?: boolean,
   withFiles?: boolean,
   withCats?: boolean,
+	withoutBots?: boolean,
   visibility?: string,
   listId?: string,
   channelId?: string,
@@ -121,7 +124,6 @@ function connectChannel() {
 	} else if (props.src === 'media') {
 		connection = stream.useChannel('globalTimeline', {
 			withRenotes: props.withRenotes,
-			withReplies: props.withReplies,
 			withFiles: true,
 			withCats: props.onlyCats,
 		},
@@ -138,6 +140,7 @@ function connectChannel() {
 			withRenotes: props.withRenotes,
 			withFiles: props.onlyFiles ? true : undefined,
 			withCats: props.onlyCats,
+			withoutBots: props.withoutBots,
 		});
 	} else if (props.src === 'mentions') {
 		connection = stream.useChannel('main');
