@@ -39,12 +39,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<div :class="$style.statsItemCount"><MkNumber :value="stats.originalNotesCount"/></div>
 		</div>
 	</div>
-	<div v-if="instance.policies.ltlAvailable" :class="[$style.tl, $style.panel]">
-		<div :class="$style.tlHeader">{{ i18n.ts.letsLookAtTimeline }}</div>
-		<div :class="$style.tlBody">
-			<MkTimeline src="local"/>
-		</div>
-	</div>
 	<div :class="$style.panel">
 		<XActiveUsersChart/>
 	</div>
@@ -57,7 +51,6 @@ import * as Misskey from 'cherrypick-js';
 import XSigninDialog from '@/components/MkSigninDialog.vue';
 import XSignupDialog from '@/components/MkSignupDialog.vue';
 import MkButton from '@/components/MkButton.vue';
-import MkTimeline from '@/components/MkTimeline.vue';
 import MkInfo from '@/components/MkInfo.vue';
 import { instanceName } from '@/config.js';
 import * as os from '@/os.js';
