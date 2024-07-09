@@ -112,6 +112,7 @@ function connectChannel() {
 			withRenotes: props.withRenotes,
 			withFiles: props.onlyFiles ? true : undefined,
 			withCats: props.onlyCats,
+			withoutBots: props.withoutBots,
 		});
 		connection2 = stream.useChannel('main');
 	} else if (props.src === 'local') {
@@ -120,12 +121,14 @@ function connectChannel() {
 			withReplies: props.withReplies,
 			withFiles: props.onlyFiles ? true : undefined,
 			withCats: props.onlyCats,
+			withoutBots: props.withoutBots,
 		});
 	} else if (props.src === 'media') {
 		connection = stream.useChannel('globalTimeline', {
 			withRenotes: props.withRenotes,
 			withFiles: true,
 			withCats: props.onlyCats,
+			withoutBots: props.withoutBots,
 		},
 		);
 	} else if (props.src === 'social') {
@@ -134,6 +137,7 @@ function connectChannel() {
 			withReplies: props.withReplies,
 			withFiles: props.onlyFiles ? true : undefined,
 			withCats: props.onlyCats,
+			withoutBots: props.withoutBots,
 		});
 	} else if (props.src === 'global') {
 		connection = stream.useChannel('globalTimeline', {
@@ -195,6 +199,7 @@ function updatePaginationQuery() {
 			withRenotes: props.withRenotes,
 			withFiles: props.onlyFiles ? true : undefined,
 			withCats: props.onlyCats,
+			withoutBots: props.withoutBots,
 		};
 	} else if (props.src === 'local') {
 		endpoint = 'notes/local-timeline';
@@ -203,6 +208,7 @@ function updatePaginationQuery() {
 			withReplies: props.withReplies,
 			withFiles: props.onlyFiles ? true : undefined,
 			withCats: props.onlyCats,
+			withoutBots: props.withoutBots,
 		};
 	} else if (props.src === 'media') {
 		endpoint = 'notes/global-timeline';
@@ -211,6 +217,7 @@ function updatePaginationQuery() {
 			withReplies: props.withReplies,
 			withFiles: true,
 			withCats: props.onlyCats,
+			withoutBots: props.withoutBots,
 		};
 	} else if (props.src === 'social') {
 		endpoint = 'notes/hybrid-timeline';
@@ -219,6 +226,7 @@ function updatePaginationQuery() {
 			withReplies: props.withReplies,
 			withFiles: props.onlyFiles ? true : undefined,
 			withCats: props.onlyCats,
+			withoutBots: props.withoutBots,
 		};
 	} else if (props.src === 'global') {
 		endpoint = 'notes/global-timeline';
@@ -226,6 +234,7 @@ function updatePaginationQuery() {
 			withRenotes: props.withRenotes,
 			withFiles: props.onlyFiles ? true : undefined,
 			withCats: props.onlyCats,
+			withoutBots: props.withoutBots,
 		};
 	} else if (props.src === 'mentions') {
 		endpoint = 'notes/mentions';

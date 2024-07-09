@@ -70,6 +70,7 @@ export type Channels = {
 			withRenotes?: boolean;
 			withFiles?: boolean;
 			withCats?: boolean;
+			withoutBots?: boolean;
 		};
 		events: {
 			note: (payload: Note) => void;
@@ -82,6 +83,7 @@ export type Channels = {
 			withReplies?: boolean;
 			withFiles?: boolean;
 			withCats?: boolean;
+			withoutBots?: boolean;
 		};
 		events: {
 			note: (payload: Note) => void;
@@ -94,6 +96,7 @@ export type Channels = {
 			withReplies?: boolean;
 			withFiles?: boolean;
 			withCats?: boolean;
+			withoutBots?: boolean;
 		};
 		events: {
 			note: (payload: Note) => void;
@@ -105,6 +108,7 @@ export type Channels = {
 			withRenotes?: boolean;
 			withFiles?: boolean;
 			withCats?: boolean;
+			withoutBots?: boolean;
 		};
 		events: {
 			note: (payload: Note) => void;

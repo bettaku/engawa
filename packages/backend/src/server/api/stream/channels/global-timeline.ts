@@ -48,6 +48,7 @@ class GlobalTimelineChannel extends Channel {
 	@bindThis
 	private async onNote(note: Packed<'Note'>) {
 		if (this.withFiles && (note.fileIds == null || note.fileIds.length === 0)) return;
+		if (this.withoutBots && note.user.isBot) return;
 
 		if (note.visibility !== 'public') return;
 		if (note.channelId != null) return;
