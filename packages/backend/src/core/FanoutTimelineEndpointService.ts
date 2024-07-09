@@ -107,7 +107,7 @@ export class FanoutTimelineEndpointService {
 
 			if (ps.withoutBots) {
 				const parentFilter = filter;
-				filter = (note) => (note.user ? note.user.isBot : true) && parentFilter(note);
+				filter = (note) => (!note.user || !note.user.isBot) && parentFilter(note);
 			}
 
 			if (ps.me) {
