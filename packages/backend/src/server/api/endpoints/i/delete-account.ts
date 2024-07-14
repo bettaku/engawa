@@ -4,6 +4,7 @@
  */
 
 import bcrypt from 'bcryptjs';
+import { comparePassword } from '@/misc/password.js';
 import { Inject, Injectable } from '@nestjs/common';
 import type { UsersRepository, UserProfilesRepository } from '@/models/_.js';
 import { Endpoint } from '@/server/api/endpoint-base.js';
