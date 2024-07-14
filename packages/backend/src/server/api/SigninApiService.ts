@@ -4,8 +4,6 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import bcrypt from 'bcryptjs';
-import * as argon from 'argon2';
 import { comparePassword, hashPassword, isOldAlgorithm } from '@/misc/password.js';
 import * as OTPAuth from 'otpauth';
 import { IsNull } from 'typeorm';
