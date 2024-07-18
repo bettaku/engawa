@@ -43,7 +43,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 		{{ i18n.ts.makeExplorable }}
 		<template #caption>{{ i18n.ts.makeExplorableDescription }}</template>
 	</MkSwitch>
-	<MkSwitch v-model="isIndexable" @update:modalValue="save()">
+	<MkSwitch v-model="isIndexable" @update:modelValue="save()">
 		{{ i18n.ts._isIndexable.title }}
 		<template #caption>{{ i18n.ts._isIndexable.description }}</template>
 	</MkSwitch>
