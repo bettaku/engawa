@@ -97,6 +97,11 @@ export class NoteEntityService implements OnModuleInit {
 			}
 		}
 
+		// visibilityがprivateかつ自分が投稿者でなかったら非表示
+		if (packedNote.visibility === 'private' && meId !== packedNote.userId) {
+			hide = true;
+		}
+
 		// visibility が followers かつ自分が投稿者のフォロワーでなかったら非表示
 		if (packedNote.visibility === 'followers') {
 			if (meId == null) {
