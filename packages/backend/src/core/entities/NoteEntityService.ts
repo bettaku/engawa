@@ -244,6 +244,13 @@ export class NoteEntityService implements OnModuleInit {
 			}
 		}
 
+		// visibilityがspecifiedかつ自分が指定されていなかったら非表示
+		if (note.visibility === 'private') {
+			if (meId !== note.userId) {
+				return false;
+			}
+		}
+
 		// visibility が followers かつ自分が投稿者のフォロワーでなかったら非表示
 		if (note.visibility === 'followers') {
 			if (meId == null) {

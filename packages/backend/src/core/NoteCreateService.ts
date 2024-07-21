@@ -507,6 +507,10 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 						await transactionalEntityManager.insert(MiEvent, event);
 					}
+
+					if (insert.visibility === 'private') {
+						insert.localOnly = true
+					}
 				});
 			} else {
 				await this.notesRepository.insert(insert);
