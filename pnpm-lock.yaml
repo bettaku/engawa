@@ -363,8 +363,8 @@ importers:
         specifier: 2.7.0
         version: 2.7.0
       pug:
-        specifier: 3.0.2
-        version: 3.0.2
+        specifier: 3.0.3
+        version: 3.0.3
       punycode:
         specifier: 2.3.1
         version: 2.3.1
@@ -447,8 +447,8 @@ importers:
         specifier: 3.6.7
         version: 3.6.7
       ws:
-        specifier: 8.17.0
-        version: 8.17.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
+        specifier: 8.18.0
+        version: 8.18.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
       xev:
         specifier: 3.0.2
         version: 3.0.2
@@ -2159,6 +2159,10 @@ packages:
 
   '@babel/types@7.24.8':
     resolution: {integrity: sha512-SkSBEHwwJRU52QEVZBmMBnE5Ux2/6WU1grdYyOhpbCNxbmJrDuDCphBzKZSO3taf0zztp+qkWlymE5tVL5l0TA==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/types@7.24.9':
+    resolution: {integrity: sha512-xm8XrMKz0IlUdocVbYJe0Z9xEgidU7msskG8BbhnTPK/HZ2z/7FP7ykqPgrUH+C+r414mNfNWam1f2vqOjqjYQ==}
     engines: {node: '>=6.9.0'}
 
   '@base2/pretty-print-object@1.0.1':
@@ -5569,8 +5573,8 @@ packages:
     resolution: {integrity: sha512-FVnvrKJwpt9LP2lAMl8qZswRNm3T4q9CON+bxldk2iwk3FFpuwhx2FfinyitizWHsVYyaY+y5JzDR0rCMV5yTQ==}
     engines: {node: '>=12.0.0'}
 
-  assert-never@1.2.1:
-    resolution: {integrity: sha512-TaTivMB6pYI1kXwrFlEhLeGfOqoDNdTxjCdwRfFFkEA30Eu+k48W34nlok2EYWJfFFzqaEmichdNM7th6M5HNw==}
+  assert-never@1.3.0:
+    resolution: {integrity: sha512-9Z3vxQ+berkL/JJo0dK+EY3Lp0s3NtSnP3VCLsh5HDcZPrh0M+KQRK5sWhUeyPPH+/RCxZqOxLMR+YC6vlviEQ==}
 
   assert-plus@1.0.0:
     resolution: {integrity: sha512-NfJ4UzBCcQGLDlQq7nHxH+tv3kyZ0hHQqF5BO6J7tNJeP5do1llPr8dZ8zHonfhAu0PHAdMkSo+8o0wxg9lZWw==}
@@ -10023,8 +10027,8 @@ packages:
   pug-walk@2.0.0:
     resolution: {integrity: sha512-yYELe9Q5q9IQhuvqsZNwA5hfPkMJ8u92bQLIMcsMxf/VADjNtEYptU+inlufAFYcWdHlwNfZOEnOOQrZrcyJCQ==}
 
-  pug@3.0.2:
-    resolution: {integrity: sha512-bp0I/hiK1D1vChHh6EfDxtndHji55XP/ZJKwsRqrz6lRia6ZC2OZbdAymlxdVFwd1L70ebrVJw4/eZ79skrIaw==}
+  pug@3.0.3:
+    resolution: {integrity: sha512-uBi6kmc9f3SZ3PXxqcHiUZLmIXgfgWooKWXcwSGwQd2Zi5Rb0bT14+8CJjJgI8AB+nndLaNgHGrcc6bPIB665g==}
 
   pump@2.0.1:
     resolution: {integrity: sha512-ruPMNRkN3MHP1cWJc9OWr+T/xDP0jhXYCLfJcBuX54hhfIBnaQmAUMfDcG4DM5UMWByBbJY69QSphm3jtDKIkA==}
@@ -11671,8 +11675,8 @@ packages:
   vue-component-type-helpers@2.0.22:
     resolution: {integrity: sha512-gPr2Ba7efUwy/Vfbuf735bHSVdN4ycoZUCHfypkI33M9DUH+ieRblLLVM2eImccFYaWNWwEzURx02EgoXDBmaQ==}
 
-  vue-component-type-helpers@2.0.26:
-    resolution: {integrity: sha512-sO9qQ8oC520SW6kqlls0iqDak53gsTVSrYylajgjmkt1c0vcgjsGSy1KzlDrbEx8pm02IEYhlUkU5hCYf8rwtg==}
+  vue-component-type-helpers@2.0.28:
+    resolution: {integrity: sha512-hoK0UsKXrXDY9zdpdk+drqOqYHpPhbmfQUJ2mFYK57+l73mQxcYyCteQsolllwGaxhWihT077+OA/FR5ZPTceg==}
 
   vue-demi@0.14.8:
     resolution: {integrity: sha512-Uuqnk9YE9SsWeReYqK2alDI5YzciATE0r2SkA6iMAtuXvNTMNACJLJEXNXaEy94ECuBe4Sk6RzRU80kjdbIo1Q==}
@@ -11869,8 +11873,8 @@ packages:
     resolution: {integrity: sha512-7KxauUdBmSdWnmpaGFg+ppNjKF8uNLry8LyzjauQDOVONfFLNKrKvQOxZ/VuTIcS/gge/YNahf5RIIQWTSarlg==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
 
-  ws@8.17.0:
-    resolution: {integrity: sha512-uJq6108EgZMAl20KagGkzCKfMEjxmKvZHG7Tlq0Z6nOky7YF7aq4mOx6xK8TJ/i1LeK4Qus7INktacctDgY8Ow==}
+  ws@8.18.0:
+    resolution: {integrity: sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -13298,6 +13302,12 @@ snapshots:
       '@babel/helper-validator-identifier': 7.24.7
       to-fast-properties: 2.0.0
 
+  '@babel/types@7.24.9':
+    dependencies:
+      '@babel/helper-string-parser': 7.24.8
+      '@babel/helper-validator-identifier': 7.24.7
+      to-fast-properties: 2.0.0
+
   '@base2/pretty-print-object@1.0.1': {}
 
   '@bcoe/v8-coverage@0.2.3': {}
@@ -13738,7 +13748,7 @@ snapshots:
       '@fastify/reply-from': 9.8.0
       fast-querystring: 1.1.2
       fastify-plugin: 4.5.1
-      ws: 8.17.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
+      ws: 8.18.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -15843,7 +15853,7 @@ snapshots:
       util: 0.12.5
       util-deprecate: 1.0.2
       watchpack: 2.4.1
-      ws: 8.17.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
+      ws: 8.18.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
     transitivePeerDependencies:
       - bufferutil
       - encoding
@@ -16113,7 +16123,7 @@ snapshots:
       ts-dedent: 2.2.0
       type-fest: 2.19.0
       vue: 3.4.31(typescript@5.4.5)
-      vue-component-type-helpers: 2.0.26
+      vue-component-type-helpers: 2.0.28
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -17683,7 +17693,7 @@ snapshots:
       pvutils: 1.1.3
       tslib: 2.6.3
 
-  assert-never@1.2.1: {}
+  assert-never@1.3.0: {}
 
   assert-plus@1.0.0: {}
 
@@ -17784,7 +17794,7 @@ snapshots:
   babel-plugin-jest-hoist@29.6.3:
     dependencies:
       '@babel/template': 7.24.7
-      '@babel/types': 7.24.7
+      '@babel/types': 7.24.9
       '@types/babel__core': 7.20.5
       '@types/babel__traverse': 7.20.6
 
@@ -17836,7 +17846,7 @@ snapshots:
 
   babel-walk@3.0.0-canary-5:
     dependencies:
-      '@babel/types': 7.24.7
+      '@babel/types': 7.24.9
 
   bail@2.0.2: {}
 
@@ -18388,8 +18398,8 @@ snapshots:
 
   constantinople@4.0.1:
     dependencies:
-      '@babel/parser': 7.24.7
-      '@babel/types': 7.24.7
+      '@babel/parser': 7.24.8
+      '@babel/types': 7.24.9
 
   content-disposition@0.5.4:
     dependencies:
@@ -21308,7 +21318,7 @@ snapshots:
       whatwg-encoding: 3.1.1
       whatwg-mimetype: 4.0.0
       whatwg-url: 14.0.0
-      ws: 8.17.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
+      ws: 8.18.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
       xml-name-validator: 5.0.0
     transitivePeerDependencies:
       - bufferutil
@@ -23248,7 +23258,7 @@ snapshots:
 
   pug-walk@2.0.0: {}
 
-  pug@3.0.2:
+  pug@3.0.3:
     dependencies:
       pug-code-gen: 3.0.3
       pug-filters: 4.0.0
@@ -24997,7 +25007,7 @@ snapshots:
 
   vue-component-type-helpers@2.0.22: {}
 
-  vue-component-type-helpers@2.0.26: {}
+  vue-component-type-helpers@2.0.28: {}
 
   vue-demi@0.14.8(vue@3.4.31(typescript@5.4.5)):
     dependencies:
@@ -25013,7 +25023,7 @@ snapshots:
       esm-resolve: 1.0.11
       hash-sum: 2.0.0
       lru-cache: 8.0.5
-      pug: 3.0.2
+      pug: 3.0.3
       recast: 0.23.9
       ts-map: 1.0.3
       vue: 3.4.31(typescript@5.4.5)
@@ -25192,9 +25202,9 @@ snapshots:
 
   with@7.0.2:
     dependencies:
-      '@babel/parser': 7.24.7
-      '@babel/types': 7.24.7
-      assert-never: 1.2.1
+      '@babel/parser': 7.24.8
+      '@babel/types': 7.24.9
+      assert-never: 1.3.0
       babel-walk: 3.0.0-canary-5
 
   word-wrap@1.2.5: {}
@@ -25232,7 +25242,7 @@ snapshots:
       imurmurhash: 0.1.4
       signal-exit: 3.0.7
 
-  ws@8.17.0(bufferutil@4.0.7)(utf-8-validate@6.0.3):
+  ws@8.18.0(bufferutil@4.0.7)(utf-8-validate@6.0.3):
     optionalDependencies:
       bufferutil: 4.0.7
       utf-8-validate: 6.0.3
