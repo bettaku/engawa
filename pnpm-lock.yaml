@@ -1320,6 +1320,9 @@ importers:
         specifier: 6.2.1
         version: 6.2.1
     devDependencies:
+      '@biomejs/biome':
+        specifier: 1.8.3
+        version: 1.8.3
       '@misskey-dev/eslint-plugin':
         specifier: 1.0.0
         version: 1.0.0(@typescript-eslint/eslint-plugin@7.7.1(@typescript-eslint/parser@7.7.1(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0)(typescript@5.4.5))(@typescript-eslint/parser@7.7.1(eslint@8.57.0)(typescript@5.4.5))(eslint-plugin-import@2.29.1(@typescript-eslint/parser@7.7.1(eslint@8.57.0)(typescript@5.4.5))(eslint@8.57.0))(eslint@8.57.0)
