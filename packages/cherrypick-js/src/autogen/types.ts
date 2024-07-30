@@ -3993,6 +3993,7 @@ export type components = {
         }[];
       isBot?: boolean;
       isCat?: boolean;
+      isGroup?: boolean;
       instance?: {
         name: string | null;
         softwareName: string | null;

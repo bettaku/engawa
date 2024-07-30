@@ -206,6 +206,12 @@ export class MiUser {
 	})
 	public isDeleted: boolean;
 
+	@Column('boolean', {
+		default: false,
+		comment: 'Whether the User is Group Actor.',
+	})
+	public isGroup: boolean;
+
 	@Column('varchar', {
 		length: 128, array: true, default: '{}',
 	})

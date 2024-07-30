@@ -188,6 +188,7 @@ export interface IActor extends IObject {
 	'vcard:bday'?: string;
 	'vcard:Address'?: string;
 	isIndexable?: boolean;
+	isGroup?: boolean;
 }
 
 export const isCollection = (object: IObject): object is ICollection =>

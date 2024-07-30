@@ -314,6 +314,8 @@ export class ApPersonService implements OnModuleInit {
 
 		const isBot = getApType(object) === 'Service' || getApType(object) === 'Application';
 
+		const isGroup = getApType(object) === 'Group' || getApType(object) === 'Organization';
+
 		const bday = person['vcard:bday']?.match(/^\d{4}-\d{2}-\d{2}/);
 
 		const url = getOneApHrefNullable(person.url);
@@ -429,6 +431,7 @@ export class ApPersonService implements OnModuleInit {
 					isBot,
 					isCat: (person as any).isCat === true,
 					isIndexable: person.isIndexable ?? true,
+					isGroup,
 					emojis,
 				})) as MiRemoteUser;
 
@@ -643,12 +646,13 @@ export class ApPersonService implements OnModuleInit {
 			isBot: getApType(object) === 'Service' || getApType(object) === 'Application',
 			isCat: (person as any).isCat === true,
 			isIndexable: person.isIndexable ?? true,
+			isGroup: getApType(object) === 'Group' || getApType(object) === 'Organization',
 			isLocked: person.manuallyApprovesFollowers,
 			movedToUri: person.movedTo ?? null,
 			alsoKnownAs: person.alsoKnownAs ?? null,
 			isExplorable: person.discoverable,
 			...(await this.resolveAvatarAndBanner(exist, person.icon, person.image).catch(() => ({}))),
-		} as Partial<MiRemoteUser> & Pick<MiRemoteUser, 'isBot' | 'isCat' | 'isLocked' | 'movedToUri' | 'alsoKnownAs' | 'isExplorable'>;
+		} as Partial<MiRemoteUser> & Pick<MiRemoteUser, 'isBot' | 'isCat' | 'isLocked' | 'movedToUri' | 'alsoKnownAs' | 'isExplorable' | 'isIndexable' | 'isGroup'>;
 
 		const moving = ((): boolean => {
 			// 移行先がない→ある
