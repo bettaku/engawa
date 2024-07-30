@@ -1039,6 +1039,14 @@ export interface Locale extends ILocale {
      */
     "flagAsCatDescription": string;
     /**
+     * センシティブとして設定
+     */
+    "flagAsSensitive": string;
+    /**
+     * このオプションを有効にすると、このアカウントはセンシティブなアカウントとして他者に表示されます。現在ローカル限定の機能です。
+     */
+    "flagAsSensitiveDescription": string;
+    /**
      * タイムラインにノートへの返信を表示する
      */
     "flagShowTimelineReplies": string;

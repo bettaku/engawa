@@ -174,6 +174,7 @@ export const paramDef = {
 		noCrawle: { type: 'boolean' },
 		preventAiLearning: { type: 'boolean' },
 		isIndexable: { type: 'boolean' },
+		isSensitive: { type: 'boolean' },
 		isBot: { type: 'boolean' },
 		isCat: { type: 'boolean' },
 		injectFeaturedNote: { type: 'boolean' },
@@ -329,6 +330,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				updates.isIndexable = ps.isIndexable;
 				profileUpdates.isIndexable = ps.isIndexable;
 			};
+			if (typeof ps.isSensitive === 'boolean') updates.isSensitive = ps.isSensitive;
 			if (typeof ps.isCat === 'boolean') updates.isCat = ps.isCat;
 			if (typeof ps.injectFeaturedNote === 'boolean') profileUpdates.injectFeaturedNote = ps.injectFeaturedNote;
 			if (typeof ps.receiveAnnouncementEmail === 'boolean') profileUpdates.receiveAnnouncementEmail = ps.receiveAnnouncementEmail;
