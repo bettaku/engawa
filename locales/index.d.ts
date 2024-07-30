@@ -1555,6 +1555,10 @@ export interface Locale extends ILocale {
      */
     "remoteUserCaution": string;
     /**
+     * センシティブなユーザーです。
+     */
+    "sensitiveUserCaution": string;
+    /**
      * アクティビティ
      */
     "activity": string;

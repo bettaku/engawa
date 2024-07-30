@@ -4033,6 +4033,8 @@ export type components = {
       isSilenced: boolean;
       /** @example false */
       isSuspended: boolean;
+      /** @example false */
+      isSensitive: boolean;
       /** @example Hi masters, I am Ai! */
       description: string | null;
       location: string | null;
