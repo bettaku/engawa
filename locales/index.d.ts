@@ -1043,7 +1043,7 @@ export interface Locale extends ILocale {
      */
     "flagAsSensitive": string;
     /**
-     * このオプションを有効にすると、このアカウントはセンシティブなアカウントとして他者に表示されます。現在ローカル限定の機能です。
+     * このオプションを有効にすると、このアカウントはセンシティブなアカウントとして他者に表示されます。この機能を有効にすると、検索結果に表示されなくなります。現在ローカル限定の機能です。
      */
     "flagAsSensitiveDescription": string;
     /**
