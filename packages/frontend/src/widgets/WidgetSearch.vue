@@ -109,7 +109,7 @@ async function search() {
 
 	key.value++;
 
-	os.popup(defineAsyncComponent(() => import('@/components/SkSearchResultWindow.vue')), {
+	os.popup(defineAsyncComponent(() => import('@/components/MkSearchResultWindow.vue')), {
 		noteKey: key.value,
 		notePagination: notePagination.value,
 	}, {
