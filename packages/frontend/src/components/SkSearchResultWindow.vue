@@ -1,7 +1,7 @@
 <template>
 <MkWindow ref="window" :initialWidth="600" :initialHeight="450" :canResize="true" @closed="emit('closed')">
 	<template #header>
-		<i class="ph-magnifying-glass ph-bold ph-lg" style="margin-right: 0.5em;"></i>
+		<i class="ti ti-zoom" style="margin-right: 0.5em;"></i>
 		<b>Result</b>
 	</template>
 	<MkNotes :key="props.noteKey" :pagination="props.notePagination"/>
