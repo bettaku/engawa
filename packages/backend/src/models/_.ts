@@ -57,6 +57,7 @@ import { MiPromoRead } from '@/models/PromoRead.js';
 import { MiRegistrationTicket } from '@/models/RegistrationTicket.js';
 import { MiRegistryItem } from '@/models/RegistryItem.js';
 import { MiRelay } from '@/models/Relay.js';
+import { MiScheduledNote } from '@/models/ScheduledNote.js';
 import { MiSignin } from '@/models/Signin.js';
 import { MiSwSubscription } from '@/models/SwSubscription.js';
 import { MiUsedUsername } from '@/models/UsedUsername.js';
@@ -178,6 +179,7 @@ export {
 	MiRegistrationTicket,
 	MiRegistryItem,
 	MiRelay,
+	MiScheduledNote,
 	MiSignin,
 	MiSwSubscription,
 	MiUsedUsername,
@@ -255,6 +257,7 @@ export type PromoReadsRepository = Repository<MiPromoRead> & MiRepository<MiProm
 export type RegistrationTicketsRepository = Repository<MiRegistrationTicket> & MiRepository<MiRegistrationTicket>;
 export type RegistryItemsRepository = Repository<MiRegistryItem> & MiRepository<MiRegistryItem>;
 export type RelaysRepository = Repository<MiRelay> & MiRepository<MiRelay>;
+export type ScheduledNotesRepository = Repository<MiScheduledNote> & MiRepository<MiScheduledNote>;
 export type SigninsRepository = Repository<MiSignin> & MiRepository<MiSignin>;
 export type SwSubscriptionsRepository = Repository<MiSwSubscription> & MiRepository<MiSwSubscription>;
 export type UsedUsernamesRepository = Repository<MiUsedUsername> & MiRepository<MiUsedUsername>;
