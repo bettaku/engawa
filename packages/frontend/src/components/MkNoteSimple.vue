@@ -37,14 +37,58 @@ import { useRouter } from '@/router/supplier.js';
 import { defaultStore } from '@/store.js';
 import { notePage } from '@/filters/note.js';
 
+const isDeleted = ref(false);
 const props = withDefaults(defineProps<{
-	note: Misskey.entities.Note;
+	note: Misskey.entities.Note & {
+		id: string | null;
+		isSchedule?: boolean;
+		scheduledNoteId?: string;
+	};
+}>();
+
+const emit = defineEmits<{
+  (ev: 'editScheduleNote'): void;
 	enableNoteClick?: boolean,
 }>(), {
 	enableNoteClick: true,
 });
 
 const showEl = ref(false);
+
+async function deleteScheduleNote() {
+	if (!props.note.isSchedule || !props.note.scheduledNoteId) return;
+
+	const { canceled } = await os.confirm({
+		type: 'warning',
+		text: i18n.ts._schedulePost.deleteAreYouSure,
+	});
+	if (canceled) return;
+
+	await os.apiWithDialog('notes/schedule/delete', { scheduledNoteId: props.note.scheduledNoteId })
+		.then(() => {
+			isDeleted.value = true;
+		});
+}
+
+async function editScheduleNote() {
+	if (!props.note.isSchedule || !props.note.scheduledNoteId) return;
+
+	const { canceled } = await os.confirm({
+		type: 'warning',
+		text: i18n.ts._schedulePost.deleteAndEditConfirm,
+	});
+
+	if (canceled) return;
+
+	await os.api('notes/schedule/delete', { scheduledNoteId: props.note.scheduledNoteId })
+		.then(() => {
+			isDeleted.value = true;
+		});
+
+	await os.post({ initialNote: props.note, renote: props.note.renote, reply: props.note.reply, channel: props.note.channel });
+
+	emit('editScheduleNote');
+}
 
 const showContent = ref(false);
 const expandOnNoteClick = defaultStore.state.expandOnNoteClick;
@@ -74,7 +118,6 @@ function noteDblClick(ev: MouseEvent) {
 	font-size: 0.95em;
 	-webkit-tap-highlight-color: transparent;
 }
-
 .avatar {
 	flex-shrink: 0;
 	display: block;

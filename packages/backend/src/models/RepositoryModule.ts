@@ -63,6 +63,7 @@ import {
 	MiReversiGame,
 	MiRole,
 	MiRoleAssignment,
+	MiScheduledNote,
 	MiSignin,
 	MiSwSubscription,
 	MiSystemWebhook,
@@ -96,6 +97,12 @@ const $usersRepository: Provider = {
 const $notesRepository: Provider = {
 	provide: DI.notesRepository,
 	useFactory: (db: DataSource) => db.getRepository(MiNote).extend(miRepository as MiRepository<MiNote>),
+	inject: [DI.db],
+};
+
+const $scheduledNotesRepository: Provider = {
+	provide: DI.scheduledNotesRepository,
+	useFactory: (db: DataSource) => db.getRepository(MiScheduledNote),
 	inject: [DI.db],
 };
 
@@ -542,6 +549,7 @@ const $abuseReportResolversRepository: Provider = {
 	providers: [
 		$usersRepository,
 		$notesRepository,
+		$scheduledNotesRepository,
 		$announcementsRepository,
 		$announcementReadsRepository,
 		$appsRepository,
@@ -619,6 +627,7 @@ const $abuseReportResolversRepository: Provider = {
 	exports: [
 		$usersRepository,
 		$notesRepository,
+		$scheduledNotesRepository,
 		$announcementsRepository,
 		$announcementReadsRepository,
 		$appsRepository,

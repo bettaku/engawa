@@ -62,7 +62,8 @@ import MkInstanceTicker from '@/components/MkInstanceTicker.vue';
 import { dateTimeFormat } from '@/scripts/intl-const';
 
 const props = defineProps<{
-	note: Misskey.entities.Note;
+	note: Misskey.entities.Note & {isSchedule? : boolean, isScheduled? : boolean};
+  scheduled?: boolean;
 }>();
 
 const mock = inject<boolean>('mock', false);

@@ -1678,6 +1678,9 @@ declare namespace entities {
         NotesConversationResponse,
         NotesCreateRequest,
         NotesCreateResponse,
+        NotesScheduleDeleteRequest,
+        NotesScheduleListRequest,
+        NotesScheduleListResponse,
         NotesDeleteRequest,
         NotesUpdateRequest,
         NotesFavoritesCreateRequest,
@@ -2772,7 +2775,20 @@ type NotesRequest = operations['notes']['requestBody']['content']['application/j
 type NotesResponse = operations['notes']['responses']['200']['content']['application/json'];
 
 // @public (undocumented)
+<<<<<<< HEAD:packages/cherrypick-js/etc/cherrypick-js.api.md
 type NotesSearchByTagRequest = operations['notes___search-by-tag']['requestBody']['content']['application/json'];
+=======
+type NotesScheduleDeleteRequest = operations['notes/schedule/delete']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type NotesScheduleListRequest = operations['notes/schedule/list']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type NotesScheduleListResponse = operations['notes/schedule/list']['responses']['200']['content']['application/json'];
+
+// @public (undocumented)
+type NotesSearchByTagRequest = operations['notes/search-by-tag']['requestBody']['content']['application/json'];
+>>>>>>> schedule-note:packages/misskey-js/etc/misskey-js.api.md
 
 // @public (undocumented)
 type NotesSearchByTagResponse = operations['notes___search-by-tag']['responses']['200']['content']['application/json'];
@@ -2838,7 +2854,7 @@ type NotificationsCreateRequest = operations['notifications___create']['requestB
 type NotificationsDeleteRequest = operations['notifications___delete']['requestBody']['content']['application/json'];
 
 // @public (undocumented)
-export const notificationTypes: readonly ["note", "follow", "mention", "reply", "renote", "quote", "reaction", "pollVote", "pollEnded", "receiveFollowRequest", "followRequestAccepted", "groupInvited", "app", "roleAssigned", "achievementEarned"];
+export const notificationTypes: readonly ["note", "follow", "mention", "reply", "renote", "quote", "reaction", "pollVote", "pollEnded", "receiveFollowRequest", "followRequestAccepted", "groupInvited", "app", "roleAssigned", "achievementEarned", "noteSchedulingFailed"];
 
 // @public (undocumented)
 type Page = components['schemas']['Page'];

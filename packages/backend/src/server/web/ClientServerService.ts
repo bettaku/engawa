@@ -35,6 +35,7 @@ import type {
 	UserWebhookDeliverQueue,
 	SystemWebhookDeliverQueue,
 	ScheduledNoteDeleteQueue,
+	ScheduleNotePostQueue
 } from '@/core/QueueModule.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
@@ -118,6 +119,7 @@ export class ClientServerService {
 		@Inject('queue:system') public systemQueue: SystemQueue,
 		@Inject('queue:endedPollNotification') public endedPollNotificationQueue: EndedPollNotificationQueue,
 		@Inject('queue:scheduledNoteDelete') public scheduledNoteDeleteQueue: ScheduledNoteDeleteQueue,
+		@Inject('queue:scheduleNotePost') public scheduleNotePostQueue: ScheduleNotePostQueue,
 		@Inject('queue:deliver') public deliverQueue: DeliverQueue,
 		@Inject('queue:inbox') public inboxQueue: InboxQueue,
 		@Inject('queue:db') public dbQueue: DbQueue,
@@ -248,6 +250,7 @@ export class ClientServerService {
 				this.systemQueue,
 				this.endedPollNotificationQueue,
 				this.scheduledNoteDeleteQueue,
+				this.scheduleNotePostQueue,
 				this.deliverQueue,
 				this.inboxQueue,
 				this.dbQueue,

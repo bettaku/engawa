@@ -117,6 +117,7 @@ import { Autocomplete } from '@/scripts/autocomplete.js';
 import * as os from '@/os.js';
 import { misskeyApi } from '@/scripts/misskey-api.js';
 import { selectFiles } from '@/scripts/select-file.js';
+import { dateTimeFormat } from '@/scripts/intl-const.js';
 import { defaultStore, notePostInterruptors, postFormActions } from '@/store.js';
 import MkInfo from '@/components/MkInfo.vue';
 import { i18n } from '@/i18n.js';
@@ -127,6 +128,8 @@ import { deepClone } from '@/scripts/clone.js';
 import MkRippleEffect from '@/components/MkRippleEffect.vue';
 import { miLocalStorage } from '@/local-storage.js';
 import { claimAchievement } from '@/scripts/achievements.js';
+import MkScheduleEditor from '@/components/MkScheduleEditor.vue';
+import { listSchedulePost } from '@/os.js';
 import { emojiPicker } from '@/scripts/emoji-picker.js';
 import { vibrate } from '@/scripts/vibrate.js';
 import * as sound from '@/scripts/sound.js';
@@ -189,6 +192,9 @@ const event = ref<{
 	start: string;
 	end: string | null;
 	metadata: Record<string, string>;
+} | null>(null);
+const schedule = ref<{
+	scheduledAt: string | null;
 } | null>(null);
 const useCw = ref<boolean>(!!props.initialCw);
 const showPreview = ref(defaultStore.state.showPreview);
@@ -262,7 +268,9 @@ const submitText = computed((): string => {
 				? i18n.ts.edit
 				: defaultStore.state.renameTheButtonInPostFormToNya
 					? i18n.ts.nya
-					: i18n.ts.note;
+					: schedule.value
+				? i18n.ts._schedulePost.addSchedule
+				: i18n.ts.note;
 });
 
 const textLength = computed((): number => {
@@ -446,6 +454,16 @@ function togglePoll() {
 	}
 }
 
+function toggleSchedule() {
+	if (schedule.value) {
+		schedule.value = null;
+	} else {
+		schedule.value = {
+			scheduledAt: null,
+		};
+	}
+}
+
 function toggleEvent() {
 	if (event.value) {
 		event.value = null;
@@ -614,6 +632,7 @@ function clear() {
 	poll.value = null;
 	event.value = null;
 	quoteId.value = null;
+	schedule.value = null;
 }
 
 function onKeydown(ev: KeyboardEvent) {
@@ -843,6 +862,7 @@ async function post(ev?: MouseEvent) {
 		replyId: props.reply ? props.reply.id : undefined,
 		renoteId: props.renote ? props.renote.id : quoteId.value ? quoteId.value : undefined,
 		channelId: props.channel ? props.channel.id : undefined,
+		schedule: schedule.value,
 		poll: poll.value,
 		event: event.value,
 		cw: useCw.value ? cw.value ?? '' : null,
@@ -914,6 +934,13 @@ async function post(ev?: MouseEvent) {
 			incNotesCount();
 			if (notesCount === 1) {
 				claimAchievement('notes1');
+			}
+			poll.value = null;
+
+			if (postData.schedule?.scheduledAt) {
+				const d = new Date(postData.schedule.scheduledAt);
+				const str = dateTimeFormat.format(d);
+				os.toast(i18n.t('_schedulePost.willBePostedAtX', { date: str }));
 			}
 
 			const text = postData.text ?? '';
@@ -1370,6 +1397,10 @@ defineExpose({
 		background: none;
 	}
 
+  &.headerRightButtonActive {
+    color: var(--accent);
+  }
+
 	&.danger {
 		color: #ff2a2a;
 	}
@@ -1476,6 +1507,15 @@ defineExpose({
 	border-bottom: solid 0.5px var(--divider);
 }
 
+.postOptionsRoot {
+	>* {
+		border-bottom: solid 0.5px var(--divider);
+	}
+	>:last-child {
+		border-bottom: none;
+	}
+}
+
 .hashtags {
 	z-index: 1;
 	padding-top: 8px;
@@ -1546,6 +1586,7 @@ defineExpose({
 	grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
 	grid-auto-rows: 40px;
 	direction: rtl;
+
 }
 
 .footerButton {
