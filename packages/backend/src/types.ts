@@ -327,38 +327,6 @@ export type ModerationLogPayloads = {
 	};
 };
 
-export type MiMinimumUser = {
-	id: MiUser['id'];
-	host: MiUser['host'];
-	username: MiUser['username'];
-	uri: MiUser['uri'];
-};
-
-export type MiNoteCreateOption = {
-	createdAt?: Date | null;
-	name?: string | null;
-	text?: string | null;
-	reply?: MiNote | null;
-	renote?: MiNote | null;
-	files?: MiDriveFile[] | null;
-	poll?: IPoll | null;
-	schedule?: MiScheduledNote | null;
-	localOnly?: boolean | null;
-	isScheduled?: boolean | null;
-	reactionAcceptance?: MiNote['reactionAcceptance'];
-	cw?: string | null;
-	visibility?: string;
-	visibleUsers?: MiMinimumUser[] | null;
-	channel?: MiChannel | null;
-	isSchedule?: boolean | null;
-	apMentions?: MiMinimumUser[] | null;
-	apHashtags?: string[] | null;
-	apEmojis?: string[] | null;
-	uri?: string | null;
-	url?: string | null;
-	app?: MiApp | null;
-};
-
 export type Serialized<T> = {
 	[K in keyof T]:
 		T[K] extends Date
