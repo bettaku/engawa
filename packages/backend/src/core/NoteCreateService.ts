@@ -152,6 +152,7 @@ type Option = {
 	url?: string | null;
 	app?: MiApp | null;
 	deleteAt?: Date | null;
+	scheduledAt?: Date | null;
 };
 
 @Injectable()
@@ -236,7 +237,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		isCat: MiUser['isCat'];
 		isIndexable: MiUser['isIndexable'];
 		isSensitive: MiUser['isSensitive'];
-	}, data: Option, silent = false): Promise<MiNote> {
+	}, data: Option, silent = false, waitToPublish?: (note: MiNote) => Promise<void> ): Promise<MiNote> {
 		// チャンネル外にリプライしたら対象のスコープに合わせる
 		// (クライアントサイドでやっても良い処理だと思うけどとりあえずサーバーサイドで)
 		if (data.reply && data.channel && data.reply.channelId !== data.channel.id) {
@@ -246,6 +247,8 @@ export class NoteCreateService implements OnApplicationShutdown {
 				data.channel = null;
 			}
 		}
+
+		const isDraft = data.scheduledAt != null;
 
 		// チャンネル内にリプライしたら対象のスコープに合わせる
 		// (クライアントサイドでやっても良い処理だと思うけどとりあえずサーバーサイドで)
@@ -380,11 +383,11 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 		tags = tags.filter(tag => Array.from(tag).length <= 128).splice(0, 32);
 
-		if (data.reply && (user.id !== data.reply.userId) && !mentionedUsers.some(u => u.id === data.reply!.userId)) {
-			mentionedUsers.push(await this.usersRepository.findOneByOrFail({ id: data.reply!.userId }));
+		if (data.reply && (user.id !== data.reply.userId) && !mentionedUsers.some(u => u.id === data.reply?.userId)) {
+			mentionedUsers.push(await this.usersRepository.findOneByOrFail({ id: data.reply?.userId }));
 		}
 
-		if (data.visibility === 'specified') {
+		if (!isDraft && data.visibility === 'specified') {
 			if (data.visibleUsers == null) throw new Error('invalid param');
 
 			for (const u of data.visibleUsers) {
@@ -408,6 +411,8 @@ export class NoteCreateService implements OnApplicationShutdown {
 			() => this.postNoteCreated(note, user, data, silent, tags!, mentionedUsers!),
 			() => { /* aborted, ignore this */ },
 		);
+
+		if (waitToPublish) await waitToPublish(note);
 
 		return note;
 	}
@@ -544,6 +549,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		isSensitive: MiUser['isSensitive'];
 	}, data: Option, silent: boolean, tags: string[], mentionedUsers: MinimumUser[]) {
 		const meta = await this.metaService.fetch();
+		const isDraft = data.scheduledAt != null;
 
 		this.notesChart.update(note, true);
 		if (meta.enableChartsForRemoteUser || (user.host == null)) {
@@ -561,7 +567,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		}
 
 		// ハッシュタグ更新
-		if (data.visibility === 'public' || data.visibility === 'home') {
+		if (!isDraft && (data.visibility === 'public' || data.visibility === 'home')) {
 			this.hashtagService.updateHashtags(user, tags);
 		}
 
