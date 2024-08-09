@@ -60,6 +60,7 @@ export class SearchService {
 		channelId?: MiNote['channelId'] | null;
 		host?: string | null;
 		fileOption?: string | null;
+		excludeNsfw?: boolean;
 	}, pagination: {
 		untilId?: MiNote['id'];
 		sinceId?: MiNote['id'];
@@ -89,6 +90,11 @@ export class SearchService {
 				} else {
 					query.andWhere('user.host = :host', { host: opts.host });
 				}
+			}
+
+			if (opts.excludeNsfw) {
+				query.andWhere('note.cw IS NULL');
+				query.andWhere('0 = (SELECT COUNT(*) FROM drive_file df WHERE df.id = ANY(note."fileIds") AND df."isSensitive" = TRUE )');
 			}
 
 			/**

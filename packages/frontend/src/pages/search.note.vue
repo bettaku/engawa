@@ -36,6 +36,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 						</div>
 					</div>
 				</MkFolder>
+
+				<MkFolder>
+					<template #label>{{ i18n.ts.options }}</template>
+					<div class="_gaps">
+						<MkSwitch v-model="excludeNsfw">{{ i18n.ts._advancedSearch._searchOption.toggleCW }}</MkSwitch>
+					</div>
+				</MkFolder>
 			</div>
 		</MkFoldableSection>
 		<div>
@@ -66,6 +73,7 @@ import MkUserCardMini from '@/components/MkUserCardMini.vue';
 import MkRadios from '@/components/MkRadios.vue';
 import { $i } from '@/account.js';
 import { instance } from '@/instance.js';
+import MkSwitch from '@/components/MkSwitch.vue';
 
 const props = withDefaults(defineProps<{
 	query?: string;
@@ -85,6 +93,7 @@ const searchQuery = ref(toRef(props, 'query').value);
 const notePagination = ref<Paging>();
 const user = ref<UserDetailed | null>(null);
 const hostInput = ref(toRef(props, 'host').value);
+const excludeNsfw = ref(false);
 
 const noteSearchableScope = instance.noteSearchableScope ?? 'local';
 
@@ -198,6 +207,7 @@ async function search() {
 			query: searchQuery.value,
 			userId: user.value ? user.value.id : null,
 			...(searchHost.value ? { host: searchHost.value } : {}),
+			excludeNsfw: excludeNsfw.value,
 		},
 	};
 

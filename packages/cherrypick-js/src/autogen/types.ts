@@ -23698,11 +23698,6 @@ export type operations = {
           untilId?: string;
           /** @default 10 */
           limit?: number;
-          /**
-           * @default combined
-           * @enum {string}
-           */
-          origin?: 'local' | 'remote' | 'combined';
           /** @default 0 */
           offset?: number;
           /** @description The local host is represented with `.`. */
@@ -23717,6 +23712,8 @@ export type operations = {
            * @default null
            */
           channelId?: string | null;
+          /** @default false */
+          excludeNsfw?: boolean;
         };
       };
     };
