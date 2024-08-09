@@ -48,6 +48,7 @@ export const paramDef = {
 		},
 		userId: { type: 'string', format: 'misskey:id', nullable: true, default: null },
 		channelId: { type: 'string', format: 'misskey:id', nullable: true, default: null },
+		fileOption: { type: 'string', enum: ['combined', 'fileOnly', 'noFile'], default: 'combined' },
 		excludeNsfw: { type: 'boolean', default: false },
 		excludeBot: { type: 'boolean', default: false },
 	},
@@ -73,6 +74,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				userId: ps.userId,
 				channelId: ps.channelId,
 				host: ps.host,
+				fileOption: ps.fileOption,
 				excludeNsfw: ps.excludeNsfw,
 				excludeBot: ps.excludeBot,
 			}, {

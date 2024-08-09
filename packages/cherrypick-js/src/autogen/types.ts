@@ -23712,6 +23712,11 @@ export type operations = {
            * @default null
            */
           channelId?: string | null;
+          /**
+           * @default combined
+           * @enum {string}
+           */
+          fileOption?: 'combined' | 'fileOnly' | 'noFile';
           /** @default false */
           excludeNsfw?: boolean;
           /** @default false */

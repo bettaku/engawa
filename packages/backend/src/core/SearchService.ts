@@ -93,6 +93,14 @@ export class SearchService {
 				}
 			}
 
+			if (opts.fileOption) {
+				if (opts.fileOption === 'fileOnly') {
+					query.andWhere('note.fileIds != \'{}\' ')
+				} else if (opts.fileOption === 'noFile') {
+					query.andWhere('note.fileIds = \'{}\' ')
+				}
+			}
+
 			if (opts.excludeNsfw) {
 				query.andWhere('note.cw IS NULL');
 				query.andWhere('0 = (SELECT COUNT(*) FROM drive_file df WHERE df.id = ANY(note."fileIds") AND df."isSensitive" = TRUE )');
