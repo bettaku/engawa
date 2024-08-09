@@ -41,6 +41,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<template #label>{{ i18n.ts.options }}</template>
 					<div class="_gaps">
 						<MkSwitch v-model="excludeNsfw">{{ i18n.ts._advancedSearch._searchOption.toggleCW }}</MkSwitch>
+						<MkSwitch v-model="excludeBot">{{ i18n.ts.antennaExcludeBots }}</MkSwitch>
 					</div>
 				</MkFolder>
 			</div>
@@ -94,6 +95,7 @@ const notePagination = ref<Paging>();
 const user = ref<UserDetailed | null>(null);
 const hostInput = ref(toRef(props, 'host').value);
 const excludeNsfw = ref(false);
+const excludeBot = ref(false);
 
 const noteSearchableScope = instance.noteSearchableScope ?? 'local';
 

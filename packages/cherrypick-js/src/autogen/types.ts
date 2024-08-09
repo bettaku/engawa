@@ -23714,6 +23714,8 @@ export type operations = {
           channelId?: string | null;
           /** @default false */
           excludeNsfw?: boolean;
+          /** @default false */
+          excludeBot?: boolean;
         };
       };
     };
