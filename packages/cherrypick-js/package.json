@@ -1,6 +1,6 @@
 {
 	"type": "module",
-	"name": "cherrypick-js",
+	"name": "cherrypick-engawa-js",
 	"version": "4.10.0-rc.3-engawa0.4.6",
 	"basedMisskeyVersion": "2024.7.0",
 	"description": "CherryPick SDK for JavaScript",
