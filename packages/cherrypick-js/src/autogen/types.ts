@@ -20458,7 +20458,6 @@ export type operations = {
           noCrawle?: boolean;
           preventAiLearning?: boolean;
           isIndexable?: boolean;
-          isSensitive?: boolean;
           isBot?: boolean;
           isCat?: boolean;
           injectFeaturedNote?: boolean;
