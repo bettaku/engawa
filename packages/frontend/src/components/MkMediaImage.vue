@@ -44,7 +44,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</template>
 	<template v-else-if="controls">
 		<div :class="$style.indicators">
-			<div v-if="['image/gif', 'image/apng'].includes(image.type)" :class="$style.indicator">GIF</div>
+			<div v-if="['image/gif'].includes(image.type)" :class="$style.indicator">GIF</div>
+			<div v-if="['image/apng'].includes(image.type)" :class="$style.indicator">APNG</div>
 			<div v-if="image.comment" :class="$style.indicator">ALT</div>
 			<div v-if="image.isSensitive" :class="$style.indicator" style="color: var(--warn);" :title="i18n.ts.sensitive"><i class="ti ti-eye-exclamation"></i></div>
 		</div>
