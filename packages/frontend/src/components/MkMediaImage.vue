@@ -221,9 +221,9 @@ onUnmounted(() => {
 	display: block;
 	position: absolute;
 	border-radius: 6px;
-	background-color: var(--fg);
+	background-color: var(--bg);
 	color: var(--accentLighten);
-	font-size: 12px;
+	font-size: 18px;
 	opacity: .5;
 	padding: 5px 8px;
 	text-align: center;
