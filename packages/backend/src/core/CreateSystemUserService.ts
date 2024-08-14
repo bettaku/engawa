@@ -1,11 +1,11 @@
 /*
- * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+ * SPDX-FileCopyrightText: syuilo and misskey-project
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
-import bcrypt from 'bcryptjs';
+import { hashPassword } from '@/misc/password.js';
 import { IsNull, DataSource } from 'typeorm';
 import { genRsaKeyPair } from '@/misc/gen-key-pair.js';
 import { MiUser } from '@/models/User.js';
@@ -32,8 +32,7 @@ export class CreateSystemUserService {
 		const password = randomUUID();
 
 		// Generate hash of password
-		const salt = await bcrypt.genSalt(8);
-		const hash = await bcrypt.hash(password, salt);
+		const hash = await hashPassword(password);
 
 		// Generate secret
 		const secret = generateNativeUserToken();

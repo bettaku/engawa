@@ -1,10 +1,10 @@
 <!--
-SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+SPDX-FileCopyrightText: syuilo and misskey-project
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<XColumn :column="column" :isStacked="isStacked" :menu="menu" :refresher="() => notificationsComponent.reload()">
+<XColumn :column="column" :isStacked="isStacked" :menu="menu" :refresher="async () => { await notificationsComponent?.reload() }">
 	<template #header><i class="ti ti-bell" style="margin-right: 8px;"></i>{{ column.name }}</template>
 
 	<XNotifications ref="notificationsComponent" :excludeTypes="props.column.excludeTypes"/>
@@ -27,7 +27,7 @@ const props = defineProps<{
 const notificationsComponent = shallowRef<InstanceType<typeof XNotifications>>();
 
 function func() {
-	os.popup(defineAsyncComponent(() => import('@/components/MkNotificationSelectWindow.vue')), {
+	const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkNotificationSelectWindow.vue')), {
 		excludeTypes: props.column.excludeTypes,
 	}, {
 		done: async (res) => {
@@ -36,12 +36,28 @@ function func() {
 				excludeTypes: excludeTypes,
 			});
 		},
-	}, 'closed');
+		closed: () => dispose(),
+	});
+}
+
+async function flushNotification() {
+	const { canceled } = await os.confirm({
+		type: 'warning',
+		text: i18n.ts.resetAreYouSure,
+	});
+
+	if (canceled) return;
+
+	os.apiWithDialog('notifications/flush');
 }
 
 const menu = [{
 	icon: 'ti ti-pencil',
 	text: i18n.ts.notificationSetting,
 	action: func,
+}, {
+	icon: 'ti ti-trash',
+	text: i18n.ts.notificationFlush,
+	action: flushNotification,
 }];
 </script>

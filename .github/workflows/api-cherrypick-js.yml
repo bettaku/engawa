@@ -1,7 +1,14 @@
 name: API report (cherrypick.js)
 
-on: [push, pull_request]
-
+on:
+  push:
+    paths:
+      - packages/cherrypick-js/**
+      - .github/workflows/api-cherrypick-js.yml
+  pull_request:
+    paths:
+      - packages/cherrypick-js/**
+      - .github/workflows/api-cherrypick-js.yml
 jobs:
   report:
 
@@ -14,7 +21,7 @@ jobs:
       - run: corepack enable
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4.0.1
+        uses: actions/setup-node@v4.0.3
         with:
           node-version-file: '.node-version'
           cache: 'pnpm'

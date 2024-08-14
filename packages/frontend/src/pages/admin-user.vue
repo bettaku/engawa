@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+SPDX-FileCopyrightText: syuilo and misskey-project
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -92,6 +92,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<FormSection>
 					<div class="_gaps">
 						<MkSwitch v-model="suspended" @update:modelValue="toggleSuspend">{{ i18n.ts.suspend }}</MkSwitch>
+						<MkSwitch v-model="isSensitive" @update:modelValue="toggleSensitive">{{ i18n.ts.sensitive }}</MkSwitch>
 
 						<div>
 							<MkButton v-if="user.host == null" inline style="margin-right: 8px;" @click="resetPassword"><i class="ti ti-key"></i> {{ i18n.ts.resetPassword }}</MkButton>
@@ -180,9 +181,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 						</MkSelect>
 					</div>
 					<div class="charts">
-						<div class="label">{{ i18n.t('recentNHours', { n: 90 }) }}</div>
+						<div class="label">{{ i18n.tsx.recentNHours({ n: 90 }) }}</div>
 						<MkChart class="chart" :src="chartSrc" span="hour" :limit="90" :args="{ user, withoutAll: true }" :detailed="true"></MkChart>
-						<div class="label">{{ i18n.t('recentNDays', { n: 90 }) }}</div>
+						<div class="label">{{ i18n.tsx.recentNDays({ n: 90 }) }}</div>
 						<MkChart class="chart" :src="chartSrc" span="day" :limit="90" :args="{ user, withoutAll: true }" :detailed="true"></MkChart>
 					</div>
 				</div>
@@ -217,11 +218,12 @@ import FormSuspense from '@/components/form/suspense.vue';
 import MkFileListForAdmin from '@/components/MkFileListForAdmin.vue';
 import MkInfo from '@/components/MkInfo.vue';
 import * as os from '@/os.js';
+import { misskeyApi } from '@/scripts/misskey-api.js';
 import { url } from '@/config.js';
 import { acct } from '@/filters/user.js';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
 import { i18n } from '@/i18n.js';
-import { iAmAdmin, $i } from '@/account.js';
+import { iAmAdmin, $i, iAmModerator } from '@/account.js';
 import MkRolePreview from '@/components/MkRolePreview.vue';
 import MkPagination from '@/components/MkPagination.vue';
 import { globalEvents } from '@/events.js';
@@ -243,6 +245,7 @@ const ap = ref<any>(null);
 const moderator = ref(false);
 const silenced = ref(false);
 const suspended = ref(false);
+const isSensitive = ref(false);
 const moderationNote = ref('');
 const filesPagination = {
 	endpoint: 'admin/drive/files' as const,
@@ -261,11 +264,11 @@ const announcementsPagination = {
 const expandedRoles = ref([]);
 
 function createFetcher() {
-	return () => Promise.all([os.api('users/show', {
+	return () => Promise.all([misskeyApi('users/show', {
 		userId: props.userId,
-	}), os.api('admin/show-user', {
+	}), misskeyApi('admin/show-user', {
 		userId: props.userId,
-	}), iAmAdmin ? os.api('admin/get-user-ips', {
+	}), iAmAdmin ? misskeyApi('admin/get-user-ips', {
 		userId: props.userId,
 	}) : Promise.resolve(null)]).then(([_user, _info, _ips]) => {
 		user.value = _user;
@@ -274,10 +277,11 @@ function createFetcher() {
 		moderator.value = info.value.isModerator;
 		silenced.value = info.value.isSilenced;
 		suspended.value = info.value.isSuspended;
+		isSensitive.value = info.value.isSensitive;
 		moderationNote.value = info.value.moderationNote;
 
 		watch(moderationNote, async () => {
-			await os.api('admin/update-user-note', { userId: user.value.id, text: moderationNote.value });
+			await misskeyApi('admin/update-user-note', { userId: user.value.id, text: moderationNote.value });
 			await refreshUser();
 		});
 	});
@@ -300,12 +304,12 @@ async function resetPassword() {
 	if (confirm.canceled) {
 		return;
 	} else {
-		const { password } = await os.api('admin/reset-password', {
+		const { password } = await misskeyApi('admin/reset-password', {
 			userId: user.value.id,
 		});
 		os.alert({
 			type: 'success',
-			text: i18n.t('newPasswordIs', { password }),
+			text: i18n.tsx.newPasswordIs({ password }),
 		});
 	}
 }
@@ -318,7 +322,20 @@ async function toggleSuspend(v) {
 	if (confirm.canceled) {
 		suspended.value = !v;
 	} else {
-		await os.api(v ? 'admin/suspend-user' : 'admin/unsuspend-user', { userId: user.value.id });
+		await misskeyApi(v ? 'admin/suspend-user' : 'admin/unsuspend-user', { userId: user.value.id });
+		await refreshUser();
+	}
+}
+
+async function toggleSensitive(v) {
+	const confirm = await os.confirm({
+		type: 'warning',
+		text: v ? i18n.ts.setSensitiveConfirm : i18n.ts.unsetSensitiveConfirm,
+	});
+	if (confirm.canceled) {
+		isSensitive.value = !v;
+	} else {
+		await misskeyApi(v? 'admin/set-user-sensitive' : 'admin/unset-user-sensitive', { userId: user.value.id });
 		await refreshUser();
 	}
 }
@@ -330,7 +347,7 @@ async function unsetUserAvatar() {
 	});
 	if (confirm.canceled) return;
 	const process = async () => {
-		await os.api('admin/unset-user-avatar', { userId: user.value.id });
+		await misskeyApi('admin/unset-user-avatar', { userId: user.value.id });
 		os.success();
 	};
 	await process().catch(err => {
@@ -349,7 +366,7 @@ async function unsetUserBanner() {
 	});
 	if (confirm.canceled) return;
 	const process = async () => {
-		await os.api('admin/unset-user-banner', { userId: user.value.id });
+		await misskeyApi('admin/unset-user-banner', { userId: user.value.id });
 		os.success();
 	};
 	await process().catch(err => {
@@ -368,7 +385,7 @@ async function deleteAllFiles() {
 	});
 	if (confirm.canceled) return;
 	const process = async () => {
-		await os.api('admin/delete-all-files-of-a-user', { userId: user.value.id });
+		await misskeyApi('admin/delete-all-files-of-a-user', { userId: user.value.id });
 		os.success();
 	};
 	await process().catch(err => {
@@ -388,7 +405,7 @@ async function deleteAccount() {
 	if (confirm.canceled) return;
 
 	const typed = await os.inputText({
-		text: i18n.t('typeToConfirm', { x: user.value?.username }),
+		text: i18n.tsx.typeToConfirm({ x: user.value?.username }),
 	});
 	if (typed.canceled) return;
 
@@ -405,7 +422,7 @@ async function deleteAccount() {
 }
 
 async function assignRole() {
-	const roles = await os.api('admin/roles/list');
+	const roles = await misskeyApi('admin/roles/list');
 
 	const { canceled, result: roleId } = await os.select({
 		title: i18n.ts._role.chooseRoleToAssign,
@@ -414,7 +431,7 @@ async function assignRole() {
 	if (canceled) return;
 
 	const { canceled: canceled2, result: period } = await os.select({
-		title: i18n.ts.period,
+		title: i18n.ts.period + ': ' + roles.find(r => r.id === roleId)!.name,
 		items: [{
 			value: 'indefinitely', text: i18n.ts.indefinitely,
 		}, {
@@ -462,16 +479,20 @@ function toggleRoleItem(role) {
 }
 
 function createAnnouncement() {
-	os.popup(defineAsyncComponent(() => import('@/components/MkUserAnnouncementEditDialog.vue')), {
+	const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkUserAnnouncementEditDialog.vue')), {
 		user: user.value,
-	}, {}, 'closed');
+	}, {
+		closed: () => dispose(),
+	});
 }
 
 function editAnnouncement(announcement) {
-	os.popup(defineAsyncComponent(() => import('@/components/MkUserAnnouncementEditDialog.vue')), {
+	const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkUserAnnouncementEditDialog.vue')), {
 		user: user.value,
 		announcement,
-	}, {}, 'closed');
+	}, {
+		closed: () => dispose(),
+	});
 }
 
 watch(() => props.userId, () => {
@@ -481,7 +502,7 @@ watch(() => props.userId, () => {
 });
 
 watch(user, () => {
-	os.api('ap/get', {
+	misskeyApi('ap/get', {
 		uri: user.value.uri ?? `${url}/users/${user.value.id}`,
 	}).then(res => {
 		ap.value = res;
@@ -520,10 +541,10 @@ const headerTabs = computed(() => [{
 	icon: 'ti ti-code',
 }]);
 
-definePageMetadata(computed(() => ({
+definePageMetadata(() => ({
 	title: user.value ? acct(user.value) : i18n.ts.userInfo,
 	icon: 'ti ti-user-exclamation',
-})));
+}));
 </script>
 
 <style lang="scss" scoped>

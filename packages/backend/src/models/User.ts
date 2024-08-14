@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+ * SPDX-FileCopyrightText: syuilo and misskey-project
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -255,6 +255,20 @@ export class MiUser {
 		comment: 'The native access token of the User. It will be null if the origin of the user is local.',
 	})
 	public token: string | null;
+
+	@Index()
+	@Column('boolean', {
+		default: true,
+		comment: 'Whether the User is indexable',
+	})
+	public isIndexable: boolean;
+
+	@Index()
+	@Column('boolean', {
+		default: false,
+		comment: 'Whether the User is sensitive.',
+	})
+	public isSensitive: boolean;
 
 	constructor(data: Partial<MiUser>) {
 		if (data == null) return;

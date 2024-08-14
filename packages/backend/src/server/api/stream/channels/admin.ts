@@ -1,10 +1,11 @@
 /*
- * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+ * SPDX-FileCopyrightText: syuilo and misskey-project
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 import { Injectable } from '@nestjs/common';
 import { bindThis } from '@/decorators.js';
+import type { JsonObject } from '@/misc/json-value.js';
 import Channel, { type MiChannelService } from '../channel.js';
 
 class AdminChannel extends Channel {
@@ -14,7 +15,7 @@ class AdminChannel extends Channel {
 	public static kind = 'read:admin:stream';
 
 	@bindThis
-	public async init(params: any) {
+	public async init(params: JsonObject) {
 		// Subscribe admin stream
 		this.subscriber.on(`adminStream:${this.user!.id}`, data => {
 			this.send(data);

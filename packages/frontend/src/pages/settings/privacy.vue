@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+SPDX-FileCopyrightText: syuilo and misskey-project
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -7,6 +7,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 <div class="_gaps_m">
 	<MkSwitch v-model="isLocked" @update:modelValue="save()">{{ i18n.ts.makeFollowManuallyApprove }}<template #caption>{{ i18n.ts.lockedAccountInfo }}</template></MkSwitch>
 	<MkSwitch v-if="isLocked" v-model="autoAcceptFollowed" @update:modelValue="save()">{{ i18n.ts.autoAcceptFollowed }}</MkSwitch>
+	<MkSwitch v-if="!isLocked" v-model="carefulBot" @update:modelValue="save()">{{ i18n.ts.carefulBot }}<template #caption>{{ i18n.ts.carefulBotDescription }}</template></MkSwitch>
 
 	<MkSwitch v-model="publicReactions" @update:modelValue="save()">
 		{{ i18n.ts.makeReactionsPublic }}
@@ -43,6 +44,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 		{{ i18n.ts.makeExplorable }}
 		<template #caption>{{ i18n.ts.makeExplorableDescription }}</template>
 	</MkSwitch>
+	<MkSwitch v-model="isIndexable" @update:modelValue="save()">
+		{{ i18n.ts._isIndexable.title }}
+		<template #caption>{{ i18n.ts._isIndexable.description }}</template>
+	</MkSwitch>
 
 	<FormSection>
 		<div class="_gaps_m">
@@ -53,6 +58,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<template v-else-if="defaultNoteVisibility === 'home'" #suffix>{{ i18n.ts._visibility.home }}</template>
 				<template v-else-if="defaultNoteVisibility === 'followers'" #suffix>{{ i18n.ts._visibility.followers }}</template>
 				<template v-else-if="defaultNoteVisibility === 'specified'" #suffix>{{ i18n.ts._visibility.specified }}</template>
+				<template v-else-if="defaultNoteVisibility === 'private'" #suffix>{{ i18n.ts._visibility.private }}</template>
 
 				<div class="_gaps_m">
 					<MkSelect v-model="defaultNoteVisibility">
@@ -60,6 +66,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<option value="home">{{ i18n.ts._visibility.home }}</option>
 						<option value="followers">{{ i18n.ts._visibility.followers }}</option>
 						<option value="specified">{{ i18n.ts._visibility.specified }}</option>
+						<option value="private">{{ i18n.ts._visibility.private }}</option>
 					</MkSelect>
 					<MkSwitch v-model="defaultNoteLocalOnly">{{ i18n.ts._visibility.disableFederation }}</MkSwitch>
 				</div>
@@ -77,21 +84,25 @@ import MkSwitch from '@/components/MkSwitch.vue';
 import MkSelect from '@/components/MkSelect.vue';
 import FormSection from '@/components/form/section.vue';
 import MkFolder from '@/components/MkFolder.vue';
-import * as os from '@/os.js';
+import { misskeyApi } from '@/scripts/misskey-api.js';
 import { defaultStore } from '@/store.js';
 import { i18n } from '@/i18n.js';
-import { $i } from '@/account.js';
+import { signinRequired } from '@/account.js';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
+
+const $i = signinRequired();
 
 const isLocked = ref($i.isLocked);
 const autoAcceptFollowed = ref($i.autoAcceptFollowed);
+const carefulBot = ref($i.carefulBot);
 const noCrawle = ref($i.noCrawle);
 const preventAiLearning = ref($i.preventAiLearning);
+const isIndexable = ref($i.isIndexable);
 const isExplorable = ref($i.isExplorable);
 const hideOnlineStatus = ref($i.hideOnlineStatus);
 const publicReactions = ref($i.publicReactions);
-const followingVisibility = ref($i?.followingVisibility);
-const followersVisibility = ref($i?.followersVisibility);
+const followingVisibility = ref($i.followingVisibility);
+const followersVisibility = ref($i.followersVisibility);
 
 const defaultNoteVisibility = computed(defaultStore.makeGetterSetter('defaultNoteVisibility'));
 const defaultNoteLocalOnly = computed(defaultStore.makeGetterSetter('defaultNoteLocalOnly'));
@@ -99,11 +110,13 @@ const rememberNoteVisibility = computed(defaultStore.makeGetterSetter('rememberN
 const keepCw = computed(defaultStore.makeGetterSetter('keepCw'));
 
 function save() {
-	os.api('i/update', {
+	misskeyApi('i/update', {
 		isLocked: !!isLocked.value,
 		autoAcceptFollowed: !!autoAcceptFollowed.value,
+		carefulBot: !!carefulBot.value,
 		noCrawle: !!noCrawle.value,
 		preventAiLearning: !!preventAiLearning.value,
+		isIndexable: !!isIndexable.value,
 		isExplorable: !!isExplorable.value,
 		hideOnlineStatus: !!hideOnlineStatus.value,
 		publicReactions: !!publicReactions.value,
@@ -116,8 +129,8 @@ const headerActions = computed(() => []);
 
 const headerTabs = computed(() => []);
 
-definePageMetadata({
+definePageMetadata(() => ({
 	title: i18n.ts.privacy,
 	icon: 'ti ti-lock-open',
-});
+}));
 </script>

@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+SPDX-FileCopyrightText: syuilo and misskey-project
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -24,6 +24,7 @@ import type * as Misskey from 'cherrypick-js';
 import FormSuspense from '@/components/form/suspense.vue';
 import MkButton from '@/components/MkButton.vue';
 import * as os from '@/os.js';
+import { misskeyApi } from '@/scripts/misskey-api.js';
 import { getAccounts, addAccount as addAccounts, removeAccount as _removeAccount, login, $i } from '@/account.js';
 import { i18n } from '@/i18n.js';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
@@ -36,7 +37,7 @@ const init = async () => {
 	getAccounts().then(accounts => {
 		storedAccounts.value = accounts.filter(x => x.id !== $i!.id);
 
-		return os.api('users/show', {
+		return misskeyApi('users/show', {
 			userIds: storedAccounts.value.map(x => x.id),
 		});
 	}).then(response => {
@@ -73,22 +74,24 @@ async function removeAccount(account) {
 }
 
 function addExistingAccount() {
-	os.popup(defineAsyncComponent(() => import('@/components/MkSigninDialog.vue')), {}, {
+	const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkSigninDialog.vue')), {}, {
 		done: async res => {
 			await addAccounts(res.id, res.i);
 			os.success();
 			init();
 		},
-	}, 'closed');
+		closed: () => dispose(),
+	});
 }
 
 function createAccount() {
-	os.popup(defineAsyncComponent(() => import('@/components/MkSignupDialog.vue')), {}, {
+	const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkSignupDialog.vue')), {}, {
 		done: async res => {
 			await addAccounts(res.id, res.i);
 			switchAccountWithToken(res.i);
 		},
-	}, 'closed');
+		closed: () => dispose(),
+	});
 }
 
 async function switchAccount(account: any) {
@@ -105,10 +108,10 @@ const headerActions = computed(() => []);
 
 const headerTabs = computed(() => []);
 
-definePageMetadata({
+definePageMetadata(() => ({
 	title: i18n.ts.accounts,
 	icon: 'ti ti-users',
-});
+}));
 </script>
 
 <style lang="scss" module>

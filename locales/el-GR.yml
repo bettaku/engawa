@@ -303,8 +303,6 @@ _sfx:
   notification: "Ειδοποιήσεις"
   chat: "Συνομιλία"
   chatBg: "Συνομιλία (Παρασκήνιο)"
-  antenna: "Αντένες"
-  channel: "Ειδοποιήσεις καναλιών"
 _ago:
   future: "Μελλοντικό"
   justNow: "Μόλις τώρα"
@@ -358,6 +356,7 @@ _profile:
   username: "Όνομα μέλους"
 _exportOrImport:
   allNotes: "Όλα τα σημειώματα"
+  clips: "Κλιπ"
   followingList: "Ακολουθεί"
   muteList: "Μέλη σε σίγαση"
   blockingList: "Μπλοκαρισμένα μέλη"
@@ -397,3 +396,6 @@ _webhookSettings:
   name: "Όνομα"
 _moderationLogTypes:
   suspend: "Αποβολή"
+_reversi:
+  total: "Σύνολο"
+

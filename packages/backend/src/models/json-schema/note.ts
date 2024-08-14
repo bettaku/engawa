@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+ * SPDX-FileCopyrightText: syuilo and misskey-project
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -91,6 +91,7 @@ export const packedNoteSchema = {
 		visibility: {
 			type: 'string',
 			optional: false, nullable: false,
+			enum: ['public', 'home', 'followers', 'specified', 'private'],
 		},
 		mentions: {
 			type: 'array',
@@ -139,6 +140,53 @@ export const packedNoteSchema = {
 		poll: {
 			type: 'object',
 			optional: true, nullable: true,
+			properties: {
+				expiresAt: {
+					type: 'string',
+					optional: true, nullable: true,
+					format: 'date-time',
+				},
+				multiple: {
+					type: 'boolean',
+					optional: false, nullable: false,
+				},
+				choices: {
+					type: 'array',
+					optional: false, nullable: false,
+					items: {
+						type: 'object',
+						optional: false, nullable: false,
+						properties: {
+							isVoted: {
+								type: 'boolean',
+								optional: false, nullable: false,
+							},
+							text: {
+								type: 'string',
+								optional: false, nullable: false,
+							},
+							votes: {
+								type: 'number',
+								optional: false, nullable: false,
+							},
+						},
+					},
+				},
+			},
+		},
+		deleteAt: {
+			type: 'string',
+			optional: true, nullable: true,
+			format: 'date-time',
+		},
+		emojis: {
+			type: 'object',
+			optional: true, nullable: false,
+			additionalProperties: {
+				anyOf: [{
+					type: 'string',
+				}],
+			},
 		},
 		event: {
 			type: 'object',
@@ -174,6 +222,10 @@ export const packedNoteSchema = {
 					type: 'boolean',
 					optional: false, nullable: false,
 				},
+				userId: {
+					type: 'string',
+					optional: false, nullable: true,
+				},
 			},
 		},
 		localOnly: {
@@ -183,9 +235,28 @@ export const packedNoteSchema = {
 		reactionAcceptance: {
 			type: 'string',
 			optional: false, nullable: true,
+			enum: ['likeOnly', 'likeOnlyForRemote', 'nonSensitiveOnly', 'nonSensitiveOnlyForLocalLikeOnlyForRemote', null],
+		},
+		reactionEmojis: {
+			type: 'object',
+			optional: false, nullable: false,
+			additionalProperties: {
+				anyOf: [{
+					type: 'string',
+				}],
+			},
 		},
 		reactions: {
 			type: 'object',
+			optional: false, nullable: false,
+			additionalProperties: {
+				anyOf: [{
+					type: 'number',
+				}],
+			},
+		},
+		reactionCount: {
+			type: 'number',
 			optional: false, nullable: false,
 		},
 		renoteCount: {
@@ -218,7 +289,7 @@ export const packedNoteSchema = {
 		},
 
 		myReaction: {
-			type: 'object',
+			type: 'string',
 			optional: true, nullable: true,
 		},
 	},

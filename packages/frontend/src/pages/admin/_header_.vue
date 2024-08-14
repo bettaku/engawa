@@ -1,19 +1,19 @@
 <!--
-SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+SPDX-FileCopyrightText: syuilo and misskey-project
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
 <div ref="el" class="fdidabkc" :style="{ background: bg }" @click="onClick">
 	<div class="buttons left">
-		<button v-vibrate="defaultStore.state.vibrateSystem ? 5 : []" class="_button button goBack" @click.stop="goBack" @touchstart="preventDrag"><i class="ti ti-arrow-left"></i></button>
+		<button v-if="mainRouter.currentRoute.value.name === 'admin'" v-vibrate="defaultStore.state.vibrateSystem ? 5 : []" class="_button button goBack" @click.stop="goBack" @touchstart="preventDrag"><i class="ti ti-arrow-left"></i></button>
 	</div>
-	<template v-if="metadata">
+	<template v-if="pageMetadata">
 		<div class="titleContainer" @click="showTabsPopup">
-			<i v-if="metadata.icon" class="icon" :class="metadata.icon"></i>
+			<i v-if="pageMetadata.icon" class="icon" :class="pageMetadata.icon"></i>
 
 			<div class="title">
-				<div class="title">{{ metadata.title }}</div>
+				<div class="title">{{ pageMetadata.title }}</div>
 			</div>
 		</div>
 		<div class="tabs">
@@ -27,8 +27,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 	<div class="buttons right">
 		<template v-if="actions">
 			<template v-for="action in actions">
-				<MkButton v-if="action.asFullButton" class="fullButton" primary @click.stop="action.handler"><i :class="action.icon" style="margin-right: 6px;"></i>{{ action.text }}</MkButton>
-				<button v-else v-vibrate="defaultStore.state.vibrateSystem ? 5 : []" v-tooltip.noDelay="action.text" class="_button button" :class="{ highlighted: action.highlighted }" @click.stop="action.handler" @touchstart="preventDrag"><i :class="action.icon"></i></button>
+				<MkButton v-if="action.asFullButton" class="fullButton" primary :disabled="action.disabled" @click.stop="action.handler"><i :class="action.icon" style="margin-right: 6px;"></i>{{ action.text }}</MkButton>
+				<button v-else v-vibrate="defaultStore.state.vibrateSystem ? 5 : []" v-tooltip.noDelay="action.text" class="_button button" :class="{ highlighted: action.highlighted }" :disabled="action.disabled" @click.stop="action.handler" @touchstart="preventDrag"><i :class="action.icon"></i></button>
 			</template>
 		</template>
 	</div>
@@ -42,9 +42,10 @@ import { popupMenu } from '@/os.js';
 import { scrollToTop } from '@/scripts/scroll.js';
 import MkButton from '@/components/MkButton.vue';
 import { globalEvents } from '@/events.js';
-import { injectPageMetadata } from '@/scripts/page-metadata.js';
+import { injectReactiveMetadata } from '@/scripts/page-metadata.js';
 import { deviceKind } from '@/scripts/device-kind.js';
 import { defaultStore } from '@/store.js';
+import { mainRouter } from '@/router/main.js';
 
 const MOBILE_THRESHOLD = 500;
 
@@ -68,6 +69,7 @@ const props = defineProps<{
 		text: string;
 		icon: string;
 		asFullButton?: boolean;
+		disabled?: boolean;
 		handler: (ev: MouseEvent) => void;
 	}[];
 	thin?: boolean;
@@ -77,7 +79,7 @@ const emit = defineEmits<{
 	(ev: 'update:tab', key: string);
 }>();
 
-const metadata = injectPageMetadata();
+const pageMetadata = injectReactiveMetadata();
 
 const el = shallowRef<HTMLElement>(null);
 const tabRefs = {};
@@ -134,7 +136,7 @@ function goBack() {
 }
 
 const calcBg = () => {
-	const rawBg = metadata?.bg ?? 'var(--bg)';
+	const rawBg = pageMetadata.value?.bg ?? 'var(--bg)';
 	const tinyBg = tinycolor(rawBg.startsWith('var(') ? getComputedStyle(document.documentElement).getPropertyValue(rawBg.slice(4, -1)) : rawBg);
 	if (isMobile.value) tinyBg.setAlpha(1);
 	else tinyBg.setAlpha(0.85);

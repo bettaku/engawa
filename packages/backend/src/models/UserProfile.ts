@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+ * SPDX-FileCopyrightText: syuilo and misskey-project
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -173,6 +173,18 @@ export class MiUserProfile {
 
 	@Column('boolean', {
 		default: true,
+		comment: 'Whether User is indexable.',
+	})
+	public isIndexable: boolean;
+
+	@Column('boolean', {
+		default: false,
+		comment: 'Whether User is sensitive.',
+	})
+	public isSensitive: boolean;
+
+	@Column('boolean', {
+		default: true,
 	})
 	public preventAiLearning: boolean;
 
@@ -249,6 +261,8 @@ export class MiUserProfile {
 			type: 'follower';
 		} | {
 			type: 'mutualFollow';
+		} | {
+			type: 'followingOrFollower';
 		} | {
 			type: 'list';
 			userListId: MiUserList['id'];

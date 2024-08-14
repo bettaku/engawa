@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+SPDX-FileCopyrightText: syuilo and misskey-project
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -37,11 +37,17 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</button>
 			</div>
 		</div>
-		<div>
-			<button class="_button" :class="$style.fileAltEditBtn" @click="describe()">
+		<div class="_gaps_s">
+			<button class="_button" :class="$style.kvEditBtn" @click="move()">
+				<MkKeyValue>
+					<template #key>{{ i18n.ts.folder }}</template>
+					<template #value>{{ folderHierarchy.join(' > ') }}<i class="ti ti-pencil" :class="$style.kvEditIcon"></i></template>
+				</MkKeyValue>
+			</button>
+			<button class="_button" :class="$style.kvEditBtn" @click="describe()">
 				<MkKeyValue>
 					<template #key>{{ i18n.ts.description }}</template>
-					<template #value>{{ file.comment ? file.comment : `(${i18n.ts.none})` }}<i class="ti ti-pencil" :class="$style.fileAltEditIcon"></i></template>
+					<template #value>{{ file.comment ? file.comment : `(${i18n.ts.none})` }}<i class="ti ti-pencil" :class="$style.kvEditIcon"></i></template>
 				</MkKeyValue>
 			</button>
 			<MkKeyValue :class="$style.fileMetaDataChildren">
@@ -79,7 +85,8 @@ import bytes from '@/filters/bytes.js';
 import { infoImageUrl } from '@/instance.js';
 import { i18n } from '@/i18n.js';
 import * as os from '@/os.js';
-import { useRouter } from '@/router.js';
+import { misskeyApi } from '@/scripts/misskey-api.js';
+import { useRouter } from '@/router/supplier.js';
 
 const router = useRouter();
 
@@ -89,12 +96,24 @@ const props = defineProps<{
 
 const fetching = ref(true);
 const file = ref<Misskey.entities.DriveFile>();
+const folderHierarchy = computed(() => {
+	if (!file.value) return [i18n.ts.drive];
+	const folderNames = [i18n.ts.drive];
+	
+	function get(folder: Misskey.entities.DriveFolder) {
+		if (folder.parent) get(folder.parent);
+		folderNames.push(folder.name);
+	}
+	
+	if (file.value.folder) get(file.value.folder);
+	return folderNames;
+});
 const isImage = computed(() => file.value?.type.startsWith('image/'));
 
 async function fetch() {
 	fetching.value = true;
 
-	file.value = await os.api('drive/files/show', {
+	file.value = await misskeyApi('drive/files/show', {
 		fileId: props.fileId,
 	}).catch((err) => {
 		console.error(err);
@@ -118,6 +137,19 @@ function crop() {
 	os.cropImage(file.value, {
 		aspectRatio: NaN,
 		uploadFolder: file.value.folderId ?? null,
+	});
+}
+
+function move() {
+	if (!file.value) return;
+
+	os.selectDriveFolder(false).then(folder => {
+		misskeyApi('drive/files/update', {
+			fileId: file.value.id,
+			folderId: folder[0] ? folder[0].id : null,
+		}).then(async () => {
+			await fetch();
+		});
 	});
 }
 
@@ -159,7 +191,7 @@ function rename() {
 function describe() {
 	if (!file.value) return;
 
-	os.popup(defineAsyncComponent(() => import('@/components/MkFileCaptionEditWindow.vue')), {
+	const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkFileCaptionEditWindow.vue')), {
 		default: file.value.comment ?? '',
 		file: file.value,
 	}, {
@@ -171,7 +203,8 @@ function describe() {
 				await fetch();
 			});
 		},
-	}, 'closed');
+		closed: () => dispose(),
+	});
 }
 
 async function deleteFile() {
@@ -179,7 +212,7 @@ async function deleteFile() {
 
 	const { canceled } = await os.confirm({
 		type: 'warning',
-		text: i18n.t('driveFileDeleteConfirm', { name: file.value.name }),
+		text: i18n.tsx.driveFileDeleteConfirm({ name: file.value.name }),
 	});
 
 	if (canceled) return;
@@ -232,6 +265,7 @@ onMounted(async () => {
 			background-color: var(--accentedBg);
 			color: var(--accent);
 			text-decoration: none;
+			outline: none;
 		}
 
 		&.danger {
@@ -279,14 +313,14 @@ onMounted(async () => {
 	padding: .5rem 1rem;
 }
 
-.fileAltEditBtn {
+.kvEditBtn {
 	text-align: start;
 	display: block;
 	width: 100%;
 	padding: .5rem 1rem;
 	border-radius: var(--radius);
 
-	.fileAltEditIcon {
+	.kvEditIcon {
 		display: inline-block;
 		color: transparent;
 		visibility: hidden;
@@ -297,7 +331,7 @@ onMounted(async () => {
 		color: var(--accent);
 		background-color: var(--accentedBg);
 
-		.fileAltEditIcon {
+		.kvEditIcon {
 			color: var(--accent);
 			visibility: visible;
 		}

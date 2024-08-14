@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+ * SPDX-FileCopyrightText: syuilo and misskey-project
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -35,7 +35,7 @@ export class UserPreview {
 
 		const showing = ref(true);
 
-		popup(defineAsyncComponent(() => import('@/components/MkUserPopup.vue')), {
+		const { dispose } = popup(defineAsyncComponent(() => import('@/components/MkUserPopup.vue')), {
 			showing,
 			q: this.user,
 			source: this.el,
@@ -47,7 +47,8 @@ export class UserPreview {
 				window.clearTimeout(this.showTimer);
 				this.hideTimer = window.setTimeout(this.close, 500);
 			},
-		}, 'closed');
+			closed: () => dispose(),
+		});
 
 		this.promise = {
 			cancel: () => {
@@ -99,7 +100,6 @@ export class UserPreview {
 		this.el.removeEventListener('mouseover', this.onMouseover);
 		this.el.removeEventListener('mouseleave', this.onMouseleave);
 		this.el.removeEventListener('click', this.onClick);
-		window.clearInterval(this.checkTimer);
 	}
 }
 

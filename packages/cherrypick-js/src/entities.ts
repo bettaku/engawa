@@ -1,8 +1,17 @@
 import { ModerationLogPayloads } from './consts.js';
-import { Announcement, EmojiDetailed, Page, User, UserDetailed } from './autogen/models';
+import {
+	Announcement,
+	EmojiDetailed,
+	MeDetailed,
+	Page,
+	Role,
+	RolePolicies,
+	User,
+	UserDetailedNotMe,
+} from './autogen/models.js';
 
-export * from './autogen/entities';
-export * from './autogen/models';
+export * from './autogen/entities.js';
+export * from './autogen/models.js';
 
 export type ID = string;
 export type DateString = string;
@@ -10,6 +19,7 @@ export type DateString = string;
 export type PageEvent = {
 	pageId: Page['id'];
 	event: string;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	var: any;
 	userId: User['id'];
 	user: User;
@@ -19,7 +29,7 @@ export type ModerationLog = {
 	id: ID;
 	createdAt: DateString;
 	userId: User['id'];
-	user: UserDetailed | null;
+	user: UserDetailedNotMe | null;
 } & ({
 	type: 'updateServerSettings';
 	info: ModerationLogPayloads['updateServerSettings'];
@@ -96,6 +106,9 @@ export type ModerationLog = {
 	type: 'unsuspendRemoteInstance';
 	info: ModerationLogPayloads['unsuspendRemoteInstance'];
 } | {
+	type: 'updateRemoteInstanceNote';
+	info: ModerationLogPayloads['updateRemoteInstanceNote'];
+} | {
 	type: 'markSensitiveDriveFile';
 	info: ModerationLogPayloads['markSensitiveDriveFile'];
 } | {
@@ -129,8 +142,23 @@ export type ModerationLog = {
 	type: 'unsetUserAvatar';
 	info: ModerationLogPayloads['unsetUserAvatar'];
 } | {
-	type: 'unsetUserBanner';
-	info: ModerationLogPayloads['unsetUserBanner'];
+	type: 'createSystemWebhook';
+	info: ModerationLogPayloads['createSystemWebhook'];
+} | {
+	type: 'updateSystemWebhook';
+	info: ModerationLogPayloads['updateSystemWebhook'];
+} | {
+	type: 'deleteSystemWebhook';
+	info: ModerationLogPayloads['deleteSystemWebhook'];
+} | {
+	type: 'createAbuseReportNotificationRecipient';
+	info: ModerationLogPayloads['createAbuseReportNotificationRecipient'];
+} | {
+	type: 'updateAbuseReportNotificationRecipient';
+	info: ModerationLogPayloads['updateAbuseReportNotificationRecipient'];
+} | {
+	type: 'deleteAbuseReportNotificationRecipient';
+	info: ModerationLogPayloads['deleteAbuseReportNotificationRecipient'];
 });
 
 export type ServerStats = {
@@ -149,7 +177,7 @@ export type ServerStats = {
 	}
 };
 
-export type ServerStatsLog = string[];
+export type ServerStatsLog = ServerStats[];
 
 export type QueueStats = {
 	deliver: {
@@ -166,7 +194,7 @@ export type QueueStats = {
 	};
 };
 
-export type QueueStatsLog = string[];
+export type QueueStatsLog = QueueStats[];
 
 export type EmojiAdded = {
 	emoji: EmojiDetailed
@@ -183,3 +211,42 @@ export type EmojiDeleted = {
 export type AnnouncementCreated = {
 	announcement: Announcement;
 };
+
+export type SignupRequest = {
+	username: string;
+	password: string;
+	host?: string;
+	invitationCode?: string;
+	emailAddress?: string;
+	'hcaptcha-response'?: string | null;
+	'g-recaptcha-response'?: string | null;
+	'turnstile-response'?: string | null;
+}
+
+export type SignupResponse = MeDetailed & {
+	token: string;
+}
+
+export type SignupPendingRequest = {
+	code: string;
+};
+
+export type SignupPendingResponse = {
+	id: User['id'],
+	i: string,
+};
+
+export type SigninRequest = {
+	username: string;
+	password: string;
+	token?: string;
+};
+
+export type SigninResponse = {
+	id: User['id'],
+	i: string,
+};
+
+type Values<T extends Record<PropertyKey, unknown>> = T[keyof T];
+
+export type PartialRolePolicyOverride = Partial<{[k in keyof RolePolicies]: Omit<Values<Role['policies']>, 'value'> & { value: RolePolicies[k] }}>;

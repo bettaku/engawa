@@ -2,12 +2,14 @@ import {
 	Antenna,
 	DriveFile,
 	DriveFolder,
-	MeDetailed,
 	Note,
 	Notification,
 	Signin,
 	User,
 	UserGroup,
+	UserDetailed,
+	UserDetailedNotMe,
+	UserLite,
 } from './autogen/models.js';
 import {
 	AnnouncementCreated,
@@ -29,16 +31,18 @@ export type Channels = {
 			mention: (payload: Note) => void;
 			reply: (payload: Note) => void;
 			renote: (payload: Note) => void;
-			follow: (payload: User) => void; // 自分が他人をフォローしたとき
-			followed: (payload: User) => void; // 他人が自分をフォローしたとき
-			unfollow: (payload: User) => void; // 自分が他人をフォロー解除したとき
-			meUpdated: (payload: MeDetailed) => void;
+			follow: (payload: UserDetailedNotMe) => void; // 自分が他人をフォローしたとき
+			followed: (payload: UserDetailed | UserLite) => void; // 他人が自分をフォローしたとき
+			unfollow: (payload: UserDetailed) => void; // 自分が他人をフォロー解除したとき
+			meUpdated: (payload: UserDetailed) => void;
 			pageEvent: (payload: PageEvent) => void;
 			urlUploadFinished: (payload: { marker: string; file: DriveFile; }) => void;
 			readAllNotifications: () => void;
 			unreadNotification: (payload: Notification) => void;
 			unreadMention: (payload: Note['id']) => void;
 			readAllUnreadMentions: () => void;
+			notificationFlushed: () => void;
+			notificationDeleted: () => void;
 			unreadSpecifiedNote: (payload: Note['id']) => void;
 			readAllUnreadSpecifiedNotes: () => void;
 			readAllMessagingMessages: () => void;
@@ -52,6 +56,7 @@ export type Channels = {
 			registryUpdated: (payload: {
 				scope?: string[];
 				key: string;
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				value: any | null;
 			}) => void;
 			driveFileCreated: (payload: DriveFile) => void;
@@ -66,6 +71,7 @@ export type Channels = {
 			withRenotes?: boolean;
 			withFiles?: boolean;
 			withCats?: boolean;
+			withoutBots?: boolean;
 		};
 		events: {
 			note: (payload: Note) => void;
@@ -78,6 +84,7 @@ export type Channels = {
 			withReplies?: boolean;
 			withFiles?: boolean;
 			withCats?: boolean;
+			withoutBots?: boolean;
 		};
 		events: {
 			note: (payload: Note) => void;
@@ -90,6 +97,7 @@ export type Channels = {
 			withReplies?: boolean;
 			withFiles?: boolean;
 			withCats?: boolean;
+			withoutBots?: boolean;
 		};
 		events: {
 			note: (payload: Note) => void;
@@ -101,6 +109,7 @@ export type Channels = {
 			withRenotes?: boolean;
 			withFiles?: boolean;
 			withCats?: boolean;
+			withoutBots?: boolean;
 		};
 		events: {
 			note: (payload: Note) => void;
@@ -128,6 +137,7 @@ export type Channels = {
 		params: {
 			listId: string;
 			withFiles?: boolean;
+			withRenotes?: boolean;
 			withCats?: boolean;
 		};
 		events: {
@@ -179,7 +189,7 @@ export type Channels = {
 			fileUpdated: (payload: DriveFile) => void;
 			folderCreated: (payload: DriveFolder) => void;
 			folderDeleted: (payload: DriveFolder['id']) => void;
-			folderUpdated: (payload: DriveFile) => void;
+			folderUpdated: (payload: DriveFolder) => void;
 		};
 		receives: null;
 	};
@@ -220,7 +230,7 @@ export type Channels = {
 			}
 		};
 		receives: null;
-	}
+	};
 };
 
 export type NoteUpdatedEvent = {
