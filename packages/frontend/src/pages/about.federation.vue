@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+SPDX-FileCopyrightText: syuilo and misskey-project
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -17,9 +17,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<option value="federating">{{ i18n.ts.federating }}</option>
 				<option value="subscribing">{{ i18n.ts.subscribing }}</option>
 				<option value="publishing">{{ i18n.ts.publishing }}</option>
-				<option value="suspended">{{ i18n.ts.suspended }}</option>
-				<option value="silenced">{{ i18n.ts.silence }}</option>
-				<option value="blocked">{{ i18n.ts.blocked }}</option>
+				<option v-if="$i" value="suspended">{{ i18n.ts.suspended }}</option>
+				<option v-if="$i" value="silenced">{{ i18n.ts.silence }}</option>
+				<option v-if="$i" value="blocked">{{ i18n.ts.blocked }}</option>
 				<option value="notResponding">{{ i18n.ts.notResponding }}</option>
 			</MkSelect>
 			<MkSelect v-model="sort">
@@ -58,6 +58,7 @@ import MkPagination, { Paging } from '@/components/MkPagination.vue';
 import MkInstanceCardMini from '@/components/MkInstanceCardMini.vue';
 import FormSplit from '@/components/form/split.vue';
 import { i18n } from '@/i18n.js';
+import { $i } from '@/account.js';
 
 const host = ref('');
 const state = ref('federating');
@@ -71,9 +72,9 @@ const pagination = {
 		sort: sort.value,
 		host: host.value !== '' ? host.value : null,
 		...(
-			state.value === 'federating' ? { federating: true } :
-			state.value === 'subscribing' ? { subscribing: true } :
-			state.value === 'publishing' ? { publishing: true } :
+			state.value === 'federating' ? { federating: true, suspended: false, blocked: false } :
+			state.value === 'subscribing' ? { subscribing: true, suspended: false, blocked: false } :
+			state.value === 'publishing' ? { publishing: true, suspended: false, blocked: false } :
 			state.value === 'suspended' ? { suspended: true } :
 			state.value === 'blocked' ? { blocked: true } :
 			state.value === 'silenced' ? { silenced: true } :

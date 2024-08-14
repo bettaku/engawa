@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and noridev and other misskey, cherrypick contributors
+SPDX-FileCopyrightText: syuilo and misskey-project & noridev and cherrypick-project
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -12,7 +12,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 		@dragover.prevent.stop="onDragover"
 		@drop.prevent.stop="onDrop"
 	>
-		<MkSpacer :contentMax="800">
+		<MkSpacer :contentMax="700">
 			<div :class="$style.body">
 				<MkPagination v-if="pagination" ref="pagingComponent" :key="userAcct || groupId" :pagination="pagination">
 					<template #default="{ items: messages, fetching: pFetching }">
@@ -57,7 +57,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, nextTick, onBeforeUnmount, watch, shallowRef, ref } from 'vue';
+import { computed, onMounted, nextTick, onBeforeUnmount, watch, shallowRef, ref, onUpdated } from 'vue';
 import * as Misskey from 'cherrypick-js';
 import XMessage from './messaging-room.message.vue';
 import XForm from './messaging-room.form.vue';
@@ -73,6 +73,7 @@ import { defaultStore } from '@/store.js';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
 import { vibrate } from '@/scripts/vibrate.js';
 import { miLocalStorage } from '@/local-storage.js';
+import { misskeyApi } from '@/scripts/misskey-api.js';
 
 const isFriendly = ref(miLocalStorage.getItem('ui') === 'friendly');
 
@@ -100,12 +101,19 @@ watch([() => props.userAcct, () => props.groupId], () => {
 	fetch();
 });
 
+onUpdated(() => {
+	if (pagingComponent.value) {
+		pagingComponent.value.$el.scrollTop = pagingComponent.value.$el.scrollHeight;
+	}
+});
+
+
 async function fetch() {
 	fetching.value = true;
 
 	if (props.userAcct) {
 		const acct = Misskey.acct.parse(props.userAcct);
-		user.value = await os.api('users/show', { username: acct.username, host: acct.host || undefined });
+		user.value = await misskeyApi('users/show', { username: acct.username, host: acct.host || undefined });
 		group.value = null;
 
 		pagination.value = {
@@ -122,7 +130,7 @@ async function fetch() {
 		});
 	} else {
 		user.value = null;
-		group.value = await os.api('users/groups/show', { groupId: props.groupId });
+		group.value = await misskeyApi('users/groups/show', { groupId: props.groupId });
 
 		pagination.value = {
 			endpoint: 'messaging/messages',
@@ -207,7 +215,7 @@ function onDrop(ev: DragEvent): void {
 }
 
 function onMessage(message) {
-	sound.play('chat');
+	sound.playMisskeySfx('chat');
 	vibrate(defaultStore.state.vibrateChat ? [30, 30, 30] : []);
 
 	const _isBottom = isBottomVisible(rootEl.value, 64);

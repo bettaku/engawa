@@ -6,6 +6,7 @@
 #───┘ URL └─────────────────────────────────────────────────────
 
 # Final accessible URL seen by a user.
+# You can set url from an environment variable instead.
 url: https://example.tld/
 
 # ONCE YOU HAVE STARTED THE INSTANCE, DO NOT CHANGE THE
@@ -38,9 +39,11 @@ db:
   port: 5432
 
   # Database name
+  # You can set db from an environment variable instead.
   db: cherrypick
 
   # Auth
+  # You can set user and pass from environment variables instead.
   user: example-cherrypick-user
   pass: example-cherrypick-pass
 
@@ -117,6 +120,19 @@ redis:
 #  index: ''
 #  scope: local
 
+#   ┌───────────────────────────┐
+#───┘ OpenSearch configuration  └─────────────────────────────
+
+# You can use OpenSearch when you enabled AdvancedSearch.
+
+#opensearch:
+#  host: opensearch
+#  port: 9200
+#  user: 'admin'
+#  pass: 'opensearch-adminpassword' #強めのパスワードじゃないと怒られる
+#  ssl: false
+#  index: 'instancename' #なんでもいい
+
 #   ┌───────────────┐
 #───┘ ID generation └───────────────────────────────────────────
 
@@ -135,6 +151,21 @@ redis:
 # ID SETTINGS AFTER THAT!
 
 id: 'aidx'
+
+#   ┌────────────────┐
+#───┘ Error tracking └──────────────────────────────────────────
+
+# Sentry is available for error tracking.
+# See the Sentry documentation for more details on options.
+
+#sentryForBackend:
+#  enableNodeProfiling: true
+#  options:
+#    dsn: 'https://examplePublicKey@o0.ingest.sentry.io/0'
+
+#sentryForFrontend:
+#  options:
+#    dsn: 'https://examplePublicKey@o0.ingest.sentry.io/0'
 
 #   ┌─────────────────────┐
 #───┘ Other configuration └─────────────────────────────────────
@@ -186,6 +217,10 @@ proxyBypassHosts:
 
 # Media Proxy
 #mediaProxy: https://example.com/proxy
+
+# Proxy remote files endpoint
+# remoteProxy: https://example.com/files/
+# remoteProxy: /files/
 
 # Proxy remote files (default: true)
 proxyRemoteFiles: true

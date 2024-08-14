@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+SPDX-FileCopyrightText: syuilo and misskey-project
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -19,7 +19,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<MkInput v-if="!noExpirationDate" v-model="expiresAt" type="datetime-local">
 						<template #label>{{ i18n.ts.expirationDate }}</template>
 					</MkInput>
-					<MkInput v-model="createCount" type="number">
+					<MkInput v-model="createCount" type="number" min="1">
 						<template #label>{{ i18n.ts.createCount }}</template>
 					</MkInput>
 					<MkButton primary rounded @click="createWithOptions">{{ i18n.ts.create }}</MkButton>
@@ -59,6 +59,7 @@ import { computed, ref, shallowRef } from 'vue';
 import XHeader from './_header_.vue';
 import { i18n } from '@/i18n.js';
 import * as os from '@/os.js';
+import { misskeyApi } from '@/scripts/misskey-api.js';
 import MkButton from '@/components/MkButton.vue';
 import MkFolder from '@/components/MkFolder.vue';
 import MkSelect from '@/components/MkSelect.vue';
@@ -93,7 +94,7 @@ async function createWithOptions() {
 		count: createCount.value,
 	};
 
-	const tickets = await os.api('admin/invite/create', options);
+	const tickets = await misskeyApi('admin/invite/create', options);
 	os.alert({
 		type: 'success',
 		title: i18n.ts.inviteCodeCreated,
@@ -126,10 +127,10 @@ const headerActions = computed(() => [{
 }]);
 const headerTabs = computed(() => []);
 
-definePageMetadata({
+definePageMetadata(() => ({
 	title: i18n.ts.invite,
 	icon: 'ti ti-user-plus',
-});
+}));
 </script>
 
 <style lang="scss" module>

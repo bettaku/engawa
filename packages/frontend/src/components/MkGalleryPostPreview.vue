@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+SPDX-FileCopyrightText: syuilo and misskey-project
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -14,8 +14,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 					leaveActiveClass: $style.transition_toggle_leaveActive,
 					leaveToClass: $style.transition_toggle_leaveTo,
 				}"
-				:src="post.files[0].thumbnailUrl"
-				:hash="post.files[0].blurhash"
+				:src="post.files?.[0]?.thumbnailUrl"
+				:hash="post.files?.[0]?.blurhash"
 				:forceBlurhash="!show"
 			/>
 		</Transition>
@@ -83,7 +83,7 @@ function leaveHover(): void {
 
 		> article {
 			> footer {
-				&:before {
+				&::before {
 					opacity: 1;
 				}
 			}
@@ -139,7 +139,7 @@ function leaveHover(): void {
 			text-shadow: 0 0 8px #000;
 			background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
 
-			&:before {
+			&::before {
 				content: "";
 				display: block;
 				position: absolute;

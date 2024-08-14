@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+ * SPDX-FileCopyrightText: syuilo and misskey-project
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -19,7 +19,9 @@ import type { MiAbuseUserReport } from '@/models/AbuseUserReport.js';
 import type { MiSignin } from '@/models/Signin.js';
 import type { MiPage } from '@/models/Page.js';
 import type { MiWebhook } from '@/models/Webhook.js';
+import type { MiSystemWebhook } from '@/models/SystemWebhook.js';
 import type { MiMeta } from '@/models/Meta.js';
+import type { MiNotification } from '@/models/Notification.js';
 import { MiAvatarDecoration, MiRole, MiRoleAssignment } from '@/models/_.js';
 import type { Packed } from '@/misc/json-schema.js';
 import { DI } from '@/di-symbols.js';
@@ -55,21 +57,23 @@ export interface MainEventTypes {
 	reply: Packed<'Note'>;
 	renote: Packed<'Note'>;
 	follow: Packed<'UserDetailedNotMe'>;
-	followed: Packed<'User'>;
-	unfollow: Packed<'User'>;
-	meUpdated: Packed<'User'>;
+	followed: Packed<'UserLite'>;
+	unfollow: Packed<'UserDetailedNotMe'>;
+	meUpdated: Packed<'MeDetailed'>;
 	pageEvent: {
 		pageId: MiPage['id'];
 		event: string;
 		var: any;
 		userId: MiUser['id'];
-		user: Packed<'User'>;
+		user: Packed<'UserDetailed'>;
 	};
 	urlUploadFinished: {
 		marker?: string | null;
 		file: Packed<'DriveFile'>;
 	};
 	readAllNotifications: undefined;
+	notificationFlushed: undefined;
+	notificationDeleted: MiNotification['id'];
 	unreadNotification: Packed<'Notification'>;
 	unreadMention: MiNote['id'];
 	readAllUnreadMentions: undefined;
@@ -96,7 +100,7 @@ export interface MainEventTypes {
 	};
 	driveFileCreated: Packed<'DriveFile'>;
 	readAntenna: MiAntenna;
-	receiveFollowRequest: Packed<'User'>;
+	receiveFollowRequest: Packed<'UserLite'>;
 	announcementCreated: {
 		announcement: Packed<'Announcement'>;
 	};
@@ -148,8 +152,8 @@ export interface ChannelEventTypes {
 }
 
 export interface UserListEventTypes {
-	userAdded: Packed<'User'>;
-	userRemoved: Packed<'User'>;
+	userAdded: Packed<'UserLite'>;
+	userRemoved: Packed<'UserLite'>;
 }
 
 export interface AntennaEventTypes {
@@ -205,10 +209,16 @@ type SerializedAll<T> = {
 	[K in keyof T]: Serialized<T[K]>;
 };
 
+type UndefinedAsNullAll<T> = {
+	[K in keyof T]: T[K] extends undefined ? null : T[K];
+}
+
 export interface InternalEventTypes {
 	userChangeSuspendedState: { id: MiUser['id']; isSuspended: MiUser['isSuspended']; };
+	userChangeDeletedState: { id: MiUser['id']; isDeleted: MiUser['isDeleted']; };
 	userTokenRegenerated: { id: MiUser['id']; oldToken: string; newToken: string; };
 	remoteUserUpdated: { id: MiUser['id']; };
+	localUserUpdated: { id: MiUser['id']; };
 	follow: { followerId: MiUser['id']; followeeId: MiUser['id']; };
 	unfollow: { followerId: MiUser['id']; followeeId: MiUser['id']; };
 	blockingCreated: { blockerId: MiUser['id']; blockeeId: MiUser['id']; };
@@ -222,6 +232,9 @@ export interface InternalEventTypes {
 	webhookCreated: MiWebhook;
 	webhookDeleted: MiWebhook;
 	webhookUpdated: MiWebhook;
+	systemWebhookCreated: MiSystemWebhook;
+	systemWebhookDeleted: MiSystemWebhook;
+	systemWebhookUpdated: MiSystemWebhook;
 	antennaCreated: MiAntenna;
 	antennaDeleted: MiAntenna;
 	antennaUpdated: MiAntenna;
@@ -238,27 +251,29 @@ export interface InternalEventTypes {
 	userListMemberRemoved: { userListId: MiUserList['id']; memberId: MiUser['id']; };
 }
 
+type EventTypesToEventPayload<T> = EventUnionFromDictionary<UndefinedAsNullAll<SerializedAll<T>>>;
+
 // name/messages(spec) pairs dictionary
 export type GlobalEvents = {
 	internal: {
 		name: 'internal';
-		payload: EventUnionFromDictionary<SerializedAll<InternalEventTypes>>;
+		payload: EventTypesToEventPayload<InternalEventTypes>;
 	};
 	broadcast: {
 		name: 'broadcast';
-		payload: EventUnionFromDictionary<SerializedAll<BroadcastTypes>>;
+		payload: EventTypesToEventPayload<BroadcastTypes>;
 	};
 	main: {
 		name: `mainStream:${MiUser['id']}`;
-		payload: EventUnionFromDictionary<SerializedAll<MainEventTypes>>;
+		payload: EventTypesToEventPayload<MainEventTypes>;
 	};
 	drive: {
 		name: `driveStream:${MiUser['id']}`;
-		payload: EventUnionFromDictionary<SerializedAll<DriveEventTypes>>;
+		payload: EventTypesToEventPayload<DriveEventTypes>;
 	};
 	note: {
 		name: `noteStream:${MiNote['id']}`;
-		payload: EventUnionFromDictionary<SerializedAll<NoteStreamEventTypes>>;
+		payload: EventTypesToEventPayload<NoteStreamEventTypes>;
 	};
 	channel: {
 		name: `channelStream:${MiChannel['id']}`;
@@ -266,7 +281,7 @@ export type GlobalEvents = {
 	};
 	userList: {
 		name: `userListStream:${MiUserList['id']}`;
-		payload: EventUnionFromDictionary<SerializedAll<UserListEventTypes>>;
+		payload: EventTypesToEventPayload<UserListEventTypes>;
 	};
 	messaging: {
 		name: `messagingStream:${MiUser['id']}-${MiUser['id']}`;
@@ -282,15 +297,15 @@ export type GlobalEvents = {
 	};
 	roleTimeline: {
 		name: `roleTimelineStream:${MiRole['id']}`;
-		payload: EventUnionFromDictionary<SerializedAll<RoleTimelineEventTypes>>;
+		payload: EventTypesToEventPayload<RoleTimelineEventTypes>;
 	};
 	antenna: {
 		name: `antennaStream:${MiAntenna['id']}`;
-		payload: EventUnionFromDictionary<SerializedAll<AntennaEventTypes>>;
+		payload: EventTypesToEventPayload<AntennaEventTypes>;
 	};
 	admin: {
 		name: `adminStream:${MiUser['id']}`;
-		payload: EventUnionFromDictionary<SerializedAll<AdminEventTypes>>;
+		payload: EventTypesToEventPayload<AdminEventTypes>;
 	};
 	notes: {
 		name: 'notesStream';

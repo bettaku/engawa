@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+ * SPDX-FileCopyrightText: syuilo and misskey-project
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -25,7 +25,7 @@ import { UserFollowingService } from '@/core/UserFollowingService.js';
 import { AccountUpdateService } from '@/core/AccountUpdateService.js';
 import { HashtagService } from '@/core/HashtagService.js';
 import { DI } from '@/di-symbols.js';
-import { RoleService } from '@/core/RoleService.js';
+import { RolePolicies, RoleService } from '@/core/RoleService.js';
 import { CacheService } from '@/core/CacheService.js';
 import { RemoteUserResolveService } from '@/core/RemoteUserResolveService.js';
 import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
@@ -33,6 +33,7 @@ import { HttpRequestService } from '@/core/HttpRequestService.js';
 import type { Config } from '@/config.js';
 import { safeForSql } from '@/misc/safe-for-sql.js';
 import { AvatarDecorationService } from '@/core/AvatarDecorationService.js';
+import { notificationRecieveConfig } from '@/models/json-schema/user.js';
 import { ApiLoggerService } from '../../ApiLoggerService.js';
 import { ApiError } from '../../error.js';
 
@@ -137,7 +138,7 @@ export const paramDef = {
 		birthday: { ...birthdaySchema, nullable: true },
 		lang: { type: 'string', enum: [null, ...Object.keys(langmap)] as string[], nullable: true },
 		avatarId: { type: 'string', format: 'misskey:id', nullable: true },
-		avatarDecorations: { type: 'array', maxItems: 16, items: {
+		avatarDecorations: { type: 'array', maxItems: 128, items: {
 			type: 'object',
 			properties: {
 				id: { type: 'string', format: 'misskey:id' },
@@ -172,6 +173,7 @@ export const paramDef = {
 		autoAcceptFollowed: { type: 'boolean' },
 		noCrawle: { type: 'boolean' },
 		preventAiLearning: { type: 'boolean' },
+		isIndexable: { type: 'boolean' },
 		isBot: { type: 'boolean' },
 		isCat: { type: 'boolean' },
 		injectFeaturedNote: { type: 'boolean' },
@@ -186,7 +188,27 @@ export const paramDef = {
 		mutedInstances: { type: 'array', items: {
 			type: 'string',
 		} },
-		notificationRecieveConfig: { type: 'object' },
+		notificationRecieveConfig: {
+			type: 'object',
+			nullable: false,
+			properties: {
+				note: notificationRecieveConfig,
+				follow: notificationRecieveConfig,
+				mention: notificationRecieveConfig,
+				reply: notificationRecieveConfig,
+				renote: notificationRecieveConfig,
+				quote: notificationRecieveConfig,
+				reaction: notificationRecieveConfig,
+				pollEnded: notificationRecieveConfig,
+				receiveFollowRequest: notificationRecieveConfig,
+				followRequestAccepted: notificationRecieveConfig,
+				groupInvited: notificationRecieveConfig,
+				roleAssigned: notificationRecieveConfig,
+				achievementEarned: notificationRecieveConfig,
+				app: notificationRecieveConfig,
+				test: notificationRecieveConfig,
+			},
+		},
 		emailNotificationTypes: { type: 'array', items: {
 			type: 'string',
 		} },
@@ -238,8 +260,16 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			const profileUpdates = {} as Partial<MiUserProfile>;
 
 			const profile = await this.userProfilesRepository.findOneByOrFail({ userId: user.id });
+			let policies: RolePolicies | null = null;
 
-			if (ps.name !== undefined) updates.name = ps.name;
+			if (ps.name !== undefined) {
+				if (ps.name === null) {
+					updates.name = null;
+				} else {
+					const trimmedName = ps.name.trim();
+					updates.name = trimmedName === '' ? null : trimmedName;
+				}
+			}
 			if (ps.description !== undefined) profileUpdates.description = ps.description;
 			if (ps.lang !== undefined) profileUpdates.lang = ps.lang;
 			if (ps.location !== undefined) profileUpdates.location = ps.location;
@@ -271,14 +301,16 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			}
 
 			if (ps.mutedWords !== undefined) {
-				checkMuteWordCount(ps.mutedWords, (await this.roleService.getUserPolicies(user.id)).wordMuteLimit);
+				policies ??= await this.roleService.getUserPolicies(user.id);
+				checkMuteWordCount(ps.mutedWords, policies.wordMuteLimit);
 				validateMuteWordRegex(ps.mutedWords);
 
 				profileUpdates.mutedWords = ps.mutedWords;
 				profileUpdates.enableWordMute = ps.mutedWords.length > 0;
 			}
 			if (ps.hardMutedWords !== undefined) {
-				checkMuteWordCount(ps.hardMutedWords, (await this.roleService.getUserPolicies(user.id)).wordMuteLimit);
+				policies ??= await this.roleService.getUserPolicies(user.id);
+				checkMuteWordCount(ps.hardMutedWords, policies.wordMuteLimit);
 				validateMuteWordRegex(ps.hardMutedWords);
 				profileUpdates.hardMutedWords = ps.hardMutedWords;
 			}
@@ -293,17 +325,25 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			if (typeof ps.autoAcceptFollowed === 'boolean') profileUpdates.autoAcceptFollowed = ps.autoAcceptFollowed;
 			if (typeof ps.noCrawle === 'boolean') profileUpdates.noCrawle = ps.noCrawle;
 			if (typeof ps.preventAiLearning === 'boolean') profileUpdates.preventAiLearning = ps.preventAiLearning;
+			if (typeof ps.isIndexable === 'boolean') {
+				updates.isIndexable = ps.isIndexable;
+				profileUpdates.isIndexable = ps.isIndexable;
+			};
 			if (typeof ps.isCat === 'boolean') updates.isCat = ps.isCat;
 			if (typeof ps.injectFeaturedNote === 'boolean') profileUpdates.injectFeaturedNote = ps.injectFeaturedNote;
 			if (typeof ps.receiveAnnouncementEmail === 'boolean') profileUpdates.receiveAnnouncementEmail = ps.receiveAnnouncementEmail;
 			if (typeof ps.alwaysMarkNsfw === 'boolean') {
-				if ((await roleService.getUserPolicies(user.id)).alwaysMarkNsfw) throw new ApiError(meta.errors.restrictedByRole);
+				policies ??= await this.roleService.getUserPolicies(user.id);
+				if (policies.alwaysMarkNsfw) throw new ApiError(meta.errors.restrictedByRole);
 				profileUpdates.alwaysMarkNsfw = ps.alwaysMarkNsfw;
 			}
 			if (typeof ps.autoSensitive === 'boolean') profileUpdates.autoSensitive = ps.autoSensitive;
 			if (ps.emailNotificationTypes !== undefined) profileUpdates.emailNotificationTypes = ps.emailNotificationTypes;
 
 			if (ps.avatarId) {
+				policies ??= await this.roleService.getUserPolicies(user.id);
+				if (!policies.canUpdateBioMedia) throw new ApiError(meta.errors.restrictedByRole);
+
 				const avatar = await this.driveFilesRepository.findOneBy({ id: ps.avatarId });
 
 				if (avatar == null || avatar.userId !== user.id) throw new ApiError(meta.errors.noSuchAvatar);
@@ -319,6 +359,9 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			}
 
 			if (ps.bannerId) {
+				policies ??= await this.roleService.getUserPolicies(user.id);
+				if (!policies.canUpdateBioMedia) throw new ApiError(meta.errors.restrictedByRole);
+
 				const banner = await this.driveFilesRepository.findOneBy({ id: ps.bannerId });
 
 				if (banner == null || banner.userId !== user.id) throw new ApiError(meta.errors.noSuchBanner);
@@ -334,14 +377,15 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			}
 
 			if (ps.avatarDecorations) {
+				policies ??= await this.roleService.getUserPolicies(user.id);
 				const decorations = await this.avatarDecorationService.getAll(true);
-				const [myRoles, myPolicies] = await Promise.all([this.roleService.getUserRoles(user.id), this.roleService.getUserPolicies(user.id)]);
+				const myRoles = await this.roleService.getUserRoles(user.id);
 				const allRoles = await this.roleService.getRoles();
 				const decorationIds = decorations
 					.filter(d => d.roleIdsThatCanBeUsedThisDecoration.filter(roleId => allRoles.some(r => r.id === roleId)).length === 0 || myRoles.some(r => d.roleIdsThatCanBeUsedThisDecoration.includes(r.id)))
 					.map(d => d.id);
 
-				if (ps.avatarDecorations.length > myPolicies.avatarDecorationLimit) throw new ApiError(meta.errors.restrictedByRole);
+				if (ps.avatarDecorations.length > policies.avatarDecorationLimit) throw new ApiError(meta.errors.restrictedByRole);
 
 				updates.avatarDecorations = ps.avatarDecorations.filter(d => decorationIds.includes(d.id)).map(d => ({
 					id: d.id,
@@ -440,9 +484,9 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			this.hashtagService.updateUsertags(user, tags);
 			//#endregion
 
-			if (Object.keys(updates).length > 0) await this.usersRepository.update(user.id, updates);
-			if (Object.keys(updates).includes('alsoKnownAs')) {
-				this.cacheService.uriPersonCache.set(this.userEntityService.genLocalUserUri(user.id), { ...user, ...updates });
+			if (Object.keys(updates).length > 0) {
+				await this.usersRepository.update(user.id, updates);
+				this.globalEventService.publishInternalEvent('localUserUpdated', { id: user.id });
 			}
 
 			await this.userProfilesRepository.update(user.id, {
@@ -450,8 +494,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				verifiedLinks: [],
 			});
 
-			const iObj = await this.userEntityService.pack<true, true>(user.id, user, {
-				detail: true,
+			const iObj = await this.userEntityService.pack(user.id, user, {
+				schema: 'MeDetailed',
 				includeSecrets: isSecure,
 			});
 
@@ -482,26 +526,32 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 	private async verifyLink(url: string, user: MiLocalUser) {
 		if (!safeForSql(url)) return;
 
-		const html = await this.httpRequestService.getHtml(url);
+		try {
+			const html = await this.httpRequestService.getHtml(url);
 
-		const { window } = new JSDOM(html);
-		const doc = window.document;
+			const { window } = new JSDOM(html);
+			const doc = window.document;
 
-		const myLink = `${this.config.url}/@${user.username}`;
+			const myLink = `${this.config.url}/@${user.username}`;
 
-		const aEls = Array.from(doc.getElementsByTagName('a'));
-		const linkEls = Array.from(doc.getElementsByTagName('link'));
+			const aEls = Array.from(doc.getElementsByTagName('a'));
+			const linkEls = Array.from(doc.getElementsByTagName('link'));
 
-		const includesMyLink = aEls.some(a => a.href === myLink);
-		const includesRelMeLinks = [...aEls, ...linkEls].some(link => link.rel === 'me' && link.href === myLink);
+			const includesMyLink = aEls.some(a => a.href === myLink);
+			const includesRelMeLinks = [...aEls, ...linkEls].some(link => link.rel === 'me' && link.href === myLink);
 
-		if (includesMyLink || includesRelMeLinks) {
-			await this.userProfilesRepository.createQueryBuilder('profile').update()
-				.where('userId = :userId', { userId: user.id })
-				.set({
-					verifiedLinks: () => `array_append("verifiedLinks", '${url}')`, // ここでSQLインジェクションされそうなのでとりあえず safeForSql で弾いている
-				})
-				.execute();
+			if (includesMyLink || includesRelMeLinks) {
+				await this.userProfilesRepository.createQueryBuilder('profile').update()
+					.where('userId = :userId', { userId: user.id })
+					.set({
+						verifiedLinks: () => `array_append("verifiedLinks", '${url}')`, // ここでSQLインジェクションされそうなのでとりあえず safeForSql で弾いている
+					})
+					.execute();
+			}
+
+			window.close();
+		} catch (err) {
+			// なにもしない
 		}
 	}
 }

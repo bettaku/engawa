@@ -1,47 +1,40 @@
 /*
- * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+ * SPDX-FileCopyrightText: syuilo and misskey-project
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 import { Ref, nextTick } from 'vue';
 import * as os from '@/os.js';
+import { i18n } from '@/i18n.js';
 import { MFM_TAGS, HTML_TAGS } from '@/const.js';
+import type { MenuItem } from '@/types/menu.js';
 
 /**
  * MFMの装飾のリストを表示する
  */
-export function mfmFunctionPicker(src: any, textArea: HTMLInputElement | HTMLTextAreaElement, textRef: Ref<string>) {
-	return new Promise((res, rej) => {
+export function mfmFunctionPicker(src: HTMLElement | EventTarget | null, textArea: HTMLInputElement | HTMLTextAreaElement, textRef: Ref<string>) {
 		os.popupMenu([{
+			text: i18n.ts.addMfmFunction,
 			type: 'label',
 		}, ...getHTMLFunctionList(textArea, textRef)
 		, { type: 'divider' }
 		, ...getMFMFunctionList(textArea, textRef)], src);
-	});
 }
 
-function getHTMLFunctionList(textArea: HTMLInputElement | HTMLTextAreaElement, textRef: Ref<string>) : object[] {
-	const ret: object[] = [];
-	HTML_TAGS.forEach(tag => {
-		ret.push({
+function getHTMLFunctionList(textArea: HTMLInputElement | HTMLTextAreaElement, textRef: Ref<string>): MenuItem[] {
+	return HTML_TAGS.map(tag => ({
 			text: tag,
 			icon: tag === 'bold' ? 'ti ti-bold' : tag === 'strike' ? 'ti ti-strikethrough' : tag === 'italic' ? 'ti ti-italic' : tag === 'small' ? 'ti ti-text-decrease' : tag === 'center' ? 'ti ti-align-center' : tag === 'plain' ? 'ti ti-clear-formatting' : tag === 'inlinecode' ? 'ti ti-code' : tag === 'blockcode' ? 'ti ti-script' : tag === 'mathinline' ? 'ti ti-math' : tag === 'mathblock' ? 'ti ti-math-function' : 'ti ti-icons',
 			action: () => add(textArea, textRef, tag),
-		});
-	});
-	return ret;
+		}));
 }
 
-function getMFMFunctionList(textArea: HTMLInputElement | HTMLTextAreaElement, textRef: Ref<string>) : object[] {
-	const ret: object[] = [];
-	MFM_TAGS.forEach(tag => {
-		ret.push({
+function getMFMFunctionList(textArea: HTMLInputElement | HTMLTextAreaElement, textRef: Ref<string>): MenuItem[] {
+	return MFM_TAGS.map(tag => ({
 			text: tag,
 			icon: 'ti ti-icons',
 			action: () => add(textArea, textRef, tag),
-		});
-	});
-	return ret;
+		}));
 }
 
 function add(textArea: HTMLInputElement | HTMLTextAreaElement, textRef: Ref<string>, type: string) {
@@ -71,7 +64,7 @@ function add(textArea: HTMLInputElement | HTMLTextAreaElement, textRef: Ref<stri
 				if (tag === 'center') textRef.value = `${textRef.value.substring(0, caretStart)}<center></center>${textRef.value.substring(caretEnd)}`;
 				if (tag === 'plain') textRef.value = `${textRef.value.substring(0, caretStart)}<plain></plain>${textRef.value.substring(caretEnd)}`;
 				if (tag === 'inlinecode') textRef.value = textRef.value.substring(0, caretStart) + '``' + textRef.value.substring(caretEnd);
-				if (tag === 'inlineblock') textRef.value = textRef.value.substring(0, caretStart) + '```' + '\n' + '\n' + '```' + textRef.value.substring(caretEnd);
+				if (tag === 'blockcode') textRef.value = textRef.value.substring(0, caretStart) + '```' + '\n' + '\n' + '```' + textRef.value.substring(caretEnd);
 				if (tag === 'mathinline') textRef.value = textRef.value.substring(0, caretStart) + '\\(\\)' + textRef.value.substring(caretEnd);
 				if (tag === 'mathblock') textRef.value = textRef.value.substring(0, caretStart) + '\\(\\\\ \\)' + textRef.value.substring(caretEnd);
 			} else {
@@ -83,7 +76,7 @@ function add(textArea: HTMLInputElement | HTMLTextAreaElement, textRef: Ref<stri
 				if (tag === 'center') textRef.value = `${textRef.value.substring(0, caretStart)}<center>${textRef.value.substring(caretStart, caretEnd)}</center>${textRef.value.substring(caretEnd)}`;
 				if (tag === 'plain') textRef.value = `${textRef.value.substring(0, caretStart)}<plain>${textRef.value.substring(caretStart, caretEnd)}</plain>${textRef.value.substring(caretEnd)}`;
 				if (tag === 'inlinecode') textRef.value = textRef.value.substring(0, caretStart) + '`' + textRef.value.substring(caretStart, caretEnd) + '`' + textRef.value.substring(caretEnd);
-				if (tag === 'inlineblock') textRef.value = textRef.value.substring(0, caretStart) + '```' + '\n' + textRef.value.substring(caretStart, caretEnd) + '\n' + '```' + textRef.value.substring(caretEnd);
+				if (tag === 'blockcode') textRef.value = textRef.value.substring(0, caretStart) + '```' + '\n' + textRef.value.substring(caretStart, caretEnd) + '\n' + '```' + textRef.value.substring(caretEnd);
 				if (tag === 'mathinline') textRef.value = textRef.value.substring(0, caretStart) + '\\(' + textRef.value.substring(caretStart, caretEnd) + '\\)' + textRef.value.substring(caretEnd);
 				if (tag === 'mathblock') textRef.value = textRef.value.substring(0, caretStart) + '\\(' + textRef.value.substring(caretStart, caretEnd) + '\\\\ \\)' + textRef.value.substring(caretEnd);
 			}
@@ -101,7 +94,7 @@ function add(textArea: HTMLInputElement | HTMLTextAreaElement, textRef: Ref<stri
 						? 2
 						: type.includes('inlinecode')
 							? -9
-							: type.includes('inlineblock')
+							: type.includes('blockcode')
 								? -5
 								: type.includes('mathinline')
 									? -8

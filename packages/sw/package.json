@@ -6,20 +6,22 @@
 		"build": "node build.js",
 		"typecheck": "tsc --noEmit",
 		"eslint": "eslint --quiet src/**/*.ts",
-		"lint": "pnpm typecheck && pnpm eslint"
+		"format": "pnpm biome format",
+		"format:write": "pnpm biome format --write",
+		"lint": "pnpm typecheck && pnpm biome lint"
 	},
 	"dependencies": {
-		"esbuild": "0.19.9",
+		"esbuild": "0.23.0",
 		"idb-keyval": "6.2.1",
 		"cherrypick-js": "workspace:*"
 	},
 	"devDependencies": {
-		"@typescript-eslint/parser": "6.14.0",
+		"@biomejs/biome": "1.8.3",
+		"@typescript-eslint/parser": "7.17.0",
 		"@typescript/lib-webworker": "npm:@types/serviceworker@0.0.67",
-		"eslint": "8.56.0",
 		"eslint-plugin-import": "2.29.1",
-		"nodemon": "3.0.2",
-		"typescript": "5.3.3"
+		"nodemon": "3.1.4",
+		"typescript": "5.5.4"
 	},
 	"type": "module"
 }

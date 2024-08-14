@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+SPDX-FileCopyrightText: syuilo and misskey-project
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -271,7 +271,7 @@ function onDrop(ev) {
 	border-radius: 10px;
 
 	&.draghover {
-		&:after {
+		&::after {
 			content: "";
 			display: block;
 			position: absolute;
@@ -285,7 +285,7 @@ function onDrop(ev) {
 	}
 
 	&.dragging {
-		&:after {
+		&::after {
 			content: "";
 			display: block;
 			position: absolute;

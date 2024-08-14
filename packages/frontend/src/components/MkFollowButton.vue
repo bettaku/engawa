@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+SPDX-FileCopyrightText: syuilo and misskey-project
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -48,14 +48,17 @@ SPDX-License-Identifier: AGPL-3.0-only
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import * as Misskey from 'cherrypick-js';
 import * as os from '@/os.js';
+import { misskeyApi } from '@/scripts/misskey-api.js';
 import { useStream } from '@/stream.js';
 import { i18n } from '@/i18n.js';
 import { claimAchievement } from '@/scripts/achievements.js';
+import { pleaseLogin } from '@/scripts/please-login.js';
+import { host } from '@/config.js';
 import { $i } from '@/account.js';
+import { defaultStore } from '@/store.js';
 import { userName } from '@/filters/user.js';
 import { vibrate } from '@/scripts/vibrate.js';
-import { defaultStore } from '@/store.js';
-import { useRouter } from '@/router.js';
+import { useRouter } from '@/router/supplier.js';
 
 const router = useRouter();
 
@@ -83,8 +86,8 @@ const hasPendingFollowRequestFromYou = ref(props.user.hasPendingFollowRequestFro
 const wait = ref(false);
 const connection = useStream().useChannel('main');
 
-if (props.user.isFollowing == null) {
-	os.api('users/show', {
+if (props.user.isFollowing == null && $i) {
+	misskeyApi('users/show', {
 		userId: props.user.id,
 	})
 		.then(onFollowChange);
@@ -98,28 +101,42 @@ function onFollowChange(user: Misskey.entities.UserDetailed) {
 }
 
 async function onClick() {
+	pleaseLogin(undefined, { type: 'web', path: `/@${props.user.username}@${props.user.host ?? host}` });
+
 	wait.value = true;
 
 	try {
 		if (isFollowing.value) {
 			const { canceled } = await os.confirm({
 				type: 'warning',
-				text: i18n.t('unfollowConfirm', { name: userName(props.user) }),
+				text: i18n.tsx.unfollowConfirm({ name: userName(props.user) }),
 			});
 
 			if (canceled) return;
 
-			await os.api('following/delete', {
+			await misskeyApi('following/delete', {
 				userId: props.user.id,
 			});
 		} else {
+			if (defaultStore.state.alwaysConfirmFollow) {
+				const { canceled } = await os.confirm({
+					type: 'question',
+					text: i18n.tsx.followConfirm({ name: props.user.name || props.user.username }),
+				});
+
+				if (canceled) {
+					wait.value = false;
+					return;
+				}
+			}
+
 			if (hasPendingFollowRequestFromYou.value) {
-				await os.api('following/requests/cancel', {
+				await misskeyApi('following/requests/cancel', {
 					userId: props.user.id,
 				});
 				hasPendingFollowRequestFromYou.value = false;
 			} else {
-				await os.api('following/create', {
+				await misskeyApi('following/create', {
 					userId: props.user.id,
 					withReplies: defaultStore.state.defaultWithReplies,
 				});
@@ -129,6 +146,8 @@ async function onClick() {
 				});
 				vibrate(defaultStore.state.vibrateSystem ? [30, 40, 100] : []);
 				hasPendingFollowRequestFromYou.value = true;
+
+				if ($i == null) return;
 
 				claimAchievement('following1');
 
@@ -196,17 +215,7 @@ onBeforeUnmount(() => {
 	}
 
 	&:focus-visible {
-		&:after {
-			content: "";
-			pointer-events: none;
-			position: absolute;
-			top: -5px;
-			right: -5px;
-			bottom: -5px;
-			left: -5px;
-			border: 2px solid var(--focus);
-			border-radius: 32px;
-		}
+		outline-offset: 2px;
 	}
 
 	&:hover {

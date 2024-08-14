@@ -1,28 +1,11 @@
 import { mkdir, writeFile } from 'fs/promises';
-import { OpenAPIV3 } from 'openapi-types';
+import { OpenAPIV3_1 } from 'openapi-types';
 import { toPascal } from 'ts-case-convert';
-import SwaggerParser from '@apidevtools/swagger-parser';
+import OpenAPIParser from '@readme/openapi-parser';
 import openapiTS from 'openapi-typescript';
 
-function generateVersionHeaderComment(openApiDocs: OpenAPIV3.Document): string {
-	const contents = {
-		version: openApiDocs.info.version,
-		basedMisskeyVersion: openApiDocs.info.description,
-		generatedAt: new Date().toISOString(),
-	};
-
-	const lines: string[] = [];
-	lines.push('/*');
-	for (const [key, value] of Object.entries(contents)) {
-		lines.push(` * ${key}: ${value}`);
-	}
-	lines.push(' */');
-
-	return lines.join('\n');
-}
-
 async function generateBaseTypes(
-	openApiDocs: OpenAPIV3.Document,
+	openApiDocs: OpenAPIV3_1.Document,
 	openApiJsonPath: string,
 	typeFileName: string,
 ) {
@@ -37,10 +20,14 @@ async function generateBaseTypes(
 	}
 	lines.push('');
 
-	lines.push(generateVersionHeaderComment(openApiDocs));
-	lines.push('');
-
-	const generatedTypes = await openapiTS(openApiJsonPath, { exportType: true });
+	const generatedTypes = await openapiTS(openApiJsonPath, {
+		exportType: true,
+		transform(schemaObject) {
+			if ('format' in schemaObject && schemaObject.format === 'binary') {
+				return schemaObject.nullable ? 'Blob | null' : 'Blob';
+			}
+		},
+	});
 	lines.push(generatedTypes);
 	lines.push('');
 
@@ -48,7 +35,7 @@ async function generateBaseTypes(
 }
 
 async function generateSchemaEntities(
-	openApiDocs: OpenAPIV3.Document,
+	openApiDocs: OpenAPIV3_1.Document,
 	typeFileName: string,
 	outputPath: string,
 ) {
@@ -60,8 +47,6 @@ async function generateSchemaEntities(
 	const schemaNames = Object.keys(schemas);
 	const typeAliasLines: string[] = [];
 
-	typeAliasLines.push(generateVersionHeaderComment(openApiDocs));
-	typeAliasLines.push('');
 	typeAliasLines.push(`import { components } from '${toImportPath(typeFileName)}';`);
 	typeAliasLines.push(
 		...schemaNames.map(it => `export type ${it} = components['schemas']['${it}'];`),
@@ -72,23 +57,29 @@ async function generateSchemaEntities(
 }
 
 async function generateEndpoints(
-	openApiDocs: OpenAPIV3.Document,
+	openApiDocs: OpenAPIV3_1.Document,
 	typeFileName: string,
 	entitiesOutputPath: string,
 	endpointOutputPath: string,
 ) {
 	const endpoints: Endpoint[] = [];
+	const endpointReqMediaTypes: EndpointReqMediaType[] = [];
+	const endpointReqMediaTypesSet = new Set<string>();
 
 	// cherrypick-jsはPOST固定で送っているので、こちらも決め打ちする。別メソッドに対応することがあればこちらも直す必要あり
-	const paths = openApiDocs.paths;
+	const paths = openApiDocs.paths ?? {};
 	const postPathItems = Object.keys(paths)
-		.map(it => paths[it]?.post)
+		.map(it => ({
+			_path_: it.replace(/^\//, ''),
+			...paths[it]?.post,
+		}))
 		.filter(filterUndefined);
 
 	for (const operation of postPathItems) {
+		const path = operation._path_;
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const operationId = operation.operationId!;
-		const endpoint = new Endpoint(operationId);
+		const endpoint = new Endpoint(path);
 		endpoints.push(endpoint);
 
 		if (isRequestBodyObject(operation.requestBody)) {
@@ -96,21 +87,34 @@ async function generateEndpoints(
 			const supportMediaTypes = Object.keys(reqContent);
 			if (supportMediaTypes.length > 0) {
 				// いまのところ複数のメディアタイプをとるエンドポイントは無いので決め打ちする
-				endpoint.request = new OperationTypeAlias(
+				const req = new OperationTypeAlias(
 					operationId,
+					path,
 					supportMediaTypes[0],
 					OperationsAliasType.REQUEST,
 				);
+				endpoint.request = req;
+
+				const reqType = new EndpointReqMediaType(path, req);
+				endpointReqMediaTypesSet.add(reqType.getMediaType());
+				endpointReqMediaTypes.push(reqType);
+			} else {
+				endpointReqMediaTypesSet.add('application/json');
+				endpointReqMediaTypes.push(new EndpointReqMediaType(path, undefined, 'application/json'));
 			}
+		} else {
+			endpointReqMediaTypesSet.add('application/json');
+			endpointReqMediaTypes.push(new EndpointReqMediaType(path, undefined, 'application/json'));
 		}
 
-		if (isResponseObject(operation.responses['200']) && operation.responses['200'].content) {
+		if (operation.responses && isResponseObject(operation.responses['200']) && operation.responses['200'].content) {
 			const resContent = operation.responses['200'].content;
 			const supportMediaTypes = Object.keys(resContent);
 			if (supportMediaTypes.length > 0) {
 				// いまのところ複数のメディアタイプを返すエンドポイントは無いので決め打ちする
 				endpoint.response = new OperationTypeAlias(
 					operationId,
+					path,
 					supportMediaTypes[0],
 					OperationsAliasType.RESPONSE,
 				);
@@ -120,8 +124,7 @@ async function generateEndpoints(
 
 	const entitiesOutputLine: string[] = [];
 
-	entitiesOutputLine.push(generateVersionHeaderComment(openApiDocs));
-	entitiesOutputLine.push('');
+	entitiesOutputLine.push('/* eslint @typescript-eslint/naming-convention: 0 */');
 
 	entitiesOutputLine.push(`import { operations } from '${toImportPath(typeFileName)}';`);
 	entitiesOutputLine.push('');
@@ -140,9 +143,6 @@ async function generateEndpoints(
 
 	const endpointOutputLine: string[] = [];
 
-	endpointOutputLine.push(generateVersionHeaderComment(openApiDocs));
-	endpointOutputLine.push('');
-
 	endpointOutputLine.push('import type {');
 	endpointOutputLine.push(
 		...[emptyRequest, emptyResponse, ...entities].map(it => '\t' + it.generateName() + ','),
@@ -157,21 +157,41 @@ async function generateEndpoints(
 	endpointOutputLine.push('}');
 	endpointOutputLine.push('');
 
+	function generateEndpointReqMediaTypesType() {
+		return `Record<keyof Endpoints, ${[...endpointReqMediaTypesSet].map((t) => `'${t}'`).join(' | ')}>`;
+	}
+
+	endpointOutputLine.push(`export const endpointReqTypes: ${generateEndpointReqMediaTypesType()} = {`);
+
+	endpointOutputLine.push(
+		...endpointReqMediaTypes.map(it => '\t' + it.toLine()),
+	);
+
+	endpointOutputLine.push('};');
+	endpointOutputLine.push('');
+
 	await writeFile(endpointOutputPath, endpointOutputLine.join('\n'));
 }
 
 async function generateApiClientJSDoc(
-	openApiDocs: OpenAPIV3.Document,
+	openApiDocs: OpenAPIV3_1.Document,
 	apiClientFileName: string,
 	endpointsFileName: string,
 	warningsOutputPath: string,
 ) {
-	const endpoints: { operationId: string; description: string; }[] = [];
+	const endpoints: {
+		operationId: string;
+		path: string;
+		description: string;
+	}[] = [];
 
 	// cherrypick-jsはPOST固定で送っているので、こちらも決め打ちする。別メソッドに対応することがあればこちらも直す必要あり
-	const paths = openApiDocs.paths;
+	const paths = openApiDocs.paths ?? {};
 	const postPathItems = Object.keys(paths)
-		.map(it => paths[it]?.post)
+		.map(it => ({
+			_path_: it.replace(/^\//, ''),
+			...paths[it]?.post,
+		}))
 		.filter(filterUndefined);
 
 	for (const operation of postPathItems) {
@@ -181,15 +201,13 @@ async function generateApiClientJSDoc(
 		if (operation.description) {
 			endpoints.push({
 				operationId: operationId,
+				path: operation._path_,
 				description: operation.description,
 			});
 		}
 	}
 
 	const endpointOutputLine: string[] = [];
-
-	endpointOutputLine.push(generateVersionHeaderComment(openApiDocs));
-	endpointOutputLine.push('');
 
 	endpointOutputLine.push(`import type { SwitchCaseResponseType } from '${toImportPath(apiClientFileName)}';`);
 	endpointOutputLine.push(`import type { Endpoints } from '${toImportPath(endpointsFileName)}';`);
@@ -204,7 +222,7 @@ async function generateApiClientJSDoc(
 			'    /**',
 			`     * ${endpoint.description.split('\n').join('\n     * ')}`,
 			'     */',
-			`    request<E extends '${endpoint.operationId}', P extends Endpoints[E][\'req\']>(`,
+			`    request<E extends '${endpoint.path}', P extends Endpoints[E][\'req\']>(`,
 			'      endpoint: E,',
 			'      params: P,',
 			'      credential?: string | null,',
@@ -222,21 +240,21 @@ async function generateApiClientJSDoc(
 	await writeFile(warningsOutputPath, endpointOutputLine.join('\n'));
 }
 
-function isRequestBodyObject(value: unknown): value is OpenAPIV3.RequestBodyObject {
+function isRequestBodyObject(value: unknown): value is OpenAPIV3_1.RequestBodyObject {
 	if (!value) {
 		return false;
 	}
 
-	const { content } = value as Record<keyof OpenAPIV3.RequestBodyObject, unknown>;
+	const { content } = value as Record<keyof OpenAPIV3_1.RequestBodyObject, unknown>;
 	return content !== undefined;
 }
 
-function isResponseObject(value: unknown): value is OpenAPIV3.ResponseObject {
+function isResponseObject(value: unknown): value is OpenAPIV3_1.ResponseObject {
 	if (!value) {
 		return false;
 	}
 
-	const { description } = value as Record<keyof OpenAPIV3.ResponseObject, unknown>;
+	const { description } = value as Record<keyof OpenAPIV3_1.ResponseObject, unknown>;
 	return description !== undefined;
 }
 
@@ -263,21 +281,24 @@ interface IOperationTypeAlias {
 
 class OperationTypeAlias implements IOperationTypeAlias {
 	public readonly operationId: string;
+	public readonly path: string;
 	public readonly mediaType: string;
 	public readonly type: OperationsAliasType;
 
 	constructor(
 		operationId: string,
+		path: string,
 		mediaType: string,
 		type: OperationsAliasType,
 	) {
 		this.operationId = operationId;
+		this.path = path;
 		this.mediaType = mediaType;
 		this.type = type;
 	}
 
 	generateName(): string {
-		const nameBase = this.operationId.replace(/\//g, '-');
+		const nameBase = this.path.replace(/\//g, '-');
 		return toPascal(nameBase + this.type);
 	}
 
@@ -310,19 +331,39 @@ const emptyRequest = new EmptyTypeAlias(OperationsAliasType.REQUEST);
 const emptyResponse = new EmptyTypeAlias(OperationsAliasType.RESPONSE);
 
 class Endpoint {
-	public readonly operationId: string;
+	public readonly path: string;
 	public request?: IOperationTypeAlias;
 	public response?: IOperationTypeAlias;
 
-	constructor(operationId: string) {
-		this.operationId = operationId;
+	constructor(path: string) {
+		this.path = path;
 	}
 
 	toLine(): string {
 		const reqName = this.request?.generateName() ?? emptyRequest.generateName();
 		const resName = this.response?.generateName() ?? emptyResponse.generateName();
 
-		return `'${this.operationId}': { req: ${reqName}; res: ${resName} };`;
+		return `'${this.path}': { req: ${reqName}; res: ${resName} };`;
+	}
+}
+
+class EndpointReqMediaType {
+	public readonly path: string;
+	public readonly mediaType: string;
+
+	constructor(path: string, request: OperationTypeAlias, mediaType?: undefined);
+	constructor(path: string, request: undefined, mediaType: string);
+	constructor(path: string, request: OperationTypeAlias | undefined, mediaType?: string) {
+		this.path = path;
+		this.mediaType = mediaType ?? request?.mediaType ?? 'application/json';
+	}
+
+	getMediaType(): string {
+		return this.mediaType;
+	}
+
+	toLine(): string {
+		return `'${this.path}': '${this.mediaType}',`;
 	}
 }
 
@@ -331,7 +372,7 @@ async function main() {
 	await mkdir(generatePath, { recursive: true });
 
 	const openApiJsonPath = './api.json';
-	const openApiDocs = await SwaggerParser.validate(openApiJsonPath) as OpenAPIV3.Document;
+	const openApiDocs = await OpenAPIParser.parse(openApiJsonPath) as OpenAPIV3_1.Document;
 
 	const typeFileName = './built/autogen/types.ts';
 	await generateBaseTypes(openApiDocs, openApiJsonPath, typeFileName);

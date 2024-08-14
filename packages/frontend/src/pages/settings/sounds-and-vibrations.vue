@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+SPDX-FileCopyrightText: syuilo and misskey-project
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -21,10 +21,16 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 		<div class="_gaps_s">
 			<MkFolder v-for="type in operationTypes" :key="type">
-				<template #label>{{ i18n.t('_sfx.' + type) }}</template>
+				<template #label>{{ i18n.ts._sfx[type] }}</template>
 				<template #suffix>{{ getSoundTypeName(sounds[type].type) }}</template>
-
-				<XSound :type="sounds[type].type" :volume="sounds[type].volume" :fileId="sounds[type].fileId" :fileUrl="sounds[type].fileUrl" @update="(res) => updated(type, res)"/>
+				<Suspense>
+					<template #default>
+						<XSound :type="sounds[type].type" :volume="sounds[type].volume" :fileId="sounds[type].fileId" :fileUrl="sounds[type].fileUrl" @update="(res) => updated(type, res)"/>
+					</template>
+					<template #fallback>
+						<MkLoading/>
+					</template>
+				</Suspense>
 			</MkFolder>
 		</div>
 	</FormSection>
@@ -75,8 +81,6 @@ const sounds = ref<Record<OperationType, Ref<SoundStore>>>({
 	notification: defaultStore.reactiveState.sound_notification,
 	chat: defaultStore.reactiveState.sound_chat,
 	chatBg: defaultStore.reactiveState.sound_chatBg,
-	antenna: defaultStore.reactiveState.sound_antenna,
-	channel: defaultStore.reactiveState.sound_channel,
 	reaction: defaultStore.reactiveState.sound_reaction,
 });
 
@@ -151,8 +155,8 @@ const headerActions = computed(() => []);
 
 const headerTabs = computed(() => []);
 
-definePageMetadata({
+definePageMetadata(() => ({
 	title: i18n.ts.soundsAndVibrations,
 	icon: 'ti ti-music',
-});
+}));
 </script>

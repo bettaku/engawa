@@ -1,14 +1,16 @@
 /*
- * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+ * SPDX-FileCopyrightText: syuilo and misskey-project
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 import { throttle } from 'throttle-debounce';
 import { markRaw } from 'vue';
 import { notificationTypes } from 'cherrypick-js';
+import type { BasicTimelineType } from '@/timelines.js';
 import { Storage } from '@/pizzax.js';
-import { api } from '@/os.js';
+import { misskeyApi } from '@/scripts/misskey-api.js';
 import { deepClone } from '@/scripts/clone.js';
+import { SoundStore } from '@/store.js';
 
 type ColumnWidget = {
 	name: string;
@@ -16,9 +18,24 @@ type ColumnWidget = {
 	data: Record<string, any>;
 };
 
+export const columnTypes = [
+	'main',
+	'widgets',
+	'notifications',
+	'tl',
+	'antenna',
+	'list',
+	'channel',
+	'mentions',
+	'direct',
+	'roleTimeline',
+] as const;
+
+export type ColumnType = typeof columnTypes[number];
+
 export type Column = {
 	id: string;
-	type: 'main' | 'widgets' | 'notifications' | 'tl' | 'antenna' | 'channel' | 'list' | 'mentions' | 'direct';
+	type: ColumnType;
 	name: string | null;
 	width: number;
 	widgets?: ColumnWidget[];
@@ -29,11 +46,12 @@ export type Column = {
 	channelId?: string;
 	roleId?: string;
 	excludeTypes?: typeof notificationTypes[number][];
-	tl?: 'home' | 'local' | 'social' | 'global';
+	tl?: BasicTimelineType;
 	withRenotes?: boolean;
 	withReplies?: boolean;
 	onlyFiles?: boolean;
 	onlyCats?: boolean;
+	soundSetting: SoundStore;
 };
 
 export const deckStore = markRaw(new Storage('deck', {
@@ -71,7 +89,7 @@ export const loadDeck = async () => {
 	let deck;
 
 	try {
-		deck = await api('i/registry/get', {
+		deck = await misskeyApi('i/registry/get', {
 			scope: ['client', 'deck', 'profiles'],
 			key: deckStore.state.profile,
 		});
@@ -96,7 +114,7 @@ export const loadDeck = async () => {
 
 // TODO: deckがloadされていない状態でsaveすると意図せず上書きが発生するので対策する
 export const saveDeck = throttle(1000, () => {
-	api('i/registry/set', {
+	misskeyApi('i/registry/set', {
 		scope: ['client', 'deck', 'profiles'],
 		key: deckStore.state.profile,
 		value: {
@@ -107,13 +125,13 @@ export const saveDeck = throttle(1000, () => {
 });
 
 export async function getProfiles(): Promise<string[]> {
-	return await api('i/registry/keys', {
+	return await misskeyApi('i/registry/keys', {
 		scope: ['client', 'deck', 'profiles'],
 	});
 }
 
 export async function deleteProfile(key: string): Promise<void> {
-	return await api('i/registry/remove', {
+	return await misskeyApi('i/registry/remove', {
 		scope: ['client', 'deck', 'profiles'],
 		key: key,
 	});
@@ -264,7 +282,7 @@ export function removeColumnWidget(id: Column['id'], widget: ColumnWidget) {
 	const columns = deepClone(deckStore.state.columns);
 	const columnIndex = deckStore.state.columns.findIndex(c => c.id === id);
 	const column = deepClone(deckStore.state.columns[columnIndex]);
-	if (column == null) return;
+	if (column == null || column.widgets == null) return;
 	column.widgets = column.widgets.filter(w => w.id !== widget.id);
 	columns[columnIndex] = column;
 	deckStore.set('columns', columns);
@@ -286,7 +304,7 @@ export function updateColumnWidget(id: Column['id'], widgetId: string, widgetDat
 	const columns = deepClone(deckStore.state.columns);
 	const columnIndex = deckStore.state.columns.findIndex(c => c.id === id);
 	const column = deepClone(deckStore.state.columns[columnIndex]);
-	if (column == null) return;
+	if (column == null || column.widgets == null) return;
 	column.widgets = column.widgets.map(w => w.id === widgetId ? {
 		...w,
 		data: widgetData,

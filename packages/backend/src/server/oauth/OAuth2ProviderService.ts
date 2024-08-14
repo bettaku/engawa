@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+ * SPDX-FileCopyrightText: syuilo and misskey-project
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -13,6 +13,7 @@ import oauth2orize, { type OAuth2, AuthorizationError, ValidateFunctionArity2, O
 import oauth2Pkce from 'oauth2orize-pkce';
 import fastifyCors from '@fastify/cors';
 import fastifyView from '@fastify/view';
+import rateLimit from '@fastify/rate-limit';
 import pug from 'pug';
 import bodyParser from 'body-parser';
 import fastifyExpress from '@fastify/express';
@@ -391,6 +392,12 @@ export class OAuth2ProviderService {
 				version: this.config.version,
 				config: this.config,
 			},
+		});
+
+
+		await fastify.register(rateLimit, {
+			max: 100,
+			timeWindow: '1 hour'
 		});
 
 		await fastify.register(fastifyExpress);

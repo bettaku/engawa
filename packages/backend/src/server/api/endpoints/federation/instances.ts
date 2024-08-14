@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+ * SPDX-FileCopyrightText: syuilo and misskey-project
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -60,6 +60,7 @@ export const paramDef = {
 				'-firstRetrievedAt',
 				'+latestRequestReceivedAt',
 				'-latestRequestReceivedAt',
+				null,
 			],
 		},
 	},
@@ -97,6 +98,12 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				default: query.orderBy('instance.id', 'DESC'); break;
 			}
 
+			if (me == null) {
+				ps.blocked = false;
+				ps.suspended = false;
+				ps.silenced = false;
+			}
+
 			if (typeof ps.blocked === 'boolean') {
 				const meta = await this.metaService.fetch(true);
 				if (ps.blocked) {
@@ -116,9 +123,9 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			if (typeof ps.suspended === 'boolean') {
 				if (ps.suspended) {
-					query.andWhere('instance.isSuspended = TRUE');
+					query.andWhere('instance.suspensionState != \'none\'');
 				} else {
-					query.andWhere('instance.isSuspended = FALSE');
+					query.andWhere('instance.suspensionState = \'none\'');
 				}
 			}
 

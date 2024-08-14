@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+ * SPDX-FileCopyrightText: syuilo and misskey-project
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -68,6 +68,7 @@ export const paramDef = {
 		withRenotes: { type: 'boolean', default: true },
 		withReplies: { type: 'boolean', default: false },
 		withCats: { type: 'boolean', default: false },
+		withoutBots: { type: 'boolean', default: false },
 	},
 	required: [],
 } as const;
@@ -115,6 +116,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					withFiles: ps.withFiles,
 					withReplies: ps.withReplies,
 					withCats: ps.withCats,
+					withoutBots: ps.withoutBots,
 				}, me);
 
 				process.nextTick(() => {
@@ -141,8 +143,15 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				timelineConfig = [
 					`homeTimeline:${me.id}`,
 					'localTimeline',
+					`localTimelineWithReplyTo:${me.id}`,
 				];
 			}
+
+			const [
+				followings,
+			] = await Promise.all([
+				this.cacheService.userFollowingsCache.fetch(me.id),
+			]);
 
 			const redisTimeline = await this.fanoutTimelineEndpointService.timeline({
 				untilId,
@@ -155,6 +164,14 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				alwaysIncludeMyNotes: true,
 				excludePureRenotes: !ps.withRenotes,
 				withCats: ps.withCats,
+				withoutBots: ps.withoutBots,
+				noteFilter: note => {
+					if (note.reply && note.reply.visibility === 'followers') {
+						if (!Object.hasOwn(followings, note.reply.userId) && note.reply.userId !== me.id) return false;
+					}
+
+					return true;
+				},
 				dbFallback: async (untilId, sinceId, limit) => await this.getFromDb({
 					untilId,
 					sinceId,
@@ -165,6 +182,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					withFiles: ps.withFiles,
 					withReplies: ps.withReplies,
 					withCats: ps.withCats,
+					withoutBots: ps.withoutBots,
 				}, me),
 			});
 
@@ -186,6 +204,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		withFiles: boolean,
 		withReplies: boolean,
 		withCats: boolean,
+		withoutBots: boolean,
 	}, me: MiLocalUser) {
 		const followees = await this.userFollowingService.getFollowees(me.id);
 		const followingChannels = await this.channelFollowingsRepository.find({
@@ -209,7 +228,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			.leftJoinAndSelect('note.reply', 'reply')
 			.leftJoinAndSelect('note.renote', 'renote')
 			.leftJoinAndSelect('reply.user', 'replyUser')
-			.leftJoinAndSelect('renote.user', 'renoteUser');
+			.leftJoinAndSelect('renote.user', 'renoteUser')
+			.andWhere('(SELECT "isSensitive" FROM "user" WHERE id = note."userId") = FALSE');
 
 		if (followingChannels.length > 0) {
 			const followingChannelIds = followingChannels.map(x => x.followeeId);
@@ -275,6 +295,10 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 		if (ps.withCats) {
 			query.andWhere('(select "isCat" from "user" where id = note."userId")');
+		}
+
+		if (ps.withoutBots) {
+			query.andWhere('(SELECT "isBot" FROM "user" WHERE id = note."userId") = FALSE');
 		}
 		//#endregion
 

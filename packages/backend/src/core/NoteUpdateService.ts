@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+ * SPDX-FileCopyrightText: syuilo and misskey-project
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -76,6 +76,8 @@ export class NoteUpdateService implements OnApplicationShutdown {
 		username: MiUser['username'];
 		host: MiUser['host'];
 		isBot: MiUser['isBot'];
+		isIndexable: MiUser['isIndexable'];
+		isSensitive: MiUser['isSensitive'];
 	}, data: Option, note: MiNote, silent = false): Promise<MiNote | null> {
 		if (data.updatedAt == null) data.updatedAt = new Date();
 
@@ -211,6 +213,8 @@ export class NoteUpdateService implements OnApplicationShutdown {
 		username: MiUser['username'];
 		host: MiUser['host'];
 		isBot: MiUser['isBot'];
+		isIndexable: MiUser['isIndexable'];
+		isSensitive: MiUser['isSensitive'];
 	}, silent: boolean) {
 		if (!silent) {
 			if (this.userEntityService.isLocalUser(user)) this.activeUsersChart.write(user);
@@ -229,9 +233,6 @@ export class NoteUpdateService implements OnApplicationShutdown {
 			}
 			//#endregion
 		}
-
-		// Register to search database
-		this.reIndex(note);
 	}
 
 	@bindThis
@@ -276,14 +277,6 @@ export class NoteUpdateService implements OnApplicationShutdown {
 		for (const remoteUser of remoteUsers) {
 			await this.apDeliverManagerService.deliverToUser(user, content, remoteUser);
 		}
-	}
-
-	@bindThis
-	private reIndex(note: MiNote) {
-		if (note.text == null && note.cw == null) return;
-
-		this.searchService.unindexNote(note);
-		this.searchService.indexNote(note);
 	}
 
 	@bindThis

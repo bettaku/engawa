@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+ * SPDX-FileCopyrightText: syuilo and misskey-project
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -16,17 +16,31 @@ await execa('pnpm', ['clean'], {
 	stderr: process.stderr,
 });
 
-await execa('pnpm', ['build-pre'], {
-	cwd: _dirname + '/../',
-	stdout: process.stdout,
-	stderr: process.stderr,
-});
+await Promise.all([
+	execa('pnpm', ['build-pre'], {
+		cwd: _dirname + '/../',
+		stdout: process.stdout,
+		stderr: process.stderr,
+	}),
+	execa('pnpm', ['build-assets'], {
+		cwd: _dirname + '/../',
+		stdout: process.stdout,
+		stderr: process.stderr,
+	}),
+	execa('pnpm', ['--filter', 'cherrypick-js', 'build'], {
+		cwd: _dirname + '/../',
+		stdout: process.stdout,
+		stderr: process.stderr,
+	}),
+]);
 
-await execa('pnpm', ['build-assets'], {
-	cwd: _dirname + '/../',
-	stdout: process.stdout,
-	stderr: process.stderr,
-});
+await Promise.all([
+	execa('pnpm', ['--filter', 'misskey-bubble-game', 'build'], {
+		cwd: _dirname + '/../',
+		stdout: process.stdout,
+		stderr: process.stderr,
+	}),
+]);
 
 execa('pnpm', ['build-pre', '--watch'], {
 	cwd: _dirname + '/../',
@@ -46,7 +60,7 @@ execa('pnpm', ['--filter', 'backend', 'dev'], {
 	stderr: process.stderr,
 });
 
-execa('pnpm', ['--filter', 'frontend', 'dev'], {
+execa('pnpm', ['--filter', 'frontend', process.env.CP_DEV_PREFER === 'backend' ? 'watch' : 'dev'], {
 	cwd: _dirname + '/../',
 	stdout: process.stdout,
 	stderr: process.stderr,
@@ -59,6 +73,12 @@ execa('pnpm', ['--filter', 'sw', 'watch'], {
 });
 
 execa('pnpm', ['--filter', 'cherrypick-js', 'watch'], {
+	cwd: _dirname + '/../',
+	stdout: process.stdout,
+	stderr: process.stderr,
+});
+
+execa('pnpm', ['--filter', 'misskey-bubble-game', 'watch'], {
 	cwd: _dirname + '/../',
 	stdout: process.stdout,
 	stderr: process.stderr,

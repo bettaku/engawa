@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+ * SPDX-FileCopyrightText: syuilo and misskey-project
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -90,7 +90,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private roleService: RoleService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
-			const listExist = await this.userListsRepository.exist({
+			const listExist = await this.userListsRepository.exists({
 				where: {
 					id: ps.listId,
 					isPublic: true,
@@ -100,15 +100,15 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			const currentCount = await this.userListsRepository.countBy({
 				userId: me.id,
 			});
-			if (currentCount > (await this.roleService.getUserPolicies(me.id)).userListLimit) {
+			if (currentCount >= (await this.roleService.getUserPolicies(me.id)).userListLimit) {
 				throw new ApiError(meta.errors.tooManyUserLists);
 			}
 
-			const userList = await this.userListsRepository.insert({
+			const userList = await this.userListsRepository.insertOne({
 				id: this.idService.gen(),
 				userId: me.id,
 				name: ps.name,
-			} as MiUserList).then(x => this.userListsRepository.findOneByOrFail(x.identifiers[0]));
+			} as MiUserList);
 
 			const users = (await this.userListMembershipsRepository.findBy({
 				userListId: ps.listId,
@@ -121,7 +121,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				});
 
 				if (currentUser.id !== me.id) {
-					const blockExist = await this.blockingsRepository.exist({
+					const blockExist = await this.blockingsRepository.exists({
 						where: {
 							blockerId: currentUser.id,
 							blockeeId: me.id,
@@ -132,7 +132,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					}
 				}
 
-				const exist = await this.userListMembershipsRepository.exist({
+				const exist = await this.userListMembershipsRepository.exists({
 					where: {
 						userListId: userList.id,
 						userId: currentUser.id,

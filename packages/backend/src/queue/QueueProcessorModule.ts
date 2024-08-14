@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+ * SPDX-FileCopyrightText: syuilo and misskey-project
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -11,7 +11,8 @@ import { QueueProcessorService } from './QueueProcessorService.js';
 import { DeliverProcessorService } from './processors/DeliverProcessorService.js';
 import { EndedPollNotificationProcessorService } from './processors/EndedPollNotificationProcessorService.js';
 import { InboxProcessorService } from './processors/InboxProcessorService.js';
-import { WebhookDeliverProcessorService } from './processors/WebhookDeliverProcessorService.js';
+import { UserWebhookDeliverProcessorService } from './processors/UserWebhookDeliverProcessorService.js';
+import { SystemWebhookDeliverProcessorService } from './processors/SystemWebhookDeliverProcessorService.js';
 import { CheckExpiredMutingsProcessorService } from './processors/CheckExpiredMutingsProcessorService.js';
 import { CleanChartsProcessorService } from './processors/CleanChartsProcessorService.js';
 import { CleanProcessorService } from './processors/CleanProcessorService.js';
@@ -24,6 +25,7 @@ import { ExportCustomEmojisProcessorService } from './processors/ExportCustomEmo
 import { ExportFollowingProcessorService } from './processors/ExportFollowingProcessorService.js';
 import { ExportMutingProcessorService } from './processors/ExportMutingProcessorService.js';
 import { ExportNotesProcessorService } from './processors/ExportNotesProcessorService.js';
+import { ExportClipsProcessorService } from './processors/ExportClipsProcessorService.js';
 import { ExportUserListsProcessorService } from './processors/ExportUserListsProcessorService.js';
 import { ExportAntennasProcessorService } from './processors/ExportAntennasProcessorService.js';
 import { ImportBlockingProcessorService } from './processors/ImportBlockingProcessorService.js';
@@ -38,6 +40,7 @@ import { TickChartsProcessorService } from './processors/TickChartsProcessorServ
 import { AggregateRetentionProcessorService } from './processors/AggregateRetentionProcessorService.js';
 import { ExportFavoritesProcessorService } from './processors/ExportFavoritesProcessorService.js';
 import { RelationshipProcessorService } from './processors/RelationshipProcessorService.js';
+import { ScheduledNoteDeleteProcessorService } from './processors/ScheduledNoteDeleteProcessorService.js';
 
 @Module({
 	imports: [
@@ -54,6 +57,7 @@ import { RelationshipProcessorService } from './processors/RelationshipProcessor
 		DeleteDriveFilesProcessorService,
 		ExportCustomEmojisProcessorService,
 		ExportNotesProcessorService,
+		ExportClipsProcessorService,
 		ExportFavoritesProcessorService,
 		ExportFollowingProcessorService,
 		ExportMutingProcessorService,
@@ -71,8 +75,10 @@ import { RelationshipProcessorService } from './processors/RelationshipProcessor
 		CleanRemoteFilesProcessorService,
 		RelationshipProcessorService,
 		ReportAbuseProcessorService,
-		WebhookDeliverProcessorService,
+		UserWebhookDeliverProcessorService,
+		SystemWebhookDeliverProcessorService,
 		EndedPollNotificationProcessorService,
+		ScheduledNoteDeleteProcessorService,
 		DeliverProcessorService,
 		InboxProcessorService,
 		AggregateRetentionProcessorService,

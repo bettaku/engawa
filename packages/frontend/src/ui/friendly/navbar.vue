@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and noridev and other misskey, cherrypick contributors
+SPDX-FileCopyrightText: syuilo and misskey-project & noridev and cherrypick-project
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -78,7 +78,8 @@ import { $i, openAccountMenu as openAccountMenu_ } from '@/account.js';
 import { defaultStore } from '@/store.js';
 import { i18n } from '@/i18n.js';
 import { instance } from '@/instance.js';
-import { mainRouter } from '@/router.js';
+import { misskeyApi } from '@/scripts/misskey-api.js';
+import { mainRouter } from '@/router/main.js';
 import { version } from '@/config.js';
 
 const iconOnly = ref(false);
@@ -95,7 +96,7 @@ const controlPanelIndicated = ref(false);
 const releasesCherryPick = ref();
 
 if ($i.isAdmin ?? $i.isModerator) {
-	os.api('admin/abuse-user-reports', {
+	misskeyApi('admin/abuse-user-reports', {
 		state: 'unresolved',
 		limit: 1,
 	}).then(reports => {
@@ -106,7 +107,7 @@ if ($i.isAdmin ?? $i.isModerator) {
 		method: 'GET',
 	}).then(res => res.json())
 		.then(async res => {
-			const meta = await os.api('admin/meta');
+			const meta = await misskeyApi('admin/meta');
 			if (meta.enableReceivePrerelease) releasesCherryPick.value = res;
 			else releasesCherryPick.value = res.filter(x => x.prerelease === false);
 			if ((version < releasesCherryPick.value[0].tag_name) && (meta.skipCherryPickVersion < releasesCherryPick.value[0].tag_name)) controlPanelIndicated.value = true;
@@ -132,10 +133,11 @@ function openAccountMenu(ev: MouseEvent) {
 }
 
 function more(ev: MouseEvent) {
-	os.popup(defineAsyncComponent(() => import('@/components/MkLaunchPad.vue')), {
+	const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkLaunchPad.vue')), {
 		src: ev.currentTarget ?? ev.target,
 	}, {
-	}, 'closed');
+		closed: () => dispose(),
+	});
 }
 
 function openProfile() {
@@ -213,6 +215,15 @@ function openProfile() {
 		display: block;
 		text-align: center;
 		width: 100%;
+
+		&:focus-visible {
+			outline: none;
+
+			> .instanceIcon {
+				outline: 2px solid var(--focus);
+				outline-offset: 2px;
+			}
+		}
 	}
 
 	.instanceIcon {
@@ -226,7 +237,7 @@ function openProfile() {
 	.bottom {
 		position: sticky;
 		bottom: 0;
-    padding-top: 20px;
+		padding-top: 20px;
 		background: var(--X14);
 		-webkit-backdrop-filter: var(--blur, blur(8px));
 		backdrop-filter: var(--blur, blur(8px));
@@ -242,7 +253,7 @@ function openProfile() {
 		font-weight: bold;
 		text-align: left;
 
-		&:before {
+		&::before {
 			content: "";
 			display: block;
 			width: calc(100% - 38px);
@@ -257,8 +268,17 @@ function openProfile() {
 			background: linear-gradient(90deg, var(--buttonGradateA), var(--buttonGradateB));
 		}
 
+		&:focus-visible {
+			outline: none;
+
+			&::before {
+				outline: 2px solid var(--fgOnAccent);
+				outline-offset: -4px;
+			}
+		}
+
 		&:hover, &.active {
-			&:before {
+			&::before {
 				background: var(--accentLighten);
 			}
 		}
@@ -284,10 +304,18 @@ function openProfile() {
 		display: flex;
 		z-index: 2;
 		align-items: center;
-    padding: 20px 0 20px 30px;
+		padding: 20px 0 20px 30px;
 		width: 100%;
 		text-align: left;
 		box-sizing: border-box;
+
+		&:focus-visible {
+			outline: none;
+
+			> .avatar {
+				box-shadow: 0 0 0 4px var(--focus);
+			}
+		}
 	}
 
 	.avatar {
@@ -338,7 +366,7 @@ function openProfile() {
 		text-align: left;
 		box-sizing: border-box;
 		color: var(--navFg);
-    margin-bottom: 0.5rem;
+		margin-bottom: 0.5rem;
 
 		&:hover {
 			text-decoration: none;
@@ -349,10 +377,19 @@ function openProfile() {
 			color: var(--navActive);
 		}
 
-		&:hover, &.active {
+		&:focus-visible {
+			outline: none;
+
+			&::before {
+				outline: 2px solid var(--focus);
+				outline-offset: -2px;
+			}
+		}
+
+		&:hover, &.active, &:focus {
 			color: var(--accent);
 
-			&:before {
+			&::before {
 				content: "";
 				display: block;
 				width: calc(100% - 34px);
@@ -373,7 +410,7 @@ function openProfile() {
 		position: relative;
 		width: 32px;
 		margin-right: 8px;
-    font-size: 1.1em;
+		font-size: 1.1em;
 	}
 
 	.itemIndicator {
@@ -382,13 +419,13 @@ function openProfile() {
 		left: 20px;
 		color: var(--navIndicator);
 		font-size: 8px;
-		animation: blink 1s infinite;
+		animation: global-blink 1s infinite;
 
-    &:has(.itemIndicateValueIcon) {
-      animation: none;
-      left: auto;
-      right: 40px;
-    }
+		&:has(.itemIndicateValueIcon) {
+			animation: none;
+			left: auto;
+			right: 40px;
+		}
 	}
 
 	.itemText {
@@ -419,6 +456,15 @@ function openProfile() {
 		display: block;
 		text-align: center;
 		width: 100%;
+
+		&:focus-visible {
+			outline: none;
+
+			> .instanceIcon {
+				outline: 2px solid var(--focus);
+				outline-offset: 2px;
+			}
+		}
 	}
 
 	.instanceIcon {
@@ -430,7 +476,7 @@ function openProfile() {
 	.bottom {
 		position: sticky;
 		bottom: 0;
-    padding-top: 20px;
+		padding-top: 20px;
 		background: var(--X14);
 		-webkit-backdrop-filter: var(--blur, blur(8px));
 		backdrop-filter: var(--blur, blur(8px));
@@ -443,7 +489,7 @@ function openProfile() {
 		height: 52px;
 		text-align: center;
 
-		&:before {
+		&::before {
 			content: "";
 			display: block;
 			position: absolute;
@@ -458,8 +504,17 @@ function openProfile() {
 			background: linear-gradient(90deg, var(--buttonGradateA), var(--buttonGradateB));
 		}
 
+		&:focus-visible {
+			outline: none;
+
+			&::before {
+				outline: 2px solid var(--fgOnAccent);
+				outline-offset: -4px;
+			}
+		}
+
 		&:hover, &.active {
-			&:before {
+			&::before {
 				background: var(--accentLighten);
 			}
 		}
@@ -477,8 +532,16 @@ function openProfile() {
 	.account {
 		display: block;
 		text-align: center;
-    padding: 20px 0;
+		padding: 20px 0;
 		width: 100%;
+
+		&:focus-visible {
+			outline: none;
+
+			> .avatar {
+				box-shadow: 0 0 0 4px var(--focus);
+			}
+		}
 	}
 
 	.avatar {
@@ -508,11 +571,20 @@ function openProfile() {
 		width: 100%;
 		text-align: center;
 
-		&:hover, &.active {
+		&:focus-visible {
+			outline: none;
+
+			&::before {
+				outline: 2px solid var(--focus);
+				outline-offset: -2px;
+			}
+		}
+
+		&:hover, &.active, &:focus {
 			text-decoration: none;
 			color: var(--accent);
 
-			&:before {
+			&::before {
 				content: "";
 				display: block;
 				height: 100%;
@@ -550,14 +622,14 @@ function openProfile() {
 		left: 24px;
 		color: var(--navIndicator);
 		font-size: 8px;
-		animation: blink 1s infinite;
+		animation: global-blink 1s infinite;
 
-    &:has(.itemIndicateValueIcon) {
-      animation: none;
-      top: 4px;
-      left: auto;
-      right: 4px;
-    }
+		&:has(.itemIndicateValueIcon) {
+			animation: none;
+			top: 4px;
+			left: auto;
+			right: 4px;
+		}
 	}
 }
 </style>

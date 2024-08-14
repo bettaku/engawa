@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+ * SPDX-FileCopyrightText: syuilo and misskey-project
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -21,6 +21,14 @@ export function getStickyTop(el: HTMLElement, container: HTMLElement | null = nu
 	const newTop = data ? Number(data) + top : top;
 	if (el === container) return newTop;
 	return getStickyTop(el.parentElement, container, newTop);
+}
+
+export function getStickyBottom(el: HTMLElement, container: HTMLElement | null = null, bottom = 0) {
+	if (!el.parentElement) return bottom;
+	const data = el.dataset.stickyContainerFooterHeight;
+	const newBottom = data ? Number(data) + bottom : bottom;
+	if (el === container) return newBottom;
+	return getStickyBottom(el.parentElement, container, newBottom);
 }
 
 export function getScrollPosition(el: HTMLElement | null): number {

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+ * SPDX-FileCopyrightText: syuilo and misskey-project
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -7,24 +7,27 @@ import { toUnicode } from 'punycode';
 import { defineAsyncComponent, ref, watch } from 'vue';
 import * as Misskey from 'cherrypick-js';
 import { i18n } from '@/i18n.js';
-import copyToClipboard from '@/scripts/copy-to-clipboard.js';
+import { copyToClipboard } from '@/scripts/copy-to-clipboard.js';
 import { host, url } from '@/config.js';
 import * as os from '@/os.js';
+import { misskeyApi } from '@/scripts/misskey-api.js';
 import { defaultStore, userActions } from '@/store.js';
 import { $i, iAmModerator } from '@/account.js';
-import { mainRouter } from '@/router.js';
-import { Router } from '@/nirax.js';
+import { notesSearchAvailable, canSearchNonLocalNotes } from '@/scripts/check-permissions.js';
+import { IRouter } from '@/nirax.js';
 import { antennasCache, rolesCache, userListsCache } from '@/cache.js';
+import { mainRouter } from '@/router/main.js';
+import { MenuItem } from '@/types/menu.js';
 import { editNickname } from '@/scripts/edit-nickname.js';
 import { globalEvents } from '@/events.js';
 
-export function getUserMenu(user: Misskey.entities.UserDetailed, router: Router = mainRouter) {
+export function getUserMenu(user: Misskey.entities.UserDetailed, router: IRouter = mainRouter) {
 	const meId = $i ? $i.id : null;
 
 	const cleanups = [] as (() => void)[];
 
 	async function inviteGroup() {
-		const groups = await os.api('users/groups/owned');
+		const groups = await misskeyApi('users/groups/owned');
 		if (groups.length === 0) {
 			os.alert({
 				type: 'error',
@@ -104,15 +107,6 @@ export function getUserMenu(user: Misskey.entities.UserDetailed, router: Router 
 		});
 	}
 
-	async function toggleWithReplies() {
-		os.apiWithDialog('following/update', {
-			userId: user.id,
-			withReplies: !user.withReplies,
-		}).then(() => {
-			user.withReplies = !user.withReplies;
-		});
-	}
-
 	async function toggleNotify() {
 		os.apiWithDialog('following/update', {
 			userId: user.id,
@@ -123,9 +117,11 @@ export function getUserMenu(user: Misskey.entities.UserDetailed, router: Router 
 	}
 
 	function reportAbuse() {
-		os.popup(defineAsyncComponent(() => import('@/components/MkAbuseReportWindow.vue')), {
+		const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkAbuseReportWindow.vue')), {
 			user: user,
-		}, {}, 'closed');
+		}, {
+			closed: () => dispose(),
+		});
 	}
 
 	function refreshUser() {
@@ -159,7 +155,7 @@ export function getUserMenu(user: Misskey.entities.UserDetailed, router: Router 
 	}
 
 	async function editMemo(): Promise<void> {
-		const userDetailed = await os.api('users/show', {
+		const userDetailed = await misskeyApi('users/show', {
 			userId: user.id,
 		});
 		const { canceled, result } = await os.form(i18n.ts.editMemo, {
@@ -179,14 +175,21 @@ export function getUserMenu(user: Misskey.entities.UserDetailed, router: Router 
 		});
 	}
 
-	let menu = [{
+	let menu: MenuItem[] = [{
 		icon: 'ti ti-at',
 		text: i18n.ts.copyUsername,
 		action: () => {
 			copyToClipboard(`@${user.username}@${user.host ?? host}`);
 			os.toast(i18n.ts.copied, 'copied');
 		},
-	}, ...(iAmModerator ? [{
+	}, ...( notesSearchAvailable && (user.host == null || canSearchNonLocalNotes) ? [{
+		icon: 'ti ti-search',
+		text: i18n.ts.searchThisUsersNotes,
+		action: () => {
+			router.push(`/search?username=${encodeURIComponent(user.username)}${user.host != null ? '&host=' + encodeURIComponent(user.host) : ''}`);
+		},
+	}] : [])
+	, ...(iAmModerator ? [{
 		icon: 'ti ti-user-exclamation',
 		text: i18n.ts.moderation,
 		action: () => {
@@ -200,6 +203,19 @@ export function getUserMenu(user: Misskey.entities.UserDetailed, router: Router 
 			os.toast(i18n.ts.copied, 'copied');
 		},
 	}, {
+		icon: 'ti ti-qrcode',
+		text: i18n.ts.getQrCode,
+		action: () => {
+			os.displayQrCode(`https://${host}/@${user.username}`);
+		},
+	}, ...(user.host != null && user.url != null ? [{
+		icon: 'ti ti-external-link',
+		text: i18n.ts.showOnRemote,
+		action: () => {
+			if (user.url == null) return;
+			window.open(user.url, '_blank', 'noopener');
+		},
+	}] : []), {
 		icon: 'ti ti-share',
 		text: i18n.ts.copyProfileUrl,
 		action: () => {
@@ -207,7 +223,7 @@ export function getUserMenu(user: Misskey.entities.UserDetailed, router: Router 
 			copyToClipboard(`${url}/${canonical}`);
 			os.toast(i18n.ts.copiedLink, 'copied');
 		},
-	}, {
+	}, ...($i ? [{
 		icon: 'ti ti-mail',
 		text: i18n.ts.sendMessage,
 		action: () => {
@@ -293,7 +309,7 @@ export function getUserMenu(user: Misskey.entities.UserDetailed, router: Router 
 				},
 			}));
 		},
-	}] as any;
+	}] : [])] as any;
 
 	if ($i && meId !== user.id) {
 		if (iAmModerator) {
@@ -308,7 +324,7 @@ export function getUserMenu(user: Misskey.entities.UserDetailed, router: Router 
 						text: r.name,
 						action: async () => {
 							const { canceled, result: period } = await os.select({
-								title: i18n.ts.period,
+								title: i18n.ts.period + ': ' + r.name,
 								items: [{
 									value: 'indefinitely', text: i18n.ts.indefinitely,
 								}, {
@@ -340,15 +356,25 @@ export function getUserMenu(user: Misskey.entities.UserDetailed, router: Router 
 
 		// フォローしたとしても user.isFollowing はリアルタイム更新されないので不便なため
 		//if (user.isFollowing) {
+		const withRepliesRef = ref(user.withReplies);
 		menu = menu.concat([{
-			icon: user.withReplies ? 'ti ti-messages-off' : 'ti ti-messages',
-			text: user.withReplies ? i18n.ts.hideRepliesToOthersInTimeline : i18n.ts.showRepliesToOthersInTimeline,
-			action: toggleWithReplies,
+			type: 'switch',
+			icon: 'ti ti-messages',
+			text: i18n.ts.showRepliesToOthersInTimeline,
+			ref: withRepliesRef,
 		}, {
 			icon: user.notify === 'none' ? 'ti ti-bell' : 'ti ti-bell-off',
 			text: user.notify === 'none' ? i18n.ts.notifyNotes : i18n.ts.unnotifyNotes,
 			action: toggleNotify,
 		}]);
+		watch(withRepliesRef, (withReplies) => {
+			misskeyApi('following/update', {
+				userId: user.id,
+				withReplies,
+			}).then(() => {
+				user.withReplies = withReplies;
+			});
+		});
 		//}
 
 		menu = menu.concat([{ type: 'divider' }, {

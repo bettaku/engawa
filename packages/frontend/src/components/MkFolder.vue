@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+SPDX-FileCopyrightText: syuilo and misskey-project
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -7,10 +7,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 <div ref="rootEl" :class="$style.root" role="group" :aria-expanded="opened">
 	<MkStickyContainer>
 		<template #header>
-			<div v-vibrate="defaultStore.state.vibrateSystem ? 5 : []" :class="[$style.header, { [$style.opened]: opened, [$style.inactive]: inactive || isArchived }]" class="_button" role="button" data-cy-folder-header @click="toggle">
+			<button v-vibrate="defaultStore.state.vibrateSystem ? 5 : []" :class="[$style.header, { [$style.opened]: opened, [$style.inactive]: inactive || isArchived }]" class="_button" role="button" data-cy-folder-header @click="toggle">
 				<div :class="$style.headerIcon"><slot name="icon"></slot></div>
 				<div :class="$style.headerText">
-					<div>
+					<div :class="$style.headerTextMain">
 						<MkCondensedLine :minScale="2 / 3"><slot name="label"></slot></MkCondensedLine>
 					</div>
 					<div :class="$style.headerTextSub">
@@ -23,10 +23,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<i v-if="opened" class="ti ti-chevron-up icon"></i>
 					<i v-else class="ti ti-chevron-down icon"></i>
 				</div>
-			</div>
+			</button>
 		</template>
 
-		<div v-if="openedAtLeastOnce" :class="[$style.body, { [$style.bgSame]: bgSame }]" :style="{ maxHeight: maxHeight ? `${maxHeight}px` : null, overflow: maxHeight ? `auto` : null }" :aria-hidden="!opened">
+		<div v-if="openedAtLeastOnce" :class="[$style.body, { [$style.bgSame]: bgSame }]" :style="{ maxHeight: maxHeight ? `${maxHeight}px` : undefined, overflow: maxHeight ? `auto` : undefined }" :aria-hidden="!opened">
 			<Transition
 				:enterActiveClass="defaultStore.state.animation ? $style.transition_toggle_enterActive : ''"
 				:leaveActiveClass="defaultStore.state.animation ? $style.transition_toggle_leaveActive : ''"
@@ -114,7 +114,7 @@ function toggle() {
 
 onMounted(() => {
 	const computedStyle = getComputedStyle(document.documentElement);
-	const parentBg = getBgColor(rootEl.value.parentElement);
+	const parentBg = getBgColor(rootEl.value!.parentElement!);
 	const myBg = computedStyle.getPropertyValue('--panel');
 	bgSame.value = parentBg === myBg;
 });
@@ -154,6 +154,10 @@ defineExpose({
 	&:hover {
 		text-decoration: none;
 		background: var(--buttonHoverBg);
+	}
+
+	&:focus-within {
+		outline-offset: 2px;
 	}
 
 	&.active {
@@ -201,6 +205,12 @@ defineExpose({
 	text-overflow: ellipsis;
 	overflow: hidden;
 	padding-right: 12px;
+}
+
+.headerTextMain,
+.headerTextSub {
+	width: fit-content;
+	max-width: 100%;
 }
 
 .headerTextSub {

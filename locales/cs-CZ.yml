@@ -366,6 +366,8 @@ hcaptcha: "hCaptcha"
 enableHcaptcha: "Aktivovat hCaptchu"
 hcaptchaSiteKey: "Klíč stránky"
 hcaptchaSecretKey: "Tajný Klíč (Secret Key)"
+mcaptchaSiteKey: "Klíč stránky"
+mcaptchaSecretKey: "Tajný Klíč (Secret Key)"
 recaptcha: "reCAPTCHA"
 enableRecaptcha: "Zapnout ReCAPTCHu"
 recaptchaSiteKey: "Klíč stránky"
@@ -1003,6 +1005,7 @@ resetPasswordConfirm: "Opravdu chcete resetovat heslo?"
 sensitiveWords: "Citlivá slova"
 sensitiveWordsDescription: "Viditelnost všech poznámek obsahujících některé z nakonfigurovaných slov bude automaticky nastavena na \"Domů\". Můžete jich uvést více tak, že je oddělíte pomocí řádků."
 sensitiveWordsDescription2: "Použití mezer vytvoří výrazy AND a obklopení klíčových slov lomítky je změní na regulární výraz."
+prohibitedWordsDescription2: "Použití mezer vytvoří výrazy AND a obklopení klíčových slov lomítky je změní na regulární výraz."
 notesSearchNotAvailable: "Vyhledávání poznámek je nedostupné."
 license: "Licence"
 unfavoriteConfirm: "Opravdu chcete odstranit z oblíbených?"
@@ -1092,7 +1095,14 @@ iHaveReadXCarefullyAndAgree: "Přečetl jsem si text \"{x}\" a souhlasím s ním
 icon: "Avatar"
 replies: "Odpovědět"
 renotes: "Přeposlat"
+sourceCode: "Zdrojový kód"
 flip: "Otočit"
+lastNDays: "Posledních {n} dnů"
+surrender: "Zrušit"
+_delivery:
+  stop: "Suspendováno"
+  _type:
+    none: "Publikuji"
 _initialAccountSetting:
   accountCreated: "Váš účet byl úspěšně vytvořen!"
   letsStartAccountSetup: "Pro začátek si nastavte svůj profil."
@@ -1182,7 +1192,7 @@ _achievements:
     _login3:
       title: "Začátečník I"
       description: "Přihlaste se celkově za 3 dny"
-      flavor: "Ode dneška mi říkejte Misskista."
+      flavor: "Ode dneška mi říkejte Cherrypikista."
     _login7:
       title: "Začátečník II"
       description: "Přihlaste se celkově za 7 dní"
@@ -1287,7 +1297,7 @@ _achievements:
     _viewAchievements3min:
       title: "Máš rád úspěchy"
       description: "Koukejte na váš seznam úspěchů alespoň po dobu 3 minut"
-    _iLoveMisskey:
+    _iLoveCherryPick:
       title: "Miluju CherryPick"
       description: "Zveřejněte \" I ❤ #CherryPick\""
       flavor: "Vývojový tým CherryPick si velmi váží vaší podpory!"
@@ -1640,8 +1650,6 @@ _sfx:
   notification: "Oznámení"
   chat: "Zprávy"
   chatBg: "Chat (Pozadí)"
-  antenna: "Antény"
-  channel: "Oznámení kanálu"
 _ago:
   future: "Budoucí"
   justNow: "Teď"
@@ -1663,7 +1671,6 @@ _2fa:
   registerTOTP: "Registrovat aplikaci autentizátoru"
   step1: "Nejprve si do zařízení nainstalujte aplikaci pro ověřování (například {a} nebo {b})."
   step2: "Poté naskenujte QR kód zobrazený na této obrazovce."
-  step2Click: "Kliknutím na tento QR kód můžete zaregistrovat 2FA do bezpečnostního klíče nebo aplikace autentizace telefonu."
   step3Title: "Zadejte ověřovací kód"
   step3: "Pro dokončení nastavení zadejte token poskytnutý vaší aplikací."
   step4: "Od této chvíle budou všechny budoucí pokusy o přihlášení vyžadovat tento přihlašovací token."
@@ -1717,7 +1724,7 @@ _auth:
   shareAccessTitle: "Udělovat oprávnění k aplikacím"
   shareAccess: "Chcete autorizovat \"{name}\" pro přístup k tomuto účtu?"
   shareAccessAsk: "Opravdu chcete této aplikaci povolit přístup k vašemu účtu?"
-  permission: "{jméno} požaduje tato oprávnění"
+  permission: "{name} požaduje tato oprávnění"
   permissionAsk: "Tato aplikace požaduje následující oprávnění"
   pleaseGoBack: "Vraťte se prosím zpět do aplikace"
   callback: "Návrat k aplikaci"
@@ -1830,6 +1837,7 @@ _profile:
 _exportOrImport:
   allNotes: "Všechny poznámky"
   favoritedNotes: "Oblíbené poznámky"
+  clips: "Oříznout"
   followingList: "Sledovaní"
   muteList: "Ztlumit"
   blockingList: "Zablokovat"
@@ -1940,7 +1948,7 @@ _notification:
   youGotMention: "{name} vás zmínil"
   youGotReply: "{name} vám odpověděl"
   youGotQuote: "{name} vás citoval"
-  youRenoted: "Poznámka od {jméno}"
+  youRenoted: "Poznámka od {name}"
   youWereFollowed: "Máte nového následovníka"
   youReceivedFollowRequest: "Obdrželi jste žádost o sledování"
   yourFollowRequestAccepted: "Vaše žádost o sledování byla přijata"
@@ -2007,7 +2015,6 @@ _webhookSettings:
   createWebhook: "Vytvořit Webhook"
   name: "Jméno"
   secret: "Tajné"
-  events: "Události Webhook"
   active: "Zapnuto"
   _events:
     follow: "Při sledování uživatele"
@@ -2017,7 +2024,13 @@ _webhookSettings:
     renote: "Při renotaci poznámky"
     reaction: "Při obdržení reakce"
     mention: "Při zmínce"
+_abuseReport:
+  _notificationRecipient:
+    _recipientType:
+      mail: "Email"
 _moderationLogTypes:
   suspend: "Zmrazit"
   resetPassword: "Resetovat heslo"
   createInvitation: "Vygenerovat pozvánku"
+_reversi:
+  total: "Celkem"

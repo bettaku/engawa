@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+SPDX-FileCopyrightText: syuilo and misskey-project
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -9,7 +9,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 	<XTimeline class="tl"/>
 	<div class="shape1"></div>
 	<div class="shape2"></div>
-	<img :src="cherrypicksvg" class="cherrypick"/>
+	<div class="logo-wrapper">
+		<div class="powered-by">Powered by</div>
+		<img :src="cherrypicksvg" class="cherrypick"/>
+	</div>
 	<div class="emojis">
 		<MkEmoji :normal="true" :noStyle="true" emoji="👍"/>
 		<MkEmoji :normal="true" :noStyle="true" emoji="❤"/>
@@ -40,11 +43,11 @@ import MarqueeText from '@/components/MkMarquee.vue';
 import MkFeaturedPhotos from '@/components/MkFeaturedPhotos.vue';
 import cherrypicksvg from '/client-assets/cherrypick.svg';
 import misskeysvg from '/client-assets/misskey.svg';
-import * as os from '@/os.js';
+import { misskeyApiGet } from '@/scripts/misskey-api.js';
 import MkVisitorDashboard from '@/components/MkVisitorDashboard.vue';
 import { getProxiedImageUrl } from '@/scripts/media-proxy.js';
+import { instance as meta } from '@/instance.js';
 
-const meta = ref<Misskey.entities.MetaResponse>();
 const instances = ref<Misskey.entities.FederationInstance[]>();
 
 function getInstanceIcon(instance: Misskey.entities.FederationInstance): string {
@@ -54,11 +57,7 @@ function getInstanceIcon(instance: Misskey.entities.FederationInstance): string 
 	return getProxiedImageUrl(instance.iconUrl, 'preview');
 }
 
-os.api('meta', { detail: true }).then(_meta => {
-	meta.value = _meta;
-});
-
-os.apiGet('federation/instances', {
+misskeyApiGet('federation/instances', {
 	sort: '+pubSub',
 	limit: 20,
 }).then(_instances => {
@@ -114,14 +113,24 @@ os.apiGet('federation/instances', {
 		opacity: 0.5;
 	}
 
-	> .cherrypick, .misskey {
+	> .logo-wrapper {
 		position: fixed;
-		top: 42px;
-		left: 42px;
-		width: 180px;
+		top: 36px;
+		left: 36px;
+		flex: auto;
+		color: #fff;
+		user-select: none;
+		pointer-events: none;
 
-		@media (max-width: 450px) {
-			width: 130px;
+		> .powered-by {
+			margin-bottom: 2px;
+		}
+
+		> .misskey, .cherrypick {
+			width: 140px;
+			@media (max-width: 450px) {
+				width: 130px;
+			}
 		}
 	}
 

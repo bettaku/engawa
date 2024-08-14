@@ -1,10 +1,10 @@
 <!--
-SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
+SPDX-FileCopyrightText: syuilo and misskey-project
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<MkA :to="`/@${page.user.username}/pages/${page.name}`" class="vhpxefrj" tabindex="-1">
+<MkA :to="`/@${page.user.username}/pages/${page.name}`" class="vhpxefrj">
 	<div v-if="page.eyeCatchingImage" class="thumbnail">
 		<MediaImage
 			:image="page.eyeCatchingImage"
@@ -20,7 +20,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 		</header>
 		<p v-if="page.summary" :title="page.summary">{{ page.summary.length > 85 ? page.summary.slice(0, 85) + '…' : page.summary }}</p>
 		<footer>
-			<img class="icon" :src="page.user.avatarUrl"/>
+			<img v-if="page.user.avatarUrl" class="icon" :src="page.user.avatarUrl"/>
 			<p>{{ userName(page.user) }}</p>
 		</footer>
 	</article>
@@ -50,10 +50,27 @@ const props = defineProps<{
 <style lang="scss" scoped>
 .vhpxefrj {
 	display: block;
+	position: relative;
 
 	&:hover {
 		text-decoration: none;
 		color: var(--accent);
+	}
+
+	&:focus-within {
+		outline: none;
+
+		&::after {
+			content: "";
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			border-radius: var(--radius);
+			pointer-events: none;
+			box-shadow: inset 0 0 0 2px var(--focus);
+		}
 	}
 
 	> .thumbnail {
