@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -58,7 +58,7 @@ const save = async () => {
 	await os.apiWithDialog('admin/update-meta', {
 		serverRules: serverRules.value,
 	});
-	fetchInstance(true);
+	fetchInstance();
 };
 
 const remove = (index: number): void => {
@@ -67,10 +67,10 @@ const remove = (index: number): void => {
 
 const headerTabs = computed(() => []);
 
-definePageMetadata(() => ({
+definePageMetadata({
 	title: i18n.ts.serverRules,
 	icon: 'ti ti-checkbox',
-}));
+});
 </script>
 
 <style lang="scss" module>

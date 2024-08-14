@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -54,11 +54,6 @@ export const meta = {
 			message: 'Cannot upload the file because you have no free space of drive.',
 			code: 'NO_FREE_SPACE',
 			id: 'd08dbc37-a6a9-463a-8c47-96c32ab5f064',
-		},
-		invalidFileSize: {
-			message: 'File size exceeds limit.',
-			code: 'INVALID_FILE_SIZE',
-			id: '9068668f-0465-4c0e-8341-1c52fd6f5ab3',
 		},
 	},
 } as const;
@@ -119,7 +114,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				if (err instanceof IdentifiableError) {
 					if (err.id === '282f77bf-5816-4f72-9264-aa14d8261a21') throw new ApiError(meta.errors.inappropriate);
 					if (err.id === 'c6244ed2-a39a-4e1c-bf93-f0fbd7764fa6') throw new ApiError(meta.errors.noFreeSpace);
-					if (err.id === 'e5989b6d-ae66-49ed-88af-516ded10ca0c') throw new ApiError(meta.errors.invalidFileSize);
 				}
 				throw new ApiError();
 			} finally {

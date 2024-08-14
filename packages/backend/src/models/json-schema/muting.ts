@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -30,7 +30,7 @@ export const packedMutingSchema = {
 		mutee: {
 			type: 'object',
 			optional: false, nullable: false,
-			ref: 'UserDetailedNotMe',
+			ref: 'UserDetailed',
 		},
 	},
 } as const;

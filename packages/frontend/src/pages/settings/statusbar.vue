@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -21,7 +21,7 @@ import { v4 as uuid } from 'uuid';
 import XStatusbar from './statusbar.statusbar.vue';
 import MkFolder from '@/components/MkFolder.vue';
 import MkButton from '@/components/MkButton.vue';
-import { misskeyApi } from '@/scripts/misskey-api.js';
+import * as os from '@/os.js';
 import { defaultStore } from '@/store.js';
 import { i18n } from '@/i18n.js';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
@@ -31,7 +31,7 @@ const statusbars = defaultStore.reactiveState.statusbars;
 const userLists = ref<Misskey.entities.UserList[] | null>(null);
 
 onMounted(() => {
-	misskeyApi('users/lists/list').then(res => {
+	os.api('users/lists/list').then(res => {
 		userLists.value = res;
 	});
 });
@@ -50,8 +50,8 @@ const headerActions = computed(() => []);
 
 const headerTabs = computed(() => []);
 
-definePageMetadata(() => ({
+definePageMetadata({
 	title: i18n.ts.statusbar,
 	icon: 'ti ti-list',
-}));
+});
 </script>

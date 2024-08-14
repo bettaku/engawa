@@ -1,21 +1,22 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 import type { Config } from '@/config.js';
 import endpoints, { IEndpoint } from '../endpoints.js';
 import { errors as basicErrors } from './errors.js';
-import { getSchemas, convertSchemaToOpenApiSchema } from './schemas.js';
+import { schemas, convertSchemaToOpenApiSchema } from './schemas.js';
 
-export function genOpenapiSpec(config: Config, includeSelfRef = false) {
+export function genOpenapiSpec(config: Config) {
 	const spec = {
-		openapi: '3.1.0',
+		openapi: '3.0.0',
 
 		info: {
 			version: config.version,
 			description: config.basedMisskeyVersion,
 			title: 'CherryPick API',
+			'x-logo': { url: '/static-assets/api-doc.png' },
 		},
 
 		externalDocs: {
@@ -30,7 +31,7 @@ export function genOpenapiSpec(config: Config, includeSelfRef = false) {
 		paths: {} as any,
 
 		components: {
-			schemas: getSchemas(includeSelfRef),
+			schemas: schemas,
 
 			securitySchemes: {
 				bearerAuth: {
@@ -56,7 +57,7 @@ export function genOpenapiSpec(config: Config, includeSelfRef = false) {
 			}
 		}
 
-		const resSchema = endpoint.meta.res ? convertSchemaToOpenApiSchema(endpoint.meta.res, 'res', includeSelfRef) : {};
+		const resSchema = endpoint.meta.res ? convertSchemaToOpenApiSchema(endpoint.meta.res) : {};
 
 		let desc = (endpoint.meta.description ? endpoint.meta.description : 'No description provided.') + '\n\n';
 
@@ -71,7 +72,7 @@ export function genOpenapiSpec(config: Config, includeSelfRef = false) {
 		}
 
 		const requestType = endpoint.meta.requireFile ? 'multipart/form-data' : 'application/json';
-		const schema = { ...convertSchemaToOpenApiSchema(endpoint.params, 'param', false) };
+		const schema = { ...endpoint.params };
 
 		if (endpoint.meta.requireFile) {
 			schema.properties = {
@@ -93,7 +94,7 @@ export function genOpenapiSpec(config: Config, includeSelfRef = false) {
 		const hasBody = (schema.type === 'object' && schema.properties && Object.keys(schema.properties).length >= 1);
 
 		const info = {
-			operationId: endpoint.name.replaceAll('/', '___'), // NOTE: スラッシュは使えない
+			operationId: endpoint.name,
 			summary: endpoint.name,
 			description: desc,
 			externalDocs: {
@@ -210,9 +211,7 @@ export function genOpenapiSpec(config: Config, includeSelfRef = false) {
 		};
 
 		spec.paths['/' + endpoint.name] = {
-			...(endpoint.meta.allowGet ? {
-				get: info,
-			} : {}),
+			...(endpoint.meta.allowGet ? { get: info } : {}),
 			post: info,
 		};
 	}

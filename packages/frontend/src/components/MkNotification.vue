@@ -1,19 +1,20 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
 <div :class="$style.root">
 	<div :class="$style.head">
-		<MkAvatar v-if="['pollEnded', 'note'].includes(notification.type) && 'note' in notification" :class="$style.icon" :user="notification.note.user" link preview/>
-		<MkAvatar v-else-if="['roleAssigned', 'achievementEarned'].includes(notification.type)" :class="$style.icon" :user="$i" link preview/>
-		<div v-else-if="notification.type === 'reaction:grouped' && notification.note.reactionAcceptance === 'likeOnly'" :class="[$style.icon, $style.icon_reactionGroupHeart]"><i class="ti ti-heart" style="line-height: 1;"></i></div>
+		<MkAvatar v-if="notification.type === 'pollEnded'" :class="$style.icon" :user="notification.note.user" link preview/>
+		<MkAvatar v-else-if="notification.type === 'note'" :class="$style.icon" :user="notification.note.user" link preview/>
+		<MkAvatar v-else-if="notification.type === 'roleAssigned'" :class="$style.icon" :user="$i" link preview/>
+		<MkAvatar v-else-if="notification.type === 'achievementEarned'" :class="$style.icon" :user="$i" link preview/>
 		<div v-else-if="notification.type === 'reaction:grouped'" :class="[$style.icon, $style.icon_reactionGroup]"><i class="ti ti-plus" style="line-height: 1;"></i></div>
 		<div v-else-if="notification.type === 'renote:grouped'" :class="[$style.icon, $style.icon_renoteGroup]"><i class="ti ti-repeat" style="line-height: 1;"></i></div>
 		<img v-else-if="notification.type === 'test'" :class="$style.icon" :src="infoImageUrl"/>
-		<MkAvatar v-else-if="'user' in notification" :class="$style.icon" :user="notification.user" link preview/>
-		<img v-else-if="'icon' in notification" :class="[$style.icon, $style.icon_app]" :src="notification.icon" alt=""/>
+		<MkAvatar v-else-if="notification.user" :class="$style.icon" :user="notification.user" link preview/>
+		<img v-else-if="notification.icon" :class="[$style.icon, $style.icon_app]" :src="notification.icon" alt=""/>
 		<div
 			:class="[$style.subIcon, {
 				[$style.t_follow]: notification.type === 'follow',
@@ -26,7 +27,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 				[$style.t_quote]: notification.type === 'quote',
 				[$style.t_pollEnded]: notification.type === 'pollEnded',
 				[$style.t_achievementEarned]: notification.type === 'achievementEarned',
-				[$style.t_roleAssigned]: notification.type === 'roleAssigned' && notification.role.iconUrl == null,
 			}]"
 		>
 			<i v-if="notification.type === 'follow'" class="ti ti-plus"></i>
@@ -39,14 +39,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<i v-else-if="notification.type === 'quote'" class="ti ti-quote"></i>
 			<i v-else-if="notification.type === 'pollEnded'" class="ti ti-chart-arrows"></i>
 			<i v-else-if="notification.type === 'achievementEarned'" class="ti ti-medal"></i>
-			<template v-else-if="notification.type === 'roleAssigned'">
-				<img v-if="notification.role.iconUrl" style="height: 1.3em; vertical-align: -22%;" :src="notification.role.iconUrl" alt=""/>
-				<i v-else class="ti ti-badges"></i>
-			</template>
+			<img v-else-if="notification.type === 'roleAssigned'" style="height: 1.3em; vertical-align: -22%;" :src="notification.role.iconUrl" alt=""/>
+			<!-- notification.reaction が null になることはまずないが、ここでoptional chaining使うと一部ブラウザで刺さるので念の為 -->
 			<MkReactionIcon
 				v-else-if="notification.type === 'reaction'"
 				:withTooltip="true"
-				:reaction="notification.reaction.replace(/^:(\w+):$/, ':$1@.:')"
+				:reaction="notification.reaction ? notification.reaction.replace(/^:(\w+):$/, ':$1@.:') : notification.reaction"
 				:noStyle="true"
 				style="width: 100%; height: 100%;"
 			/>
@@ -59,11 +57,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<span v-else-if="notification.type === 'roleAssigned'">{{ i18n.ts._notification.roleAssigned }}</span>
 			<span v-else-if="notification.type === 'achievementEarned'">{{ i18n.ts._notification.achievementEarned }}</span>
 			<span v-else-if="notification.type === 'test'">{{ i18n.ts._notification.testNotification }}</span>
-			<MkA v-else-if="notification.type === 'follow' || notification.type === 'mention' || notification.type === 'reply' || notification.type === 'renote' || notification.type === 'quote' || notification.type === 'reaction' || notification.type === 'receiveFollowRequest' || notification.type === 'followRequestAccepted'" v-user-preview="notification.user.id" :class="$style.headerName" :to="userPage(notification.user)"><MkUserName :user="notification.user"/></MkA>
-			<span v-else-if="notification.type === 'reaction:grouped' && notification.note.reactionAcceptance === 'likeOnly'">{{ i18n.tsx._notification.likedBySomeUsers({ n: getActualReactedUsersCount(notification) }) }}</span>
-			<span v-else-if="notification.type === 'reaction:grouped'">{{ i18n.tsx._notification.reactedBySomeUsers({ n: getActualReactedUsersCount(notification) }) }}</span>
-			<span v-else-if="notification.type === 'renote:grouped'">{{ i18n.tsx._notification.renotedBySomeUsers({ n: notification.users.length }) }}</span>
-			<span v-else-if="notification.type === 'app'">{{ notification.header }}</span>
+			<MkA v-else-if="notification.user" v-user-preview="notification.user.id" :class="$style.headerName" :to="userPage(notification.user)"><MkUserName :user="notification.user"/></MkA>
+			<span v-else-if="notification.type === 'reaction:grouped'">{{ i18n.t('_notification.reactedBySomeUsers', { n: notification.reactions.length }) }}</span>
+			<span v-else-if="notification.type === 'renote:grouped'">{{ i18n.t('_notification.renotedBySomeUsers', { n: notification.users.length }) }}</span>
+			<span v-else>{{ notification.header }}</span>
 			<MkTime v-if="withTime" :time="notification.createdAt" :class="$style.headerTime" :mode="defaultStore.state.enableAbsoluteTime ? 'absolute' : 'relative'"/>
 		</header>
 		<div>
@@ -74,7 +71,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</MkA>
 			<MkA v-else-if="notification.type === 'renote' || notification.type === 'renote:grouped'" :class="$style.text" :to="notePage(notification.note)" :title="getNoteSummary(notification.note.renote)">
 				<i class="ti ti-quote" :class="$style.quote"></i>
-				<Mfm :text="getNoteSummary(notification.note.renote)" :plain="true" :nowrap="true" :author="notification.note.renote?.user"/>
+				<Mfm :text="getNoteSummary(notification.note.renote)" :plain="true" :nowrap="true" :author="notification.note.renote.user"/>
 				<i class="ti ti-quote" :class="$style.quote"></i>
 			</MkA>
 			<MkA v-else-if="notification.type === 'reply'" :class="$style.text" :to="notePage(notification.note)" :title="getNoteSummary(notification.note)">
@@ -125,12 +122,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</span>
 
 			<div v-if="notification.type === 'reaction:grouped'">
-				<div v-for="reaction of notification.reactions" :key="reaction.user.id + reaction.reaction" :class="$style.reactionsItem">
+				<div v-for="reaction of notification.reactions" :class="$style.reactionsItem">
 					<MkAvatar :class="$style.reactionsItemAvatar" :user="reaction.user" link preview/>
 					<div :class="$style.reactionsItemReaction">
 						<MkReactionIcon
 							:withTooltip="true"
-							:reaction="reaction.reaction.replace(/^:(\w+):$/, ':$1@.:')"
+							:reaction="reaction.reaction ? reaction.reaction.replace(/^:(\w+):$/, ':$1@.:') : reaction.reaction"
 							:noStyle="true"
 							style="width: 100%; height: 100%;"
 						/>
@@ -138,7 +135,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</div>
 			</div>
 			<div v-else-if="notification.type === 'renote:grouped'">
-				<div v-for="user of notification.users" :key="user.id" :class="$style.reactionsItem">
+				<div v-for="user of notification.users" :class="$style.reactionsItem">
 					<MkAvatar :class="$style.reactionsItemAvatar" :user="user" link preview/>
 				</div>
 			</div>
@@ -157,12 +154,10 @@ import { getNoteSummary } from '@/scripts/get-note-summary.js';
 import { notePage } from '@/filters/note.js';
 import { userPage } from '@/filters/user.js';
 import { i18n } from '@/i18n.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
-import { signinRequired } from '@/account.js';
+import * as os from '@/os.js';
+import { $i } from '@/account.js';
 import { infoImageUrl } from '@/instance.js';
 import { defaultStore } from '@/store.js';
-
-const $i = signinRequired();
 
 const props = withDefaults(defineProps<{
 	notification: Misskey.entities.Notification;
@@ -177,30 +172,23 @@ const followRequestDone = ref(false);
 const groupInviteDone = ref(false);
 
 const acceptFollowRequest = () => {
-	if (!('user' in props.notification)) return;
 	followRequestDone.value = true;
-	misskeyApi('following/requests/accept', { userId: props.notification.user.id });
+	os.api('following/requests/accept', { userId: props.notification.user.id });
 };
 
 const rejectFollowRequest = () => {
-	if (!('user' in props.notification)) return;
 	followRequestDone.value = true;
-	misskeyApi('following/requests/reject', { userId: props.notification.user.id });
+	os.api('following/requests/reject', { userId: props.notification.user.id });
 };
-
-function getActualReactedUsersCount(notification: Misskey.entities.Notification) {
-	if (notification.type !== 'reaction:grouped') return 0;
-	return new Set(notification.reactions.map((reaction) => reaction.user.id)).size;
-}
 
 const acceptGroupInvitation = () => {
 	groupInviteDone.value = true;
-	misskeyApi('users/groups/invitations/accept', { invitationId: props.notification.invitation.id });
+	os.apiWithDialog('users/groups/invitations/accept', { invitationId: props.notification.invitation.id });
 };
 
 const rejectGroupInvitation = () => {
 	groupInviteDone.value = true;
-	misskeyApi('users/groups/invitations/reject', { invitationId: props.notification.invitation.id });
+	os.apiWithDialog('users/groups/invitations/reject', { invitationId: props.notification.invitation.id });
 };
 </script>
 
@@ -231,7 +219,6 @@ const rejectGroupInvitation = () => {
 }
 
 .icon_reactionGroup,
-.icon_reactionGroupHeart,
 .icon_renoteGroup {
 	display: grid;
 	align-items: center;
@@ -244,15 +231,11 @@ const rejectGroupInvitation = () => {
 }
 
 .icon_reactionGroup {
-	background: var(--eventReaction);
-}
-
-.icon_reactionGroupHeart {
-	background: var(--eventReactionHeart);
+	background: #e99a0b;
 }
 
 .icon_renoteGroup {
-	background: var(--eventRenote);
+	background: #36d298;
 }
 
 .icon_app {
@@ -281,49 +264,43 @@ const rejectGroupInvitation = () => {
 
 .t_follow, .t_followRequestAccepted, .t_receiveFollowRequest, .t_groupInvited {
 	padding: 3px;
-	background: var(--eventFollow);
+	background: #36aed2;
 	pointer-events: none;
 }
 
 .t_renote {
 	padding: 3px;
-	background: var(--eventRenote);
+	background: #36d298;
 	pointer-events: none;
 }
 
 .t_quote {
 	padding: 3px;
-	background: var(--eventRenote);
+	background: #36d298;
 	pointer-events: none;
 }
 
 .t_reply {
 	padding: 3px;
-	background: var(--eventReply);
+	background: #007aff;
 	pointer-events: none;
 }
 
 .t_mention {
 	padding: 3px;
-	background: var(--eventOther);
+	background: #88a6b7;
 	pointer-events: none;
 }
 
 .t_pollEnded {
 	padding: 3px;
-	background: var(--eventOther);
+	background: #88a6b7;
 	pointer-events: none;
 }
 
 .t_achievementEarned {
 	padding: 3px;
-	background: var(--eventAchievement);
-	pointer-events: none;
-}
-
-.t_roleAssigned {
-	padding: 3px;
-	background: var(--eventOther);
+	background: #cb9a11;
 	pointer-events: none;
 }
 
@@ -366,7 +343,7 @@ const rejectGroupInvitation = () => {
 	margin-right: 4px;
 	position: relative;
 
-	&::before {
+	&:before {
 		position: absolute;
 		transform: rotate(180deg);
 	}

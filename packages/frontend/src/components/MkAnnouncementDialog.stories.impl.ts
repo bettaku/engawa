@@ -1,13 +1,10 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-import { action } from '@storybook/addon-actions';
 import { StoryObj } from '@storybook/vue3';
-import { HttpResponse, http } from 'msw';
-import { commonHandlers } from '../../.storybook/mocks.js';
 import MkAnnouncementDialog from './MkAnnouncementDialog.vue';
 export const Default = {
 	render(args) {
@@ -26,13 +23,8 @@ export const Default = {
 						...this.args,
 					};
 				},
-				events() {
-					return {
-						closed: action('closed'),
-					};
-				},
 			},
-			template: '<MkAnnouncementDialog v-bind="props" v-on="events" />',
+			template: '<MkAnnouncementDialog v-bind="props" />',
 		};
 	},
 	args: {
@@ -46,20 +38,10 @@ export const Default = {
 			imageUrl: null,
 			display: 'dialog',
 			needConfirmationToRead: false,
-			silence: false,
 			forYou: true,
 		},
 	},
 	parameters: {
 		layout: 'centered',
-		msw: {
-			handlers: [
-				...commonHandlers,
-				http.post('/api/i/read-announcement', async ({ request }) => {
-					action('POST /api/i/read-announcement')(await request.json());
-					return HttpResponse.json();
-				}),
-			],
-		},
 	},
 } satisfies StoryObj<typeof MkAnnouncementDialog>;

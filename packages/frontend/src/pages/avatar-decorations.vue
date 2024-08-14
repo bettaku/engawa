@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -48,7 +48,6 @@ import MkButton from '@/components/MkButton.vue';
 import MkInput from '@/components/MkInput.vue';
 import MkTextarea from '@/components/MkTextarea.vue';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
 import { i18n } from '@/i18n.js';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
 import MkFolder from '@/components/MkFolder.vue';
@@ -76,11 +75,11 @@ function add() {
 function del(avatarDecoration) {
 	os.confirm({
 		type: 'warning',
-		text: i18n.tsx.deleteAreYouSure({ x: avatarDecoration.name }),
+		text: i18n.t('deleteAreYouSure', { x: avatarDecoration.name }),
 	}).then(({ canceled }) => {
 		if (canceled) return;
 		avatarDecorations.value = avatarDecorations.value.filter(x => x !== avatarDecoration);
-		misskeyApi('admin/avatar-decorations/delete', avatarDecoration);
+		os.api('admin/avatar-decorations/delete', avatarDecoration);
 	});
 }
 
@@ -94,7 +93,7 @@ async function save(avatarDecoration) {
 }
 
 function load() {
-	misskeyApi('admin/avatar-decorations/list').then(_avatarDecorations => {
+	os.api('admin/avatar-decorations/list').then(_avatarDecorations => {
 		avatarDecorations.value = _avatarDecorations;
 	});
 }
@@ -110,10 +109,10 @@ const headerActions = computed(() => [{
 
 const headerTabs = computed(() => []);
 
-definePageMetadata(() => ({
+definePageMetadata({
 	title: i18n.ts.avatarDecorations,
 	icon: 'ti ti-sparkles',
-}));
+});
 </script>
 
 <style lang="scss" module>

@@ -1,14 +1,22 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<div v-if="instance" :class="$style.root" :style="{ backgroundImage: `url(${ instance.backgroundImageUrl })` }"></div>
+<div v-if="meta" :class="$style.root" :style="{ backgroundImage: `url(${ meta.backgroundImageUrl })` }"></div>
 </template>
 
 <script lang="ts" setup>
-import { instance } from '@/instance.js';
+import { ref } from 'vue';
+import * as Misskey from 'cherrypick-js';
+import * as os from '@/os.js';
+
+const meta = ref<Misskey.entities.MetaResponse>();
+
+os.api('meta', { detail: true }).then(gotMeta => {
+	meta.value = gotMeta;
+});
 </script>
 
 <style lang="scss" module>

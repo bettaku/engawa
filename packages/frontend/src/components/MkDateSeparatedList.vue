@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -51,7 +51,7 @@ export default defineComponent({
 		function getDateText(time: string) {
 			const date = new Date(time).getDate();
 			const month = new Date(time).getMonth() + 1;
-			return i18n.tsx.monthAndDay({
+			return i18n.t('monthAndDay', {
 				month: month.toString(),
 				day: date.toString(),
 			});
@@ -125,36 +125,34 @@ export default defineComponent({
 			return children;
 		};
 
-		function onBeforeLeave(element: Element) {
-			const el = element as HTMLElement;
+		function onBeforeLeave(el: HTMLElement) {
 			el.style.top = `${el.offsetTop}px`;
 			el.style.left = `${el.offsetLeft}px`;
 		}
 
-		function onLeaveCancelled(element: Element) {
-			const el = element as HTMLElement;
+		function onLeaveCanceled(el: HTMLElement) {
 			el.style.top = '';
 			el.style.left = '';
 		}
 
-		// eslint-disable-next-line vue/no-setup-props-reactivity-loss
-		const classes = {
-			[$style['date-separated-list']]: true,
-			[$style['date-separated-list-nogap']]: props.noGap,
-			[$style['reversed']]: props.reversed,
-			[$style['direction-down']]: props.direction === 'down',
-			[$style['direction-up']]: props.direction === 'up',
-		};
-
-		return () => defaultStore.state.animation ? h(TransitionGroup, {
-			class: classes,
-			name: 'list',
-			tag: 'div',
-			onBeforeLeave,
-			onLeaveCancelled,
-		}, { default: renderChildren }) : h('div', {
-			class: classes,
-		}, { default: renderChildren });
+		return () => h(
+			defaultStore.state.animation ? TransitionGroup : 'div',
+			{
+				class: {
+					[$style['date-separated-list']]: true,
+					[$style['date-separated-list-nogap']]: props.noGap,
+					[$style['reversed']]: props.reversed,
+					[$style['direction-down']]: props.direction === 'down',
+					[$style['direction-up']]: props.direction === 'up',
+				},
+				...(defaultStore.state.animation ? {
+					name: 'list',
+					tag: 'div',
+					onBeforeLeave,
+					onLeaveCanceled,
+				} : {}),
+			},
+			{ default: renderChildren });
 	},
 });
 </script>

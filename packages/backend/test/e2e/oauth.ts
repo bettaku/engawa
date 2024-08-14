@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -11,18 +11,13 @@
 process.env.NODE_ENV = 'test';
 
 import * as assert from 'assert';
-import {
-	AuthorizationCode,
-	type AuthorizationTokenConfig,
-	ClientCredentials,
-	ModuleOptions,
-	ResourceOwnerPassword,
-} from 'simple-oauth2';
+import { AuthorizationCode, ResourceOwnerPassword, type AuthorizationTokenConfig, ClientCredentials, ModuleOptions } from 'simple-oauth2';
 import pkceChallenge from 'pkce-challenge';
 import { JSDOM } from 'jsdom';
-import Fastify, { type FastifyInstance, type FastifyReply } from 'fastify';
-import { api, port, sendEnvUpdateRequest, signup } from '../utils.js';
+import Fastify, { type FastifyReply, type FastifyInstance } from 'fastify';
+import { api, port, signup, startServer } from '../utils.js';
 import type * as misskey from 'cherrypick-js';
+import type { INestApplicationContext } from '@nestjs/common';
 
 const host = `http://127.0.0.1:${port}`;
 
@@ -80,7 +75,7 @@ function getMeta(html: string): { transactionId: string | undefined, clientName:
 	};
 }
 
-function fetchDecision(transactionId: string, user: misskey.entities.SignupResponse, { cancel }: { cancel?: boolean } = {}): Promise<Response> {
+function fetchDecision(transactionId: string, user: misskey.entities.MeSignup, { cancel }: { cancel?: boolean } = {}): Promise<Response> {
 	return fetch(new URL('/oauth/decision', host), {
 		method: 'post',
 		body: new URLSearchParams({
@@ -95,14 +90,14 @@ function fetchDecision(transactionId: string, user: misskey.entities.SignupRespo
 	});
 }
 
-async function fetchDecisionFromResponse(response: Response, user: misskey.entities.SignupResponse, { cancel }: { cancel?: boolean } = {}): Promise<Response> {
+async function fetchDecisionFromResponse(response: Response, user: misskey.entities.MeSignup, { cancel }: { cancel?: boolean } = {}): Promise<Response> {
 	const { transactionId } = getMeta(await response.text());
 	assert.ok(transactionId);
 
 	return await fetchDecision(transactionId, user, { cancel });
 }
 
-async function fetchAuthorizationCode(user: misskey.entities.SignupResponse, scope: string, code_challenge: string): Promise<{ client: AuthorizationCode, code: string }> {
+async function fetchAuthorizationCode(user: misskey.entities.MeSignup, scope: string, code_challenge: string): Promise<{ client: AuthorizationCode, code: string }> {
 	const client = new AuthorizationCode(clientConfig);
 
 	const response = await fetch(client.authorizeURL({
@@ -152,14 +147,16 @@ async function assertDirectError(response: Response, status: number, error: stri
 }
 
 describe('OAuth', () => {
+	let app: INestApplicationContext;
 	let fastify: FastifyInstance;
 
-	let alice: misskey.entities.SignupResponse;
-	let bob: misskey.entities.SignupResponse;
+	let alice: misskey.entities.MeSignup;
+	let bob: misskey.entities.MeSignup;
 
 	let sender: (reply: FastifyReply) => void;
 
 	beforeAll(async () => {
+		app = await startServer();
 		alice = await signup({ username: 'alice' });
 		bob = await signup({ username: 'bob' });
 
@@ -171,7 +168,7 @@ describe('OAuth', () => {
 	}, 1000 * 60 * 2);
 
 	beforeEach(async () => {
-		await sendEnvUpdateRequest({ key: 'CHERRYPICK_TEST_CHECK_IP_RANGE', value: '' });
+		process.env.CHERRYPICK_TEST_CHECK_IP_RANGE = '';
 		sender = (reply): void => {
 			reply.send(`
 				<!DOCTYPE html>
@@ -183,6 +180,7 @@ describe('OAuth', () => {
 
 	afterAll(async () => {
 		await fastify.close();
+		await app.close();
 	});
 
 	test('Full flow', async () => {
@@ -216,7 +214,7 @@ describe('OAuth', () => {
 		assert.ok(location.searchParams.has('code'));
 		assert.strictEqual(location.searchParams.get('state'), 'state');
 		// https://datatracker.ietf.org/doc/html/rfc9207#name-response-parameter-iss
-		assert.strictEqual(location.searchParams.get('iss'), 'http://cherrypick.local');
+		assert.strictEqual(location.searchParams.get('iss'), 'http://misskey.local');
 
 		const code = new URL(location).searchParams.get('code');
 		assert.ok(code);
@@ -605,7 +603,7 @@ describe('OAuth', () => {
 				bearer: true,
 			});
 			assert.strictEqual(createResult.status, 403);
-			assert.ok(createResult.headers.get('WWW-Authenticate')?.startsWith('Bearer realm="CherryPick", error="insufficient_scope", error_description'));
+			assert.ok(createResult.headers.get('WWW-Authenticate')?.startsWith('Bearer realm="Misskey", error="insufficient_scope", error_description'));
 		});
 	});
 
@@ -704,7 +702,7 @@ describe('OAuth', () => {
 		assert.strictEqual(response.status, 200);
 
 		const body = await response.json();
-		assert.strictEqual(body.issuer, 'http://cherrypick.local');
+		assert.strictEqual(body.issuer, 'http://misskey.local');
 		assert.ok(body.scopes_supported.includes('write:notes'));
 	});
 
@@ -883,7 +881,7 @@ describe('OAuth', () => {
 		});
 
 		test('Disallow loopback', async () => {
-			await sendEnvUpdateRequest({ key: 'CHERRYPICK_TEST_CHECK_IP_RANGE', value: '1' });
+			process.env.CHERRYPICK_TEST_CHECK_IP_RANGE = '1';
 
 			const client = new AuthorizationCode(clientConfig);
 			const response = await fetch(client.authorizeURL({

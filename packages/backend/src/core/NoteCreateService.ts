@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -40,7 +40,7 @@ import InstanceChart from '@/core/chart/charts/instance.js';
 import ActiveUsersChart from '@/core/chart/charts/active-users.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { NotificationService } from '@/core/NotificationService.js';
-import { UserWebhookService } from '@/core/UserWebhookService.js';
+import { WebhookService } from '@/core/WebhookService.js';
 import { HashtagService } from '@/core/HashtagService.js';
 import { AntennaService } from '@/core/AntennaService.js';
 import { QueueService } from '@/core/QueueService.js';
@@ -54,14 +54,12 @@ import { bindThis } from '@/decorators.js';
 import { DB_MAX_NOTE_TEXT_LENGTH } from '@/const.js';
 import { RoleService } from '@/core/RoleService.js';
 import { MetaService } from '@/core/MetaService.js';
+import { SearchService } from '@/core/SearchService.js';
 import { FeaturedService } from '@/core/FeaturedService.js';
 import { FanoutTimelineService } from '@/core/FanoutTimelineService.js';
 import { UtilityService } from '@/core/UtilityService.js';
 import { UserBlockingService } from '@/core/UserBlockingService.js';
 import { isReply } from '@/misc/is-reply.js';
-import { trackPromise } from '@/misc/promise-tracker.js';
-import { IdentifiableError } from '@/misc/identifiable-error.js';
-import { Data } from 'ws';
 
 type NotificationType = 'reply' | 'renote' | 'quote' | 'mention';
 
@@ -151,14 +149,11 @@ type Option = {
 	uri?: string | null;
 	url?: string | null;
 	app?: MiApp | null;
-	deleteAt?: Date | null;
 };
 
 @Injectable()
 export class NoteCreateService implements OnApplicationShutdown {
 	#shutdownController = new AbortController();
-
-	public static ContainsProhibitedWordsError = class extends Error {};
 
 	constructor(
 		@Inject(DI.config)
@@ -212,13 +207,14 @@ export class NoteCreateService implements OnApplicationShutdown {
 		private federatedInstanceService: FederatedInstanceService,
 		private hashtagService: HashtagService,
 		private antennaService: AntennaService,
-		private webhookService: UserWebhookService,
+		private webhookService: WebhookService,
 		private featuredService: FeaturedService,
 		private remoteUserResolveService: RemoteUserResolveService,
 		private apDeliverManagerService: ApDeliverManagerService,
 		private apRendererService: ApRendererService,
 		private roleService: RoleService,
 		private metaService: MetaService,
+		private searchService: SearchService,
 		private notesChart: NotesChart,
 		private perUserNotesChart: PerUserNotesChart,
 		private activeUsersChart: ActiveUsersChart,
@@ -234,8 +230,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 		host: MiUser['host'];
 		isBot: MiUser['isBot'];
 		isCat: MiUser['isCat'];
-		isIndexable: MiUser['isIndexable'];
-		isSensitive: MiUser['isSensitive'];
 	}, data: Option, silent = false): Promise<MiNote> {
 		// チャンネル外にリプライしたら対象のスコープに合わせる
 		// (クライアントサイドでやっても良い処理だと思うけどとりあえずサーバーサイドで)
@@ -265,21 +259,11 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 		if (data.visibility === 'public' && data.channel == null) {
 			const sensitiveWords = meta.sensitiveWords;
-			if (this.utilityService.isKeyWordIncluded(data.cw ?? data.text ?? '', sensitiveWords)) {
+			if (this.utilityService.isSensitiveWordIncluded(data.cw ?? data.text ?? '', sensitiveWords)) {
 				data.visibility = 'home';
 			} else if ((await this.roleService.getUserPolicies(user.id)).canPublicNote === false) {
 				data.visibility = 'home';
 			}
-		}
-
-		const hasProhibitedWords = await this.checkProhibitedWordsContain({
-			cw: data.cw,
-			text: data.text,
-			pollChoices: data.poll?.choices,
-		}, meta.prohibitedWords);
-
-		if (hasProhibitedWords) {
-			throw new IdentifiableError('689ee33f-f97c-479a-ac49-1b9f8140af99', 'Note contains prohibited words');
 		}
 
 		const inSilencedInstance = this.utilityService.isSilencedHost(meta.silencedHosts, user.host);
@@ -309,14 +293,13 @@ export class NoteCreateService implements OnApplicationShutdown {
 					data.visibility = 'followers';
 					break;
 				case 'specified':
-				case 'private':
-					// specified / direct note/ private noteはreject
+					// specified / direct noteはreject
 					throw new Error('Renote target is not public or home');
 			}
 		}
 
 		// Check blocking
-		if (this.isRenote(data) && !this.isQuote(data)) {
+		if (data.renote && !this.isQuote(data)) {
 			if (data.renote.userHost === null) {
 				if (data.renote.userId !== user.id) {
 					const blocked = await this.userBlockingService.checkBlocked(data.renote.userId, user.id);
@@ -347,9 +330,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 				data.text = data.text.slice(0, DB_MAX_NOTE_TEXT_LENGTH);
 			}
 			data.text = data.text.trim();
-			if (data.text === '') {
-				data.text = null;
-			}
 		} else {
 			data.text = null;
 		}
@@ -375,9 +355,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 			mentionedUsers = data.apMentions ?? await this.extractMentionedUsers(user, combinedTokens);
 		}
 
-		// if the host is media-silenced, custom emojis are not allowed
-		if (this.utilityService.isMediaSilencedHost(meta.mediaSilencedHosts, user.host)) emojis = [];
-
 		tags = tags.filter(tag => Array.from(tag).length <= 128).splice(0, 32);
 
 		if (data.reply && (user.id !== data.reply.userId) && !mentionedUsers.some(u => u.id === data.reply!.userId)) {
@@ -396,10 +373,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 			if (data.reply && !data.visibleUsers.some(x => x.id === data.reply!.userId)) {
 				data.visibleUsers.push(await this.usersRepository.findOneByOrFail({ id: data.reply!.userId }));
 			}
-		}
-
-		if (mentionedUsers.length > 0 && mentionedUsers.length > (await this.roleService.getUserPolicies(user.id)).mentionLimit) {
-			throw new IdentifiableError('9f466dab-c856-48cd-9e65-ff90ff750580', 'Note contains too many mentions');
 		}
 
 		const note = await this.insertNote(user, data, tags, emojis, mentionedUsers);
@@ -430,7 +403,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 			hasPoll: data.poll != null,
 			hasEvent: data.event != null,
 			cw: data.cw ?? null,
-			deleteAt: data.deleteAt,
 			tags: tags.map(tag => normalizeForSearch(tag)),
 			emojis,
 			userId: user.id,
@@ -490,7 +462,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 							noteVisibility: insert.visibility,
 							userId: user.id,
 							userHost: user.host,
-							channelId: insert.channelId,
 						});
 
 						await transactionalEntityManager.insert(MiPoll, poll);
@@ -509,10 +480,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 						});
 
 						await transactionalEntityManager.insert(MiEvent, event);
-					}
-
-					if (insert.visibility === 'private') {
-						insert.localOnly = true
 					}
 				});
 			} else {
@@ -540,8 +507,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 		username: MiUser['username'];
 		host: MiUser['host'];
 		isBot: MiUser['isBot'];
-		isIndexable: MiUser['isIndexable'];
-		isSensitive: MiUser['isSensitive'];
 	}, data: Option, silent: boolean, tags: string[], mentionedUsers: MinimumUser[]) {
 		const meta = await this.metaService.fetch();
 
@@ -607,16 +572,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 			});
 		}
 
-		if (data.deleteAt) {
-			const delay = data.deleteAt.getTime() - Date.now();
-			this.queueService.scheduledNoteDeleteQueue.add(note.id, {
-				noteId: note.id,
-			}, {
-				delay,
-				removeOnComplete: true,
-			});
-		}
-
 		if (!silent) {
 			if (this.userEntityService.isLocalUser(user)) this.activeUsersChart.write(user);
 
@@ -655,7 +610,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 			this.webhookService.getActiveWebhooks().then(webhooks => {
 				webhooks = webhooks.filter(x => x.userId === user.id && x.on.includes('note'));
 				for (const webhook of webhooks) {
-					this.queueService.userWebhookDeliver(webhook, 'note', {
+					this.queueService.webhookDeliver(webhook, 'note', {
 						note: noteObj,
 					});
 				}
@@ -669,7 +624,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 			if (data.reply) {
 				// 通知
 				if (data.reply.userHost === null) {
-					const isThreadMuted = await this.noteThreadMutingsRepository.exists({
+					const isThreadMuted = await this.noteThreadMutingsRepository.exist({
 						where: {
 							userId: data.reply.userId,
 							threadId: data.reply.threadId ?? data.reply.id,
@@ -682,7 +637,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 						const webhooks = (await this.webhookService.getActiveWebhooks()).filter(x => x.userId === data.reply!.userId && x.on.includes('reply'));
 						for (const webhook of webhooks) {
-							this.queueService.userWebhookDeliver(webhook, 'reply', {
+							this.queueService.webhookDeliver(webhook, 'reply', {
 								note: noteObj,
 							});
 						}
@@ -691,7 +646,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 			}
 
 			// If it is renote
-			if (this.isRenote(data)) {
+			if (data.renote) {
 				const type = this.isQuote(data) ? 'quote' : 'renote';
 
 				// Notify
@@ -705,7 +660,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 					const webhooks = (await this.webhookService.getActiveWebhooks()).filter(x => x.userId === data.renote!.userId && x.on.includes('renote'));
 					for (const webhook of webhooks) {
-						this.queueService.userWebhookDeliver(webhook, 'renote', {
+						this.queueService.webhookDeliver(webhook, 'renote', {
 							note: noteObj,
 						});
 					}
@@ -746,7 +701,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 						this.relayService.deliverToRelays(user, noteActivity);
 					}
 
-					trackPromise(dm.execute());
+					dm.execute();
 				})();
 			}
 			//#endregion
@@ -770,23 +725,14 @@ export class NoteCreateService implements OnApplicationShutdown {
 			});
 		}
 
+		// Register to search database
+		this.index(note);
 	}
 
 	@bindThis
-	private isRenote(note: Option): note is Option & { renote: MiNote } {
-		return note.renote != null;
-	}
-
-	@bindThis
-	private isQuote(note: Option & { renote: MiNote }): note is Option & { renote: MiNote } & (
-		{ text: string } | { cw: string } | { reply: MiNote } | { poll: IPoll } | { files: MiDriveFile[] }
-	) {
-		// NOTE: SYNC WITH misc/is-quote.ts
-		return note.text != null ||
-			note.reply != null ||
-			note.cw != null ||
-			note.poll != null ||
-			(note.files != null && note.files.length > 0);
+	private isQuote(note: Option): note is Option & { renote: MiNote } {
+		// sync with misc/is-quote.ts
+		return !!note.renote && (!!note.text || !!note.cw || (!!note.files && !!note.files.length) || !!note.poll);
 	}
 
 	@bindThis
@@ -816,7 +762,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 	@bindThis
 	private async createMentionedEvents(mentionedUsers: MinimumUser[], note: MiNote, nm: NotificationManager) {
 		for (const u of mentionedUsers.filter(u => this.userEntityService.isLocalUser(u))) {
-			const isThreadMuted = await this.noteThreadMutingsRepository.exists({
+			const isThreadMuted = await this.noteThreadMutingsRepository.exist({
 				where: {
 					userId: u.id,
 					threadId: note.threadId ?? note.id,
@@ -835,7 +781,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 			const webhooks = (await this.webhookService.getActiveWebhooks()).filter(x => x.userId === u.id && x.on.includes('mention'));
 			for (const webhook of webhooks) {
-				this.queueService.userWebhookDeliver(webhook, 'mention', {
+				this.queueService.webhookDeliver(webhook, 'mention', {
 					note: detailPackedNote,
 				});
 			}
@@ -854,11 +800,18 @@ export class NoteCreateService implements OnApplicationShutdown {
 	private async renderNoteOrRenoteActivity(data: Option, note: MiNote) {
 		if (data.localOnly) return null;
 
-		const content = this.isRenote(data) && !this.isQuote(data)
+		const content = data.renote && !this.isQuote(data)
 			? this.apRendererService.renderAnnounce(data.renote.uri ? data.renote.uri : `${this.config.url}/notes/${data.renote.id}`, note)
 			: this.apRendererService.renderCreate(await this.apRendererService.renderNote(note, false), note);
 
 		return this.apRendererService.addContext(content);
+	}
+
+	@bindThis
+	private index(note: MiNote) {
+		if (note.text == null && note.cw == null) return;
+
+		this.searchService.indexNote(note);
 	}
 
 	@bindThis
@@ -879,7 +832,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		const mentions = extractMentions(tokens);
 		let mentionedUsers = (await Promise.all(mentions.map(m =>
 			this.remoteUserResolveService.resolveUser(m.username, m.host ?? user.host).catch(() => null),
-		))).filter(x => x != null);
+		))).filter(x => x != null) as MiUser[];
 
 		// Drop duplicate users
 		mentionedUsers = mentionedUsers.filter((u, i, self) =>
@@ -974,13 +927,10 @@ export class NoteCreateService implements OnApplicationShutdown {
 				}
 			}
 
-			// 自分自身のHTL
-			if (note.userHost == null) {
-				if (note.visibility !== 'specified' || !note.visibleUserIds.some(v => v === user.id)) {
-					this.fanoutTimelineService.push(`homeTimeline:${user.id}`, note.id, meta.perUserHomeTimelineCacheMax, r);
-					if (note.fileIds.length > 0) {
-						this.fanoutTimelineService.push(`homeTimelineWithFiles:${user.id}`, note.id, meta.perUserHomeTimelineCacheMax / 2, r);
-					}
+			if (note.visibility !== 'specified' || !note.visibleUserIds.some(v => v === user.id)) { // 自分自身のHTL
+				this.fanoutTimelineService.push(`homeTimeline:${user.id}`, note.id, meta.perUserHomeTimelineCacheMax, r);
+				if (note.fileIds.length > 0) {
+					this.fanoutTimelineService.push(`homeTimelineWithFiles:${user.id}`, note.id, meta.perUserHomeTimelineCacheMax / 2, r);
 				}
 			}
 
@@ -1054,23 +1004,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 				isFollowerHibernated: true,
 			});
 		}
-	}
-
-	public async checkProhibitedWordsContain(content: Parameters<UtilityService['concatNoteContentsForKeyWordCheck']>[0], prohibitedWords?: string[]) {
-		if (prohibitedWords == null) {
-			prohibitedWords = (await this.metaService.fetch()).prohibitedWords;
-		}
-
-		if (
-			this.utilityService.isKeyWordIncluded(
-				this.utilityService.concatNoteContentsForKeyWordCheck(content),
-				prohibitedWords,
-			)
-		) {
-			return true;
-		}
-
-		return false;
 	}
 
 	@bindThis

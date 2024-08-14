@@ -1,9 +1,9 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { VNode, h, SetupContext, provide } from 'vue';
+import { VNode, h, SetupContext } from 'vue';
 import * as mfm from 'cherrypick-mfm-js';
 import * as Misskey from 'cherrypick-js';
 import temml from 'temml/dist/temml.mjs';
@@ -14,14 +14,12 @@ import MkMention from '@/components/MkMention.vue';
 import MkEmoji from '@/components/global/MkEmoji.vue';
 import MkCustomEmoji from '@/components/global/MkCustomEmoji.vue';
 import MkCode from '@/components/MkCode.vue';
-import MkCodeInline from '@/components/MkCodeInline.vue';
 import MkGoogle from '@/components/MkGoogle.vue';
 import MkSparkle from '@/components/MkSparkle.vue';
-import MkA, { MkABehavior } from '@/components/global/MkA.vue';
+import MkA from '@/components/global/MkA.vue';
 import { host } from '@/config.js';
 import { defaultStore } from '@/store.js';
 import { nyaize as doNyaize } from '@/scripts/nyaize.js';
-import { safeParseFloat } from '@/scripts/safe-parse.js';
 
 const QUOTE_STYLE = `
 display: block;
@@ -38,13 +36,12 @@ type MfmProps = {
 	nowrap?: boolean;
 	author?: Misskey.entities.UserLite;
 	isNote?: boolean;
-	emojiUrls?: Record<string, string>;
+	emojiUrls?: string[];
 	rootScale?: number;
 	nyaize?: boolean | 'respect';
 	parsedNodes?: mfm.MfmNode[] | null;
 	enableEmojiMenu?: boolean;
 	enableEmojiMenuReaction?: boolean;
-	linkNavigationBehavior?: MkABehavior;
 };
 
 type MfmEvents = {
@@ -52,9 +49,7 @@ type MfmEvents = {
 };
 
 // eslint-disable-next-line import/no-default-export
-export default function (props: MfmProps, { emit }: { emit: SetupContext<MfmEvents>['emit'] }) {
-	provide('linkNavigationBehavior', props.linkNavigationBehavior);
-
+export default function(props: MfmProps, context: SetupContext<MfmEvents>) {
 	const isNote = props.isNote ?? true;
 	const shouldNyaize = props.nyaize ? props.nyaize === 'respect' ? props.author?.isCat : false : false;
 
@@ -63,15 +58,9 @@ export default function (props: MfmProps, { emit }: { emit: SetupContext<MfmEven
 
 	const rootAst = props.parsedNodes ?? (props.plain ? mfm.parseSimple : mfm.parse)(props.text);
 
-	const validTime = (t: string | boolean | null | undefined) => {
+	const validTime = (t: string | null | undefined) => {
 		if (t == null) return null;
-		if (typeof t === 'boolean') return null;
-		return t.match(/^\-?[0-9.]+s$/) ? t : null;
-	};
-
-	const validColor = (c: unknown): string | null => {
-		if (typeof c !== 'string') return null;
-		return c.match(/^[0-9a-f]{3,6}$/i) ? c : null;
+		return t.match(/^[0-9.]+s$/) ? t : null;
 	};
 
 	const useAnim = defaultStore.state.advancedMfm && defaultStore.state.animatedMfm;
@@ -124,7 +113,7 @@ export default function (props: MfmProps, { emit }: { emit: SetupContext<MfmEven
 					case 'tada': {
 						const speed = validTime(token.props.args.speed) ?? '1s';
 						const delay = validTime(token.props.args.delay) ?? '0s';
-						style = 'font-size: 150%;' + (useAnim ? `animation: global-tada ${speed} linear infinite both; animation-delay: ${delay};` : '');
+						style = 'font-size: 150%;' + (useAnim ? `animation: tada ${speed} linear infinite both; animation-delay: ${delay};` : '');
 						break;
 					}
 					case 'jelly': {
@@ -238,14 +227,14 @@ export default function (props: MfmProps, { emit }: { emit: SetupContext<MfmEven
 						break;
 					}
 					case 'rotate': {
-						const degrees = safeParseFloat(token.props.args.deg) ?? 90;
+						const degrees = parseFloat(token.props.args.deg ?? '90');
 						style = `transform: rotate(${degrees}deg); transform-origin: center center;`;
 						break;
 					}
 					case 'position': {
 						if (!defaultStore.state.advancedMfm) break;
-						const x = safeParseFloat(token.props.args.x) ?? 0;
-						const y = safeParseFloat(token.props.args.y) ?? 0;
+						const x = parseFloat(token.props.args.x ?? '0');
+						const y = parseFloat(token.props.args.y ?? '0');
 						style = `transform: translateX(${x}em) translateY(${y}em);`;
 						break;
 					}
@@ -254,36 +243,22 @@ export default function (props: MfmProps, { emit }: { emit: SetupContext<MfmEven
 							style = '';
 							break;
 						}
-						const x = Math.min(safeParseFloat(token.props.args.x) ?? 1, 5);
-						const y = Math.min(safeParseFloat(token.props.args.y) ?? 1, 5);
+						const x = Math.min(parseFloat(token.props.args.x ?? '1'), 5);
+						const y = Math.min(parseFloat(token.props.args.y ?? '1'), 5);
 						style = `transform: scale(${x}, ${y});`;
 						scale = scale * Math.max(x, y);
 						break;
 					}
 					case 'fg': {
-						let color = validColor(token.props.args.color);
-						color = color ?? 'f00';
+						let color = token.props.args.color;
+						if (!/^[0-9a-f]{3,6}$/i.test(color)) color = 'f00';
 						style = `color: #${color}; overflow-wrap: anywhere;`;
 						break;
 					}
 					case 'bg': {
-						let color = validColor(token.props.args.color);
-						color = color ?? 'f00';
+						let color = token.props.args.color;
+						if (!/^[0-9a-f]{3,6}$/i.test(color)) color = 'f00';
 						style = `background-color: #${color}; overflow-wrap: anywhere;`;
-						break;
-					}
-					case 'border': {
-						let color = validColor(token.props.args.color);
-						color = color ? `#${color}` : 'var(--accent)';
-						let b_style = token.props.args.style;
-						if (
-							typeof b_style !== 'string' ||
-							!['hidden', 'dotted', 'dashed', 'solid', 'double', 'groove', 'ridge', 'inset', 'outset']
-								.includes(b_style)
-						) b_style = 'solid';
-						const width = safeParseFloat(token.props.args.width) ?? 1;
-						const radius = safeParseFloat(token.props.args.radius) ?? 0;
-						style = `border: ${width}px ${b_style} ${color}; border-radius: ${radius}px;${token.props.args.noclip ? '' : ' overflow: clip;'}`;
 						break;
 					}
 					case 'ruby': {
@@ -324,8 +299,7 @@ export default function (props: MfmProps, { emit }: { emit: SetupContext<MfmEven
 						return h('span', { onClick(ev: MouseEvent): void {
 							ev.stopPropagation();
 							ev.preventDefault();
-							const clickEv = typeof token.props.args.ev === 'string' ? token.props.args.ev : '';
-							emit('clickEv', clickEv);
+							context.emit('clickEv', token.props.args.ev ?? '');
 						} }, genEl(token.children, scale));
 					}
 				}
@@ -386,14 +360,15 @@ export default function (props: MfmProps, { emit }: { emit: SetupContext<MfmEven
 				return [h(MkCode, {
 					key: Math.random(),
 					code: token.props.code,
-					lang: token.props.lang ?? undefined,
+					lang: token.props.lang,
 				})];
 			}
 
 			case 'inlineCode': {
-				return [h(MkCodeInline, {
+				return [h(MkCode, {
 					key: Math.random(),
 					code: token.props.code,
+					inline: true,
 				})];
 			}
 
@@ -420,7 +395,6 @@ export default function (props: MfmProps, { emit }: { emit: SetupContext<MfmEven
 						useOriginalSize: scale >= 2.5,
 						menu: props.enableEmojiMenu,
 						menuReaction: props.enableEmojiMenuReaction,
-						fallbackToImage: false,
 					})];
 				} else {
 					// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -430,7 +404,8 @@ export default function (props: MfmProps, { emit }: { emit: SetupContext<MfmEven
 						return [h(MkCustomEmoji, {
 							key: Math.random(),
 							name: token.props.name,
-							url: props.emojiUrls && props.emojiUrls[token.props.name],
+							// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+							url: props.emojiUrls ? props.emojiUrls[token.props.name] : null,
 							normal: props.plain,
 							host: props.author.host,
 							useOriginalSize: scale >= 2.5,

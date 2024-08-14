@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -34,8 +34,6 @@ export default function(app: App) {
 	app.component('WidgetUserList', defineAsyncComponent(() => import('./WidgetUserList.vue')));
 	app.component('WidgetClicker', defineAsyncComponent(() => import('./WidgetClicker.vue')));
 	app.component('WidgetBirthdayFollowings', defineAsyncComponent(() => import('./WidgetBirthdayFollowings.vue')));
-	app.component('WidgetDice', defineAsyncComponent(() => import('./WidgetDice.vue')));
-	app.component('WidgetSearch', defineAsyncComponent(() => import('./WidgetSearch.vue')));
 }
 
 export const widgets = [
@@ -67,6 +65,4 @@ export const widgets = [
 	'userList',
 	'clicker',
 	'birthdayFollowings',
-	'dice',
-	'search',
 ];

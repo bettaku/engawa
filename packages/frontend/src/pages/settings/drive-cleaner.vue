@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -48,10 +48,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, type StyleValue } from 'vue';
+import { computed, ref, watch } from 'vue';
 import tinycolor from 'tinycolor2';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
 import MkPagination from '@/components/MkPagination.vue';
 import MkDriveFileThumbnail from '@/components/MkDriveFileThumbnail.vue';
 import { i18n } from '@/i18n.js';
@@ -95,17 +94,17 @@ watch(sortModeSelect, () => {
 
 function fetchDriveInfo(): void {
 	fetching.value = true;
-	misskeyApi('drive').then(info => {
+	os.api('drive').then(info => {
 		capacity.value = info.capacity;
 		usage.value = info.usage;
 		fetching.value = false;
 	});
 }
 
-function genUsageBar(fsize: number): StyleValue {
+function genUsageBar(fsize: number): object {
 	return {
 		width: `${fsize / usage.value * 100}%`,
-		background: tinycolor({ h: 180 - (fsize / usage.value * 180), s: 0.7, l: 0.5 }).toHslString(),
+		background: tinycolor({ h: 180 - (fsize / usage.value * 180), s: 0.7, l: 0.5 }),
 	};
 }
 
@@ -117,10 +116,10 @@ function onContextMenu(ev: MouseEvent, file): void {
 	os.contextMenu(getDriveFileMenu(file), ev);
 }
 
-definePageMetadata(() => ({
+definePageMetadata({
 	title: i18n.ts.drivecleaner,
 	icon: 'ti ti-trash',
-}));
+});
 </script>
 
 <style lang="scss" module>

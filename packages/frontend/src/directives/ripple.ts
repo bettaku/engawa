@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -17,9 +17,7 @@ export default {
 			const x = rect.left + (el.offsetWidth / 2);
 			const y = rect.top + (el.offsetHeight / 2);
 
-			const { dispose } = popup(MkRippleEffect, { x, y }, {
-				end: () => dispose(),
-			});
+			popup(MkRippleEffect, { x, y }, {}, 'end');
 		});
 	},
 };

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project & noridev and cherrypick-project
+ * SPDX-FileCopyrightText: syuilo and noridev and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -109,11 +109,11 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				throw new ApiError(meta.errors.alreadyInvited);
 			}
 
-			const invitation = await this.userGroupInvitationsRepository.insertOne({
+			const invitation = await this.userGroupInvitationsRepository.insert({
 				id: this.idService.gen(),
 				userId: user.id,
 				userGroupId: userGroup.id,
-			} as MiUserGroupInvitation);
+			} as MiUserGroupInvitation).then(x => this.userGroupInvitationsRepository.findOneByOrFail(x.identifiers[0]));
 
 			// 通知を作成
 			this.notificationService.createNotification(user.id, 'groupInvited', {

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -30,9 +30,6 @@ export class RenoteMutingEntityService {
 	public async pack(
 		src: MiRenoteMuting['id'] | MiRenoteMuting,
 		me?: { id: MiUser['id'] } | null | undefined,
-		hints?: {
-			packedMutee?: Packed<'UserDetailedNotMe'>
-		},
 	): Promise<Packed<'RenoteMuting'>> {
 		const muting = typeof src === 'object' ? src : await this.renoteMutingsRepository.findOneByOrFail({ id: src });
 
@@ -40,21 +37,18 @@ export class RenoteMutingEntityService {
 			id: muting.id,
 			createdAt: this.idService.parse(muting.id).date.toISOString(),
 			muteeId: muting.muteeId,
-			mutee: hints?.packedMutee ?? this.userEntityService.pack(muting.muteeId, me, {
-				schema: 'UserDetailedNotMe',
+			mutee: this.userEntityService.pack(muting.muteeId, me, {
+				detail: true,
 			}),
 		});
 	}
 
 	@bindThis
-	public async packMany(
-		mutings: MiRenoteMuting[],
+	public packMany(
+		mutings: any[],
 		me: { id: MiUser['id'] },
 	) {
-		const _users = mutings.map(({ mutee, muteeId }) => mutee ?? muteeId);
-		const _userMap = await this.userEntityService.packMany(_users, me, { schema: 'UserDetailedNotMe' })
-			.then(users => new Map(users.map(u => [u.id, u])));
-		return Promise.all(mutings.map(muting => this.pack(muting, me, { packedMutee: _userMap.get(muting.muteeId) })));
+		return Promise.all(mutings.map(x => this.pack(x, me)));
 	}
 }
 

@@ -1,13 +1,9 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 export function isUserRelated(note: any, userIds: Set<string>, ignoreAuthor = false): boolean {
-	if (!note) {
-		return false;
-	}
-
 	if (userIds.has(note.userId) && !ignoreAuthor) {
 		return true;
 	}

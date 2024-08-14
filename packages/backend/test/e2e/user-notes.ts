@@ -1,24 +1,28 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 process.env.NODE_ENV = 'test';
 
 import * as assert from 'assert';
-import { api, post, signup, uploadUrl } from '../utils.js';
+import { signup, api, post, uploadUrl, startServer } from '../utils.js';
+import type { INestApplicationContext } from '@nestjs/common';
 import type * as misskey from 'cherrypick-js';
 
 describe('users/notes', () => {
-	let alice: misskey.entities.SignupResponse;
-	let jpgNote: misskey.entities.Note;
-	let pngNote: misskey.entities.Note;
-	let jpgPngNote: misskey.entities.Note;
+	let app: INestApplicationContext;
+
+	let alice: misskey.entities.MeSignup;
+	let jpgNote: any;
+	let pngNote: any;
+	let jpgPngNote: any;
 
 	beforeAll(async () => {
+		app = await startServer();
 		alice = await signup({ username: 'alice' });
-		const jpg = await uploadUrl(alice, 'https://raw.githubusercontent.com/kokonect-link/cherrypick/develop/packages/backend/test/resources/192.jpg');
-		const png = await uploadUrl(alice, 'https://raw.githubusercontent.com/kokonect-link/cherrypick/develop/packages/backend/test/resources/192.png');
+		const jpg = await uploadUrl(alice, 'https://raw.githubusercontent.com/kokonect-link/cherrypick/develop/packages/backend/test/resources/Lenna.jpg');
+		const png = await uploadUrl(alice, 'https://raw.githubusercontent.com/kokonect-link/cherrypick/develop/packages/backend/test/resources/Lenna.png');
 		jpgNote = await post(alice, {
 			fileIds: [jpg.id],
 		});
@@ -30,8 +34,12 @@ describe('users/notes', () => {
 		});
 	}, 1000 * 60 * 2);
 
+	afterAll(async() => {
+		await app.close();
+	});
+
 	test('withFiles', async () => {
-		const res = await api('users/notes', {
+		const res = await api('/users/notes', {
 			userId: alice.id,
 			withFiles: true,
 		}, alice);

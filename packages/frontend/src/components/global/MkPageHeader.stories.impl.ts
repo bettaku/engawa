@@ -1,10 +1,10 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-import { waitFor } from '@storybook/test';
+import { waitFor } from '@storybook/testing-library';
 import { StoryObj } from '@storybook/vue3';
 import MkPageHeader from './MkPageHeader.vue';
 export const Empty = {
@@ -33,6 +33,7 @@ export const Empty = {
 		await waitFor(async () => await wait);
 	},
 	args: {
+		static: true,
 		tabs: [],
 	},
 	parameters: {
@@ -70,8 +71,8 @@ export const IconOnly = {
 		...Icon.args,
 		tabs: [
 			{
-				key: Icon.args.tabs[0].key,
-				icon: Icon.args.tabs[0].icon,
+				...Icon.args.tabs[0],
+				title: undefined,
 				iconOnly: true,
 			},
 		],

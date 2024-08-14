@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -15,7 +15,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 		<template #default="{ items: notifications }">
 			<MkDateSeparatedList v-slot="{ item: notification }" :class="$style.list" :items="notifications" :noGap="!defaultStore.state.showGapBetweenNotesInTimeline || mainRouter.currentRoute.value.name !== 'my-notifications'">
-				<MkNote v-if="['reply', 'quote', 'mention'].includes(notification.type)" :key="notification.id + ':note'" :note="notification.note" :withHardMute="true" :notification="true"/>
+				<MkNote v-if="['reply', 'quote', 'mention'].includes(notification.type)" :key="notification.id" :note="notification.note" :withHardMute="true" :notification="true"/>
 				<XNotification v-else :key="notification.id" :notification="notification" :withTime="true" :full="true" class="_panel"/>
 			</MkDateSeparatedList>
 		</template>
@@ -25,7 +25,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <script lang="ts" setup>
 import { onUnmounted, onDeactivated, onMounted, computed, shallowRef, onActivated } from 'vue';
-import * as Misskey from 'cherrypick-js';
 import MkPagination from '@/components/MkPagination.vue';
 import XNotification from '@/components/MkNotification.vue';
 import MkDateSeparatedList from '@/components/MkDateSeparatedList.vue';
@@ -35,7 +34,7 @@ import { i18n } from '@/i18n.js';
 import { notificationTypes } from '@/const.js';
 import { infoImageUrl } from '@/instance.js';
 import { defaultStore } from '@/store.js';
-import { mainRouter } from '@/router/main.js';
+import { mainRouter } from '@/router.js';
 import MkPullToRefresh from '@/components/MkPullToRefresh.vue';
 import { globalEvents } from '@/events.js';
 
@@ -66,7 +65,7 @@ function onNotification(notification) {
 	}
 
 	if (!isMuted) {
-		pagingComponent.value?.prepend(notification);
+		pagingComponent.value.prepend(notification);
 	}
 }
 
@@ -78,13 +77,11 @@ function reload() {
 	});
 }
 
-let connection: Misskey.ChannelConnection<Misskey.Channels['main']>;
+let connection;
 
 onMounted(() => {
 	connection = useStream().useChannel('main');
 	connection.on('notification', onNotification);
-	connection.on('notificationDeleted', reload);
-	connection.on('notificationFlushed', reload);
 
 	globalEvents.on('reloadNotification', () => reload());
 });
@@ -93,8 +90,6 @@ onActivated(() => {
 	pagingComponent.value?.reload();
 	connection = useStream().useChannel('main');
 	connection.on('notification', onNotification);
-	connection.on('notificationDeleted', reload);
-	connection.on('notificationFlushed', reload);
 });
 
 onUnmounted(() => {

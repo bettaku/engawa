@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -79,11 +79,11 @@ export class ImportUserListsProcessorService {
 				});
 
 				if (list == null) {
-					list = await this.userListsRepository.insertOne({
+					list = await this.userListsRepository.insert({
 						id: this.idService.gen(),
 						userId: user.id,
 						name: listName,
-					});
+					}).then(x => this.userListsRepository.findOneByOrFail(x.identifiers[0]));
 				}
 
 				let target = this.utilityService.isSelfHost(host!) ? await this.usersRepository.findOneBy({

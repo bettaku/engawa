@@ -1,20 +1,21 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
 <img v-if="!useOsNativeEmojis" :class="[$style.root, { [$style.large]: defaultStore.state.largeNoteReactions }]" :src="url" :alt="props.emoji" decoding="async" @pointerenter="computeTitle" @click.stop="onClick"/>
-<span v-else :alt="props.emoji" @pointerenter="computeTitle" @click.stop="onClick">{{ colorizedNativeEmoji }}</span>
+<span v-else-if="useOsNativeEmojis" :alt="props.emoji" @pointerenter="computeTitle" @click.stop="onClick">{{ props.emoji }}</span>
+<span v-else @click.stop>{{ emoji }}</span>
 </template>
 
 <script lang="ts" setup>
 import { computed, inject } from 'vue';
-import { char2fluentEmojiFilePath, char2twemojiFilePath } from '@/scripts/emoji-base.js';
+import { char2twemojiFilePath, char2fluentEmojiFilePath } from '@/scripts/emoji-base.js';
 import { defaultStore } from '@/store.js';
-import { colorizeEmoji, getEmojiName } from '@/scripts/emojilist.js';
+import { getEmojiName } from '@/scripts/emojilist.js';
 import * as os from '@/os.js';
-import { copyToClipboard } from '@/scripts/copy-to-clipboard.js';
+import copyToClipboard from '@/scripts/copy-to-clipboard.js';
 import * as sound from '@/scripts/sound.js';
 import { i18n } from '@/i18n.js';
 
@@ -29,12 +30,14 @@ const react = inject<((name: string) => void) | null>('react', null);
 const char2path = defaultStore.state.emojiStyle === 'twemoji' ? char2twemojiFilePath : char2fluentEmojiFilePath;
 
 const useOsNativeEmojis = computed(() => defaultStore.state.emojiStyle === 'native');
-const url = computed(() => char2path(props.emoji));
-const colorizedNativeEmoji = computed(() => colorizeEmoji(props.emoji));
+const url = computed(() => {
+	return char2path(props.emoji);
+});
 
 // Searching from an array with 2000 items for every emoji felt like too energy-consuming, so I decided to do it lazily on pointerenter
 function computeTitle(event: PointerEvent): void {
-	(event.target as HTMLElement).title = getEmojiName(props.emoji);
+	const title = getEmojiName(props.emoji as string) ?? props.emoji as string;
+	(event.target as HTMLElement).title = title;
 }
 
 function onClick(ev: MouseEvent) {
@@ -54,7 +57,7 @@ function onClick(ev: MouseEvent) {
 			icon: 'ti ti-plus',
 			action: () => {
 				react(props.emoji);
-				sound.playMisskeySfx('reaction');
+				sound.play('reaction');
 			},
 		}] : [])], ev.currentTarget ?? ev.target);
 	}

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -13,7 +13,7 @@ import { ApPersonService } from './models/ApPersonService.js';
 import type { ApObject } from './type.js';
 import type { Resolver } from './ApResolverService.js';
 
-type Visibility = 'public' | 'home' | 'followers' | 'specified' | 'private';
+type Visibility = 'public' | 'home' | 'followers' | 'specified';
 
 type AudienceInfo = {
 	visibility: Visibility,
@@ -40,7 +40,7 @@ export class ApAudienceService {
 		const limit = promiseLimit<MiUser | null>(2);
 		const mentionedUsers = (await Promise.all(
 			others.map(id => limit(() => this.apPersonService.resolvePerson(id, resolver).catch(() => null))),
-		)).filter(x => x != null);
+		)).filter((x): x is MiUser => x != null);
 
 		if (toGroups.public.length > 0) {
 			return {
@@ -58,7 +58,7 @@ export class ApAudienceService {
 			};
 		}
 
-		if (toGroups.followers.length > 0 || ccGroups.followers.length > 0) {
+		if (toGroups.followers.length > 0) {
 			return {
 				visibility: 'followers',
 				mentionedUsers,

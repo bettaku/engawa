@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -17,7 +17,7 @@ import * as Misskey from 'cherrypick-js';
 import MkMention from './MkMention.vue';
 import { i18n } from '@/i18n.js';
 import { host as localHost } from '@/config.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
+import { api } from '@/os.js';
 
 const user = ref<Misskey.entities.UserLite>();
 
@@ -25,7 +25,7 @@ const props = defineProps<{
 	movedTo: string; // user id
 }>();
 
-misskeyApi('users/show', { userId: props.movedTo }).then(u => user.value = u);
+api('users/show', { userId: props.movedTo }).then(u => user.value = u);
 </script>
 
 <style lang="scss" module>

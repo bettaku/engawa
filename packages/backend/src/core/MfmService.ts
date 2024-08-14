@@ -1,24 +1,21 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 import { URL } from 'node:url';
 import { Inject, Injectable } from '@nestjs/common';
 import * as parse5 from 'parse5';
-import { Window, XMLSerializer } from 'happy-dom';
+import { Window } from 'happy-dom';
 import { DI } from '@/di-symbols.js';
 import type { Config } from '@/config.js';
 import { intersperse } from '@/misc/prelude/array.js';
-import { normalizeForSearch } from '@/misc/normalize-for-search.js';
 import type { IMentionedRemoteUsers } from '@/models/Note.js';
 import { bindThis } from '@/decorators.js';
-import type { DefaultTreeAdapterMap } from 'parse5';
+import * as TreeAdapter from '../../node_modules/parse5/dist/tree-adapters/default.js';
 import type * as mfm from 'cherrypick-mfm-js';
 
-const treeAdapter = parse5.defaultTreeAdapter;
-type Node = DefaultTreeAdapterMap['node'];
-type ChildNode = DefaultTreeAdapterMap['childNode'];
+const treeAdapter = TreeAdapter.defaultTreeAdapter;
 
 const urlRegex = /^https?:\/\/[\w\/:%#@$&?!()\[\]~.,=+\-]+/;
 const urlRegexFull = /^https?:\/\/[\w\/:%#@$&?!()\[\]~.,=+\-]+$/;
@@ -36,8 +33,6 @@ export class MfmService {
 		// some AP servers like Pixelfed use br tags as well as newlines
 		html = html.replace(/<br\s?\/?>\r?\n/gi, '\n');
 
-		const normalizedHashtagNames = hashtagNames == null ? undefined : new Set<string>(hashtagNames.map(x => normalizeForSearch(x)));
-
 		const dom = parse5.parseFragment(html);
 
 		let text = '';
@@ -48,7 +43,7 @@ export class MfmService {
 
 		return text.trim();
 
-		function getText(node: Node): string {
+		function getText(node: TreeAdapter.Node): string {
 			if (treeAdapter.isTextNode(node)) return node.value;
 			if (!treeAdapter.isElementNode(node)) return '';
 			if (node.nodeName === 'br') return '\n';
@@ -60,7 +55,7 @@ export class MfmService {
 			return '';
 		}
 
-		function appendChildren(childNodes: ChildNode[]): void {
+		function appendChildren(childNodes: TreeAdapter.ChildNode[]): void {
 			if (childNodes) {
 				for (const n of childNodes) {
 					analyze(n);
@@ -68,16 +63,14 @@ export class MfmService {
 			}
 		}
 
-		function analyze(node: Node) {
+		function analyze(node: TreeAdapter.Node) {
 			if (treeAdapter.isTextNode(node)) {
 				text += node.value;
 				return;
 			}
 
 			// Skip comment or document type node
-			if (!treeAdapter.isElementNode(node)) {
-				return;
-			}
+			if (!treeAdapter.isElementNode(node)) return;
 
 			switch (node.nodeName) {
 				case 'br': {
@@ -85,15 +78,16 @@ export class MfmService {
 					break;
 				}
 
-				case 'a': {
+				case 'a':
+				{
 					const txt = getText(node);
 					const rel = node.attrs.find(x => x.name === 'rel');
 					const href = node.attrs.find(x => x.name === 'href');
 
 					// ハッシュタグ
-					if (normalizedHashtagNames && href && normalizedHashtagNames.has(normalizeForSearch(txt))) {
+					if (hashtagNames && href && hashtagNames.map(x => x.toLowerCase()).includes(txt.toLowerCase())) {
 						text += txt;
-						// メンション
+					// メンション
 					} else if (txt.startsWith('@') && !(rel && rel.value.startsWith('me '))) {
 						const part = txt.split('@');
 
@@ -105,7 +99,7 @@ export class MfmService {
 						} else if (part.length === 3) {
 							text += txt;
 						}
-						// その他
+					// その他
 					} else {
 						const generateLink = () => {
 							if (!href && !txt) {
@@ -133,7 +127,8 @@ export class MfmService {
 					break;
 				}
 
-				case 'h1': {
+				case 'h1':
+				{
 					text += '【';
 					appendChildren(node.childNodes);
 					text += '】\n';
@@ -141,14 +136,16 @@ export class MfmService {
 				}
 
 				case 'b':
-				case 'strong': {
+				case 'strong':
+				{
 					text += '**';
 					appendChildren(node.childNodes);
 					text += '**';
 					break;
 				}
 
-				case 'small': {
+				case 'small':
+				{
 					text += '<small>';
 					appendChildren(node.childNodes);
 					text += '</small>';
@@ -156,7 +153,8 @@ export class MfmService {
 				}
 
 				case 's':
-				case 'del': {
+				case 'del':
+				{
 					text += '~~';
 					appendChildren(node.childNodes);
 					text += '~~';
@@ -164,7 +162,8 @@ export class MfmService {
 				}
 
 				case 'i':
-				case 'em': {
+				case 'em':
+				{
 					text += '<i>';
 					appendChildren(node.childNodes);
 					text += '</i>';
@@ -205,7 +204,8 @@ export class MfmService {
 				case 'h3':
 				case 'h4':
 				case 'h5':
-				case 'h6': {
+				case 'h6':
+				{
 					text += '\n\n';
 					appendChildren(node.childNodes);
 					break;
@@ -218,7 +218,8 @@ export class MfmService {
 				case 'article':
 				case 'li':
 				case 'dt':
-				case 'dd': {
+				case 'dd':
+				{
 					text += '\n';
 					appendChildren(node.childNodes);
 					break;
@@ -242,8 +243,6 @@ export class MfmService {
 		const { window } = new Window();
 
 		const doc = window.document;
-
-		const body = doc.createElement('p');
 
 		function appendChildren(children: mfm.MfmNode[], targetElement: any): void {
 			if (children) {
@@ -420,10 +419,6 @@ export class MfmService {
 			},
 
 			text: (node) => {
-				if (!node.props.text.match(/[\r\n]/)) {
-					return doc.createTextNode(node.props.text);
-				}
-
 				const el = doc.createElement('span');
 				const nodes = node.props.text.split(/\r\n|\r|\n/).map(x => doc.createTextNode(x));
 
@@ -455,8 +450,8 @@ export class MfmService {
 			},
 		};
 
-		appendChildren(nodes, body);
+		appendChildren(nodes, doc.body);
 
-		return new XMLSerializer().serializeToString(body);
+		return `<p>${doc.body.innerHTML}</p>`;
 	}
 }

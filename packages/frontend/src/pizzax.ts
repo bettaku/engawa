@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -8,12 +8,11 @@
 import { onUnmounted, Ref, ref, watch } from 'vue';
 import { BroadcastChannel } from 'broadcast-channel';
 import { $i } from '@/account.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
+import { api } from '@/os.js';
 import { get, set } from '@/scripts/idb-proxy.js';
 import { defaultStore } from '@/store.js';
 import { useStream } from '@/stream.js';
 import { deepClone } from '@/scripts/clone.js';
-import { deepMerge } from '@/scripts/merge.js';
 
 type StateDef = Record<string, {
 	where: 'account' | 'device' | 'deviceAccount';
@@ -81,21 +80,6 @@ export class Storage<T extends StateDef> {
 		this.loaded = this.ready.then(() => this.load());
 	}
 
-	private isPureObject(value: unknown): value is Record<string | number | symbol, unknown> {
-		return typeof value === 'object' && value !== null && !Array.isArray(value);
-	}
-
-	private mergeState<X>(value: X, def: X): X {
-		if (this.isPureObject(value) && this.isPureObject(def)) {
-			const merged = deepMerge(value, def);
-
-			if (_DEV_) console.log('Merging state. Incoming: ', value, ' Default: ', def, ' Result: ', merged);
-
-			return merged as X;
-		}
-		return value;
-	}
-
 	private async init(): Promise<void> {
 		await this.migrate();
 
@@ -105,11 +89,11 @@ export class Storage<T extends StateDef> {
 
 		for (const [k, v] of Object.entries(this.def) as [keyof T, T[keyof T]['default']][]) {
 			if (v.where === 'device' && Object.prototype.hasOwnProperty.call(deviceState, k)) {
-				this.reactiveState[k].value = this.state[k] = this.mergeState<T[keyof T]['default']>(deviceState[k], v.default);
+				this.reactiveState[k].value = this.state[k] = deviceState[k];
 			} else if (v.where === 'account' && $i && Object.prototype.hasOwnProperty.call(registryCache, k)) {
-				this.reactiveState[k].value = this.state[k] = this.mergeState<T[keyof T]['default']>(registryCache[k], v.default);
+				this.reactiveState[k].value = this.state[k] = registryCache[k];
 			} else if (v.where === 'deviceAccount' && Object.prototype.hasOwnProperty.call(deviceAccountState, k)) {
-				this.reactiveState[k].value = this.state[k] = this.mergeState<T[keyof T]['default']>(deviceAccountState[k], v.default);
+				this.reactiveState[k].value = this.state[k] = deviceAccountState[k];
 			} else {
 				this.reactiveState[k].value = this.state[k] = v.default;
 				if (_DEV_) console.log('Use default value', k, v.default);
@@ -150,7 +134,7 @@ export class Storage<T extends StateDef> {
 				window.setTimeout(async () => {
 					await defaultStore.ready;
 
-					misskeyApi('i/registry/get-all', { scope: ['client', this.key] })
+					api('i/registry/get-all', { scope: ['client', this.key] })
 						.then(kvs => {
 							const cache: Partial<T> = {};
 							for (const [k, v] of Object.entries(this.def) as [keyof T, T[keyof T]['default']][]) {
@@ -184,7 +168,7 @@ export class Storage<T extends StateDef> {
 		this.reactiveState[key].value = this.state[key] = rawValue;
 
 		return this.addIdbSetJob(async () => {
-			if (_DEV_) console.log(`set ${String(key)} start`);
+			if (_DEV_) console.log(`set ${key} start`);
 			switch (this.def[key].where) {
 				case 'device': {
 					this.pizzaxChannel.postMessage({
@@ -215,7 +199,7 @@ export class Storage<T extends StateDef> {
 					const cache = await get(this.registryCacheKeyName) || {};
 					cache[key] = rawValue;
 					await set(this.registryCacheKeyName, cache);
-					await misskeyApi('i/registry/set', {
+					await api('i/registry/set', {
 						scope: ['client', this.key],
 						key: key.toString(),
 						value: rawValue,
@@ -223,7 +207,7 @@ export class Storage<T extends StateDef> {
 					break;
 				}
 			}
-			if (_DEV_) console.log(`set ${String(key)} complete`);
+			if (_DEV_) console.log(`set ${key} complete`);
 		});
 	}
 
@@ -239,12 +223,9 @@ export class Storage<T extends StateDef> {
 
 	/**
 	 * 特定のキーの、簡易的なgetter/setterを作ります
-	 * 主にvue上で設定コントロールのmodelとして使う用
+	 * 主にvue場で設定コントロールのmodelとして使う用
 	 */
-	public makeGetterSetter<K extends keyof T>(key: K, getter?: (v: T[K]) => unknown, setter?: (v: unknown) => T[K]): {
-		get: () => T[K]['default'];
-		set: (value: T[K]['default']) => void;
-	} {
+	public makeGetterSetter<K extends keyof T>(key: K, getter?: (v: T[K]) => unknown, setter?: (v: unknown) => T[K]) {
 		const valueRef = ref(this.state[key]);
 
 		const stop = watch(this.reactiveState[key], val => {

@@ -1,17 +1,15 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<MkA :to="`/play/${flash.id}`" class="vhpxefrk _panel">
+<MkA :to="`/play/${flash.id}`" class="vhpxefrk _panel" tabindex="-1">
 	<article>
 		<header>
 			<h1 :title="flash.title">{{ flash.title }}</h1>
 		</header>
-		<p v-if="flash.summary" :title="flash.summary">
-			<Mfm class="summaryMfm" :text="flash.summary" :plain="true" :nowrap="true"/>
-		</p>
+		<p v-if="flash.summary" :title="flash.summary">{{ flash.summary.length > 85 ? flash.summary.slice(0, 85) + '…' : flash.summary }}</p>
 		<footer>
 			<img class="icon" :src="flash.user.avatarUrl"/>
 			<p>{{ userName(flash.user) }}</p>
@@ -40,10 +38,6 @@ const props = defineProps<{
 		color: var(--accent);
 	}
 
-	&:focus-visible {
-		outline-offset: -2px;
-	}
-
 	> article {
 		padding: 16px;
 
@@ -61,12 +55,6 @@ const props = defineProps<{
 			margin: 0;
 			color: var(--urlPreviewText);
 			font-size: 0.8em;
-			overflow: clip;
-
-			> .summaryMfm {
-				display: block;
-				width: 100%;
-			}
 		}
 
 		> footer {

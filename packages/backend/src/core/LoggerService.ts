@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -23,8 +23,8 @@ export class LoggerService {
 	}
 
 	@bindThis
-	public getLogger(domain: string, color?: KEYWORD | undefined) {
+	public getLogger(domain: string, color?: KEYWORD | undefined, store?: boolean) {
 		const logger = this.cloudLogging?.log(this.config.cloudLogging?.logName ?? 'cherrypick');
-		return new Logger(domain, color, logger);
+		return new Logger(domain, color, store, logger);
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -37,7 +37,7 @@ export class ServerStatsService implements OnApplicationShutdown {
 		const log = [] as any[];
 
 		ev.on('requestServerStatsLog', x => {
-			ev.emit(`serverStatsLog:${x.id}`, log.slice(0, x.length));
+			ev.emit(`serverStatsLog:${x.id}`, log.slice(0, x.length ?? 50));
 		});
 
 		const tick = async () => {

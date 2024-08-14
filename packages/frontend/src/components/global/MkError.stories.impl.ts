@@ -1,11 +1,12 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { action } from '@storybook/addon-actions';
-import { expect, waitFor } from '@storybook/test';
+import { expect } from '@storybook/jest';
+import { waitFor } from '@storybook/testing-library';
 import { StoryObj } from '@storybook/vue3';
 import MkError from './MkError.vue';
 export const Default = {

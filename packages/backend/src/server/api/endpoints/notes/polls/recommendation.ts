@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -32,7 +32,6 @@ export const paramDef = {
 	properties: {
 		limit: { type: 'integer', minimum: 1, maximum: 100, default: 10 },
 		offset: { type: 'integer', default: 0 },
-		excludeChannels: { type: 'boolean', default: false },
 	},
 	required: [],
 } as const;
@@ -85,12 +84,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				.andWhere(`poll.userId NOT IN (${ mutingQuery.getQuery() })`);
 
 			query.setParameters(mutingQuery.getParameters());
-			//#endregion
-
-			//#region exclude channels
-			if (ps.excludeChannels) {
-				query.andWhere('poll.channelId IS NULL');
-			}
 			//#endregion
 
 			const polls = await query

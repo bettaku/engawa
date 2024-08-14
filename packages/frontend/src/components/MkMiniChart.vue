@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -22,8 +22,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 		stroke-width="2"
 	/>
 	<circle
-		:cx="headX ?? undefined"
-		:cy="headY ?? undefined"
+		:cx="headX"
+		:cy="headY"
 		r="3"
 		:fill="color"
 	/>

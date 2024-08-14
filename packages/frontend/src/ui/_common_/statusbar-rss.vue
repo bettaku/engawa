@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -28,7 +28,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <script lang="ts" setup>
 import { ref } from 'vue';
-import * as Misskey from 'cherrypick-js';
 import MarqueeText from '@/components/MkMarquee.vue';
 import { useInterval } from '@/scripts/use-interval.js';
 import { shuffle } from '@/scripts/shuffle.js';
@@ -43,13 +42,13 @@ const props = defineProps<{
 	refreshIntervalSec?: number;
 }>();
 
-const items = ref<Misskey.entities.FetchRssResponse['items']>([]);
+const items = ref([]);
 const fetching = ref(true);
 const key = ref(0);
 
 const tick = () => {
 	window.fetch(`/api/fetch-rss?url=${props.url}`, {}).then(res => {
-		res.json().then((feed: Misskey.entities.FetchRssResponse) => {
+		res.json().then(feed => {
 			if (props.shuffle) {
 				shuffle(feed.items);
 			}

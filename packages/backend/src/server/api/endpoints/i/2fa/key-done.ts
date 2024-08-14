@@ -1,9 +1,9 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { comparePassword } from '@/misc/password.js';
+import bcrypt from 'bcryptjs';
 import { Inject, Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
@@ -86,7 +86,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 				}
 			}
 
-			const passwordMatched = await comparePassword(ps.password, profile.password ?? '');
+			const passwordMatched = await bcrypt.compare(ps.password, profile.password ?? '');
 			if (!passwordMatched) {
 				throw new ApiError(meta.errors.incorrectPassword);
 			}
@@ -96,10 +96,10 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 			}
 
 			const keyInfo = await this.webAuthnService.verifyRegistration(me.id, ps.credential);
-			const keyId = keyInfo.credentialID;
 
+			const credentialId = Buffer.from(keyInfo.credentialID).toString('base64url');
 			await this.userSecurityKeysRepository.insert({
-				id: keyId,
+				id: credentialId,
 				userId: me.id,
 				name: ps.name,
 				publicKey: Buffer.from(keyInfo.credentialPublicKey).toString('base64url'),
@@ -111,12 +111,12 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 
 			// Publish meUpdated event
 			this.globalEventService.publishMainStream(me.id, 'meUpdated', await this.userEntityService.pack(me.id, me, {
-				schema: 'MeDetailed',
+				detail: true,
 				includeSecrets: true,
 			}));
 
 			return {
-				id: keyId,
+				id: credentialId,
 				name: ps.name,
 			};
 		});

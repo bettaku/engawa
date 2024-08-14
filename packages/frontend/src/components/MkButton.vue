@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -11,7 +11,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 	:type="type"
 	:name="name"
 	:value="value"
-	:disabled="disabled"
 	@click="emit('click', $event)"
 	@mousedown="onMousedown"
 >
@@ -23,8 +22,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 <MkA
 	v-else class="_button"
 	:class="[$style.root, { [$style.inline]: inline, [$style.primary]: primary, [$style.gradate]: gradate, [$style.danger]: danger, [$style.rounded]: rounded, [$style.full]: full, [$style.small]: small, [$style.large]: large, [$style.transparent]: transparent, [$style.asLike]: asLike }]"
-	:to="to ?? '#'"
-	:behavior="linkBehavior"
+	:to="to"
 	@mousedown="onMousedown"
 >
 	<div ref="ripples" :class="$style.ripples" :data-children-class="$style.ripple"></div>
@@ -47,7 +45,6 @@ const props = defineProps<{
 	inline?: boolean;
 	link?: boolean;
 	to?: string;
-	linkBehavior?: null | 'window' | 'browser';
 	autofocus?: boolean;
 	wait?: boolean;
 	danger?: boolean;
@@ -58,7 +55,6 @@ const props = defineProps<{
 	asLike?: boolean;
 	name?: string;
 	value?: string;
-	disabled?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -138,10 +134,6 @@ function onMousedown(evt: MouseEvent): void {
 	overflow: clip;
 	box-sizing: border-box;
 	transition: background 0.1s ease;
-
-	&:hover {
-		text-decoration: none;
-	}
 
 	&:not(:disabled):hover {
 		background: var(--buttonHoverBg);
@@ -254,6 +246,7 @@ function onMousedown(evt: MouseEvent): void {
 	}
 
 	&:focus-visible {
+		outline: solid 2px var(--focus);
 		outline-offset: 2px;
 	}
 

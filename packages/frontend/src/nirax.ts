@@ -1,33 +1,24 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 // NIRAX --- A lightweight router
 
-import { Component, onMounted, shallowRef, ShallowRef } from 'vue';
 import { EventEmitter } from 'eventemitter3';
+import { Component, onMounted, shallowRef, ShallowRef } from 'vue';
 import { safeURIDecode } from '@/scripts/safe-uri-decode.js';
 
-interface RouteDefBase {
+type RouteDef = {
 	path: string;
+	component: Component;
 	query?: Record<string, string>;
 	loginRequired?: boolean;
 	name?: string;
 	hash?: string;
 	globalCacheKey?: string;
 	children?: RouteDef[];
-}
-
-interface RouteDefWithComponent extends RouteDefBase {
-	component: Component,
-}
-
-interface RouteDefWithRedirect extends RouteDefBase {
-	redirect: string | ((props: Map<string, string | boolean>) => string);
-}
-
-export type RouteDef = RouteDefWithComponent | RouteDefWithRedirect;
+};
 
 type ParsedPath = (string | {
 	name: string;
@@ -36,40 +27,7 @@ type ParsedPath = (string | {
 	optional?: boolean;
 })[];
 
-export type RouterEvent = {
-	change: (ctx: {
-		beforePath: string;
-		path: string;
-		resolved: Resolved;
-		key: string;
-	}) => void;
-	replace: (ctx: {
-		path: string;
-		key: string;
-	}) => void;
-	push: (ctx: {
-		beforePath: string;
-		path: string;
-		route: RouteDef | null;
-		props: Map<string, string> | null;
-		key: string;
-	}) => void;
-	same: () => void;
-}
-
-export type Resolved = {
-	route: RouteDef;
-	props: Map<string, string | boolean>;
-	child?: Resolved;
-	redirected?: boolean;
-
-	/** @internal */
-	_parsedRoute: {
-		fullPath: string;
-		queryString: string | null;
-		hash: string | null;
-	};
-};
+export type Resolved = { route: RouteDef; props: Map<string, string | boolean>; child?: Resolved; };
 
 function parsePath(path: string): ParsedPath {
 	const res = [] as ParsedPath;
@@ -96,99 +54,34 @@ function parsePath(path: string): ParsedPath {
 	return res;
 }
 
-export interface IRouter extends EventEmitter<RouterEvent> {
-	current: Resolved;
-	currentRef: ShallowRef<Resolved>;
-	currentRoute: ShallowRef<RouteDef>;
-	navHook: ((path: string, flag?: any) => boolean) | null;
-
-	/**
-	 * ルートの初期化（eventListenerの定義後に必ず呼び出すこと）
-	 */
-	init(): void;
-
-	resolve(path: string): Resolved | null;
-
-	getCurrentPath(): any;
-
-	getCurrentKey(): string;
-
-	push(path: string, flag?: any): void;
-
-	replace(path: string, key?: string | null): void;
-
-	/** @see EventEmitter */
-	eventNames(): Array<EventEmitter.EventNames<RouterEvent>>;
-
-	/** @see EventEmitter */
-	listeners<T extends EventEmitter.EventNames<RouterEvent>>(
-		event: T
-	): Array<EventEmitter.EventListener<RouterEvent, T>>;
-
-	/** @see EventEmitter */
-	listenerCount(
-		event: EventEmitter.EventNames<RouterEvent>
-	): number;
-
-	/** @see EventEmitter */
-	emit<T extends EventEmitter.EventNames<RouterEvent>>(
-		event: T,
-		...args: EventEmitter.EventArgs<RouterEvent, T>
-	): boolean;
-
-	/** @see EventEmitter */
-	on<T extends EventEmitter.EventNames<RouterEvent>>(
-		event: T,
-		fn: EventEmitter.EventListener<RouterEvent, T>,
-		context?: any
-	): this;
-
-	/** @see EventEmitter */
-	addListener<T extends EventEmitter.EventNames<RouterEvent>>(
-		event: T,
-		fn: EventEmitter.EventListener<RouterEvent, T>,
-		context?: any
-	): this;
-
-	/** @see EventEmitter */
-	once<T extends EventEmitter.EventNames<RouterEvent>>(
-		event: T,
-		fn: EventEmitter.EventListener<RouterEvent, T>,
-		context?: any
-	): this;
-
-	/** @see EventEmitter */
-	removeListener<T extends EventEmitter.EventNames<RouterEvent>>(
-		event: T,
-		fn?: EventEmitter.EventListener<RouterEvent, T>,
-		context?: any,
-		once?: boolean | undefined
-	): this;
-
-	/** @see EventEmitter */
-	off<T extends EventEmitter.EventNames<RouterEvent>>(
-		event: T,
-		fn?: EventEmitter.EventListener<RouterEvent, T>,
-		context?: any,
-		once?: boolean | undefined
-	): this;
-
-	/** @see EventEmitter */
-	removeAllListeners(
-		event?: EventEmitter.EventNames<RouterEvent>
-	): this;
-}
-
-export class Router extends EventEmitter<RouterEvent> implements IRouter {
+export class Router extends EventEmitter<{
+	change: (ctx: {
+		beforePath: string;
+		path: string;
+		resolved: Resolved;
+		key: string;
+	}) => void;
+	replace: (ctx: {
+		path: string;
+		key: string;
+	}) => void;
+	push: (ctx: {
+		beforePath: string;
+		path: string;
+		route: RouteDef | null;
+		props: Map<string, string> | null;
+		key: string;
+	}) => void;
+	same: () => void;
+}> {
 	private routes: RouteDef[];
 	public current: Resolved;
-	public currentRef: ShallowRef<Resolved>;
-	public currentRoute: ShallowRef<RouteDef>;
+	public currentRef: ShallowRef<Resolved> = shallowRef();
+	public currentRoute: ShallowRef<RouteDef> = shallowRef();
 	private currentPath: string;
 	private isLoggedIn: boolean;
 	private notFoundPageComponent: Component;
 	private currentKey = Date.now().toString();
-	private redirectCount = 0;
 
 	public navHook: ((path: string, flag?: any) => boolean) | null = null;
 
@@ -196,24 +89,13 @@ export class Router extends EventEmitter<RouterEvent> implements IRouter {
 		super();
 
 		this.routes = routes;
-		this.current = this.resolve(currentPath)!;
-		this.currentRef = shallowRef(this.current);
-		this.currentRoute = shallowRef(this.current.route);
 		this.currentPath = currentPath;
 		this.isLoggedIn = isLoggedIn;
 		this.notFoundPageComponent = notFoundPageComponent;
-	}
-
-	public init() {
-		const res = this.navigate(this.currentPath, null, false);
-		this.emit('replace', {
-			path: res._parsedRoute.fullPath,
-			key: this.currentKey,
-		});
+		this.navigate(currentPath, null, false);
 	}
 
 	public resolve(path: string): Resolved | null {
-		const fullPath = path;
 		let queryString: string | null = null;
 		let hash: string | null = null;
 		if (path[0] === '/') path = path.substring(1);
@@ -225,12 +107,6 @@ export class Router extends EventEmitter<RouterEvent> implements IRouter {
 			queryString = path.substring(path.indexOf('?') + 1);
 			path = path.substring(0, path.indexOf('?'));
 		}
-
-		const _parsedRoute = {
-			fullPath,
-			queryString,
-			hash,
-		};
 
 		if (_DEV_) console.log('Routing: ', path, queryString);
 
@@ -282,7 +158,6 @@ export class Router extends EventEmitter<RouterEvent> implements IRouter {
 								route,
 								props,
 								child,
-								_parsedRoute,
 							};
 						} else {
 							continue forEachRouteLoop;
@@ -308,7 +183,6 @@ export class Router extends EventEmitter<RouterEvent> implements IRouter {
 					return {
 						route,
 						props,
-						_parsedRoute,
 					};
 				} else {
 					if (route.children) {
@@ -318,7 +192,6 @@ export class Router extends EventEmitter<RouterEvent> implements IRouter {
 								route,
 								props,
 								child,
-								_parsedRoute,
 							};
 						} else {
 							continue forEachRouteLoop;
@@ -337,7 +210,7 @@ export class Router extends EventEmitter<RouterEvent> implements IRouter {
 		return check(this.routes, _parts);
 	}
 
-	private navigate(path: string, key: string | null | undefined, emitChange = true, _redirected = false): Resolved {
+	private navigate(path: string, key: string | null | undefined, emitChange = true) {
 		const beforePath = this.currentPath;
 		this.currentPath = path;
 
@@ -345,20 +218,6 @@ export class Router extends EventEmitter<RouterEvent> implements IRouter {
 
 		if (res == null) {
 			throw new Error('no route found for: ' + path);
-		}
-
-		if ('redirect' in res.route) {
-			let redirectPath: string;
-			if (typeof res.route.redirect === 'function') {
-				redirectPath = res.route.redirect(res.props);
-			} else {
-				redirectPath = res.route.redirect + (res._parsedRoute.queryString ? '?' + res._parsedRoute.queryString : '') + (res._parsedRoute.hash ? '#' + res._parsedRoute.hash : '');
-			}
-			if (_DEV_) console.log('Redirecting to: ', redirectPath);
-			if (_redirected && this.redirectCount++ > 10) {
-				throw new Error('redirect loop detected');
-			}
-			return this.navigate(redirectPath, null, emitChange, true);
 		}
 
 		if (res.route.loginRequired && !this.isLoggedIn) {
@@ -373,7 +232,7 @@ export class Router extends EventEmitter<RouterEvent> implements IRouter {
 		this.currentRoute.value = res.route;
 		this.currentKey = res.route.globalCacheKey ?? key ?? path;
 
-		if (emitChange && res.route.path !== '/:(*)') {
+		if (emitChange) {
 			this.emit('change', {
 				beforePath,
 				path,
@@ -382,11 +241,7 @@ export class Router extends EventEmitter<RouterEvent> implements IRouter {
 			});
 		}
 
-		this.redirectCount = 0;
-		return {
-			...res,
-			redirected: _redirected,
-		};
+		return res;
 	}
 
 	public getCurrentPath() {
@@ -408,34 +263,25 @@ export class Router extends EventEmitter<RouterEvent> implements IRouter {
 			if (cancel) return;
 		}
 		const res = this.navigate(path, null);
-		if (res.route.path === '/:(*)') {
-			location.href = path;
-		} else {
-			this.emit('push', {
-				beforePath,
-				path: res._parsedRoute.fullPath,
-				route: res.route,
-				props: res.props,
-				key: this.currentKey,
-			});
-		}
-	}
-
-	public replace(path: string, key?: string | null) {
-		const res = this.navigate(path, key);
-		this.emit('replace', {
-			path: res._parsedRoute.fullPath,
+		this.emit('push', {
+			beforePath,
+			path,
+			route: res.route,
+			props: res.props,
 			key: this.currentKey,
 		});
 	}
+
+	public replace(path: string, key?: string | null) {
+		this.navigate(path, key);
+	}
 }
 
-export function useScrollPositionManager(getScrollContainer: () => HTMLElement | null, router: IRouter) {
+export function useScrollPositionManager(getScrollContainer: () => HTMLElement, router: Router) {
 	const scrollPosStore = new Map<string, number>();
 
 	onMounted(() => {
 		const scrollContainer = getScrollContainer();
-		if (scrollContainer == null) return;
 
 		scrollContainer.addEventListener('scroll', () => {
 			scrollPosStore.set(router.getCurrentKey(), scrollContainer.scrollTop);

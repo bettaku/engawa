@@ -1,40 +1,28 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<div :class="$style.root">
-	<MkMediaList v-if="image" :mediaList="[image]" :class="$style.mediaList"/>
+<div>
+	<MediaImage
+		v-if="image"
+		:image="image"
+		:disableImageLink="true"
+	/>
 </div>
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue';
+import { ref } from 'vue';
 import * as Misskey from 'cherrypick-js';
-import MkMediaList from '@/components/MkMediaList.vue';
+import { ImageBlock } from './block.type.js';
+import MediaImage from '@/components/MkMediaImage.vue';
 
 const props = defineProps<{
-	block: Misskey.entities.PageBlock,
+	block: ImageBlock,
 	page: Misskey.entities.Page,
 }>();
 
-const image = ref<Misskey.entities.DriveFile | null>(null);
-
-onMounted(() => {
-	image.value = props.page.attachedFiles.find(x => x.id === props.block.fileId) ?? null;
-});
+const image = ref<Misskey.entities.DriveFile>(props.page.attachedFiles.find(x => x.id === props.block.fileId));
 </script>
-
-<style lang="scss" module>
-.root {
-	border: 1px solid var(--divider);
-	border-radius: var(--radius);
-	overflow: hidden;
-}
-.mediaList {
-	// MkMediaList 内の上部マージン 4px
-	margin-top: -4px;
-	height: calc(100% + 4px);
-}
-</style>

@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -19,13 +19,11 @@ import { ref, watch } from 'vue';
 import MkTextarea from '@/components/MkTextarea.vue';
 import MkInfo from '@/components/MkInfo.vue';
 import MkButton from '@/components/MkButton.vue';
-import { signinRequired } from '@/account.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
+import * as os from '@/os.js';
+import { $i } from '@/account.js';
 import { i18n } from '@/i18n.js';
 
-const $i = signinRequired();
-
-const instanceMutes = ref($i.mutedInstances.join('\n'));
+const instanceMutes = ref($i!.mutedInstances.join('\n'));
 const changed = ref(false);
 
 async function save() {
@@ -34,7 +32,7 @@ async function save() {
 		.map(el => el.trim())
 		.filter(el => el);
 
-	await misskeyApi('i/update', {
+	await os.api('i/update', {
 		mutedInstances: mutes,
 	});
 

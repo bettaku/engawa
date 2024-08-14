@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -9,32 +9,12 @@ import type { IActivity } from '@/core/activitypub/type.js';
 import type { MiDriveFile } from '@/models/DriveFile.js';
 import type { MiAbuseUserReport } from '@/models/AbuseUserReport.js';
 import type { MiWebhook, webhookEventTypes } from '@/models/Webhook.js';
-import type { MiSystemWebhook, SystemWebhookEventType } from '@/models/SystemWebhook.js';
 import type { Config } from '@/config.js';
 import { DI } from '@/di-symbols.js';
 import { bindThis } from '@/decorators.js';
 import type { Antenna } from '@/server/api/endpoints/i/import-antennas.js';
-import { ApRequestCreator } from '@/core/activitypub/ApRequestService.js';
-import type {
-	DbJobData,
-	DeliverJobData,
-	RelationshipJobData,
-	SystemWebhookDeliverJobData,
-	ThinUser,
-	UserWebhookDeliverJobData,
-} from '../queue/types.js';
-import type {
-	DbQueue,
-	DeliverQueue,
-	EndedPollNotificationQueue,
-	InboxQueue,
-	ObjectStorageQueue,
-	RelationshipQueue,
-	SystemQueue,
-	UserWebhookDeliverQueue,
-	SystemWebhookDeliverQueue,
-	ScheduledNoteDeleteQueue,
-} from './QueueModule.js';
+import type { DbQueue, DeliverQueue, EndedPollNotificationQueue, InboxQueue, ObjectStorageQueue, RelationshipQueue, SystemQueue, WebhookDeliverQueue } from './QueueModule.js';
+import type { DbJobData, DeliverJobData, RelationshipJobData, ThinUser } from '../queue/types.js';
 import type httpSignature from '@peertube/http-signature';
 import type * as Bull from 'bullmq';
 
@@ -46,14 +26,12 @@ export class QueueService {
 
 		@Inject('queue:system') public systemQueue: SystemQueue,
 		@Inject('queue:endedPollNotification') public endedPollNotificationQueue: EndedPollNotificationQueue,
-		@Inject('queue:scheduledNoteDelete') public scheduledNoteDeleteQueue: ScheduledNoteDeleteQueue,
 		@Inject('queue:deliver') public deliverQueue: DeliverQueue,
 		@Inject('queue:inbox') public inboxQueue: InboxQueue,
 		@Inject('queue:db') public dbQueue: DbQueue,
 		@Inject('queue:relationship') public relationshipQueue: RelationshipQueue,
 		@Inject('queue:objectStorage') public objectStorageQueue: ObjectStorageQueue,
-		@Inject('queue:userWebhookDeliver') public userWebhookDeliverQueue: UserWebhookDeliverQueue,
-		@Inject('queue:systemWebhookDeliver') public systemWebhookDeliverQueue: SystemWebhookDeliverQueue,
+		@Inject('queue:webhookDeliver') public webhookDeliverQueue: WebhookDeliverQueue,
 	) {
 		this.systemQueue.add('tickCharts', {
 		}, {
@@ -97,15 +75,11 @@ export class QueueService {
 		if (content == null) return null;
 		if (to == null) return null;
 
-		const contentBody = JSON.stringify(content);
-		const digest = ApRequestCreator.createDigest(contentBody);
-
 		const data: DeliverJobData = {
 			user: {
 				id: user.id,
 			},
-			content: contentBody,
-			digest,
+			content,
 			to,
 			isSharedInbox,
 		};
@@ -130,8 +104,6 @@ export class QueueService {
 	@bindThis
 	public async deliverMany(user: ThinUser, content: IActivity | null, inboxes: Map<string, boolean>) {
 		if (content == null) return null;
-		const contentBody = JSON.stringify(content);
-		const digest = ApRequestCreator.createDigest(contentBody);
 
 		const opts = {
 			attempts: this.config.deliverJobMaxAttempts ?? 12,
@@ -146,8 +118,7 @@ export class QueueService {
 			name: d[0],
 			data: {
 				user,
-				content: contentBody,
-				digest,
+				content,
 				to: d[0],
 				isSharedInbox: d[1],
 			},
@@ -197,16 +168,6 @@ export class QueueService {
 	@bindThis
 	public createExportNotesJob(user: ThinUser) {
 		return this.dbQueue.add('exportNotes', {
-			user: { id: user.id },
-		}, {
-			removeOnComplete: true,
-			removeOnFail: true,
-		});
-	}
-
-	@bindThis
-	public createExportClipsJob(user: ThinUser) {
-		return this.dbQueue.add('exportClips', {
 			user: { id: user.id },
 		}, {
 			removeOnComplete: true,
@@ -458,13 +419,9 @@ export class QueueService {
 		});
 	}
 
-	/**
-	 * @see UserWebhookDeliverJobData
-	 * @see WebhookDeliverProcessorService
-	 */
 	@bindThis
-	public userWebhookDeliver(webhook: MiWebhook, type: typeof webhookEventTypes[number], content: unknown) {
-		const data: UserWebhookDeliverJobData = {
+	public webhookDeliver(webhook: MiWebhook, type: typeof webhookEventTypes[number], content: unknown) {
+		const data = {
 			type,
 			content,
 			webhookId: webhook.id,
@@ -475,33 +432,7 @@ export class QueueService {
 			eventId: randomUUID(),
 		};
 
-		return this.userWebhookDeliverQueue.add(webhook.id, data, {
-			attempts: 4,
-			backoff: {
-				type: 'custom',
-			},
-			removeOnComplete: true,
-			removeOnFail: true,
-		});
-	}
-
-	/**
-	 * @see SystemWebhookDeliverJobData
-	 * @see WebhookDeliverProcessorService
-	 */
-	@bindThis
-	public systemWebhookDeliver(webhook: MiSystemWebhook, type: SystemWebhookEventType, content: unknown) {
-		const data: SystemWebhookDeliverJobData = {
-			type,
-			content,
-			webhookId: webhook.id,
-			to: webhook.url,
-			secret: webhook.secret,
-			createdAt: Date.now(),
-			eventId: randomUUID(),
-		};
-
-		return this.systemWebhookDeliverQueue.add(webhook.id, data, {
+		return this.webhookDeliverQueue.add(webhook.id, data, {
 			attempts: 4,
 			backoff: {
 				type: 'custom',

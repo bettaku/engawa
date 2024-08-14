@@ -1,10 +1,10 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<div ref="rootEl" :class="$style.root">
+<div ref="el" :class="$style.root">
 	<header :class="[$style.header, { [$style.reduceAnimation]: !defaultStore.state.animation, [$style.showEl]: (showEl && ['hideHeaderOnly', 'hideHeaderFloatBtn', 'hide'].includes(<string>defaultStore.state.displayHeaderNavBarWhenScroll)) && isMobile && mainRouter.currentRoute.value.name === 'explore' }]" class="_button" :style="{ background: bg }" @click="showBody = !showBody">
 		<div :class="$style.title"><div><slot name="header"></slot></div></div>
 		<div :class="$style.divider"></div>
@@ -14,10 +14,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 		</button>
 	</header>
 	<Transition
-		:enterActiveClass="defaultStore.state.animation ? $style.folderToggleEnterActive : ''"
-		:leaveActiveClass="defaultStore.state.animation ? $style.folderToggleLeaveActive : ''"
-		:enterFromClass="defaultStore.state.animation ? $style.folderToggleEnterFrom : ''"
-		:leaveToClass="defaultStore.state.animation ? $style.folderToggleLeaveTo : ''"
+		:name="defaultStore.state.animation ? 'folder-toggle' : ''"
 		@enter="enter"
 		@afterEnter="afterEnter"
 		@leave="leave"
@@ -34,7 +31,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 import { onMounted, ref, shallowRef, watch } from 'vue';
 import tinycolor from 'tinycolor2';
 import { miLocalStorage } from '@/local-storage.js';
-import { mainRouter } from '@/router/main.js';
+import { mainRouter } from '@/router.js';
 import { defaultStore } from '@/store.js';
 import { deviceKind } from '@/scripts/device-kind.js';
 import { globalEvents } from '@/events.js';
@@ -57,8 +54,8 @@ const props = withDefaults(defineProps<{
 	expanded: true,
 });
 
-const rootEl = shallowRef<HTMLDivElement>();
-const bg = ref<string>();
+const el = shallowRef<HTMLDivElement>();
+const bg = ref<string | null>(null);
 const showBody = ref((props.persistKey && miLocalStorage.getItem(`${miLocalStoragePrefix}${props.persistKey}`)) ? (miLocalStorage.getItem(`${miLocalStoragePrefix}${props.persistKey}`) === 't') : props.expanded);
 
 watch(showBody, () => {
@@ -67,44 +64,40 @@ watch(showBody, () => {
 	}
 });
 
-function enter(element: Element) {
-	const el = element as HTMLElement;
+function enter(el: Element) {
 	const elementHeight = el.getBoundingClientRect().height;
-	el.style.height = '0';
+	el.style.height = 0;
 	el.offsetHeight; // reflow
 	el.style.height = elementHeight + 'px';
 }
 
-function afterEnter(element: Element) {
-	const el = element as HTMLElement;
-	el.style.height = 'unset';
+function afterEnter(el: Element) {
+	el.style.height = null;
 }
 
-function leave(element: Element) {
-	const el = element as HTMLElement;
+function leave(el: Element) {
 	const elementHeight = el.getBoundingClientRect().height;
 	el.style.height = elementHeight + 'px';
 	el.offsetHeight; // reflow
-	el.style.height = '0';
+	el.style.height = 0;
 }
 
-function afterLeave(element: Element) {
-	const el = element as HTMLElement;
-	el.style.height = 'unset';
+function afterLeave(el: Element) {
+	el.style.height = null;
 }
 
 onMounted(() => {
-	function getParentBg(el?: HTMLElement | null): string {
+	function getParentBg(el: HTMLElement | null): string {
 		if (el == null || el.tagName === 'BODY') return 'var(--bg)';
-		const background = el.style.background || el.style.backgroundColor;
-		if (background) {
-			return background;
+		const bg = el.style.background || el.style.backgroundColor;
+		if (bg) {
+			return bg;
 		} else {
 			return getParentBg(el.parentElement);
 		}
 	}
 
-	const rawBg = getParentBg(rootEl.value);
+	const rawBg = getParentBg(el.value);
 	const _bg = tinycolor(rawBg.startsWith('var(') ? getComputedStyle(document.documentElement).getPropertyValue(rawBg.slice(4, -1)) : rawBg);
 	_bg.setAlpha(0.85);
 	bg.value = _bg.toRgbString();
@@ -116,12 +109,14 @@ onMounted(() => {
 </script>
 
 <style lang="scss" module>
-.folderToggleEnterActive, .folderToggleLeaveActive {
+.folder-toggle-enter-active, .folder-toggle-leave-active {
 	overflow-y: clip;
 	transition: opacity 0.5s, height 0.5s !important;
 }
-
-.folderToggleEnterFrom, .folderToggleLeaveTo {
+.folder-toggle-enter-from {
+	opacity: 0;
+}
+.folder-toggle-leave-to {
 	opacity: 0;
 }
 

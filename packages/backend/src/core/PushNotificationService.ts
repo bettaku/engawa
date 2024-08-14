@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -106,7 +106,7 @@ export class PushNotificationService implements OnApplicationShutdown {
 				type,
 				body: (type === 'notification' || type === 'unreadAntennaNote') ? truncateBody(type, body) : body,
 				userId,
-				dateTime: Date.now(),
+				dateTime: (new Date()).getTime(),
 			}), {
 				proxy: this.config.proxy,
 			}).catch((err: any) => {
@@ -120,17 +120,10 @@ export class PushNotificationService implements OnApplicationShutdown {
 						endpoint: subscription.endpoint,
 						auth: subscription.auth,
 						publickey: subscription.publickey,
-					}).then(() => {
-						this.refreshCache(userId);
 					});
 				}
 			});
 		}
-	}
-
-	@bindThis
-	public refreshCache(userId: string): void {
-		this.subscriptionsCache.refresh(userId);
 	}
 
 	@bindThis

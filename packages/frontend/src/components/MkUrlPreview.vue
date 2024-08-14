@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -13,9 +13,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 			v-if="player.url.startsWith('http://') || player.url.startsWith('https://')"
 			sandbox="allow-popups allow-scripts allow-storage-access-by-user-activation allow-same-origin"
 			scrolling="no"
-			:allow="player.allow == null ? 'autoplay;encrypted-media;fullscreen' : player.allow.filter(x => ['autoplay', 'clipboard-write', 'fullscreen', 'encrypted-media', 'picture-in-picture', 'web-share'].includes(x)).join(';')"
+			:allow="player.allow.join(';')"
 			:class="$style.playerIframe"
-			:src="transformPlayerUrl(player.url)"
+			:src="player.url + (player.url.match(/\?/) ? '&autoplay=1&auto_play=1' : '?autoplay=1&auto_play=1')"
 			:style="{ border: 0 }"
 		></iframe>
 		<span v-else>invalid url</span>
@@ -83,18 +83,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { defineAsyncComponent, onDeactivated, onUnmounted, ref } from 'vue';
-import type { summaly } from '@misskey-dev/summaly';
+import { defineAsyncComponent, onUnmounted, ref } from 'vue';
+import type { summaly } from 'summaly';
 import { url as local } from '@/config.js';
 import { i18n } from '@/i18n.js';
 import * as os from '@/os.js';
 import { deviceKind } from '@/scripts/device-kind.js';
 import MkButton from '@/components/MkButton.vue';
 import { versatileLang } from '@/scripts/intl-const.js';
-import { transformPlayerUrl } from '@/scripts/player-url-transform.js';
 import { defaultStore } from '@/store.js';
-import { instance } from '@/instance.js';
-import { getProxiedImageUrlNullable } from '@/scripts/media-proxy.js';
 
 type SummalyResult = Awaited<ReturnType<typeof summaly>>;
 
@@ -134,10 +131,6 @@ const embedId = `embed${Math.random().toString().replace(/\D/, '')}`;
 const tweetHeight = ref(150);
 const unknownUrl = ref(false);
 
-onDeactivated(() => {
-	playerEnabled.value = false;
-});
-
 const requestUrl = new URL(props.url);
 if (!['http:', 'https:'].includes(requestUrl.protocol)) throw new Error('invalid url');
 
@@ -152,19 +145,18 @@ if (requestUrl.hostname === 'music.youtube.com' && requestUrl.pathname.match('^/
 
 requestUrl.hash = '';
 
-window.fetch(`${instance.urlPreviewEndpoint}?url=${encodeURIComponent(requestUrl.href)}&lang=${versatileLang}`)
+window.fetch(`/url?url=${encodeURIComponent(requestUrl.href)}&lang=${versatileLang}`)
 	.then(res => {
 		if (!res.ok) {
-			if (_DEV_) {
-				console.warn(`[HTTP${res.status}] Failed to fetch url preview`);
-			}
-			return null;
+			fetching.value = false;
+			unknownUrl.value = true;
+			return;
 		}
 
 		return res.json();
 	})
-	.then((info: SummalyResult | null) => {
-		if (!info || info.url == null) {
+	.then((info: SummalyResult) => {
+		if (info.url == null) {
 			fetching.value = false;
 			unknownUrl.value = true;
 			return;
@@ -175,8 +167,8 @@ window.fetch(`${instance.urlPreviewEndpoint}?url=${encodeURIComponent(requestUrl
 
 		title.value = info.title;
 		description.value = info.description;
-		thumbnail.value = getProxiedImageUrlNullable(info.thumbnail, 'avatar', true);
-		icon.value = getProxiedImageUrlNullable(info.icon, 'emoji', true);
+		thumbnail.value = info.thumbnail;
+		icon.value = info.icon;
 		sitename.value = info.sitename;
 		player.value = info.player;
 		sensitive.value = info.sensitive ?? false;
@@ -191,13 +183,11 @@ function adjustTweetHeight(message: any) {
 	if (height) tweetHeight.value = height;
 }
 
-function openPlayer(): void {
-	const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkYouTubePlayer.vue')), {
+const openPlayer = (): void => {
+	os.popup(defineAsyncComponent(() => import('@/components/MkYouTubePlayer.vue')), {
 		url: requestUrl.href,
-	}, {
-		// TODO
 	});
-}
+};
 
 (window as any).addEventListener('message', adjustTweetHeight);
 

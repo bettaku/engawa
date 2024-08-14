@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -16,15 +16,15 @@ import { useChartTooltip } from '@/scripts/use-chart-tooltip.js';
 import { chartVLine } from '@/scripts/chart-vline.js';
 import { alpha } from '@/scripts/color.js';
 import { initChart } from '@/scripts/init-chart.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
+import * as os from '@/os.js';
 
 initChart();
 
-const chartEl = shallowRef<HTMLCanvasElement | null>(null);
+const chartEl = shallowRef<HTMLCanvasElement>(null);
 
 const { handler: externalTooltipHandler } = useChartTooltip();
 
-let chartInstance: Chart | null = null;
+let chartInstance: Chart;
 
 const getYYYYMMDD = (date: Date) => {
 	const y = date.getFullYear().toString().padStart(2, '0');
@@ -40,14 +40,12 @@ const getDate = (ymd: string) => {
 };
 
 onMounted(async () => {
-	let raw = await misskeyApi('retention', { });
+	let raw = await os.api('retention', { });
 
 	const vLineColor = defaultStore.state.darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)';
 
 	const accent = tinycolor(getComputedStyle(document.documentElement).getPropertyValue('--accent'));
 	const color = accent.toHex();
-
-	if (chartEl.value == null) return;
 
 	chartInstance = new Chart(chartEl.value, {
 		type: 'line',
@@ -69,7 +67,7 @@ onMounted(async () => {
 					x: (i + 1).toString(),
 					y: (v / record.users) * 100,
 					d: getYYYYMMDD(new Date(record.createdAt)),
-				}))] as any,
+				}))],
 			})),
 		},
 		options: {
@@ -111,11 +109,11 @@ onMounted(async () => {
 					enabled: false,
 					callbacks: {
 						title(context) {
-							const v = context[0].dataset.data[context[0].dataIndex] as unknown as { x: string, y: number, d: string };
+							const v = context[0].dataset.data[context[0].dataIndex];
 							return `${v.x} days later`;
 						},
 						label(context) {
-							const v = context.dataset.data[context.dataIndex] as unknown as { x: string, y: number, d: string };
+							const v = context.dataset.data[context.dataIndex];
 							const p = Math.round(v.y) + '%';
 							return `${v.d} ${p}`;
 						},

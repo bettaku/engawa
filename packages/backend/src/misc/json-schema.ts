@@ -1,15 +1,15 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 import {
-	packedMeDetailedOnlySchema,
-	packedMeDetailedSchema,
-	packedUserDetailedNotMeOnlySchema,
-	packedUserDetailedNotMeSchema,
-	packedUserDetailedSchema,
 	packedUserLiteSchema,
+	packedUserDetailedNotMeOnlySchema,
+	packedMeDetailedOnlySchema,
+	packedUserDetailedNotMeSchema,
+	packedMeDetailedSchema,
+	packedUserDetailedSchema,
 	packedUserSchema,
 } from '@/models/json-schema/user.js';
 import { packedNoteSchema } from '@/models/json-schema/note.js';
@@ -26,7 +26,7 @@ import { packedBlockingSchema } from '@/models/json-schema/blocking.js';
 import { packedNoteReactionSchema } from '@/models/json-schema/note-reaction.js';
 import { packedHashtagSchema } from '@/models/json-schema/hashtag.js';
 import { packedInviteCodeSchema } from '@/models/json-schema/invite-code.js';
-import { packedPageBlockSchema, packedPageSchema } from '@/models/json-schema/page.js';
+import { packedPageSchema } from '@/models/json-schema/page.js';
 import { packedUserGroupSchema } from '@/models/json-schema/user-group.js';
 import { packedNoteFavoriteSchema } from '@/models/json-schema/note-favorite.js';
 import { packedChannelSchema } from '@/models/json-schema/channel.js';
@@ -39,27 +39,8 @@ import { packedEmojiDetailedSchema, packedEmojiSimpleSchema } from '@/models/jso
 import { packedFlashSchema } from '@/models/json-schema/flash.js';
 import { packedAnnouncementSchema } from '@/models/json-schema/announcement.js';
 import { packedSigninSchema } from '@/models/json-schema/signin.js';
-import {
-	packedRoleCondFormulaFollowersOrFollowingOrNotesSchema,
-	packedRoleCondFormulaLogicsSchema,
-	packedRoleCondFormulaValueAssignedRoleSchema,
-	packedRoleCondFormulaValueCreatedSchema,
-	packedRoleCondFormulaValueIsLocalOrRemoteSchema,
-	packedRoleCondFormulaValueNot,
-	packedRoleCondFormulaValueSchema,
-	packedRoleCondFormulaValueUserSettingBooleanSchema,
-	packedRoleLiteSchema,
-	packedRolePoliciesSchema,
-	packedRoleSchema,
-} from '@/models/json-schema/role.js';
+import { packedRoleLiteSchema, packedRoleSchema } from '@/models/json-schema/role.js';
 import { packedAdSchema } from '@/models/json-schema/ad.js';
-import {
-	packedMetaDetailedOnlySchema,
-	packedMetaDetailedSchema,
-	packedMetaLiteSchema,
-} from '@/models/json-schema/meta.js';
-import { packedSystemWebhookSchema } from '@/models/json-schema/system-webhook.js';
-import { packedAbuseReportNotificationRecipientSchema } from '@/models/json-schema/abuse-report-notification-recipient.js';
 
 export const refs = {
 	UserLite: packedUserLiteSchema,
@@ -89,7 +70,6 @@ export const refs = {
 	Hashtag: packedHashtagSchema,
 	InviteCode: packedInviteCodeSchema,
 	Page: packedPageSchema,
-	PageBlock: packedPageBlockSchema,
 	Channel: packedChannelSchema,
 	QueueCount: packedQueueCountSchema,
 	Antenna: packedAntennaSchema,
@@ -100,28 +80,11 @@ export const refs = {
 	EmojiDetailed: packedEmojiDetailedSchema,
 	Flash: packedFlashSchema,
 	Signin: packedSigninSchema,
-	RoleCondFormulaLogics: packedRoleCondFormulaLogicsSchema,
-	RoleCondFormulaValueNot: packedRoleCondFormulaValueNot,
-	RoleCondFormulaValueIsLocalOrRemote: packedRoleCondFormulaValueIsLocalOrRemoteSchema,
-	RoleCondFormulaValueUserSettingBooleanSchema: packedRoleCondFormulaValueUserSettingBooleanSchema,
-	RoleCondFormulaValueAssignedRole: packedRoleCondFormulaValueAssignedRoleSchema,
-	RoleCondFormulaValueCreated: packedRoleCondFormulaValueCreatedSchema,
-	RoleCondFormulaFollowersOrFollowingOrNotes: packedRoleCondFormulaFollowersOrFollowingOrNotesSchema,
-	RoleCondFormulaValue: packedRoleCondFormulaValueSchema,
 	RoleLite: packedRoleLiteSchema,
 	Role: packedRoleSchema,
-	RolePolicies: packedRolePoliciesSchema,
-	MetaLite: packedMetaLiteSchema,
-	MetaDetailedOnly: packedMetaDetailedOnlySchema,
-	MetaDetailed: packedMetaDetailedSchema,
-	SystemWebhook: packedSystemWebhookSchema,
-	AbuseReportNotificationRecipient: packedAbuseReportNotificationRecipientSchema,
 };
 
 export type Packed<x extends keyof typeof refs> = SchemaType<typeof refs[x]>;
-
-export type KeyOf<x extends keyof typeof refs> = PropertiesToUnion<typeof refs[x]>;
-type PropertiesToUnion<p extends Schema> = p['properties'] extends NonNullable<Obj> ? keyof p['properties'] : never;
 
 type TypeStringef = 'null' | 'boolean' | 'integer' | 'number' | 'string' | 'array' | 'object' | 'any';
 type StringDefToType<T extends TypeStringef> =
@@ -152,7 +115,6 @@ export interface Schema extends OfSchema {
 	readonly example?: any;
 	readonly format?: string;
 	readonly ref?: keyof typeof refs;
-	readonly selfRef?: boolean;
 	readonly enum?: ReadonlyArray<string | null>;
 	readonly default?: (this['type'] extends TypeStringef ? StringDefToType<this['type']> : any) | null;
 	readonly maxLength?: number;
@@ -233,7 +195,7 @@ export type SchemaTypeDef<p extends Schema> =
 			p['items']['allOf'] extends ReadonlyArray<Schema> ? UnionToIntersection<UnionSchemaType<NonNullable<p['items']['allOf']>>>[] :
 			never
 		) :
-		p['items'] extends NonNullable<Schema> ? SchemaType<p['items']>[] :
+		p['items'] extends NonNullable<Schema> ? SchemaTypeDef<p['items']>[] :
 		any[]
 	) :
 	p['anyOf'] extends ReadonlyArray<Schema> ? UnionSchemaType<p['anyOf']> & PartialIntersection<UnionSchemaType<p['anyOf']>> :

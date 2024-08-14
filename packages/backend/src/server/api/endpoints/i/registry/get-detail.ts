@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -22,15 +22,6 @@ export const meta = {
 
 	res: {
 		type: 'object',
-		properties: {
-			updatedAt: {
-				type: 'string',
-				optional: false,
-			},
-			value: {
-				optional: false,
-			},
-		},
 	},
 } as const;
 
@@ -59,7 +50,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			}
 
 			return {
-				updatedAt: item.updatedAt.toISOString(),
+				updatedAt: item.updatedAt,
 				value: item.value,
 			};
 		});

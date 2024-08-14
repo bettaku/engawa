@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -61,15 +61,15 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			const currentCount = await this.userListsRepository.countBy({
 				userId: me.id,
 			});
-			if (currentCount >= (await this.roleService.getUserPolicies(me.id)).userListLimit) {
+			if (currentCount > (await this.roleService.getUserPolicies(me.id)).userListLimit) {
 				throw new ApiError(meta.errors.tooManyUserLists);
 			}
 
-			const userList = await this.userListsRepository.insertOne({
+			const userList = await this.userListsRepository.insert({
 				id: this.idService.gen(),
 				userId: me.id,
 				name: ps.name,
-			} as MiUserList);
+			} as MiUserList).then(x => this.userListsRepository.findOneByOrFail(x.identifiers[0]));
 
 			return await this.userListEntityService.pack(userList);
 		});

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -38,7 +38,7 @@ export class MiAnnouncement {
 		length: 256, nullable: false,
 		default: 'info',
 	})
-	public icon: 'info' | 'warning' | 'error' | 'success';
+	public icon: string;
 
 	// normal ... お知らせページ掲載
 	// banner ... お知らせページ掲載 + バナー表示
@@ -47,7 +47,7 @@ export class MiAnnouncement {
 		length: 256, nullable: false,
 		default: 'normal',
 	})
-	public display: 'normal' | 'banner' | 'dialog';
+	public display: string;
 
 	@Column('boolean', {
 		default: false,

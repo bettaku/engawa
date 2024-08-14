@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -26,11 +26,10 @@ import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { QueueService } from '@/core/QueueService.js';
 import { MessagingService } from '@/core/MessagingService.js';
-import type { UsersRepository, NotesRepository, FollowingsRepository, MessagingMessagesRepository, FollowRequestsRepository } from '@/models/_.js';
+import type { UsersRepository, NotesRepository, FollowingsRepository, MessagingMessagesRepository, AbuseUserReportsRepository, FollowRequestsRepository } from '@/models/_.js';
 import { bindThis } from '@/decorators.js';
 import type { MiRemoteUser } from '@/models/User.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { AbuseReportService } from '@/core/AbuseReportService.js';
 import { getApHrefNullable, getApId, getApIds, getApType, isAccept, isActor, isAdd, isAnnounce, isBlock, isCollection, isCollectionOrOrderedCollection, isCreate, isDelete, isFlag, isFollow, isLike, isMove, isPost, isRead, isReject, isRemove, isTombstone, isUndo, isUpdate, validActor, validPost } from './type.js';
 import { ApNoteService } from './models/ApNoteService.js';
 import { ApLoggerService } from './ApLoggerService.js';
@@ -40,7 +39,7 @@ import { ApAudienceService } from './ApAudienceService.js';
 import { ApPersonService } from './models/ApPersonService.js';
 import { ApQuestionService } from './models/ApQuestionService.js';
 import type { Resolver } from './ApResolverService.js';
-import type { IAccept, IAdd, IAnnounce, IBlock, ICreate, IDelete, IFlag, IFollow, ILike, IObject, IRead, IReject, IRemove, IUndo, IUpdate, IMove, IPost } from './type.js';
+import type { IAccept, IAdd, IAnnounce, IBlock, ICreate, IDelete, IFlag, IFollow, ILike, IObject, IRead, IReject, IRemove, IUndo, IUpdate, IMove } from './type.js';
 
 @Injectable()
 export class ApInboxService {
@@ -62,6 +61,9 @@ export class ApInboxService {
 		@Inject(DI.messagingMessagesRepository)
 		private messagingMessagesRepository: MessagingMessagesRepository,
 
+		@Inject(DI.abuseUserReportsRepository)
+		private abuseUserReportsRepository: AbuseUserReportsRepository,
+
 		@Inject(DI.followRequestsRepository)
 		private followRequestsRepository: FollowRequestsRepository,
 
@@ -70,7 +72,6 @@ export class ApInboxService {
 		private utilityService: UtilityService,
 		private idService: IdService,
 		private metaService: MetaService,
-		private abuseReportService: AbuseReportService,
 		private userFollowingService: UserFollowingService,
 		private apAudienceService: ApAudienceService,
 		private reactionService: ReactionService,
@@ -88,37 +89,28 @@ export class ApInboxService {
 		private apPersonService: ApPersonService,
 		private apQuestionService: ApQuestionService,
 		private queueService: QueueService,
-		private globalEventService: GlobalEventService,
 		private messagingService: MessagingService,
+		private globalEventService: GlobalEventService,
 	) {
 		this.logger = this.apLoggerService.logger;
 	}
 
 	@bindThis
-	public async performActivity(actor: MiRemoteUser, activity: IObject): Promise<string | void> {
-		let result = undefined as string | void;
+	public async performActivity(actor: MiRemoteUser, activity: IObject): Promise<void> {
 		if (isCollectionOrOrderedCollection(activity)) {
-			const results = [] as [string, string | void][];
 			const resolver = this.apResolverService.createResolver();
 			for (const item of toArray(isCollection(activity) ? activity.items : activity.orderedItems)) {
 				const act = await resolver.resolve(item);
 				try {
-					results.push([getApId(item), await this.performOneActivity(actor, act)]);
+					await this.performOneActivity(actor, act);
 				} catch (err) {
 					if (err instanceof Error || typeof err === 'string') {
 						this.logger.error(err);
-					} else {
-						throw err;
 					}
 				}
 			}
-
-			const hasReason = results.some(([, reason]) => (reason != null && !reason.startsWith('ok')));
-			if (hasReason) {
-				result = results.map(([id, reason]) => `${id}: ${reason}`).join('\n');
-			}
 		} else {
-			result = await this.performOneActivity(actor, activity);
+			await this.performOneActivity(actor, activity);
 		}
 
 		// ついでにリモートユーザーの情報が古かったら更新しておく
@@ -129,45 +121,44 @@ export class ApInboxService {
 				});
 			}
 		}
-		return result;
 	}
 
 	@bindThis
-	public async performOneActivity(actor: MiRemoteUser, activity: IObject): Promise<string | void> {
+	public async performOneActivity(actor: MiRemoteUser, activity: IObject): Promise<void> {
 		if (actor.isSuspended) return;
 
 		if (isCreate(activity)) {
-			return await this.create(actor, activity);
+			await this.create(actor, activity);
 		} else if (isDelete(activity)) {
-			return await this.delete(actor, activity);
+			await this.delete(actor, activity);
 		} else if (isUpdate(activity)) {
-			return await this.update(actor, activity);
+			await this.update(actor, activity);
 		} else if (isRead(activity)) {
-			return await this.read(actor, activity);
+			await this.read(actor, activity);
 		} else if (isFollow(activity)) {
-			return await this.follow(actor, activity);
+			await this.follow(actor, activity);
 		} else if (isAccept(activity)) {
-			return await this.accept(actor, activity);
+			await this.accept(actor, activity);
 		} else if (isReject(activity)) {
-			return await this.reject(actor, activity);
+			await this.reject(actor, activity);
 		} else if (isAdd(activity)) {
-			return await this.add(actor, activity);
+			await this.add(actor, activity).catch(err => this.logger.error(err));
 		} else if (isRemove(activity)) {
-			return await this.remove(actor, activity);
+			await this.remove(actor, activity).catch(err => this.logger.error(err));
 		} else if (isAnnounce(activity)) {
-			return await this.announce(actor, activity);
+			await this.announce(actor, activity);
 		} else if (isLike(activity)) {
-			return await this.like(actor, activity);
+			await this.like(actor, activity);
 		} else if (isUndo(activity)) {
-			return await this.undo(actor, activity);
+			await this.undo(actor, activity);
 		} else if (isBlock(activity)) {
-			return await this.block(actor, activity);
+			await this.block(actor, activity);
 		} else if (isFlag(activity)) {
-			return await this.flag(actor, activity);
+			await this.flag(actor, activity);
 		} else if (isMove(activity)) {
-			return await this.move(actor, activity);
+			await this.move(actor, activity);
 		} else {
-			return `unrecognized activity type: ${activity.type}`;
+			this.logger.warn(`unrecognized activity type: ${activity.type}`);
 		}
 	}
 
@@ -272,49 +263,38 @@ export class ApInboxService {
 	}
 
 	@bindThis
-	private async add(actor: MiRemoteUser, activity: IAdd): Promise<string | void> {
+	private async add(actor: MiRemoteUser, activity: IAdd): Promise<void> {
 		if (actor.uri !== activity.actor) {
-			return 'invalid actor';
+			throw new Error('invalid actor');
 		}
 
 		if (activity.target == null) {
-			return 'target is null';
+			throw new Error('target is null');
 		}
 
 		if (activity.target === actor.featured) {
 			const note = await this.apNoteService.resolveNote(activity.object);
-			if (note == null) return 'note not found';
+			if (note == null) throw new Error('note not found');
 			await this.notePiningService.addPinned(actor, note.id);
 			return;
 		}
 
-		return `unknown target: ${activity.target}`;
+		throw new Error(`unknown target: ${activity.target}`);
 	}
 
 	@bindThis
-	private async announce(actor: MiRemoteUser, activity: IAnnounce): Promise<string | void> {
+	private async announce(actor: MiRemoteUser, activity: IAnnounce): Promise<void> {
 		const uri = getApId(activity);
 
 		this.logger.info(`Announce: ${uri}`);
 
-		const resolver = this.apResolverService.createResolver();
-
-		if (!activity.object) return 'skip: activity has no object property';
 		const targetUri = getApId(activity.object);
-		if (targetUri.startsWith('bear:')) return 'skip: bearcaps url not supported.';
 
-		const target = await resolver.resolve(activity.object).catch(e => {
-			this.logger.error(`Resolution failed: ${e}`);
-			return e;
-		});
-
-		if (isPost(target)) return await this.announceNote(actor, activity, target);
-
-		return `skip: unknown object type ${getApType(target)}`;
+		this.announceNote(actor, activity, targetUri);
 	}
 
 	@bindThis
-	private async announceNote(actor: MiRemoteUser, activity: IAnnounce, target: IPost): Promise<string | void> {
+	private async announceNote(actor: MiRemoteUser, activity: IAnnounce, targetUri: string): Promise<void> {
 		const uri = getApId(activity);
 
 		if (actor.isSuspended) {
@@ -332,7 +312,7 @@ export class ApInboxService {
 
 		try {
 			// 既に同じURIを持つものが登録されていないかチェック
-			const exist = await this.apNoteService.fetchNote(fromRelay ? target : uri);
+			const exist = await this.apNoteService.fetchNote(fromRelay ? targetUri : uri);
 			if (exist) {
 				return;
 			}
@@ -340,21 +320,24 @@ export class ApInboxService {
 			// Announce対象をresolve
 			let renote;
 			try {
-				renote = await this.apNoteService.resolveNote(target);
-				if (renote == null) return 'announce target is null';
+				renote = await this.apNoteService.resolveNote(targetUri);
+				if (renote == null) throw new Error('announce target is null');
 			} catch (err) {
 				// 対象が4xxならスキップ
 				if (err instanceof StatusError) {
-					if (!err.isRetryable) {
-						return `Ignored announce target ${target.id} - ${err.statusCode}`;
+					if (err.isClientError) {
+						this.logger.warn(`Ignored announce target ${targetUri} - ${err.statusCode}`);
+						return;
 					}
-					return `Error in announce target ${target.id} - ${err.statusCode}`;
+
+					this.logger.warn(`Error in announce target ${targetUri} - ${err.statusCode}`);
 				}
 				throw err;
 			}
 
 			if (!await this.noteEntityService.isVisibleForMe(renote, actor.id)) {
-				return 'skip: invalid actor for this activity';
+				this.logger.warn('skip: invalid actor for this activity');
+				return;
 			}
 
 			if (fromRelay) {
@@ -369,7 +352,8 @@ export class ApInboxService {
 			const createdAt = activity.published ? new Date(activity.published) : null;
 
 			if (createdAt && createdAt < this.idService.parse(renote.id).date) {
-				return 'skip: malformed createdAt';
+				this.logger.warn('skip: malformed createdAt');
+				return;
 			}
 
 			await this.noteCreateService.create(actor, {
@@ -403,14 +387,10 @@ export class ApInboxService {
 	}
 
 	@bindThis
-	private async create(actor: MiRemoteUser, activity: ICreate): Promise<string | void> {
+	private async create(actor: MiRemoteUser, activity: ICreate): Promise<void> {
 		const uri = getApId(activity);
 
 		this.logger.info(`Create: ${uri}`);
-
-		if (!activity.object) return 'skip: activity has no object property';
-		const targetUri = getApId(activity.object);
-		if (targetUri.startsWith('bear:')) return 'skip: bearcaps url not supported.';
 
 		// copy audiences between activity <=> object.
 		if (typeof activity.object === 'object') {
@@ -436,9 +416,9 @@ export class ApInboxService {
 		});
 
 		if (isPost(object)) {
-			await this.createNote(resolver, actor, object, false, activity);
+			this.createNote(resolver, actor, object, false, activity);
 		} else {
-			return `Unknown type: ${getApType(object)}`;
+			this.logger.warn(`Unknown type: ${getApType(object)}`);
 		}
 	}
 
@@ -467,7 +447,7 @@ export class ApInboxService {
 			await this.apNoteService.createNote(note, resolver, silent);
 			return 'ok';
 		} catch (err) {
-			if (err instanceof StatusError && !err.isRetryable) {
+			if (err instanceof StatusError && err.isClientError) {
 				return `skip ${err.statusCode}`;
 			} else {
 				throw err;
@@ -480,7 +460,7 @@ export class ApInboxService {
 	@bindThis
 	private async delete(actor: MiRemoteUser, activity: IDelete): Promise<string> {
 		if (actor.uri !== activity.actor) {
-			return 'invalid actor';
+			throw new Error('invalid actor');
 		}
 
 		// 削除対象objectのtype
@@ -540,8 +520,6 @@ export class ApInboxService {
 			isDeleted: true,
 		});
 
-		this.globalEventService.publishInternalEvent('remoteUserUpdated', { id: actor.id });
-
 		return `ok: queued ${job.name} ${job.id}`;
 	}
 
@@ -587,19 +565,22 @@ export class ApInboxService {
 		const userIds = uris
 			.filter(uri => uri.startsWith(this.config.url + '/users/'))
 			.map(uri => uri.split('/').at(-1))
-			.filter(x => x != null);
+			.filter((userId): userId is string => userId !== undefined);
 		const users = await this.usersRepository.findBy({
 			id: In(userIds),
 		});
 		if (users.length < 1) return 'skip';
 
-		await this.abuseReportService.report([{
+		const report = await this.abuseUserReportsRepository.insert({
+			id: this.idService.gen(),
 			targetUserId: users[0].id,
 			targetUserHost: users[0].host,
 			reporterId: actor.id,
 			reporterHost: actor.host,
 			comment: `${activity.content}\n${JSON.stringify(uris, null, 2)}`,
-		}]);
+		}).then(x => this.abuseUserReportsRepository.findOneByOrFail(x.identifiers[0]));
+
+		this.queueService.createReportAbuseJob(report);
 
 		return 'ok';
 	}
@@ -647,29 +628,29 @@ export class ApInboxService {
 	}
 
 	@bindThis
-	private async remove(actor: MiRemoteUser, activity: IRemove): Promise<string | void> {
+	private async remove(actor: MiRemoteUser, activity: IRemove): Promise<void> {
 		if (actor.uri !== activity.actor) {
-			return 'invalid actor';
+			throw new Error('invalid actor');
 		}
 
 		if (activity.target == null) {
-			return 'target is null';
+			throw new Error('target is null');
 		}
 
 		if (activity.target === actor.featured) {
 			const note = await this.apNoteService.resolveNote(activity.object);
-			if (note == null) return 'note not found';
+			if (note == null) throw new Error('note not found');
 			await this.notePiningService.removePinned(actor, note.id);
 			return;
 		}
 
-		return `unknown target: ${activity.target}`;
+		throw new Error(`unknown target: ${activity.target}`);
 	}
 
 	@bindThis
 	private async undo(actor: MiRemoteUser, activity: IUndo): Promise<string> {
 		if (actor.uri !== activity.actor) {
-			return 'invalid actor';
+			throw new Error('invalid actor');
 		}
 
 		const uri = activity.id ?? activity;
@@ -680,7 +661,7 @@ export class ApInboxService {
 
 		const object = await resolver.resolve(activity.object).catch(e => {
 			this.logger.error(`Resolution failed: ${e}`);
-			return e;
+			throw e;
 		});
 
 		// don't queue because the sender may attempt again when timeout
@@ -700,7 +681,7 @@ export class ApInboxService {
 			return 'skip: follower not found';
 		}
 
-		const isFollowing = await this.followingsRepository.exists({
+		const isFollowing = await this.followingsRepository.exist({
 			where: {
 				followerId: follower.id,
 				followeeId: actor.id,
@@ -757,14 +738,14 @@ export class ApInboxService {
 			return 'skip: フォロー解除しようとしているユーザーはローカルユーザーではありません';
 		}
 
-		const requestExist = await this.followRequestsRepository.exists({
+		const requestExist = await this.followRequestsRepository.exist({
 			where: {
 				followerId: actor.id,
 				followeeId: followee.id,
 			},
 		});
 
-		const isFollowing = await this.followingsRepository.exists({
+		const isFollowing = await this.followingsRepository.exist({
 			where: {
 				followerId: actor.id,
 				followeeId: followee.id,

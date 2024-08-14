@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project & noridev and cherrypick-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -29,7 +29,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<span v-if="visibility === 'home'"><i class="ti ti-home"></i></span>
 						<span v-if="visibility === 'followers'"><i class="ti ti-lock"></i></span>
 						<span v-if="visibility === 'specified'"><i class="ti ti-mail"></i></span>
-						<span v-if="visibility === 'private'"><i class="ti ti-notebook"></i></span>
 						<span :class="$style.headerRightButtonText">{{ i18n.ts._visibility[visibility] }}</span>
 					</button>
 					<button v-else class="_button" :class="[$style.headerRightItem, $style.visibility]" disabled>
@@ -129,7 +128,7 @@ import { toASCII } from 'punycode/';
 import autosize from 'autosize';
 import MkNotePreview from '@/components/MkNotePreview.vue';
 import XPostFormAttaches from '@/components/MkPostFormAttaches.vue';
-import MkPollEditor, { type PollEditorModelValue } from '@/components/MkPollEditor.vue';
+import MkPollEditor from '@/components/MkPollEditor.vue';
 import MkEventEditor from '@/components/MkEventEditor.vue';
 import { host, url } from '@/config.js';
 import { erase, unique } from '@/scripts/array.js';
@@ -137,13 +136,12 @@ import { extractMentions } from '@/scripts/extract-mentions.js';
 import { formatTimeString } from '@/scripts/format-time-string.js';
 import { Autocomplete } from '@/scripts/autocomplete.js';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
 import { selectFiles } from '@/scripts/select-file.js';
 import { defaultStore, notePostInterruptors, postFormActions } from '@/store.js';
 import MkInfo from '@/components/MkInfo.vue';
 import { i18n } from '@/i18n.js';
 import { instance } from '@/instance.js';
-import { signinRequired, notesCount, incNotesCount, getAccounts, openAccountMenu as openAccountMenu_ } from '@/account.js';
+import { $i, notesCount, incNotesCount, getAccounts, openAccountMenu as openAccountMenu_ } from '@/account.js';
 import { uploadFile } from '@/scripts/upload.js';
 import { deepClone } from '@/scripts/clone.js';
 import MkRippleEffect from '@/components/MkRippleEffect.vue';
@@ -155,8 +153,6 @@ import XSigninDialog from '@/components/MkSigninDialog.vue';
 import * as sound from '@/scripts/sound.js';
 import { mfmFunctionPicker } from '@/scripts/mfm-function-picker.js';
 
-const $i = signinRequired();
-
 const modal = inject('modal');
 
 const props = withDefaults(defineProps<{
@@ -164,13 +160,13 @@ const props = withDefaults(defineProps<{
 	renote?: Misskey.entities.Note;
 	channel?: Misskey.entities.Channel; // TODO
 	mention?: Misskey.entities.User;
-	specified?: Misskey.entities.UserDetailed;
+	specified?: Misskey.entities.User;
 	initialText?: string;
 	initialCw?: string;
 	initialVisibility?: (typeof Misskey.noteVisibilities)[number];
 	initialFiles?: Misskey.entities.DriveFile[];
 	initialLocalOnly?: boolean;
-	initialVisibleUsers?: Misskey.entities.UserDetailed[];
+	initialVisibleUsers?: Misskey.entities.User[];
 	initialNote?: Misskey.entities.Note;
 	instant?: boolean;
 	fixed?: boolean;
@@ -206,7 +202,12 @@ const posting = ref(false);
 const posted = ref(false);
 const text = ref(props.initialText ?? '');
 const files = ref(props.initialFiles ?? []);
-const poll = ref<PollEditorModelValue | null>(null);
+const poll = ref<{
+	choices: string[];
+	multiple: boolean;
+	expiresAt: string | null;
+	expiredAfter: string | null;
+} | null>(null);
 const event = ref<{
 	title: string;
 	start: string;
@@ -225,7 +226,7 @@ const localOnly = ref<boolean>(props.initialLocalOnly ?? defaultStore.state.reme
 const visibility = ref(props.initialVisibility ?? (defaultStore.state.rememberNoteVisibility ? defaultStore.state.visibility : defaultStore.state.defaultNoteVisibility) as typeof Misskey.noteVisibilities[number]);
 const visibleUsers = ref<Misskey.entities.UserDetailed[]>([]);
 if (props.initialVisibleUsers) {
-	props.initialVisibleUsers.forEach(u => pushVisibleUser(u));
+	props.initialVisibleUsers.forEach(pushVisibleUser);
 }
 const reactionAcceptance = ref(defaultStore.state.reactionAcceptance);
 const autocomplete = ref(null);
@@ -301,14 +302,7 @@ const maxTextLength = computed((): number => {
 
 const canPost = computed((): boolean => {
 	return !props.mock && !posting.value && !posted.value &&
-		(
-			1 <= textLength.value ||
-			1 <= files.value.length ||
-			poll.value != null ||
-			event.value != null ||
-			props.renote != null ||
-			quoteId.value != null
-		) &&
+		(1 <= textLength.value || 1 <= files.value.length || !!poll.value || !!props.renote || !!event.value) &&
 		(textLength.value <= maxTextLength.value) &&
 		(!poll.value || poll.value.choices.length >= 2);
 });
@@ -330,7 +324,7 @@ watch(visibleUsers, () => {
 	deep: true,
 });
 
-if ($i.isSilenced && visibility.value === 'public') {
+if ($i?.isSilenced && visibility.value === 'public') {
 	visibility.value = 'home';
 }
 
@@ -351,15 +345,15 @@ if (props.reply && ['home', 'followers', 'specified'].includes(props.reply.visib
 
 	if (visibility.value === 'specified') {
 		if (props.reply.visibleUserIds) {
-			misskeyApi('users/show', {
-				userIds: props.reply.visibleUserIds.filter(uid => uid !== $i.id && uid !== props.reply?.userId),
+			os.api('users/show', {
+				userIds: props.reply.visibleUserIds.filter(uid => uid !== $i.id && uid !== props.reply.userId),
 			}).then(users => {
-				users.forEach(u => pushVisibleUser(u));
+				users.forEach(pushVisibleUser);
 			});
 		}
 
 		if (props.reply.userId !== $i.id) {
-			misskeyApi('users/show', { userId: props.reply.userId }).then(user => {
+			os.api('users/show', { userId: props.reply.userId }).then(user => {
 				pushVisibleUser(user);
 			});
 		}
@@ -387,8 +381,6 @@ function watchForDraft() {
 	watch(files, () => saveDraft(), { deep: true });
 	watch(visibility, () => saveDraft());
 	watch(localOnly, () => saveDraft());
-	watch(quoteId, () => saveDraft());
-	watch(reactionAcceptance, () => saveDraft());
 }
 
 function checkMissingMention() {
@@ -410,8 +402,8 @@ function addMissingMention() {
 
 	for (const x of extractMentions(ast)) {
 		if (!visibleUsers.value.some(u => (u.username === x.username) && (u.host === x.host))) {
-			misskeyApi('users/show', { username: x.username, host: x.host }).then(user => {
-				pushVisibleUser(user);
+			os.api('users/show', { username: x.username, host: x.host }).then(user => {
+				visibleUsers.value.push(user);
 			});
 		}
 	}
@@ -498,12 +490,11 @@ function setVisibility() {
 		return;
 	}
 
-	const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkVisibilityPicker.vue')), {
+	os.popup(defineAsyncComponent(() => import('@/components/MkVisibilityPicker.vue')), {
 		currentVisibility: visibility.value,
-		isSilenced: $i.isSilenced,
+		isSilenced: $i?.isSilenced,
 		localOnly: localOnly.value,
 		src: visibilityButton.value,
-		...(props.reply ? { isReplyVisibilitySpecified: props.reply.visibility === 'specified' } : {}),
 	}, {
 		changeVisibility: v => {
 			visibility.value = v;
@@ -511,8 +502,7 @@ function setVisibility() {
 				defaultStore.set('visibility', visibility.value);
 			}
 		},
-		closed: () => dispose(),
-	});
+	}, 'closed');
 }
 
 async function toggleLocalOnly() {
@@ -573,7 +563,7 @@ async function toggleReactionAcceptance() {
 	reactionAcceptance.value = select.result;
 }
 
-function pushVisibleUser(user: Misskey.entities.UserDetailed) {
+function pushVisibleUser(user) {
 	if (!visibleUsers.value.some(u => u.username === user.username && u.host === user.host)) {
 		visibleUsers.value.push(user);
 	}
@@ -603,9 +593,9 @@ function clear() {
 
 function onKeydown(ev: KeyboardEvent) {
 	if (defaultStore.state.useEnterToSend && !ev.shiftKey) {
-		if (ev.key === 'Enter' && canPost.value) post();
+		if (ev.key === 'Enter' && canPost) post();
 	} else {
-		if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey) && canPost.value) post();
+		if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey) && canPost) post();
 	}
 
 	if (defaultStore.state.postFormVisibilityHotkey) {
@@ -629,12 +619,10 @@ function onCompositionEnd(ev: CompositionEvent) {
 
 async function onPaste(ev: ClipboardEvent) {
 	if (props.mock) return;
-	if (!ev.clipboardData) return;
 
-	for (const { item, i } of Array.from(ev.clipboardData.items, (data, x) => ({ item: data, i: x }))) {
+	for (const { item, i } of Array.from(ev.clipboardData.items, (item, i) => ({ item, i }))) {
 		if (item.kind === 'file') {
 			const file = item.getAsFile();
-			if (!file) continue;
 			const lio = file.name.lastIndexOf('.');
 			const ext = lio >= 0 ? file.name.slice(lio) : '';
 			const formatted = `${formatTimeString(new Date(file.lastModified), defaultStore.state.pastedFileName).replace(/{{number}}/g, `${i + 1}`)}${ext}`;
@@ -656,24 +644,7 @@ async function onPaste(ev: ClipboardEvent) {
 				return;
 			}
 
-			quoteId.value = paste.substring(url.length).match(/^\/notes\/(.+?)\/?$/)?.[1] ?? null;
-		});
-	}
-
-	if (paste.length > 1000) {
-		ev.preventDefault();
-		os.confirm({
-			type: 'info',
-			text: i18n.ts.attachAsFileQuestion,
-		}).then(({ canceled }) => {
-			if (canceled) {
-				insertTextAtCursor(textareaEl.value, paste);
-				return;
-			}
-
-			const fileName = formatTimeString(new Date(), defaultStore.state.pastedFileName).replace(/{{number}}/g, '0');
-			const file = new File([paste], `${fileName}.txt`, { type: 'text/plain' });
-			upload(file, `${fileName}.txt`);
+			quoteId.value = paste.substring(url.length).match(/^\/notes\/(.+?)\/?$/)[1];
 		});
 	}
 }
@@ -704,26 +675,26 @@ function onDragover(ev) {
 	}
 }
 
-function onDragenter() {
+function onDragenter(ev) {
 	draghover.value = true;
 }
 
-function onDragleave() {
+function onDragleave(ev) {
 	draghover.value = false;
 }
 
-function onDrop(ev: DragEvent): void {
+function onDrop(ev): void {
 	draghover.value = false;
 
 	// ファイルだったら
-	if (ev.dataTransfer && ev.dataTransfer.files.length > 0) {
+	if (ev.dataTransfer.files.length > 0) {
 		ev.preventDefault();
 		for (const x of Array.from(ev.dataTransfer.files)) upload(x);
 		return;
 	}
 
 	//#region ドライブのファイル
-	const driveFile = ev.dataTransfer?.getData(_DATA_TRANSFER_DRIVE_FILE_);
+	const driveFile = ev.dataTransfer.getData(_DATA_TRANSFER_DRIVE_FILE_);
 	if (driveFile != null && driveFile !== '') {
 		const file = JSON.parse(driveFile);
 		files.value.push(file);
@@ -749,9 +720,6 @@ function saveDraft() {
 			files: files.value,
 			poll: poll.value,
 			event: event.value,
-			visibleUserIds: visibility.value === 'specified' ? visibleUsers.value.map(x => x.id) : undefined,
-			quoteId: quoteId.value,
-			reactionAcceptance: reactionAcceptance.value,
 		},
 	};
 
@@ -776,16 +744,11 @@ async function post(ev?: MouseEvent) {
 	}
 
 	if (ev) {
-		const el = (ev.currentTarget ?? ev.target) as HTMLElement | null;
-
-		if (el) {
-			const rect = el.getBoundingClientRect();
-			const x = rect.left + (el.offsetWidth / 2);
-			const y = rect.top + (el.offsetHeight / 2);
-			const { dispose } = os.popup(MkRippleEffect, { x, y }, {
-				end: () => dispose(),
-			});
-		}
+		const el = ev.currentTarget ?? ev.target;
+		const rect = el.getBoundingClientRect();
+		const x = rect.left + (el.offsetWidth / 2);
+		const y = rect.top + (el.offsetHeight / 2);
+		os.popup(MkRippleEffect, { x, y }, {}, 'end');
 	}
 
 	if (props.mock) return;
@@ -840,39 +803,29 @@ async function post(ev?: MouseEvent) {
 
 	if (withHashtags.value && hashtags.value && hashtags.value.trim() !== '') {
 		const hashtags_ = hashtags.value.trim().split(' ').map(x => x.startsWith('#') ? x : '#' + x).join(' ');
-		if (!postData.text) {
-			postData.text = hashtags_;
-		} else {
-			const postTextLines = postData.text.split('\n');
-			if (postTextLines[postTextLines.length - 1].trim() === '') {
-				postTextLines[postTextLines.length - 1] += hashtags_;
-			} else {
-				postTextLines[postTextLines.length - 1] += ' ' + hashtags_;
-			}
-			postData.text = postTextLines.join('\n');
-		}
+		postData.text = postData.text ? `${postData.text} ${hashtags_}` : hashtags_;
 	}
 
 	// plugin
 	if (notePostInterruptors.length > 0) {
 		for (const interruptor of notePostInterruptors) {
 			try {
-				postData = await interruptor.handler(deepClone(postData)) as typeof postData;
+				postData = await interruptor.handler(deepClone(postData));
 			} catch (err) {
 				console.error(err);
 			}
 		}
 	}
 
-	let token: string | undefined = undefined;
+	let token = undefined;
 
 	if (postAccount.value) {
 		const storedAccounts = await getAccounts();
-		token = storedAccounts.find(x => x.id === postAccount.value?.id)?.token;
+		token = storedAccounts.find(x => x.id === postAccount.value.id)?.token;
 	}
 
 	posting.value = true;
-	misskeyApi(props.updateMode ? 'notes/update' : 'notes/create', postData, token).then(() => {
+	os.api(props.updateMode ? 'notes/update' : 'notes/create', postData, token).then(() => {
 		if (props.freezeAfterPosted) {
 			posted.value = true;
 		} else {
@@ -887,7 +840,7 @@ async function post(ev?: MouseEvent) {
 			deleteDraft();
 			emit('posted');
 			if (postData.text && postData.text !== '') {
-				const hashtags_ = mfm.parse(postData.text).map(x => x.type === 'hashtag' && x.props.hashtag).filter(x => x) as string[];
+				const hashtags_ = mfm.parse(postData.text).filter(x => x.type === 'hashtag').map(x => x.props.hashtag);
 				const history = JSON.parse(miLocalStorage.getItem('hashtags') ?? '[]') as string[];
 				miLocalStorage.setItem('hashtags', JSON.stringify(unique(hashtags_.concat(history))));
 			}
@@ -945,7 +898,7 @@ async function post(ev?: MouseEvent) {
 	});
 	textareaEl.value.style.height = '35px';
 	showForm.value = false;
-	if (props.updateMode) sound.playMisskeySfx('noteEdited');
+	if (props.updateMode) sound.play('noteEdited');
 	vibrate(defaultStore.state.vibrateSystem ? [10, 20, 10, 20, 10, 20, 60] : []);
 }
 
@@ -954,32 +907,18 @@ function cancel() {
 }
 
 function insertMention() {
-	os.selectUser({ localOnly: localOnly.value, includeSelf: true }).then(user => {
+	os.selectUser().then(user => {
 		insertTextAtCursor(textareaEl.value, '@' + Misskey.acct.toString(user) + ' ');
 	});
 }
 
 async function insertEmoji(ev: MouseEvent) {
 	textAreaReadOnly.value = true;
-	const target = ev.currentTarget ?? ev.target;
-	if (target == null) return;
 
-	// emojiPickerはダイアログが閉じずにtextareaとやりとりするので、
-	// focustrapをかけているとinsertTextAtCursorが効かない
-	// そのため、投稿フォームのテキストに直接注入する
-	// See: https://github.com/misskey-dev/misskey/pull/14282
-	//      https://github.com/misskey-dev/misskey/issues/14274
-
-	let pos = textareaEl.value?.selectionStart ?? 0;
-	let posEnd = textareaEl.value?.selectionEnd ?? text.value.length;
 	emojiPicker.show(
-		target as HTMLElement,
+		ev.currentTarget ?? ev.target,
 		emoji => {
-			const textBefore = text.value.substring(0, pos);
-			const textAfter = text.value.substring(posEnd);
-			text.value = textBefore + emoji + textAfter;
-			pos += emoji.length;
-			posEnd += emoji.length;
+			insertTextAtCursor(textareaEl.value, emoji);
 		},
 		() => {
 			textAreaReadOnly.value = false;
@@ -989,7 +928,6 @@ async function insertEmoji(ev: MouseEvent) {
 }
 
 async function insertMfmFunction(ev: MouseEvent) {
-	if (textareaEl.value == null) return;
 	mfmFunctionPicker(
 		ev.currentTarget ?? ev.target,
 		textareaEl.value,
@@ -997,15 +935,14 @@ async function insertMfmFunction(ev: MouseEvent) {
 	);
 }
 
-function showActions(ev: MouseEvent) {
+function showActions(ev) {
 	os.popupMenu(postFormActions.map(action => ({
 		text: action.title,
 		action: () => {
 			action.handler({
 				text: text.value,
 				cw: cw.value,
-			}, (key, value: any) => {
-				if (typeof key !== 'string') return;
+			}, (key, value) => {
 				if (key === 'text') { text.value = value; }
 				if (key === 'cw') { useCw.value = value !== null; cw.value = value; }
 			});
@@ -1039,7 +976,7 @@ function openAccountMenu(ev: MouseEvent) {
 function formClick() {
 	if ($i) showForm.value = true;
 
-	if (text.value === '' && props.reply && (props.reply.user.username !== $i.username || (props.reply.user.host != null && props.reply.user.host !== host))) {
+	if (props.reply && (props.reply.user.username !== $i.username || (props.reply.user.host != null && props.reply.user.host !== host))) {
 		text.value = `@${props.reply.user.username}${props.reply.user.host != null ? '@' + toASCII(props.reply.user.host) : ''} `;
 	}
 
@@ -1097,9 +1034,9 @@ onMounted(() => {
 	autosize(textareaEl.value);
 
 	// TODO: detach when unmount
-	if (textareaEl.value) new Autocomplete(textareaEl.value, text);
-	if (cwInputEl.value) new Autocomplete(cwInputEl.value, cw);
-	if (hashtagsInputEl.value) new Autocomplete(hashtagsInputEl.value, hashtags);
+	new Autocomplete(textareaEl.value, text);
+	new Autocomplete(cwInputEl.value, cw);
+	new Autocomplete(hashtagsInputEl.value, hashtags);
 
 	nextTick(() => {
 		// 書きかけの投稿を復元
@@ -1119,13 +1056,6 @@ onMounted(() => {
 				if (draft.data.event) {
 					event.value = draft.data.event;
 				}
-				if (draft.data.visibleUserIds) {
-					misskeyApi('users/show', { userIds: draft.data.visibleUserIds }).then(users => {
-						users.forEach(u => pushVisibleUser(u));
-					});
-				}
-				quoteId.value = draft.data.quoteId;
-				reactionAcceptance.value = draft.data.reactionAcceptance;
 			}
 		}
 
@@ -1133,17 +1063,15 @@ onMounted(() => {
 		if (props.initialNote) {
 			const init = props.initialNote;
 			text.value = init.text ? init.text : '';
+			files.value = init.files;
+			cw.value = init.cw;
 			useCw.value = init.cw != null;
-			cw.value = init.cw ?? null;
-			visibility.value = init.visibility;
-			localOnly.value = init.localOnly ?? false;
-			files.value = init.files ?? [];
 			if (init.poll) {
 				poll.value = {
 					choices: init.poll.choices.map(x => x.text),
 					multiple: init.poll.multiple,
-					expiresAt: init.poll.expiresAt ? (new Date(init.poll.expiresAt)).getTime() : null,
-					expiredAfter: null,
+					expiresAt: init.poll.expiresAt,
+					expiredAfter: init.poll.expiredAfter,
 				};
 			}
 			if (init.event) {
@@ -1154,13 +1082,9 @@ onMounted(() => {
 					metadata: init.event.metadata,
 				};
 			}
-			if (init.visibleUserIds) {
-				misskeyApi('users/show', { userIds: init.visibleUserIds }).then(users => {
-					users.forEach(u => pushVisibleUser(u));
-				});
-			}
+			visibility.value = init.visibility;
+			localOnly.value = init.localOnly;
 			quoteId.value = init.renote ? init.renote.id : null;
-			reactionAcceptance.value = init.reactionAcceptance;
 			disableRightClick.value = init.disableRightClick != null;
 		}
 
@@ -1255,15 +1179,6 @@ defineExpose({
 .submit {
 	margin: 12px 12px 12px 6px;
 	vertical-align: bottom;
-
-	&:focus-visible {
-		outline: none;
-
-		.submitInner {
-			outline: 2px solid var(--fgOnAccent);
-			outline-offset: -4px;
-		}
-	}
 
 	&:disabled {
 		opacity: 0.7;
@@ -1558,7 +1473,7 @@ defineExpose({
 	// .cw,
 	// .hashtags,
 	// .text {
-	// padding: 0 16px;
+		// padding: 0 16px;
 	// }
 
 	.cw {

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -17,16 +17,20 @@ export function useChartTooltip(opts: { position: 'top' | 'middle' } = { positio
 		borderColor: string;
 		text: string;
 	}[] | null>(null);
-	const { dispose: disposeTooltipComponent } = os.popup(MkChartTooltip, {
+	let disposeTooltipComponent;
+
+	os.popup(MkChartTooltip, {
 		showing: tooltipShowing,
 		x: tooltipX,
 		y: tooltipY,
 		title: tooltipTitle,
 		series: tooltipSeries,
-	}, {});
+	}, {}).then(({ dispose }) => {
+		disposeTooltipComponent = dispose;
+	});
 
 	onUnmounted(() => {
-		disposeTooltipComponent();
+		if (disposeTooltipComponent) disposeTooltipComponent();
 	});
 
 	onDeactivated(() => {
@@ -49,11 +53,11 @@ export function useChartTooltip(opts: { position: 'top' | 'middle' } = { positio
 		const rect = context.chart.canvas.getBoundingClientRect();
 
 		tooltipShowing.value = true;
-		tooltipX.value = rect.left + window.scrollX + context.tooltip.caretX;
+		tooltipX.value = rect.left + window.pageXOffset + context.tooltip.caretX;
 		if (opts.position === 'top') {
-			tooltipY.value = rect.top + window.scrollY;
+			tooltipY.value = rect.top + window.pageYOffset;
 		} else if (opts.position === 'middle') {
-			tooltipY.value = rect.top + window.scrollY + context.tooltip.caretY;
+			tooltipY.value = rect.top + window.pageYOffset + context.tooltip.caretY;
 		}
 	}
 

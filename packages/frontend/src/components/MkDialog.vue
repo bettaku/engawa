@@ -1,10 +1,10 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<MkModal ref="modal" :preferType="'dialog'" :zPriority="'high'" @click="done(true)" @closed="emit('closed')" @esc="cancel()">
+<MkModal ref="modal" :preferType="'dialog'" :zPriority="'high'" @click="done(true)" @closed="emit('closed')">
 	<div :class="$style.root">
 		<div v-if="icon" :class="$style.icon">
 			<i :class="icon"></i>
@@ -31,18 +31,18 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<MkInput v-if="input" v-model="inputValue" autofocus :type="input.type || 'text'" :placeholder="input.placeholder || undefined" :autocomplete="input.autocomplete" @keydown="onInputKeydown">
 			<template v-if="input.type === 'password'" #prefix><i class="ti ti-lock"></i></template>
 			<template #caption>
-				<span v-if="okButtonDisabledReason === 'charactersExceeded'" v-text="i18n.tsx._dialog.charactersExceeded({ current: (inputValue as string)?.length ?? 0, max: input.maxLength ?? 'NaN' })"/>
-				<span v-else-if="okButtonDisabledReason === 'charactersBelow'" v-text="i18n.tsx._dialog.charactersBelow({ current: (inputValue as string)?.length ?? 0, min: input.minLength ?? 'NaN' })"/>
+				<span v-if="okButtonDisabledReason === 'charactersExceeded'" v-text="i18n.t('_dialog.charactersExceeded', { current: (inputValue as string).length, max: input.maxLength ?? 'NaN' })"/>
+				<span v-else-if="okButtonDisabledReason === 'charactersBelow'" v-text="i18n.t('_dialog.charactersBelow', { current: (inputValue as string).length, min: input.minLength ?? 'NaN' })"/>
 			</template>
 		</MkInput>
 		<MkSelect v-if="select" v-model="selectedValue" autofocus>
 			<template v-if="select.items">
-				<template v-for="item in select.items">
-					<optgroup v-if="'sectionTitle' in item" :label="item.sectionTitle">
-						<option v-for="subItem in item.items" :value="subItem.value">{{ subItem.text }}</option>
-					</optgroup>
-					<option v-else :value="item.value">{{ item.text }}</option>
-				</template>
+				<option v-for="item in select.items" :value="item.value">{{ item.text }}</option>
+			</template>
+			<template v-else>
+				<optgroup v-for="groupedItem in select.groupedItems" :label="groupedItem.label">
+					<option v-for="item in groupedItem.items" :value="item.value">{{ item.text }}</option>
+				</optgroup>
 			</template>
 		</MkSelect>
 		<div v-if="(showOkButton || showCancelButton) && !actions" :class="$style.buttons">
@@ -57,7 +57,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { ref, shallowRef, computed } from 'vue';
+import { onBeforeUnmount, onMounted, ref, shallowRef, computed } from 'vue';
 import MkModal from '@/components/MkModal.vue';
 import MkButton from '@/components/MkButton.vue';
 import MkInput from '@/components/MkInput.vue';
@@ -65,7 +65,7 @@ import MkSelect from '@/components/MkSelect.vue';
 import { i18n } from '@/i18n.js';
 
 type Input = {
-	type?: 'text' | 'number' | 'password' | 'email' | 'url' | 'date' | 'time' | 'search' | 'datetime-local';
+	type: 'text' | 'number' | 'password' | 'email' | 'url' | 'date' | 'time' | 'search' | 'datetime-local';
 	placeholder?: string | null;
 	autocomplete?: string;
 	default: string | number | null;
@@ -73,24 +73,24 @@ type Input = {
 	maxLength?: number;
 };
 
-type SelectItem = {
-	value: any;
-	text: string;
-};
-
 type Select = {
-	items: (SelectItem | {
-		sectionTitle: string;
-		items: SelectItem[];
-	})[];
+	items: {
+		value: string;
+		text: string;
+	}[];
+	groupedItems: {
+		label: string;
+		items: {
+			value: string;
+			text: string;
+		}[];
+	}[];
 	default: string | null;
 };
 
-type Result = string | number | true | null;
-
 const props = withDefaults(defineProps<{
 	type?: 'success' | 'error' | 'warning' | 'info' | 'question' | 'waiting';
-	title?: string;
+	title: string;
 	text?: string;
 	caption?: string;
 	input?: Input;
@@ -115,7 +115,7 @@ const props = withDefaults(defineProps<{
 });
 
 const emit = defineEmits<{
-	(ev: 'done', v: { canceled: true } | { canceled: false, result: Result }): void;
+	(ev: 'done', v: { canceled: boolean; result: any }): void;
 	(ev: 'closed'): void;
 }>();
 
@@ -127,7 +127,7 @@ const selectedValue = ref(props.select?.default ?? null);
 const okButtonDisabledReason = computed<null | 'charactersExceeded' | 'charactersBelow'>(() => {
 	if (props.input) {
 		if (props.input.minLength) {
-			if (inputValue.value == null || (inputValue.value as string).length < props.input.minLength) {
+			if ((inputValue.value || inputValue.value === '') && (inputValue.value as string).length < props.input.minLength) {
 				return 'charactersBelow';
 			}
 		}
@@ -141,11 +141,8 @@ const okButtonDisabledReason = computed<null | 'charactersExceeded' | 'character
 	return null;
 });
 
-// overload function を使いたいので lint エラーを無視する
-function done(canceled: true): void;
-function done(canceled: false, result: Result): void; // eslint-disable-line no-redeclare
-function done(canceled: boolean, result?: Result): void { // eslint-disable-line no-redeclare
-	emit('done', { canceled, result } as { canceled: true } | { canceled: false, result: Result });
+function done(canceled: boolean, result?) {
+	emit('done', { canceled, result });
 	modal.value?.close();
 }
 
@@ -168,13 +165,25 @@ function onBgClick() {
 	if (props.cancelableByBgClick) cancel();
 }
 */
+function onKeydown(evt: KeyboardEvent) {
+	if (evt.key === 'Escape') cancel();
+}
+
 function onInputKeydown(evt: KeyboardEvent) {
-	if (evt.key === 'Enter' && okButtonDisabledReason.value === null) {
+	if (evt.key === 'Enter') {
 		evt.preventDefault();
 		evt.stopPropagation();
 		ok();
 	}
 }
+
+onMounted(() => {
+	document.addEventListener('keydown', onKeydown);
+});
+
+onBeforeUnmount(() => {
+	document.removeEventListener('keydown', onKeydown);
+});
 </script>
 
 <style lang="scss" module>

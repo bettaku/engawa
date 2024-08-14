@@ -1,14 +1,13 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { post } from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
+import { api, post } from '@/os.js';
 import { $i, login } from '@/account.js';
 import { getAccountFromId } from '@/scripts/get-account-from-id.js';
+import { mainRouter } from '@/router.js';
 import { deepClone } from '@/scripts/clone.js';
-import { mainRouter } from '@/router/main.js';
 
 export function swInject() {
 	navigator.serviceWorker.addEventListener('message', async ev => {
@@ -31,10 +30,10 @@ export function swInject() {
 				// プッシュ通知から来たreply,renoteはtruncateBodyが通されているため、
 				// 完全なノートを取得しなおす
 				if (props.reply) {
-					props.reply = await misskeyApi('notes/show', { noteId: props.reply.id });
+					props.reply = await api('notes/show', { noteId: props.reply.id });
 				}
 				if (props.renote) {
-					props.renote = await misskeyApi('notes/show', { noteId: props.renote.id });
+					props.renote = await api('notes/show', { noteId: props.renote.id });
 				}
 				return post(props);
 			}
