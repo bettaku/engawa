@@ -1,11 +1,11 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 import isAnimated from 'is-file-animated';
 import { isWebpSupported } from './isWebpSupported.js';
-import type { BrowserImageResizerConfigWithConvertedOutput } from '@misskey-dev/browser-image-resizer';
+import type { BrowserImageResizerConfig } from 'browser-image-resizer';
 import { defaultStore } from '@/store.js';
 
 const compressTypeMap = {
@@ -56,7 +56,7 @@ async function inputImageKind(file: File): Promise<'lossy' | 'lossless' | undefi
 	return compressKind;
 }
 
-export async function getCompressionConfig(file: File): Promise<BrowserImageResizerConfigWithConvertedOutput | undefined> {
+export async function getCompressionConfig(file: File): Promise<BrowserImageResizerConfig | undefined> {
 	const inputCompressKind = await inputImageKind(file);
 	if (!inputCompressKind) return undefined;
 

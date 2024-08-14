@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -12,8 +12,7 @@ import { ApiError } from '../../../error.js';
 
 export const meta = {
 	requireCredential: true,
-	kind: 'arr-update', // ここにkindプロパティを追加
-	secure: true,
+
 	requireAdmin: true,
 
 	errors: {

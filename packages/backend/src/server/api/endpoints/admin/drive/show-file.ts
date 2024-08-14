@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -61,7 +61,7 @@ export const meta = {
 			name: {
 				type: 'string',
 				optional: false, nullable: false,
-				example: '192.jpg',
+				example: 'lenna.jpg',
 			},
 			type: {
 				type: 'string',
@@ -84,24 +84,6 @@ export const meta = {
 			properties: {
 				type: 'object',
 				optional: false, nullable: false,
-				properties: {
-					width: {
-						type: 'number',
-						optional: true, nullable: false,
-					},
-					height: {
-						type: 'number',
-						optional: true, nullable: false,
-					},
-					orientation: {
-						type: 'number',
-						optional: true, nullable: false,
-					},
-					avgColor: {
-						type: 'string',
-						optional: true, nullable: false,
-					},
-				},
 			},
 			storedInternal: {
 				type: 'boolean',

@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -30,9 +30,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 		[$style.transition_modal_leaveTo]: transitionName === 'modal',
 		[$style.transition_send_leaveTo]: transitionName === 'send',
 	})"
-	:duration="transitionDuration" appear @afterLeave="onClosed" @enter="emit('opening')" @afterEnter="onOpened"
+	:duration="transitionDuration" appear @afterLeave="emit('closed')" @enter="emit('opening')" @afterEnter="onOpened"
 >
-	<div v-show="manualShowing != null ? manualShowing : showing" ref="modalRootEl" v-hotkey.global="keymap" :class="[$style.root, { [$style.drawer]: type === 'drawer', [$style.dialog]: type === 'dialog', [$style.popup]: type === 'popup' }]" :style="{ zIndex, pointerEvents: (manualShowing != null ? manualShowing : showing) ? 'auto' : 'none', '--transformOrigin': transformOrigin }">
+	<div v-show="manualShowing != null ? manualShowing : showing" v-hotkey.global="keymap" :class="[$style.root, { [$style.drawer]: type === 'drawer', [$style.dialog]: type === 'dialog', [$style.popup]: type === 'popup' }]" :style="{ zIndex, pointerEvents: (manualShowing != null ? manualShowing : showing) ? 'auto' : 'none', '--transformOrigin': transformOrigin }">
 		<div data-cy-bg :data-cy-transparent="isEnableBgTransparent" class="_modalBg" :class="[$style.bg, { [$style.bgTransparent]: isEnableBgTransparent, [$style.removeModalBgColorForBlur]: defaultStore.state.useBlurEffectForModal && defaultStore.state.removeModalBgColorForBlur }]" :style="{ zIndex }" @click="onBgClick" @mousedown="onBgClick" @contextmenu.prevent.stop="() => {}"></div>
 		<div ref="content" :class="[$style.content, { [$style.fixed]: fixed }]" :style="{ zIndex }" @click.self="onBgClick">
 			<slot :max-height="maxHeight" :type="type"></slot>
@@ -47,9 +47,6 @@ import * as os from '@/os.js';
 import { isTouchUsing } from '@/scripts/touch.js';
 import { defaultStore } from '@/store.js';
 import { deviceKind } from '@/scripts/device-kind.js';
-import { type Keymap } from '@/scripts/hotkey.js';
-import { focusTrap } from '@/scripts/focus-trap.js';
-import { focusParent } from '@/scripts/focus.js';
 
 function getFixedContainer(el: Element | null): Element | null {
 	if (el == null || el.tagName === 'BODY') return null;
@@ -71,8 +68,6 @@ const props = withDefaults(defineProps<{
 	zPriority?: 'low' | 'middle' | 'high';
 	noOverlap?: boolean;
 	transparentBg?: boolean;
-	hasInteractionWithOtherFocusTrappedEls?: boolean;
-	returnFocusTo?: HTMLElement | null;
 }>(), {
 	manualShowing: null,
 	src: null,
@@ -81,8 +76,6 @@ const props = withDefaults(defineProps<{
 	zPriority: 'low',
 	noOverlap: true,
 	transparentBg: false,
-	hasInteractionWithOtherFocusTrappedEls: false,
-	returnFocusTo: null,
 });
 
 const emit = defineEmits<{
@@ -100,7 +93,6 @@ const maxHeight = ref<number>();
 const fixed = ref(false);
 const transformOrigin = ref('center');
 const showing = ref(true);
-const modalRootEl = shallowRef<HTMLElement>();
 const content = shallowRef<HTMLElement>();
 const zIndex = os.claimZIndex(props.zPriority);
 const useSendAnime = ref(false);
@@ -139,7 +131,6 @@ const transitionDuration = computed((() =>
 					: 0
 ));
 
-let releaseFocusTrap: (() => void) | null = null;
 let contentClicking = false;
 
 function close(opts: { useSendAnimation?: boolean } = {}) {
@@ -163,11 +154,8 @@ if (type.value === 'drawer') {
 }
 
 const keymap = {
-	'esc': {
-		allowRepeat: true,
-		callback: () => emit('esc'),
-	},
-} as const satisfies Keymap;
+	'esc': () => emit('esc'),
+};
 
 const MARGIN = 16;
 const SCROLLBAR_THICKNESS = 16;
@@ -187,8 +175,8 @@ const align = () => {
 	let left;
 	let top;
 
-	const x = srcRect.left + (fixed.value ? 0 : window.scrollX);
-	const y = srcRect.top + (fixed.value ? 0 : window.scrollY);
+	const x = srcRect.left + (fixed.value ? 0 : window.pageXOffset);
+	const y = srcRect.top + (fixed.value ? 0 : window.pageYOffset);
 
 	if (props.anchor.x === 'center') {
 		left = x + (props.src.offsetWidth / 2) - (width / 2);
@@ -232,24 +220,24 @@ const align = () => {
 		}
 	} else {
 		// 画面から横にはみ出る場合
-		if (left + width - window.scrollX > (window.innerWidth - SCROLLBAR_THICKNESS)) {
-			left = (window.innerWidth - SCROLLBAR_THICKNESS) - width + window.scrollX - 1;
+		if (left + width - window.pageXOffset > (window.innerWidth - SCROLLBAR_THICKNESS)) {
+			left = (window.innerWidth - SCROLLBAR_THICKNESS) - width + window.pageXOffset - 1;
 		}
 
-		const underSpace = ((window.innerHeight - SCROLLBAR_THICKNESS) - MARGIN) - (top - window.scrollY);
+		const underSpace = ((window.innerHeight - SCROLLBAR_THICKNESS) - MARGIN) - (top - window.pageYOffset);
 		const upperSpace = (srcRect.top - MARGIN);
 
 		// 画面から縦にはみ出る場合
-		if (top + height - window.scrollY > ((window.innerHeight - SCROLLBAR_THICKNESS) - MARGIN)) {
+		if (top + height - window.pageYOffset > ((window.innerHeight - SCROLLBAR_THICKNESS) - MARGIN)) {
 			if (props.noOverlap && props.anchor.x === 'center') {
 				if (underSpace >= (upperSpace / 3)) {
 					maxHeight.value = underSpace;
 				} else {
 					maxHeight.value = upperSpace;
-					top = window.scrollY + ((upperSpace + MARGIN) - height);
+					top = window.pageYOffset + ((upperSpace + MARGIN) - height);
 				}
 			} else {
-				top = ((window.innerHeight - SCROLLBAR_THICKNESS) - MARGIN) - height + window.scrollY - 1;
+				top = ((window.innerHeight - SCROLLBAR_THICKNESS) - MARGIN) - height + window.pageYOffset - 1;
 			}
 		} else {
 			maxHeight.value = underSpace;
@@ -267,15 +255,15 @@ const align = () => {
 	let transformOriginX = 'center';
 	let transformOriginY = 'center';
 
-	if (top >= srcRect.top + props.src.offsetHeight + (fixed.value ? 0 : window.scrollY)) {
+	if (top >= srcRect.top + props.src.offsetHeight + (fixed.value ? 0 : window.pageYOffset)) {
 		transformOriginY = 'top';
-	} else if ((top + height) <= srcRect.top + (fixed.value ? 0 : window.scrollY)) {
+	} else if ((top + height) <= srcRect.top + (fixed.value ? 0 : window.pageYOffset)) {
 		transformOriginY = 'bottom';
 	}
 
-	if (left >= srcRect.left + props.src.offsetWidth + (fixed.value ? 0 : window.scrollX)) {
+	if (left >= srcRect.left + props.src.offsetWidth + (fixed.value ? 0 : window.pageXOffset)) {
 		transformOriginX = 'left';
-	} else if ((left + width) <= srcRect.left + (fixed.value ? 0 : window.scrollX)) {
+	} else if ((left + width) <= srcRect.left + (fixed.value ? 0 : window.pageXOffset)) {
 		transformOriginX = 'right';
 	}
 
@@ -288,11 +276,8 @@ const align = () => {
 const onOpened = () => {
 	emit('opened');
 
-	// NOTE: Chromatic テストの際に undefined になる場合がある
-	if (content.value == null) return;
-
 	// モーダルコンテンツにマウスボタンが押され、コンテンツ外でマウスボタンが離されたときにモーダルバックグラウンドクリックと判定させないためにマウスイベントを監視しフラグ管理する
-	const el = content.value.children[0];
+	const el = content.value!.children[0];
 	el.addEventListener('mousedown', ev => {
 		contentClicking = true;
 		window.addEventListener('mouseup', ev => {
@@ -302,10 +287,6 @@ const onOpened = () => {
 			}, 100);
 		}, { passive: true, once: true });
 	}, { passive: true });
-};
-
-const onClosed = () => {
-	emit('closed');
 };
 
 const alignObserver = new ResizeObserver((entries, observer) => {
@@ -323,20 +304,6 @@ onMounted(() => {
 		await nextTick();
 
 		align();
-	}, { immediate: true });
-
-	watch([showing, () => props.manualShowing], ([showing, manualShowing]) => {
-		if (manualShowing === true || (manualShowing == null && showing === true)) {
-			if (modalRootEl.value != null) {
-				const { release } = focusTrap(modalRootEl.value, props.hasInteractionWithOtherFocusTrappedEls);
-
-				releaseFocusTrap = release;
-				modalRootEl.value.focus();
-			}
-		} else {
-			releaseFocusTrap?.();
-			focusParent(props.returnFocusTo ?? props.src, true, false);
-		}
 	}, { immediate: true });
 
 	nextTick(() => {

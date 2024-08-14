@@ -33,17 +33,16 @@
 		],
 		"types": [
 			"vite/client",
-			"vitest/importMeta",
 		],
 		"lib": [
 			"esnext",
-			"dom",
-			"dom.iterable"
+			"dom"
 		],
 		"jsx": "preserve"
 	},
 	"compileOnSave": false,
 	"include": [
+		".eslintrc.js",
 		"./**/*.ts",
 		"./**/*.vue"
 	],

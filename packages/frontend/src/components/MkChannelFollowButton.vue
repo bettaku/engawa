@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -26,18 +26,17 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <script lang="ts" setup>
 import { ref } from 'vue';
-import * as Misskey from 'cherrypick-js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
+import * as os from '@/os.js';
 import { i18n } from '@/i18n.js';
 
 const props = withDefaults(defineProps<{
-	channel: Misskey.entities.Channel;
+	channel: Record<string, any>;
 	full?: boolean;
 }>(), {
 	full: false,
 });
 
-const isFollowing = ref(props.channel.isFollowing);
+const isFollowing = ref<boolean>(props.channel.isFollowing);
 const wait = ref(false);
 
 async function onClick() {
@@ -45,12 +44,12 @@ async function onClick() {
 
 	try {
 		if (isFollowing.value) {
-			await misskeyApi('channels/unfollow', {
+			await os.api('channels/unfollow', {
 				channelId: props.channel.id,
 			});
 			isFollowing.value = false;
 		} else {
-			await misskeyApi('channels/follow', {
+			await os.api('channels/follow', {
 				channelId: props.channel.id,
 			});
 			isFollowing.value = true;
@@ -87,7 +86,17 @@ async function onClick() {
 	}
 
 	&:focus-visible {
-		outline-offset: 2px;
+		&:after {
+			content: "";
+			pointer-events: none;
+			position: absolute;
+			top: -5px;
+			right: -5px;
+			bottom: -5px;
+			left: -5px;
+			border: 2px solid var(--focus);
+			border-radius: 32px;
+		}
 	}
 
 	&:hover {

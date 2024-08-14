@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -73,7 +73,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					url: webhook.url,
 					secret: webhook.secret,
 					active: webhook.active,
-					latestSentAt: webhook.latestSentAt ? webhook.latestSentAt.toISOString() : null,
+					latestSentAt: webhook.latestSentAt?.toISOString(),
 					latestStatus: webhook.latestStatus,
 				}
 			));

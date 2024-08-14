@@ -1,17 +1,16 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 import * as Misskey from 'cherrypick-js';
 
 export function shouldCollapsed(note: Misskey.entities.Note, urls: string[]): boolean {
-	return note.cw == null && (
-		note.text != null && (
-			(note.text.split('\n').length > 9) ||
-			(note.text.length > 500) ||
-			(urls.length >= 4)
-		) || note.files.length >= 5
+	return note.cw == null && note.text != null && (
+		(note.text.split('\n').length > 9) ||
+		(note.text.length > 500) ||
+		(note.files.length >= 5) ||
+		(urls.length >= 4)
 	);
 }
 

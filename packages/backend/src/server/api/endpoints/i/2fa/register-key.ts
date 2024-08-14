@@ -1,9 +1,9 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { comparePassword } from '@/misc/password.js';
+import bcrypt from 'bcryptjs';
 import { Inject, Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import type { UserProfilesRepository } from '@/models/_.js';
@@ -47,7 +47,7 @@ export const meta = {
 				properties: {
 					id: {
 						type: 'string',
-						optional: true,
+						nullable: true,
 					},
 				},
 			},
@@ -148,7 +148,6 @@ export const meta = {
 					'enterprise',
 					'indirect',
 					'none',
-					null,
 				],
 			},
 			extensions: {
@@ -217,7 +216,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 				}
 			}
 
-			const passwordMatched = await comparePassword(ps.password, profile.password ?? '');
+			const passwordMatched = await bcrypt.compare(ps.password, profile.password ?? '');
 			if (!passwordMatched) {
 				throw new ApiError(meta.errors.incorrectPassword);
 			}

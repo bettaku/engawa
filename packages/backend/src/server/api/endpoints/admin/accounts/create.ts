@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -9,10 +9,8 @@ import { Endpoint } from '@/server/api/endpoint-base.js';
 import type { UsersRepository } from '@/models/_.js';
 import { SignupService } from '@/core/SignupService.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { InstanceActorService } from '@/core/InstanceActorService.js';
 import { localUsernameSchema, passwordSchema } from '@/models/User.js';
 import { DI } from '@/di-symbols.js';
-import { Packed } from '@/misc/json-schema.js';
 
 export const meta = {
 	tags: ['admin'],
@@ -20,7 +18,7 @@ export const meta = {
 	res: {
 		type: 'object',
 		optional: false, nullable: false,
-		ref: 'MeDetailed',
+		ref: 'User',
 		properties: {
 			token: {
 				type: 'string',
@@ -47,12 +45,13 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 		private userEntityService: UserEntityService,
 		private signupService: SignupService,
-		private instanceActorService: InstanceActorService,
 	) {
 		super(meta, paramDef, async (ps, _me, token) => {
 			const me = _me ? await this.usersRepository.findOneByOrFail({ id: _me.id }) : null;
-			const realUsers = await this.instanceActorService.realLocalUsersPresent();
-			if ((realUsers && !me?.isRoot) || token !== null) throw new Error('access denied');
+			const noUsers = (await this.usersRepository.countBy({
+				host: IsNull(),
+			})) === 0;
+			if ((!noUsers && !me?.isRoot) || token !== null) throw new Error('access denied');
 
 			const { account, secret } = await this.signupService.signup({
 				username: ps.username,
@@ -61,11 +60,11 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			});
 
 			const res = await this.userEntityService.pack(account, account, {
-				schema: 'MeDetailed',
+				detail: true,
 				includeSecrets: true,
-			}) as Packed<'MeDetailed'> & { token: string };
+			});
 
-			res.token = secret;
+			(res as any).token = secret;
 
 			return res;
 		});

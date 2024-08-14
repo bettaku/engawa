@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -75,12 +75,12 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			}
 
 			// Create folder
-			const folder = await this.driveFoldersRepository.insertOne({
+			const folder = await this.driveFoldersRepository.insert({
 				id: this.idService.gen(),
 				name: ps.name,
 				parentId: parent !== null ? parent.id : null,
 				userId: me.id,
-			});
+			}).then(x => this.driveFoldersRepository.findOneByOrFail(x.identifiers[0]));
 
 			const folderObj = await this.driveFolderEntityService.pack(folder);
 

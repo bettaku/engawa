@@ -1,17 +1,17 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<section :class="$style.section">
+<section>
 	<component
 		:is="'h' + h"
-		:class="
-			h === 2 ? $style.h2 :
-			h === 3 ? $style.h3 :
-			h === 4 ? $style.h4 : ''
-		"
+		:class="{
+			'h2': h === 2,
+			'h3': h === 3,
+			'h4': h === 4,
+		}"
 	>
 		{{ block.title }}
 	</component>
@@ -25,11 +25,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 <script lang="ts" setup>
 import { defineAsyncComponent } from 'vue';
 import * as Misskey from 'cherrypick-js';
+import { SectionBlock } from './block.type.js';
 
 const XBlock = defineAsyncComponent(() => import('./page.block.vue'));
 
 defineProps<{
-	block: Misskey.entities.PageBlock,
+	block: SectionBlock,
 	h: number,
 	page: Misskey.entities.Page,
 }>();
@@ -37,26 +38,17 @@ defineProps<{
 
 <style lang="scss" module>
 .h2 {
-	font-size: 1.6em;
+	font-size: 1.35em;
 	margin: 0 0 0.5em 0;
-	border-bottom: 1px solid var(--accentLighten);
-	padding: 0.1em;
 }
 
 .h3 {
-	font-size: 1.25em;
+	font-size: 1em;
 	margin: 0 0 0.5em 0;
-	border-left: 3px solid var(--accentLighten);
-	border-bottom: 1px solid var(--accentLighten);
-	padding: 0.05em 0.5em 0.15em;
 }
 
 .h4 {
 	font-size: 1em;
 	margin: 0 0 0.5em 0;
-}
-
-.section {
-	margin-bottom: 1em;
 }
 </style>

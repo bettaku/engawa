@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -55,7 +55,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				var: ps.var,
 				userId: me.id,
 				user: await this.userEntityService.pack(me.id, { id: page.userId }, {
-					schema: 'UserDetailed',
+					detail: true,
 				}),
 			});
 		});

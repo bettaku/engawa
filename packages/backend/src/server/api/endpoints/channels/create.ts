@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -80,7 +80,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				}
 			}
 
-			const channel = await this.channelsRepository.insertOne({
+			const channel = await this.channelsRepository.insert({
 				id: this.idService.gen(),
 				userId: me.id,
 				name: ps.name,
@@ -89,7 +89,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				isSensitive: ps.isSensitive ?? false,
 				...(ps.color !== undefined ? { color: ps.color } : {}),
 				allowRenoteToExternal: ps.allowRenoteToExternal ?? true,
-			} as MiChannel);
+			} as MiChannel).then(x => this.channelsRepository.findOneByOrFail(x.identifiers[0]));
 
 			return await this.channelEntityService.pack(channel, me);
 		});

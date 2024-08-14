@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -17,23 +17,21 @@ updateI18n(locales['en-US']);
 // XXX: cherrypick-js panics if WebSocket is not defined
 vi.stubGlobal('WebSocket', class WebSocket extends EventTarget { static CLOSING = 2; });
 
-export const defaultStoreState: Record<string, unknown> = {
-
-	// なんかtestがうまいこと動かないのでここに書く
-	dataSaver: {
-		media: false,
-		avatar: false,
-		urlPreview: false,
-		code: false,
-	},
-
-};
-
 // XXX: defaultStore somehow becomes undefined in vitest?
 vi.mock('@/store.js', () => {
 	return {
 		defaultStore: {
-			state: defaultStoreState,
+			state: {
+
+				// なんかtestがうまいこと動かないのでここに書く
+				dataSaver: {
+					media: false,
+					avatar: false,
+					urlPreview: false,
+					code: false,
+				},
+
+			},
 		},
 	};
 });

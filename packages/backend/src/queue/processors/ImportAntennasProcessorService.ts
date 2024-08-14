@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -44,11 +44,11 @@ const validate = new Ajv().compile({
 		} },
 		caseSensitive: { type: 'boolean' },
 		localOnly: { type: 'boolean' },
-		excludeBots: { type: 'boolean' },
 		withReplies: { type: 'boolean' },
 		withFile: { type: 'boolean' },
+		notify: { type: 'boolean' },
 	},
-	required: ['name', 'src', 'keywords', 'excludeKeywords', 'users', 'caseSensitive', 'withReplies', 'withFile'],
+	required: ['name', 'src', 'keywords', 'excludeKeywords', 'users', 'caseSensitive', 'withReplies', 'withFile', 'notify'],
 });
 
 @Injectable()
@@ -76,7 +76,7 @@ export class ImportAntennasProcessorService {
 					this.logger.warn('Validation Failed');
 					continue;
 				}
-				const result = await this.antennasRepository.insertOne({
+				const result = await this.antennasRepository.insert({
 					id: this.idService.gen(now.getTime()),
 					lastUsedAt: now,
 					userId: job.data.user.id,
@@ -88,10 +88,10 @@ export class ImportAntennasProcessorService {
 					users: (antenna.src === 'list' && antenna.userListAccts !== null ? antenna.userListAccts : antenna.users).filter(Boolean),
 					caseSensitive: antenna.caseSensitive,
 					localOnly: antenna.localOnly,
-					excludeBots: antenna.excludeBots,
 					withReplies: antenna.withReplies,
 					withFile: antenna.withFile,
-				});
+					notify: antenna.notify,
+				}).then(x => this.antennasRepository.findOneByOrFail(x.identifiers[0]));
 				this.logger.succ('Antenna created: ' + result.id);
 				this.globalEventService.publishInternalEvent('antennaCreated', result);
 			}

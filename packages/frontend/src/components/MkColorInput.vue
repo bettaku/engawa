@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -41,8 +41,8 @@ const { modelValue } = toRefs(props);
 const v = ref(modelValue.value);
 const inputEl = shallowRef<HTMLElement>();
 
-const onInput = () => {
-	emit('update:modelValue', v.value ?? '');
+const onInput = (ev: KeyboardEvent) => {
+	emit('update:modelValue', v.value);
 };
 </script>
 

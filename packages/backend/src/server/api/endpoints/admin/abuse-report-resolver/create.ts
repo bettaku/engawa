@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -13,45 +13,41 @@ import { IdService } from '@/core/IdService.js';
 
 export const meta = {
 	tags: ['admin'],
+
 	requireCredential: true,
-	secure: true,
+
 	requireAdmin: true,
-	kind: 'arr-create', // ここにkindプロパティを追加
+
 	res: {
 		type: 'object',
 		properties: {
 			name: {
 				type: 'string',
-				nullable: false,
-				optional: false,
+				nullable: false, optional: false,
 			},
 			targetUserPattern: {
 				type: 'string',
-				nullable: true,
-				optional: false,
+				nullable: true, optional: false,
 			},
 			reporterPattern: {
 				type: 'string',
-				nullable: true,
-				optional: false,
+				nullable: true, optional: false,
 			},
 			reportContentPattern: {
 				type: 'string',
-				nullable: true,
-				optional: false,
+				nullable: true, optional: false,
 			},
 			expiresAt: {
 				type: 'string',
-				nullable: false,
-				optional: false,
+				nullable: false, optional: false,
 			},
 			forward: {
 				type: 'boolean',
-				nullable: false,
-				optional: false,
+				nullable: false, optional: false,
 			},
 		},
 	},
+
 	errors: {
 		invalidRegularExpressionForTargetUser: {
 			message: 'Invalid regular expression for target user.',
@@ -127,7 +123,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 				ps.expiresAt === '6months' ? function () { expirationDate!.setUTCMonth((expirationDate!.getUTCMonth() + 6 + 1) % 12 - 1); expirationDate!.setUTCFullYear(expirationDate!.getUTCFullYear() + (Math.floor((previousMonth + 6 + 1) / 12))); } :
 				ps.expiresAt === '1year' ? function () { expirationDate!.setUTCFullYear(expirationDate!.getUTCFullYear() + 1); } : function () { expirationDate = null; })();
 
-			return await this.abuseReportResolverRepository.insertOne({
+			return await this.abuseReportResolverRepository.insert({
 				id: this.idService.gen(),
 				updatedAt: now,
 				name: ps.name,
@@ -137,7 +133,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 				expirationDate,
 				expiresAt: ps.expiresAt,
 				forward: ps.forward,
-			});
+			}).then(x => this.abuseReportResolverRepository.findOneByOrFail(x.identifiers[0]));
 		});
 	}
 }

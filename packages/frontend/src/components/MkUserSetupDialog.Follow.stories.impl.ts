@@ -1,11 +1,11 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { StoryObj } from '@storybook/vue3';
-import { HttpResponse, http } from 'msw';
+import { rest } from 'msw';
 import { commonHandlers } from '../../.storybook/mocks.js';
 import { userDetailed } from '../../.storybook/fakes.js';
 import MkUserSetupDialog_Follow from './MkUserSetupDialog.Follow.vue';
@@ -38,17 +38,17 @@ export const Default = {
 		msw: {
 			handlers: [
 				...commonHandlers,
-				http.post('/api/users', () => {
-					return HttpResponse.json([
+				rest.post('/api/users', (req, res, ctx) => {
+					return res(ctx.json([
 						userDetailed('44'),
 						userDetailed('49'),
-					]);
+					]));
 				}),
-				http.post('/api/pinned-users', () => {
-					return HttpResponse.json([
+				rest.post('/api/pinned-users', (req, res, ctx) => {
+					return res(ctx.json([
 						userDetailed('44'),
 						userDetailed('49'),
-					]);
+					]));
 				}),
 			],
 		},

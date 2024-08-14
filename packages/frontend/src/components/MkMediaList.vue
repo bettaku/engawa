@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -39,7 +39,6 @@ import XVideo from '@/components/MkMediaVideo.vue';
 import * as os from '@/os.js';
 import { FILE_TYPE_BROWSERSAFE } from '@/const.js';
 import { defaultStore } from '@/store.js';
-import { focusParent } from '@/scripts/focus.js';
 
 const props = defineProps<{
 	mediaList: Misskey.entities.DriveFile[];
@@ -50,12 +49,10 @@ const gallery = shallowRef<HTMLDivElement>();
 const pswpZIndex = os.claimZIndex('middle');
 document.documentElement.style.setProperty('--mk-pswp-root-z-index', pswpZIndex.toString());
 const count = computed(() => props.mediaList.filter(media => previewable(media)).length);
-let lightbox: PhotoSwipeLightbox | null = null;
-
-let activeEl: HTMLElement | null = null;
+let lightbox: PhotoSwipeLightbox | null;
 
 const popstateHandler = (): void => {
-	if (lightbox?.pswp && lightbox.pswp.isOpen === true) {
+	if (lightbox.pswp && lightbox.pswp.isOpen === true) {
 		lightbox.pswp.close();
 	}
 };
@@ -63,17 +60,14 @@ const popstateHandler = (): void => {
 async function calcAspectRatio() {
 	if (!gallery.value) return;
 
-	const img = props.mediaList[0];
+	let img = props.mediaList[0];
 
 	if (props.mediaList.length !== 1 || !(img.properties.width && img.properties.height)) {
 		gallery.value.style.aspectRatio = '';
 		return;
 	}
 
-	const ratioMax = (ratio: number) => {
-		if (img.properties.width == null || img.properties.height == null) return '';
-		return `${Math.max(ratio, img.properties.width / img.properties.height).toString()} / 1`;
-	};
+	const ratioMax = (ratio: number) => `${Math.max(ratio, img.properties.width / img.properties.height).toString()} / 1`;
 
 	switch (defaultStore.state.mediaListWithOneImageAppearance) {
 		case '16_9':
@@ -134,17 +128,18 @@ onMounted(() => {
 		bgOpacity: 1,
 		showAnimationDuration: 100,
 		hideAnimationDuration: 100,
-		returnFocus: false,
 		pswpModule: PhotoSwipe,
 	});
 
-	lightbox.addFilter('itemData', (itemData) => {
+	lightbox.on('itemData', (ev) => {
+		const { itemData } = ev;
+
 		// element is children
 		const { element } = itemData;
 
-		const id = element?.dataset.id;
+		const id = element.dataset.id;
 		const file = props.mediaList.find(media => media.id === id);
-		if (!file) return itemData;
+		if (!file) return;
 
 		itemData.src = file.url;
 		itemData.w = Number(file.properties.width);
@@ -152,13 +147,10 @@ onMounted(() => {
 		if (file.properties.orientation != null && file.properties.orientation >= 5) {
 			[itemData.w, itemData.h] = [itemData.h, itemData.w];
 		}
-		itemData.msrc = file.thumbnailUrl ?? undefined;
-		itemData.alt = file.comment || undefined;
+		itemData.msrc = file.thumbnailUrl;
+		itemData.alt = file.comment ?? file.name;
 		itemData.comment = file.comment ?? file.name;
-		itemData.title = file.name;
 		itemData.thumbCropped = true;
-
-		return itemData;
 	});
 
 	// prevent to open hidden media
@@ -170,67 +162,41 @@ onMounted(() => {
 	});
 
 	lightbox.on('uiRegister', () => {
-		lightbox?.pswp?.ui?.registerElement({
+		lightbox.pswp.ui.registerElement({
 			name: 'altText',
-			className: 'pswp__alt-text-container',
+			className: 'pwsp__alt-text-container',
 			appendTo: 'wrapper',
-			onInit: (el, pswp) => {
-				const textBox = document.createElement('p');
-				textBox.className = 'pswp__alt-text _acrylic';
+			onInit: (el, pwsp) => {
+				let textBox = document.createElement('p');
+				textBox.className = 'pwsp__alt-text _acrylic';
 				el.appendChild(textBox);
 
-				pswp.on('change', () => {
-					const altText = pswp.currSlide?.data.alt || null;
-					textBox.textContent = altText;
-					if (!altText) {
-						el.style.display = 'none';
-					}
-				});
-			},
-		});
-		lightbox?.pswp?.ui?.registerElement({
-			name: 'fileName',
-			className: 'pswp__file-name-container',
-			appendTo: 'wrapper',
-			onInit: (el, pswp) => {
-				const textBox = document.createElement('p');
-				textBox.className = 'pswp__file-name _acrylic';
-				el.appendChild(textBox);
-
-				pswp.on('change', () => {
-					textBox.textContent = pswp.currSlide?.data.title;
+				pwsp.on('change', (a) => {
+					textBox.textContent = pwsp.currSlide.data.comment;
 				});
 			},
 		});
 	});
 
-	lightbox.on('afterInit', () => {
-		activeEl = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-		focusParent(activeEl, true, true);
-		lightbox?.pswp?.element?.focus({
-			preventScroll: true,
-		});
+	lightbox.init();
+
+	window.addEventListener('popstate', popstateHandler);
+
+	lightbox.on('beforeOpen', () => {
 		history.pushState(null, '', '#pswp');
 	});
 
-	lightbox.on('destroy', () => {
-		focusParent(activeEl, true, false);
-		activeEl = null;
+	lightbox.on('close', () => {
 		if (window.location.hash === '#pswp') {
 			history.back();
 		}
 	});
-
-	window.addEventListener('popstate', popstateHandler);
-
-	lightbox.init();
 });
 
 onUnmounted(() => {
 	window.removeEventListener('popstate', popstateHandler);
 	lightbox?.destroy();
 	lightbox = null;
-	activeEl = null;
 });
 
 const previewable = (file: Misskey.entities.DriveFile): boolean => {
@@ -238,16 +204,6 @@ const previewable = (file: Misskey.entities.DriveFile): boolean => {
 	// FILE_TYPE_BROWSERSAFEに適合しないものはブラウザで表示するのに不適切
 	return (file.type.startsWith('video') || file.type.startsWith('image')) && FILE_TYPE_BROWSERSAFE.includes(file.type);
 };
-
-const openGallery = () => {
-	if (props.mediaList.filter(media => previewable(media)).length > 0) {
-		lightbox?.loadAndOpen(0);
-	}
-};
-
-defineExpose({
-	openGallery,
-});
 </script>
 
 <style lang="scss" module>
@@ -352,23 +308,7 @@ defineExpose({
 	backdrop-filter: var(--modalBgFilter);
 }
 
-.pswp__alt-text-container {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-
-	position: absolute;
-	bottom: 100px;
-	left: 50%;
-	transform: translateX(-50%);
-
-	width: 75%;
-	max-width: 800px;
-
-	z-index: 2;
-}
-
-.pswp__file-name-container {
+.pwsp__alt-text-container {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
@@ -380,29 +320,15 @@ defineExpose({
 
 	width: 75%;
 	max-width: 800px;
-
-	z-index: 1;
 }
 
-.pswp__alt-text {
+.pwsp__alt-text {
 	color: var(--fg);
 	margin: 0 auto;
 	text-align: center;
 	padding: var(--margin);
 	border-radius: var(--radius);
 	max-height: 8em;
-	overflow-y: auto;
-	text-shadow: var(--bg) 0 0 10px, var(--bg) 0 0 3px, var(--bg) 0 0 3px;
-	white-space: pre-line;
-}
-
-.pswp__file-name {
-	color: var(--fg);
-	margin: 0 auto;
-	text-align: center;
-	padding: var(--margin);
-	border-radius: var(--radius);
-	max-height: 16em;
 	overflow-y: auto;
 	text-shadow: var(--bg) 0 0 10px, var(--bg) 0 0 3px, var(--bg) 0 0 3px;
 	white-space: pre-line;

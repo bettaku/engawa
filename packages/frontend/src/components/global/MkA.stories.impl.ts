@@ -1,10 +1,11 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-import { expect, userEvent, within } from '@storybook/test';
+import { expect } from '@storybook/jest';
+import { userEvent, within } from '@storybook/testing-library';
 import { StoryObj } from '@storybook/vue3';
 import MkA from './MkA.vue';
 import { tick } from '@/scripts/test-utils.js';
@@ -32,18 +33,18 @@ export const Default = {
 	async play({ canvasElement }) {
 		const canvas = within(canvasElement);
 		const a = canvas.getByRole<HTMLAnchorElement>('link');
-		// FIXME: 通るけどその後落ちるのでコメントアウト
-		// await expect(a.href).toMatch(/^https?:\/\/.*#test$/);
+		await expect(a.href).toMatch(/^https?:\/\/.*#test$/);
 		await userEvent.pointer({ keys: '[MouseRight]', target: a });
+		await tick();
 		const menu = canvas.getByRole('menu');
 		await expect(menu).toBeInTheDocument();
 		await userEvent.click(a);
 		a.blur();
+		await tick();
 		await expect(menu).not.toBeInTheDocument();
 	},
 	args: {
 		to: '#test',
-		behavior: 'browser',
 	},
 	parameters: {
 		layout: 'centered',

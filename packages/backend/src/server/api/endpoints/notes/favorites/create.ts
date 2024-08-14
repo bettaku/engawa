@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -67,7 +67,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			});
 
 			// if already favorited
-			const exist = await this.noteFavoritesRepository.exists({
+			const exist = await this.noteFavoritesRepository.exist({
 				where: {
 					noteId: note.id,
 					userId: me.id,

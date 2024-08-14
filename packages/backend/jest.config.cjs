@@ -160,6 +160,7 @@ module.exports = {
 	testMatch: [
 		"<rootDir>/test/unit/**/*.ts",
 		"<rootDir>/src/**/*.test.ts",
+		"<rootDir>/test/e2e/**/*.ts",
 	],
 
 	// An array of regexp pattern strings that are matched against all test paths, matched tests are skipped

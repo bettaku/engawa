@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -24,7 +24,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					:ref="id"
 					:key="id"
 					:class="$style.column"
-					:column="columns.find(c => c.id === id)!"
+					:column="columns.find(c => c.id === id)"
 					:isStacked="ids.length > 1"
 					@headerWheel="onWheel"
 				/>
@@ -96,7 +96,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 import { computed, defineAsyncComponent, ref, watch, shallowRef } from 'vue';
 import { v4 as uuid } from 'uuid';
 import XCommon from './_common_/common.vue';
-import { deckStore, columnTypes, addColumn as addColumnToStore, loadDeck, getProfiles, deleteProfile as deleteProfile_ } from './deck/deck-store.js';
+import { deckStore, addColumn as addColumnToStore, loadDeck, getProfiles, deleteProfile as deleteProfile_ } from './deck/deck-store.js';
 import XSidebar from '@/ui/_common_/navbar.vue';
 import XDrawerMenu from '@/ui/_common_/navbar-for-mobile.vue';
 import MkButton from '@/components/MkButton.vue';
@@ -104,6 +104,7 @@ import * as os from '@/os.js';
 import { navbarItemDef } from '@/navbar.js';
 import { $i } from '@/account.js';
 import { i18n } from '@/i18n.js';
+import { mainRouter } from '@/router.js';
 import { unisonReload } from '@/scripts/unison-reload.js';
 import { deviceKind } from '@/scripts/device-kind.js';
 import { defaultStore } from '@/store.js';
@@ -117,8 +118,6 @@ import XWidgetsColumn from '@/ui/deck/widgets-column.vue';
 import XMentionsColumn from '@/ui/deck/mentions-column.vue';
 import XDirectColumn from '@/ui/deck/direct-column.vue';
 import XRoleTimelineColumn from '@/ui/deck/role-timeline-column.vue';
-import { mainRouter } from '@/router/main.js';
-import { MenuItem } from '@/types/menu.js';
 const XStatusBars = defineAsyncComponent(() => import('@/ui/_common_/statusbars.vue'));
 const XAnnouncements = defineAsyncComponent(() => import('@/ui/_common_/announcements.vue'));
 
@@ -153,12 +152,10 @@ window.addEventListener('resize', () => {
 const snapScroll = deviceKind === 'smartphone' || deviceKind === 'tablet';
 const drawerMenuShowing = ref(false);
 
-/*
 const route = 'TODO';
 watch(route, () => {
 	drawerMenuShowing.value = false;
 });
-*/
 
 const columns = deckStore.reactiveState.columns;
 const layout = deckStore.reactiveState.layout;
@@ -177,20 +174,32 @@ function showSettings() {
 const columnsEl = shallowRef<HTMLElement>();
 
 const addColumn = async (ev) => {
+	const columns = [
+		'main',
+		'widgets',
+		'notifications',
+		'tl',
+		'antenna',
+		'list',
+		'channel',
+		'mentions',
+		'direct',
+		'roleTimeline',
+	];
+
 	const { canceled, result: column } = await os.select({
 		title: i18n.ts._deck.addColumn,
-		items: columnTypes.map(column => ({
-			value: column, text: i18n.ts._deck._columns[column],
+		items: columns.map(column => ({
+			value: column, text: i18n.t('_deck._columns.' + column),
 		})),
 	});
-	if (canceled || column == null) return;
+	if (canceled) return;
 
 	addColumnToStore({
 		type: column,
 		id: uuid(),
-		name: i18n.ts._deck._columns[column],
+		name: i18n.t('_deck._columns.' + column),
 		width: 330,
-		soundSetting: { type: null, volume: 1 },
 	});
 };
 
@@ -202,7 +211,7 @@ const onContextmenu = (ev) => {
 };
 
 function onWheel(ev: WheelEvent) {
-	if (ev.deltaX === 0 && columnsEl.value != null) {
+	if (ev.deltaX === 0) {
 		columnsEl.value.scrollLeft += ev.deltaY;
 	}
 }
@@ -213,41 +222,42 @@ document.documentElement.style.scrollBehavior = 'auto';
 loadDeck();
 
 function changeProfile(ev: MouseEvent) {
-	let items: MenuItem[] = [{
+	const items = ref([{
 		text: deckStore.state.profile,
-		active: true,
-		action: () => {},
-	}];
+		active: true.valueOf,
+	}]);
 	getProfiles().then(profiles => {
-		items.push(...(profiles.filter(k => k !== deckStore.state.profile).map(k => ({
+		items.value = [{
+			text: deckStore.state.profile,
+			active: true.valueOf,
+		}, ...(profiles.filter(k => k !== deckStore.state.profile).map(k => ({
 			text: k,
 			action: () => {
 				deckStore.set('profile', k);
 				unisonReload();
 			},
-		}))), { type: 'divider' as const }, {
+		}))), { type: 'divider' }, {
 			text: i18n.ts._deck.newProfile,
 			icon: 'ti ti-plus',
 			action: async () => {
 				const { canceled, result: name } = await os.inputText({
 					title: i18n.ts._deck.profile,
-					minLength: 1,
+					allowEmpty: false,
 				});
-				if (canceled || name == null) return;
+				if (canceled) return;
 
 				deckStore.set('profile', name);
 				unisonReload();
 			},
-		});
-	}).then(() => {
-		os.popupMenu(items, ev.currentTarget ?? ev.target);
+		}];
 	});
+	os.popupMenu(items, ev.currentTarget ?? ev.target);
 }
 
 async function deleteProfile() {
 	const { canceled } = await os.confirm({
 		type: 'warning',
-		text: i18n.tsx.deleteAreYouSure({ x: deckStore.state.profile }),
+		text: i18n.t('deleteAreYouSure', { x: deckStore.state.profile }),
 	});
 	if (canceled) return;
 
@@ -479,7 +489,7 @@ body {
 	left: 0;
 	color: var(--indicator);
 	font-size: 16px;
-	animation: global-blink 1s infinite;
+	animation: blink 1s infinite;
 
 	&:has(.itemIndicateValueIcon) {
 		animation: none;

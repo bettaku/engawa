@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -91,7 +91,6 @@ import XModerators from './overview.moderators.vue';
 import XHeatmap from './overview.heatmap.vue';
 import type { InstanceForPie } from './overview.pie.vue';
 import * as os from '@/os.js';
-import { misskeyApi, misskeyApiGet } from '@/scripts/misskey-api.js';
 import { useStream } from '@/stream.js';
 import { i18n } from '@/i18n.js';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
@@ -134,14 +133,14 @@ onMounted(async () => {
 	magicGrid.listen();
 	*/
 
-	misskeyApiGet('charts/federation', { limit: 2, span: 'day' }).then(chart => {
+	os.apiGet('charts/federation', { limit: 2, span: 'day' }).then(chart => {
 		federationPubActive.value = chart.pubActive[0];
 		federationPubActiveDiff.value = chart.pubActive[0] - chart.pubActive[1];
 		federationSubActive.value = chart.subActive[0];
 		federationSubActiveDiff.value = chart.subActive[0] - chart.subActive[1];
 	});
 
-	misskeyApiGet('federation/stats', { limit: 10 }).then(res => {
+	os.apiGet('federation/stats', { limit: 10 }).then(res => {
 		topSubInstancesForPie.value = [
 			...res.topSubInstances.map(x => ({
 				name: x.host,
@@ -166,25 +165,25 @@ onMounted(async () => {
 		];
 	});
 
-	misskeyApi('admin/server-info').then(serverInfoResponse => {
+	os.api('admin/server-info').then(serverInfoResponse => {
 		serverInfo.value = serverInfoResponse;
 	});
 
-	misskeyApi('admin/show-users', {
+	os.api('admin/show-users', {
 		limit: 5,
 		sort: '+createdAt',
 	}).then(res => {
 		newUsers.value = res;
 	});
 
-	misskeyApi('federation/instances', {
+	os.api('federation/instances', {
 		sort: '+latestRequestReceivedAt',
 		limit: 25,
 	}).then(res => {
 		activeInstances.value = res;
 	});
 
-	misskeyApi('admin/meta', {}).then(res => {
+	os.api('admin/meta', {}).then(res => {
 		meta.value = res;
 	});
 
@@ -208,10 +207,10 @@ const headerActions = computed(() => []);
 
 const headerTabs = computed(() => []);
 
-definePageMetadata(() => ({
+definePageMetadata({
 	title: i18n.ts.dashboard,
 	icon: 'ti ti-dashboard',
-}));
+});
 </script>
 
 <style lang="scss" module>

@@ -1,15 +1,23 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
 <div :class="$style.root">
-	<MkMediaAudio v-if="media.type.startsWith('audio') && media.type !== 'audio/midi'" :audio="media"/>
-	<div v-else-if="media.isSensitive && hide" :class="$style.sensitive" @click="show">
+	<div v-if="media.isSensitive && hide" :class="$style.sensitive" @click="hide = false">
 		<span style="font-size: 1.6em;"><i class="ti ti-alert-triangle"></i></span>
 		<b>{{ i18n.ts.sensitive }}</b>
 		<span>{{ i18n.ts.clickToShow }}</span>
+	</div>
+	<div v-else-if="media.type.startsWith('audio') && media.type !== 'audio/midi'" :class="$style.audio">
+		<audio
+			ref="audioEl"
+			:src="media.url"
+			:title="media.name"
+			controls
+			preload="metadata"
+		/>
 	</div>
 	<a
 		v-else :class="$style.download"
@@ -24,30 +32,23 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { shallowRef, watch, ref } from 'vue';
 import * as Misskey from 'cherrypick-js';
 import { i18n } from '@/i18n.js';
-import { defaultStore } from '@/store.js';
-import * as os from '@/os.js';
-import MkMediaAudio from '@/components/MkMediaAudio.vue';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
 	media: Misskey.entities.DriveFile;
-}>();
+}>(), {
+});
 
+const audioEl = shallowRef<HTMLAudioElement>();
 const hide = ref(true);
 
-async function show() {
-	if (props.media.isSensitive && defaultStore.state.confirmWhenRevealingSensitiveMedia) {
-		const { canceled } = await os.confirm({
-			type: 'question',
-			text: i18n.ts.sensitiveMediaRevealConfirm,
-		});
-		if (canceled) return;
+watch(audioEl, () => {
+	if (audioEl.value) {
+		audioEl.value.volume = 0.3;
 	}
-
-	hide.value = false;
-}
+});
 </script>
 
 <style lang="scss" module>

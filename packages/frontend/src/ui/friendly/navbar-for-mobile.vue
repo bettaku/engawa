@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project & noridev and cherrypick-project
+SPDX-FileCopyrightText: syuilo and noridev and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -63,8 +63,7 @@ import { $i, openAccountMenu as openAccountMenu_ } from '@/account.js';
 import { defaultStore } from '@/store.js';
 import { i18n } from '@/i18n.js';
 import { instance } from '@/instance.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
-import { mainRouter } from '@/router/main.js';
+import { mainRouter } from '@/router.js';
 import { version } from '@/config.js';
 
 const menu = toRef(defaultStore.state, 'menu');
@@ -79,7 +78,7 @@ const controlPanelIndicated = ref(false);
 const releasesCherryPick = ref();
 
 if ($i.isAdmin ?? $i.isModerator) {
-	misskeyApi('admin/abuse-user-reports', {
+	os.api('admin/abuse-user-reports', {
 		state: 'unresolved',
 		limit: 1,
 	}).then(reports => {
@@ -90,7 +89,7 @@ if ($i.isAdmin ?? $i.isModerator) {
 		method: 'GET',
 	}).then(res => res.json())
 		.then(async res => {
-			const meta = await misskeyApi('admin/meta');
+			const meta = await os.api('admin/meta');
 			if (meta.enableReceivePrerelease) releasesCherryPick.value = res;
 			else releasesCherryPick.value = res.filter(x => x.prerelease === false);
 			if ((version < releasesCherryPick.value[0].tag_name) && (meta.skipCherryPickVersion < releasesCherryPick.value[0].tag_name)) controlPanelIndicated.value = true;
@@ -104,9 +103,8 @@ function openAccountMenu(ev: MouseEvent) {
 }
 
 function more() {
-	const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkLaunchPad.vue')), {}, {
-		closed: () => dispose(),
-	});
+	os.popup(defineAsyncComponent(() => import('@/components/MkLaunchPad.vue')), {}, {
+	}, 'closed');
 }
 
 function openProfile() {
@@ -188,7 +186,7 @@ function openProfile() {
 	font-weight: bold;
 	text-align: left;
 
-	&::before {
+	&:before {
 		content: "";
 		display: block;
 		width: calc(100% - 38px);
@@ -204,7 +202,7 @@ function openProfile() {
 	}
 
 	&:hover, &.active {
-		&::before {
+		&:before {
 			background: var(--accentLighten);
 		}
 	}
@@ -293,7 +291,7 @@ function openProfile() {
 	}
 
 	&:hover, &.active {
-		&::before {
+		&:before {
 			content: "";
 			display: block;
 			width: calc(100% - 24px);
@@ -323,7 +321,7 @@ function openProfile() {
 	left: 20px;
 	color: var(--navIndicator);
 	font-size: 6px;
-	animation: global-blink 1s infinite;
+	animation: blink 1s infinite;
 
   &:has(.itemIndicateValueIcon) {
     animation: none;

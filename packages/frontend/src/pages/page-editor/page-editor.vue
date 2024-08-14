@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -71,12 +71,11 @@ import MkSwitch from '@/components/MkSwitch.vue';
 import MkInput from '@/components/MkInput.vue';
 import { url } from '@/config.js';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
 import { selectFile } from '@/scripts/select-file.js';
+import { mainRouter } from '@/router.js';
 import { i18n } from '@/i18n.js';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
 import { $i } from '@/account.js';
-import { mainRouter } from '@/router/main.js';
 
 const props = defineProps<{
 	initPageId?: string;
@@ -107,7 +106,7 @@ watch(eyeCatchingImageId, async () => {
 	if (eyeCatchingImageId.value == null) {
 		eyeCatchingImage.value = null;
 	} else {
-		eyeCatchingImage.value = await misskeyApi('drive/files/show', {
+		eyeCatchingImage.value = await os.api('drive/files/show', {
 			fileId: eyeCatchingImageId.value,
 		});
 	}
@@ -150,7 +149,7 @@ function save() {
 
 	if (pageId.value) {
 		options.pageId = pageId.value;
-		misskeyApi('pages/update', options)
+		os.api('pages/update', options)
 			.then(page => {
 				currentName.value = name.value.trim();
 				os.alert({
@@ -159,7 +158,7 @@ function save() {
 				});
 			}).catch(onError);
 	} else {
-		misskeyApi('pages/create', options)
+		os.api('pages/create', options)
 			.then(created => {
 				pageId.value = created.id;
 				currentName.value = name.value.trim();
@@ -175,10 +174,10 @@ function save() {
 function del() {
 	os.confirm({
 		type: 'warning',
-		text: i18n.tsx.removeAreYouSure({ x: title.value.trim() }),
+		text: i18n.t('removeAreYouSure', { x: title.value.trim() }),
 	}).then(({ canceled }) => {
 		if (canceled) return;
-		misskeyApi('pages/delete', {
+		os.api('pages/delete', {
 			pageId: pageId.value,
 		}).then(() => {
 			os.alert({
@@ -193,7 +192,7 @@ function del() {
 function duplicate() {
 	title.value = title.value + ' - copy';
 	name.value = name.value + '-copy';
-	misskeyApi('pages/create', getSaveOptions()).then(created => {
+	os.api('pages/create', getSaveOptions()).then(created => {
 		pageId.value = created.id;
 		currentName.value = name.value.trim();
 		os.alert({
@@ -237,11 +236,11 @@ function removeEyeCatchingImage() {
 
 async function init() {
 	if (props.initPageId) {
-		page.value = await misskeyApi('pages/show', {
+		page.value = await os.api('pages/show', {
 			pageId: props.initPageId,
 		});
 	} else if (props.initPageName && props.initUser) {
-		page.value = await misskeyApi('pages/show', {
+		page.value = await os.api('pages/show', {
 			name: props.initPageName,
 			username: props.initUser,
 		});
@@ -284,11 +283,17 @@ const headerTabs = computed(() => [{
 	icon: 'ti ti-note',
 }]);
 
-definePageMetadata(() => ({
-	title: props.initPageId ? i18n.ts._pages.editPage
-	: props.initPageName && props.initUser ? i18n.ts._pages.readPage
-	: i18n.ts._pages.newPage,
-	icon: 'ti ti-pencil',
+definePageMetadata(computed(() => {
+	let title = i18n.ts._pages.newPage;
+	if (props.initPageId) {
+		title = i18n.ts._pages.editPage;
+	} else if (props.initPageName && props.initUser) {
+		title = i18n.ts._pages.readPage;
+	}
+	return {
+		title: title,
+		icon: 'ti ti-pencil',
+	};
 }));
 </script>
 

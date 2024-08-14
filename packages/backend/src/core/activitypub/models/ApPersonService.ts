@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -34,7 +34,6 @@ import { StatusError } from '@/misc/status-error.js';
 import type { UtilityService } from '@/core/UtilityService.js';
 import type { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { bindThis } from '@/decorators.js';
-import { RoleService } from '@/core/RoleService.js';
 import { MetaService } from '@/core/MetaService.js';
 import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
 import type { AccountMoveService } from '@/core/AccountMoveService.js';
@@ -102,8 +101,6 @@ export class ApPersonService implements OnModuleInit {
 
 		@Inject(DI.followingsRepository)
 		private followingsRepository: FollowingsRepository,
-
-		private roleService: RoleService,
 
 		private avatarDecorationService: AvatarDecorationService,
 	) {
@@ -246,42 +243,20 @@ export class ApPersonService implements OnModuleInit {
 		return null;
 	}
 
-	private async resolveAvatarAndBanner(user: MiRemoteUser, icon: any, image: any): Promise<Partial<Pick<MiRemoteUser, 'avatarId' | 'bannerId' | 'avatarUrl' | 'bannerUrl' | 'avatarBlurhash' | 'bannerBlurhash'>>> {
-		if (user == null) throw new Error('failed to create user: user is null');
-
+	private async resolveAvatarAndBanner(user: MiRemoteUser, icon: any, image: any): Promise<Pick<MiRemoteUser, 'avatarId' | 'bannerId' | 'avatarUrl' | 'bannerUrl' | 'avatarBlurhash' | 'bannerBlurhash'>> {
 		const [avatar, banner] = await Promise.all([icon, image].map(img => {
-			// if we have an explicitly missing image, return an
-			// explicitly-null set of values
-			if ((img == null) || (typeof img === 'object' && img.url == null)) {
-				return { id: null, url: null, blurhash: null };
-			}
-
+			if (img == null) return null;
+			if (user == null) throw new Error('failed to create user: user is null');
 			return this.apImageService.resolveImage(user, img).catch(() => null);
 		}));
 
-		if (((avatar != null && avatar.id != null) || (banner != null && banner.id != null))
-				&& !(await this.roleService.getUserPolicies(user.id)).canUpdateBioMedia) {
-			return {};
-		}
-
-		/*
-			we don't want to return nulls on errors! if the database fields
-			are already null, nothing changes; if the database has old
-			values, we should keep those. The exception is if the remote has
-			actually removed the images: in that case, the block above
-			returns the special {id:null}&c value, and we return those
-		*/
 		return {
-			...( avatar ? {
-				avatarId: avatar.id,
-				avatarUrl: avatar.url ? this.driveFileEntityService.getPublicUrl(avatar, 'avatar') : null,
-				avatarBlurhash: avatar.blurhash,
-			} : {}),
-			...( banner ? {
-				bannerId: banner.id,
-				bannerUrl: banner.url ? this.driveFileEntityService.getPublicUrl(banner) : null,
-				bannerBlurhash: banner.blurhash,
-			} : {}),
+			avatarId: avatar?.id ?? null,
+			bannerId: banner?.id ?? null,
+			avatarUrl: avatar ? this.driveFileEntityService.getPublicUrl(avatar, 'avatar', false) : null,
+			bannerUrl: banner ? this.driveFileEntityService.getPublicUrl(banner, undefined, false) : null,
+			avatarBlurhash: avatar?.blurhash ?? null,
+			bannerBlurhash: banner?.blurhash ?? null,
 		};
 	}
 
@@ -428,7 +403,6 @@ export class ApPersonService implements OnModuleInit {
 					tags,
 					isBot,
 					isCat: (person as any).isCat === true,
-					isIndexable: person.isIndexable ?? true,
 					emojis,
 				})) as MiRemoteUser;
 
@@ -642,7 +616,6 @@ export class ApPersonService implements OnModuleInit {
 			tags,
 			isBot: getApType(object) === 'Service' || getApType(object) === 'Application',
 			isCat: (person as any).isCat === true,
-			isIndexable: person.isIndexable ?? true,
 			isLocked: person.manuallyApprovesFollowers,
 			movedToUri: person.movedTo ?? null,
 			alsoKnownAs: person.alsoKnownAs ?? null,
@@ -806,7 +779,7 @@ export class ApPersonService implements OnModuleInit {
 
 			// とりあえずidを別の時間で生成して順番を維持
 			let td = 0;
-			for (const note of featuredNotes.filter(x => x != null)) {
+			for (const note of featuredNotes.filter((note): note is MiNote => note != null)) {
 				td -= 1000;
 				transactionalEntityManager.insert(MiUserNotePining, {
 					id: this.idService.gen(Date.now() + td),

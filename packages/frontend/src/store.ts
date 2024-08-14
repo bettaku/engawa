@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -8,7 +8,6 @@ import * as Misskey from 'cherrypick-js';
 import { miLocalStorage } from './local-storage.js';
 import type { SoundType } from '@/scripts/sound.js';
 import { Storage } from '@/pizzax.js';
-import { hemisphere } from '@/scripts/intl-const.js';
 
 interface PostFormAction {
 	title: string,
@@ -94,7 +93,7 @@ export const defaultStore = markRaw(new Storage('base', {
 	},
 	defaultNoteVisibility: {
 		where: 'account',
-		default: 'public' as (typeof Misskey.noteVisibilities)[number],
+		default: 'public',
 	},
 	defaultNoteLocalOnly: {
 		where: 'account',
@@ -136,10 +135,6 @@ export const defaultStore = markRaw(new Storage('base', {
 		where: 'account',
 		default: [] as string[],
 	},
-	showNoAltTextWarning: {
-		where: 'account',
-		default: true,
-	},
 
 	menu: {
 		where: 'deviceAccount',
@@ -155,7 +150,7 @@ export const defaultStore = markRaw(new Storage('base', {
 	},
 	visibility: {
 		where: 'deviceAccount',
-		default: 'public' as (typeof Misskey.noteVisibilities)[number],
+		default: 'public' as 'public' | 'home' | 'followers' | 'specified',
 	},
 	localOnly: {
 		where: 'deviceAccount',
@@ -163,7 +158,7 @@ export const defaultStore = markRaw(new Storage('base', {
 	},
 	showPreview: {
 		where: 'device',
-		default: true,
+		default: false,
 	},
 	showPreviewInReplies: {
 		where: 'device',
@@ -198,14 +193,6 @@ export const defaultStore = markRaw(new Storage('base', {
 		default: {
 			src: 'home' as 'home' | 'local' | 'social' | 'global' | `list:${string}`,
 			userList: null as Misskey.entities.UserList | null,
-			filter: {
-				withReplies: false,
-				withRenotes: true,
-				withSensitive: true,
-				onlyFiles: false,
-				onlyCats: false,
-				withoutBots: false,
-			},
 		},
 	},
 	pinnedUserLists: {
@@ -238,10 +225,6 @@ export const defaultStore = markRaw(new Storage('base', {
 		default: true,
 	},
 	advancedMfm: {
-		where: 'device',
-		default: true,
-	},
-	showReactionsCount: {
 		where: 'device',
 		default: true,
 	},
@@ -425,6 +408,10 @@ export const defaultStore = markRaw(new Storage('base', {
 		where: 'device',
 		default: false,
 	},
+	tlWithReplies: {
+		where: 'device',
+		default: false,
+	},
 	defaultWithReplies: {
 		where: 'account',
 		default: true,
@@ -449,41 +436,6 @@ export const defaultStore = markRaw(new Storage('base', {
 	enableSeasonalScreenEffect: {
 		where: 'device',
 		default: false,
-	},
-	dropAndFusion: {
-		where: 'device',
-		default: {
-			bgmVolume: 0.25,
-			sfxVolume: 1,
-		},
-	},
-	hemisphere: {
-		where: 'device',
-		default: hemisphere as 'N' | 'S',
-	},
-	enableHorizontalSwipe: {
-		where: 'device',
-		default: true,
-	},
-	useNativeUIForVideoAudioPlayer: {
-		where: 'device',
-		default: false,
-	},
-	keepOriginalFilename: {
-		where: 'device',
-		default: true,
-	},
-	alwaysConfirmFollow: {
-		where: 'device',
-		default: true,
-	},
-	confirmWhenRevealingSensitiveMedia: {
-		where: 'device',
-		default: false,
-	},
-	contextMenu: {
-		where: 'device',
-		default: 'app' as 'app' | 'appWithShift' | 'native',
 	},
 	showUnreadNotificationsCount: {
 		where: 'deviceAccount',
@@ -525,6 +477,14 @@ export const defaultStore = markRaw(new Storage('base', {
 	sound_chatBg: {
 		where: 'device',
 		default: { type: 'syuilo/waon', volume: 1 } as SoundStore,
+	},
+	sound_antenna: {
+		where: 'device',
+		default: { type: 'syuilo/triple', volume: 1 } as SoundStore,
+	},
+	sound_channel: {
+		where: 'device',
+		default: { type: 'syuilo/square-pico', volume: 1 } as SoundStore,
 	},
 	sound_reaction: {
 		where: 'device',
@@ -588,10 +548,6 @@ export const defaultStore = markRaw(new Storage('base', {
 	renoteVisibilitySelection: {
 		where: 'device',
 		default: true,
-	},
-	forceRenoteVisibilitySelection: {
-		where: 'device',
-		default: 'none' as 'none' | 'public' | 'home' | 'followers',
 	},
 	showFixedPostFormInReplies: {
 		where: 'device',
@@ -686,10 +642,6 @@ export const defaultStore = markRaw(new Storage('base', {
 	expandOnNoteClick: {
 		where: 'device',
 		default: true,
-	},
-	expandOnNoteClickBehavior: {
-		where: 'device',
-		default: 'click' as 'click' | 'doubleClick',
 	},
 	displayHeaderNavBarWhenScroll: {
 		where: 'device',

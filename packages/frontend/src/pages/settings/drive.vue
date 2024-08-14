@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -44,10 +44,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<template #label>{{ i18n.ts.keepOriginalUploading }}</template>
 				<template #caption>{{ i18n.ts.keepOriginalUploadingDescription }}</template>
 			</MkSwitch>
-			<MkSwitch v-model="keepOriginalFilename">
-				<template #label>{{ i18n.ts.keepOriginalFilename }}</template>
-				<template #caption>{{ i18n.ts.keepOriginalFilenameDescription }}</template>
-			</MkSwitch>
 			<MkSelect v-model="imageCompressionMode">
 				<template #label>{{ i18n.ts._imageCompressionMode.title }}</template>
 				<option value="resizeCompress">{{ i18n.ts._imageCompressionMode.resizeCompress }}</option>
@@ -78,16 +74,13 @@ import FormSection from '@/components/form/section.vue';
 import MkKeyValue from '@/components/MkKeyValue.vue';
 import FormSplit from '@/components/form/split.vue';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
 import bytes from '@/filters/bytes.js';
 import { defaultStore } from '@/store.js';
 import MkChart from '@/components/MkChart.vue';
 import { i18n } from '@/i18n.js';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
-import { signinRequired } from '@/account.js';
+import { $i } from '@/account.js';
 import MkSelect from '@/components/MkSelect.vue';
-
-const $i = signinRequired();
 
 const fetching = ref(true);
 const usage = ref<number | null>(null);
@@ -97,29 +90,27 @@ const alwaysMarkNsfw = ref($i.alwaysMarkNsfw);
 const autoSensitive = ref($i.autoSensitive);
 
 const meterStyle = computed(() => {
-	if (!capacity.value || !usage.value) return {};
 	return {
 		width: `${usage.value / capacity.value * 100}%`,
 		background: tinycolor({
 			h: 180 - (usage.value / capacity.value * 180),
 			s: 0.7,
 			l: 0.5,
-		}).toHslString(),
+		}),
 	};
 });
 
 const keepOriginalUploading = computed(defaultStore.makeGetterSetter('keepOriginalUploading'));
-const keepOriginalFilename = computed(defaultStore.makeGetterSetter('keepOriginalFilename'));
 const imageCompressionMode = computed(defaultStore.makeGetterSetter('imageCompressionMode'));
 
-misskeyApi('drive').then(info => {
+os.api('drive').then(info => {
 	capacity.value = info.capacity;
 	usage.value = info.usage;
 	fetching.value = false;
 });
 
 if (defaultStore.state.uploadFolder) {
-	misskeyApi('drive/folders/show', {
+	os.api('drive/folders/show', {
 		folderId: defaultStore.state.uploadFolder,
 	}).then(response => {
 		uploadFolder.value = response;
@@ -128,10 +119,10 @@ if (defaultStore.state.uploadFolder) {
 
 function chooseUploadFolder() {
 	os.selectDriveFolder(false).then(async folder => {
-		defaultStore.set('uploadFolder', folder[0] ? folder[0].id : null);
+		defaultStore.set('uploadFolder', folder ? folder.id : null);
 		os.success();
 		if (defaultStore.state.uploadFolder) {
-			uploadFolder.value = await misskeyApi('drive/folders/show', {
+			uploadFolder.value = await os.api('drive/folders/show', {
 				folderId: defaultStore.state.uploadFolder,
 			});
 		} else {
@@ -141,7 +132,7 @@ function chooseUploadFolder() {
 }
 
 function saveProfile() {
-	misskeyApi('i/update', {
+	os.api('i/update', {
 		alwaysMarkNsfw: !!alwaysMarkNsfw.value,
 		autoSensitive: !!autoSensitive.value,
 	}).catch(err => {
@@ -158,10 +149,10 @@ const headerActions = computed(() => []);
 
 const headerTabs = computed(() => []);
 
-definePageMetadata(() => ({
+definePageMetadata({
 	title: i18n.ts.drive,
 	icon: 'ti ti-cloud',
-}));
+});
 </script>
 
 <style lang="scss" module>

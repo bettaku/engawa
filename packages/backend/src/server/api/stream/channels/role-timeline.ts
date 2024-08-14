@@ -1,14 +1,15 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 import { Injectable } from '@nestjs/common';
+import { isUserRelated } from '@/misc/is-user-related.js';
+import type { Packed } from '@/misc/json-schema.js';
 import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
 import { bindThis } from '@/decorators.js';
 import { RoleService } from '@/core/RoleService.js';
 import type { GlobalEvents } from '@/core/GlobalEventService.js';
-import type { JsonObject } from '@/misc/json-value.js';
 import Channel, { type MiChannelService } from '../channel.js';
 
 class RoleTimelineChannel extends Channel {
@@ -29,9 +30,8 @@ class RoleTimelineChannel extends Channel {
 	}
 
 	@bindThis
-	public async init(params: JsonObject) {
-		if (typeof params.roleId !== 'string') return;
-		this.roleId = params.roleId;
+	public async init(params: any) {
+		this.roleId = params.roleId as string;
 
 		this.subscriber.on(`roleTimelineStream:${this.roleId}`, this.onEvent);
 	}
@@ -46,7 +46,12 @@ class RoleTimelineChannel extends Channel {
 			}
 			if (note.visibility !== 'public') return;
 
-			if (this.isNoteMutedOrBlocked(note)) return;
+			// 流れてきたNoteがミュートしているユーザーが関わるものだったら無視する
+			if (isUserRelated(note, this.userIdsWhoMeMuting)) return;
+			// 流れてきたNoteがブロックされているユーザーが関わるものだったら無視する
+			if (isUserRelated(note, this.userIdsWhoBlockingMe)) return;
+
+			if (note.renote && !note.text && isUserRelated(note, this.userIdsWhoMeMutingRenotes)) return;
 
 			this.send('note', note);
 		} else {

@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -22,7 +22,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</ol>
 	<ol v-else-if="emojis.length > 0" ref="suggests" :class="$style.list">
 		<li v-for="emoji in emojis" :key="emoji.emoji" :class="$style.item" tabindex="-1" @click="complete(type, emoji.emoji)" @keydown="onKeydown">
-			<MkCustomEmoji v-if="'isCustomEmoji' in emoji && emoji.isCustomEmoji" :name="emoji.emoji" :class="$style.emoji" :fallbackToImage="true"/>
+			<MkCustomEmoji v-if="'isCustomEmoji' in emoji && emoji.isCustomEmoji" :name="emoji.emoji" :class="$style.emoji"/>
 			<MkEmoji v-else :emoji="emoji.emoji" :class="$style.emoji"/>
 			<!-- eslint-disable-next-line vue/no-v-html -->
 			<span v-if="q" :class="$style.emojiName" v-html="sanitizeHtml(emoji.name.replace(q, `<b>${q}</b>`))"></span>
@@ -33,11 +33,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 	<ol v-else-if="mfmTags.length > 0" ref="suggests" :class="$style.list">
 		<li v-for="tag in mfmTags" tabindex="-1" :class="$style.item" @click="complete(type, tag)" @keydown="onKeydown">
 			<span>{{ tag }}</span>
-		</li>
-	</ol>
-	<ol v-else-if="mfmParams.length > 0" ref="suggests" :class="$style.list">
-		<li v-for="param in mfmParams" tabindex="-1" :class="$style.item" @click="complete(type, q.params.toSpliced(-1, 1, param).join(','))" @keydown="onKeydown">
-			<span>{{ param }}</span>
 		</li>
 	</ol>
 	<ol v-else-if="htmlTags.length > 0" ref="suggests" :class="$style.list">
@@ -55,14 +50,24 @@ import contains from '@/scripts/contains.js';
 import { char2twemojiFilePath, char2fluentEmojiFilePath } from '@/scripts/emoji-base.js';
 import { acct } from '@/filters/user.js';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
 import { defaultStore } from '@/store.js';
 import { emojilist, getEmojiName } from '@/scripts/emojilist.js';
 import { i18n } from '@/i18n.js';
 import { miLocalStorage } from '@/local-storage.js';
 import { customEmojis } from '@/custom-emojis.js';
-import { MFM_TAGS, MFM_PARAMS, HTML_TAGS } from '@/const.js';
-import { searchEmoji, EmojiDef } from '@/scripts/search-emoji.js';
+import { MFM_TAGS, HTML_TAGS } from '@/const.js';
+
+type EmojiDef = {
+	emoji: string;
+	name: string;
+	url: string;
+	aliasOf?: string;
+} | {
+	emoji: string;
+	name: string;
+	aliasOf?: string;
+	isCustomEmoji?: true;
+};
 
 const lib = emojilist.filter(x => x.category !== 'flags');
 
@@ -82,7 +87,7 @@ const emojiDb = computed(() => {
 				unicodeEmojiDB.push({
 					emoji: emoji,
 					name: k,
-					aliasOf: getEmojiName(emoji),
+					aliasOf: getEmojiName(emoji)!,
 					url: char2path(emoji),
 				});
 			}
@@ -130,7 +135,7 @@ export default {
 
 const props = defineProps<{
 	type: string;
-	q: any;
+	q: string | null;
 	textarea: HTMLTextAreaElement;
 	close: () => void;
 	x: number;
@@ -151,7 +156,6 @@ const hashtags = ref<any[]>([]);
 const emojis = ref<(EmojiDef)[]>([]);
 const items = ref<Element[] | HTMLCollection>([]);
 const mfmTags = ref<string[]>([]);
-const mfmParams = ref<string[]>([]);
 const htmlTags = ref<string[]>([]);
 const select = ref(-1);
 const zIndex = os.claimZIndex('high');
@@ -204,7 +208,7 @@ function exec() {
 			users.value = JSON.parse(cache);
 			fetching.value = false;
 		} else {
-			misskeyApi('users/search-by-username-and-host', {
+			os.api('users/search-by-username-and-host', {
 				username: props.q,
 				limit: 10,
 				detail: false,
@@ -227,7 +231,7 @@ function exec() {
 				hashtags.value = hashtags;
 				fetching.value = false;
 			} else {
-				misskeyApi('hashtags/search', {
+				os.api('hashtags/search', {
 					query: props.q,
 					limit: 30,
 				}).then(searchedHashtags => {
@@ -245,7 +249,7 @@ function exec() {
 			return;
 		}
 
-		emojis.value = searchEmoji(props.q, emojiDb.value);
+		emojis.value = emojiAutoComplete(props.q, emojiDb.value);
 	} else if (props.type === 'mfmTag') {
 		if (!props.q || props.q === '') {
 			mfmTags.value = MFM_TAGS;
@@ -253,13 +257,6 @@ function exec() {
 		}
 
 		mfmTags.value = MFM_TAGS.filter(tag => tag.startsWith(props.q ?? ''));
-	} else if (props.type === 'mfmParam') {
-		if (props.q.params.at(-1) === '') {
-			mfmParams.value = MFM_PARAMS[props.q.tag] ?? [];
-			return;
-		}
-
-		mfmParams.value = MFM_PARAMS[props.q.tag].filter(param => param.startsWith(props.q.params.at(-1) ?? ''));
 	} else if (props.type === 'htmlTag') {
 		if (!props.q || props.q === '') {
 			htmlTags.value = HTML_TAGS;
@@ -268,6 +265,78 @@ function exec() {
 
 		htmlTags.value = HTML_TAGS.filter(tag => tag.startsWith(props.q ?? ''));
 	}
+}
+
+type EmojiScore = { emoji: EmojiDef, score: number };
+
+function emojiAutoComplete(query: string | null, emojiDb: EmojiDef[], max = 30): EmojiDef[] {
+	if (!query) {
+		return [];
+	}
+
+	const matched = new Map<string, EmojiScore>();
+
+	// 前方一致（エイリアスなし）
+	emojiDb.some(x => {
+		if (x.name.startsWith(query) && !x.aliasOf) {
+			matched.set(x.name, { emoji: x, score: query.length + 1 });
+		}
+		return matched.size === max;
+	});
+
+	// 前方一致（エイリアス込み）
+	if (matched.size < max) {
+		emojiDb.some(x => {
+			if (x.name.startsWith(query) && !matched.has(x.aliasOf ?? x.name)) {
+				matched.set(x.aliasOf ?? x.name, { emoji: x, score: query.length });
+			}
+			return matched.size === max;
+		});
+	}
+
+	// 部分一致（エイリアス込み）
+	if (matched.size < max) {
+		emojiDb.some(x => {
+			if (x.name.includes(query) && !matched.has(x.aliasOf ?? x.name)) {
+				matched.set(x.aliasOf ?? x.name, { emoji: x, score: query.length - 1 });
+			}
+			return matched.size === max;
+		});
+	}
+
+	// 簡易あいまい検索（3文字以上）
+	if (matched.size < max && query.length > 3) {
+		const queryChars = [...query];
+		const hitEmojis = new Map<string, EmojiScore>();
+
+		for (const x of emojiDb) {
+			// 文字列の位置を進めながら、クエリの文字を順番に探す
+
+			let pos = 0;
+			let hit = 0;
+			for (const c of queryChars) {
+				pos = x.name.indexOf(c, pos);
+				if (pos <= -1) break;
+				hit++;
+			}
+
+			// 半分以上の文字が含まれていればヒットとする
+			if (hit > Math.ceil(queryChars.length / 2) && hit - 2 > (matched.get(x.aliasOf ?? x.name)?.score ?? 0)) {
+				hitEmojis.set(x.aliasOf ?? x.name, { emoji: x, score: hit - 2 });
+			}
+		}
+
+		// ヒットしたものを全部追加すると雑多になるので、先頭の6件程度だけにしておく（6件＝オートコンプリートのポップアップのサイズ分）
+		[...hitEmojis.values()]
+			.sort((x, y) => y.score - x.score)
+			.slice(0, 6)
+			.forEach(it => matched.set(it.emoji.name, it));
+	}
+
+	return [...matched.values()]
+		.sort((x, y) => y.score - x.score)
+		.slice(0, max)
+		.map(it => it.emoji);
 }
 
 function onMousedown(event: Event) {
@@ -353,7 +422,7 @@ function applySelect() {
 
 function chooseUser() {
 	props.close();
-	os.selectUser({ includeSelf: true }).then(user => {
+	os.selectUser().then(user => {
 		complete('user', user);
 		props.textarea.focus();
 	});

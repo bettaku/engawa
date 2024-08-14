@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -45,11 +45,6 @@ export const packedFederationInstanceSchema = {
 			type: 'boolean',
 			optional: false, nullable: false,
 		},
-		suspensionState: {
-			type: 'string',
-			nullable: false, optional: false,
-			enum: ['none', 'manuallySuspended', 'goneSuspended', 'autoSuspendedForNotResponding'],
-		},
 		isBlocked: {
 			type: 'boolean',
 			optional: false, nullable: false,
@@ -88,10 +83,6 @@ export const packedFederationInstanceSchema = {
 			type: 'boolean',
 			optional: false, nullable: false,
 		},
-		isMediaSilenced: {
-			type: 'boolean',
-			optional: false, nullable: false,
-		},
 		iconUrl: {
 			type: 'string',
 			optional: false, nullable: true,
@@ -115,10 +106,6 @@ export const packedFederationInstanceSchema = {
 			type: 'string',
 			optional: false, nullable: true,
 			format: 'date-time',
-		},
-		moderationNote: {
-			type: 'string',
-			optional: true, nullable: true,
 		},
 	},
 } as const;

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -26,7 +26,6 @@ export interface IObject {
 	endTime?: Date;
 	icon?: any;
 	image?: any;
-	mediaType?: string;
 	url?: ApObject | string;
 	href?: string;
 	tag?: IObject | IObject[];
@@ -187,7 +186,6 @@ export interface IActor extends IObject {
 	};
 	'vcard:bday'?: string;
 	'vcard:Address'?: string;
-	isIndexable?: boolean;
 }
 
 export const isCollection = (object: IObject): object is ICollection =>
@@ -247,14 +245,14 @@ export interface IKey extends IObject {
 }
 
 export interface IApDocument extends IObject {
-	type: 'Audio' | 'Document' | 'Image' | 'Page' | 'Video';
+	type: 'Document';
+	name: string | null;
+	mediaType: string;
 }
 
-export const isDocument = (object: IObject): object is IApDocument =>
-	['Audio', 'Document', 'Image', 'Page', 'Video'].includes(getApType(object));
-
-export interface IApImage extends IApDocument {
+export interface IApImage extends IObject {
 	type: 'Image';
+	name: string | null;
 }
 
 export interface ICreate extends IActivity {
@@ -334,4 +332,3 @@ export const isAnnounce = (object: IObject): object is IAnnounce => getApType(ob
 export const isBlock = (object: IObject): object is IBlock => getApType(object) === 'Block';
 export const isFlag = (object: IObject): object is IFlag => getApType(object) === 'Flag';
 export const isMove = (object: IObject): object is IMove => getApType(object) === 'Move';
-export const isNote = (object: IObject): object is IPost => getApType(object) === 'Note';

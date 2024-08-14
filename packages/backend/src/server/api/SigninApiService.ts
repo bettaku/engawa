@@ -1,10 +1,10 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { comparePassword, hashPassword, isOldAlgorithm } from '@/misc/password.js';
+import bcrypt from 'bcryptjs';
 import * as OTPAuth from 'otpauth';
 import { IsNull } from 'typeorm';
 import { DI } from '@/di-symbols.js';
@@ -22,7 +22,7 @@ import { WebAuthnService } from '@/core/WebAuthnService.js';
 import { UserAuthService } from '@/core/UserAuthService.js';
 import { RateLimiterService } from './RateLimiterService.js';
 import { SigninService } from './SigninService.js';
-import type { AuthenticationResponseJSON } from '@simplewebauthn/types';
+import type { AuthenticationResponseJSON } from '@simplewebauthn/typescript-types';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
 @Injectable()
@@ -123,12 +123,7 @@ export class SigninApiService {
 		const profile = await this.userProfilesRepository.findOneByOrFail({ userId: user.id });
 
 		// Compare password
-		const same = await comparePassword(password, profile.password!);
-
-		if (same && isOldAlgorithm(profile.password!)) {
-			profile.password = await hashPassword(password);
-			await this.userProfilesRepository.save(profile);
-		}
+		const same = await bcrypt.compare(password, profile.password!);
 
 		const fail = async (status?: number, failure?: { id: string }) => {
 			// Append signin history

@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -20,13 +20,13 @@ import * as Misskey from 'cherrypick-js';
 import XPie from './pie.vue';
 
 const props = defineProps<{
-	connection: Misskey.ChannelConnection<Misskey.Channels['serverStats']>,
+	connection: any,
 	meta: Misskey.entities.ServerInfoResponse
 }>();
 
 const usage = ref<number>(0);
 
-function onStats(stats: Misskey.entities.ServerStats) {
+function onStats(stats) {
 	usage.value = stats.cpu;
 }
 

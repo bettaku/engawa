@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -52,7 +52,7 @@ watch(available, () => {
 });
 
 onMounted(() => {
-	if (rootEl.value) width.value = rootEl.value.offsetWidth;
+	width.value = rootEl.value.offsetWidth;
 
 	if (loaded) {
 		available.value = true;

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -7,7 +7,6 @@ import * as fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import * as yaml from 'js-yaml';
-import * as Sentry from '@sentry/node';
 import type { RedisOptions } from 'ioredis';
 
 type RedisOptionsSource = Partial<RedisOptions> & {
@@ -23,7 +22,7 @@ type RedisOptionsSource = Partial<RedisOptions> & {
  * 設定ファイルの型
  */
 type Source = {
-	url?: string;
+	url: string;
 	port?: number;
 	socket?: string;
 	chmodSocket?: string;
@@ -31,9 +30,9 @@ type Source = {
 	db: {
 		host: string;
 		port: number;
-		db?: string;
-		user?: string;
-		pass?: string;
+		db: string;
+		user: string;
+		pass: string;
 		disableCache?: boolean;
 		extra?: { [x: string]: string };
 	};
@@ -45,7 +44,6 @@ type Source = {
 		user: string;
 		pass: string;
 	}[];
-	pgroonga?: boolean;
 	redis: RedisOptionsSource;
 	redisForPubsub?: RedisOptionsSource;
 	redisForJobQueue?: RedisOptionsSource;
@@ -58,19 +56,6 @@ type Source = {
 		index: string;
 		scope?: 'local' | 'global' | string[];
 	};
-	opensearch?: {
-		host: string;
-		port: string;
-		user: string;
-		pass: string;
-		ssl?: boolean;
-		rejectUnauthorized?: boolean;
-		index: string;
-	} | undefined;
-	sentryForBackend?: { options: Partial<Sentry.NodeOptions>; enableNodeProfiling: boolean; };
-	sentryForFrontend?: { options: Partial<Sentry.NodeOptions> };
-
-	publishTarballInsteadOfProvideRepositoryUrl?: boolean;
 
 	proxy?: string;
 	proxySmtp?: string;
@@ -89,10 +74,10 @@ type Source = {
 
 	deliverJobConcurrency?: number;
 	inboxJobConcurrency?: number;
-	relationshipJobConcurrency?: number;
+	relashionshipJobConcurrency?: number;
 	deliverJobPerSec?: number;
 	inboxJobPerSec?: number;
-	relationshipJobPerSec?: number;
+	relashionshipJobPerSec?: number;
 	deliverJobMaxAttempts?: number;
 	inboxJobMaxAttempts?: number;
 
@@ -105,7 +90,6 @@ type Source = {
 	apFileBaseUrl?: string;
 
 	mediaProxy?: string;
-	remoteProxy?: string;
 	proxyRemoteFiles?: boolean;
 	videoThumbnailGenerator?: string;
 
@@ -140,7 +124,6 @@ export type Config = {
 		user: string;
 		pass: string;
 	}[] | undefined;
-	pgroonga: boolean | undefined;
 	meilisearch: {
 		host: string;
 		port: string;
@@ -148,15 +131,6 @@ export type Config = {
 		ssl?: boolean;
 		index: string;
 		scope?: 'local' | 'global' | string[];
-	} | undefined;
-	opensearch: {
-		host: string;
-		port: string;
-		user: string;
-		pass: string;
-		ssl?: boolean;
-		rejectUnauthorized?: boolean;
-		index: string;
 	} | undefined;
 	proxy: string | undefined;
 	proxySmtp: string | undefined;
@@ -169,10 +143,10 @@ export type Config = {
 	outgoingAddressFamily: 'ipv4' | 'ipv6' | 'dual' | undefined;
 	deliverJobConcurrency: number | undefined;
 	inboxJobConcurrency: number | undefined;
-	relationshipJobConcurrency: number | undefined;
+	relashionshipJobConcurrency: number | undefined;
 	deliverJobPerSec: number | undefined;
 	inboxJobPerSec: number | undefined;
-	relationshipJobPerSec: number | undefined;
+	relashionshipJobPerSec: number | undefined;
 	deliverJobMaxAttempts: number | undefined;
 	inboxJobMaxAttempts: number | undefined;
 
@@ -188,7 +162,6 @@ export type Config = {
 
 	version: string;
 	basedMisskeyVersion: string;
-	publishTarballInsteadOfProvideRepositoryUrl: boolean;
 	host: string;
 	hostname: string;
 	scheme: string;
@@ -201,15 +174,12 @@ export type Config = {
 	clientEntry: string;
 	clientManifestExists: boolean;
 	mediaProxy: string;
-	remoteProxy?: string;
 	externalMediaProxyEnabled: boolean;
 	videoThumbnailGenerator: string | null;
 	redis: RedisOptions & RedisOptionsSource;
 	redisForPubsub: RedisOptions & RedisOptionsSource;
 	redisForJobQueue: RedisOptions & RedisOptionsSource;
 	redisForTimelines: RedisOptions & RedisOptionsSource;
-	sentryForBackend: { options: Partial<Sentry.NodeOptions>; enableNodeProfiling: boolean; } | undefined;
-	sentryForFrontend: { options: Partial<Sentry.NodeOptions> } | undefined;
 	perChannelMaxNoteCacheCount: number;
 	perUserNotificationsMaxCount: number;
 	deactivateAntennaThreshold: number;
@@ -241,7 +211,7 @@ export function loadConfig(): Config {
 		: { 'src/_boot_.ts': { file: 'src/_boot_.ts' } };
 	const config = yaml.load(fs.readFileSync(path, 'utf-8')) as Source;
 
-	const url = tryCreateUrl(config.url ?? process.env.CHERRYPICK_URL ?? '');
+	const url = tryCreateUrl(config.url);
 	const version = meta.version;
 	const basedMisskeyVersion = meta.basedMisskeyVersion;
 	const host = url.host;
@@ -249,25 +219,15 @@ export function loadConfig(): Config {
 	const scheme = url.protocol.replace(/:$/, '');
 	const wsScheme = scheme.replace('http', 'ws');
 
-	const dbDb = config.db.db ?? process.env.DATABASE_DB ?? '';
-	const dbUser = config.db.user ?? process.env.DATABASE_USER ?? '';
-	const dbPass = config.db.pass ?? process.env.DATABASE_PASSWORD ?? '';
-
 	const externalMediaProxy = config.mediaProxy ?
 		config.mediaProxy.endsWith('/') ? config.mediaProxy.substring(0, config.mediaProxy.length - 1) : config.mediaProxy
 		: null;
 	const internalMediaProxy = `${scheme}://${host}/proxy`;
-
-	const remoteProxy = config.remoteProxy ?
-		config.remoteProxy.endsWith('/') ? config.remoteProxy.substring(0, config.remoteProxy.length - 1) : config.remoteProxy
-		: undefined;
-
 	const redis = convertRedisOptions(config.redis, host);
 
 	return {
 		version,
 		basedMisskeyVersion,
-		publishTarballInsteadOfProvideRepositoryUrl: !!config.publishTarballInsteadOfProvideRepositoryUrl,
 		url: url.origin,
 		port: config.port ?? parseInt(process.env.PORT ?? '', 10),
 		socket: config.socket,
@@ -281,18 +241,14 @@ export function loadConfig(): Config {
 		apiUrl: `${scheme}://${host}/api`,
 		authUrl: `${scheme}://${host}/auth`,
 		driveUrl: `${scheme}://${host}/files`,
-		db: { ...config.db, db: dbDb, user: dbUser, pass: dbPass },
+		db: config.db,
 		dbReplications: config.dbReplications,
 		dbSlaves: config.dbSlaves,
-		pgroonga: config.pgroonga,
 		meilisearch: config.meilisearch,
-		opensearch: config.opensearch,
 		redis,
 		redisForPubsub: config.redisForPubsub ? convertRedisOptions(config.redisForPubsub, host) : redis,
 		redisForJobQueue: config.redisForJobQueue ? convertRedisOptions(config.redisForJobQueue, host) : redis,
 		redisForTimelines: config.redisForTimelines ? convertRedisOptions(config.redisForTimelines, host) : redis,
-		sentryForBackend: config.sentryForBackend,
-		sentryForFrontend: config.sentryForFrontend,
 		id: config.id,
 		proxy: config.proxy,
 		proxySmtp: config.proxySmtp,
@@ -304,18 +260,17 @@ export function loadConfig(): Config {
 		outgoingAddressFamily: config.outgoingAddressFamily,
 		deliverJobConcurrency: config.deliverJobConcurrency,
 		inboxJobConcurrency: config.inboxJobConcurrency,
-		relationshipJobConcurrency: config.relationshipJobConcurrency,
+		relashionshipJobConcurrency: config.relashionshipJobConcurrency,
 		deliverJobPerSec: config.deliverJobPerSec,
 		inboxJobPerSec: config.inboxJobPerSec,
-		relationshipJobPerSec: config.relationshipJobPerSec,
+		relashionshipJobPerSec: config.relashionshipJobPerSec,
 		deliverJobMaxAttempts: config.deliverJobMaxAttempts,
 		inboxJobMaxAttempts: config.inboxJobMaxAttempts,
 		proxyRemoteFiles: config.proxyRemoteFiles,
-		signToActivityPubGet: config.signToActivityPubGet ?? true,
+		signToActivityPubGet: config.signToActivityPubGet,
 		apFileBaseUrl: config.apFileBaseUrl,
 		mediaProxy: externalMediaProxy ?? internalMediaProxy,
 		externalMediaProxyEnabled: externalMediaProxy !== null && externalMediaProxy !== internalMediaProxy,
-		remoteProxy,
 		videoThumbnailGenerator: config.videoThumbnailGenerator ?
 			config.videoThumbnailGenerator.endsWith('/') ? config.videoThumbnailGenerator.substring(0, config.videoThumbnailGenerator.length - 1) : config.videoThumbnailGenerator
 			: null,

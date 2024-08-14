@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -34,9 +34,9 @@ const tagUsers = computed(() => ({
 	},
 }));
 
-definePageMetadata(() => ({
+definePageMetadata(computed(() => ({
 	title: props.tag,
 	icon: 'ti ti-user-search',
-}));
+})));
 </script>
 

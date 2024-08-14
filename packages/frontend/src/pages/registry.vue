@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -26,7 +26,6 @@ import { ref, computed } from 'vue';
 import * as Misskey from 'cherrypick-js';
 import JSON5 from 'json5';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
 import { i18n } from '@/i18n.js';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
 import FormLink from '@/components/form/link.vue';
@@ -36,7 +35,7 @@ import MkButton from '@/components/MkButton.vue';
 const scopesWithDomain = ref<Misskey.entities.IRegistryScopesWithDomainResponse | null>(null);
 
 function fetchScopes() {
-	misskeyApi('i/registry/scopes-with-domain').then(res => {
+	os.api('i/registry/scopes-with-domain').then(res => {
 		scopesWithDomain.value = res;
 	});
 }
@@ -73,8 +72,8 @@ const headerActions = computed(() => []);
 
 const headerTabs = computed(() => []);
 
-definePageMetadata(() => ({
+definePageMetadata({
 	title: i18n.ts.registry,
 	icon: 'ti ti-adjustments',
-}));
+});
 </script>

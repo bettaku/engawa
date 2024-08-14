@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -77,6 +77,10 @@ export class DeleteAccountProcessorService {
 				cursor = notes.at(-1)?.id ?? null;
 
 				await this.notesRepository.delete(notes.map(note => note.id));
+
+				for (const note of notes) {
+					await this.searchService.unindexNote(note);
+				}
 			}
 
 			this.logger.succ(`All of notes deleted: ${job.data.user.id}`);

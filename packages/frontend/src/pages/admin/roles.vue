@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -54,13 +54,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<MkSwitch v-model="policies.canEditNote">
 								<template #label>{{ i18n.ts.enable }}</template>
 							</MkSwitch>
-						</MkFolder>
-
-						<MkFolder v-if="matchQuery([i18n.ts._role._options.mentionMax, 'mentionLimit'])">
-							<template #label>{{ i18n.ts._role._options.mentionMax }}</template>
-							<template #suffix>{{ policies.mentionLimit }}</template>
-							<MkInput v-model="policies.mentionLimit" type="number">
-							</MkInput>
 						</MkFolder>
 
 						<MkFolder v-if="matchQuery([i18n.ts._role._options.canInvite, 'canInvite'])">
@@ -118,14 +111,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 							</MkSwitch>
 						</MkFolder>
 
-						<MkFolder v-if="matchQuery([i18n.ts._role._options.canAdvancedSearchNotes, 'canAdvancedSearchNotes'])">
-							<template #label>{{ i18n.ts._role._options.canAdvancedSearchNotes }}</template>
-							<template #suffix>{{ policies.canAdvancedSearchNotes ? i18n.ts.yes : i18n.ts.no }}</template>
-							<MkSwitch v-model="policies.canAdvancedSearchNotes">
-								<template #label>{{ i18n.ts.enable }}</template>
-							</MkSwitch>
-						</MkFolder>
-
 						<MkFolder v-if="matchQuery([i18n.ts._role._options.canUseTranslator, 'canSearchNotes'])">
 							<template #label>{{ i18n.ts._role._options.canUseTranslator }}</template>
 							<template #suffix>{{ policies.canUseTranslator ? i18n.ts.yes : i18n.ts.no }}</template>
@@ -150,14 +135,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 							</MkSwitch>
 						</MkFolder>
 
-						<MkFolder v-if="matchQuery([i18n.ts._role._options.canUpdateBioMedia, 'canUpdateBioMedia'])">
-							<template #label>{{ i18n.ts._role._options.canUpdateBioMedia }}</template>
-							<template #suffix>{{ policies.canUpdateBioMedia ? i18n.ts.yes : i18n.ts.no }}</template>
-							<MkSwitch v-model="policies.canUpdateBioMedia">
-								<template #label>{{ i18n.ts.enable }}</template>
-							</MkSwitch>
-						</MkFolder>
-
 						<MkFolder v-if="matchQuery([i18n.ts._role._options.pinMax, 'pinLimit'])">
 							<template #label>{{ i18n.ts._role._options.pinMax }}</template>
 							<template #suffix>{{ policies.pinLimit }}</template>
@@ -176,7 +153,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<template #label>{{ i18n.ts._role._options.wordMuteMax }}</template>
 							<template #suffix>{{ policies.wordMuteLimit }}</template>
 							<MkInput v-model="policies.wordMuteLimit" type="number">
-								<template #suffix>items</template>
+								<template #suffix>chars</template>
 							</MkInput>
 						</MkFolder>
 
@@ -229,13 +206,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<MkInput v-model="policies.avatarDecorationLimit" type="number" :min="0">
 							</MkInput>
 						</MkFolder>
-						<MkFolder v-if="matchQuery([i18n.ts._role._options.fileSizeLimit, 'fileSizeLimit'])">
-							<template #label>{{ i18n.ts._role._options.fileSizeLimit }}</template>
-							<template #suffix>{{ policies.fileSizeLimit }}MB</template>
-							<MkInput v-model="policies.fileSizeLimit" type="number" :min="0">
-								<template #suffix>MB</template>
-							</MkInput>
-						</MkFolder>
 
 						<MkButton primary rounded @click="updateBaseRole">{{ i18n.ts.save }}</MkButton>
 					</div>
@@ -270,18 +240,17 @@ import MkButton from '@/components/MkButton.vue';
 import MkRange from '@/components/MkRange.vue';
 import MkRolePreview from '@/components/MkRolePreview.vue';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
 import { i18n } from '@/i18n.js';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
-import { instance, fetchInstance } from '@/instance.js';
+import { instance } from '@/instance.js';
+import { useRouter } from '@/router.js';
 import MkFoldableSection from '@/components/MkFoldableSection.vue';
 import { ROLE_POLICIES } from '@/const.js';
-import { useRouter } from '@/router/supplier.js';
 
 const router = useRouter();
 const baseRoleQ = ref('');
 
-const roles = await misskeyApi('admin/roles/list');
+const roles = await os.api('admin/roles/list');
 
 const policies = reactive<Record<typeof ROLE_POLICIES[number], any>>({});
 for (const ROLE_POLICY of ROLE_POLICIES) {
@@ -297,7 +266,6 @@ async function updateBaseRole() {
 	await os.apiWithDialog('admin/roles/update-default-policies', {
 		policies,
 	});
-	fetchInstance(true);
 }
 
 function create() {
@@ -312,10 +280,10 @@ const headerActions = computed(() => [{
 
 const headerTabs = computed(() => []);
 
-definePageMetadata(() => ({
+definePageMetadata(computed(() => ({
 	title: i18n.ts.roles,
 	icon: 'ti ti-badges',
-}));
+})));
 </script>
 
 <style lang="scss" module>

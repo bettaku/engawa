@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -43,33 +43,13 @@ export class UtilityService {
 	}
 
 	@bindThis
-	public isMediaSilencedHost(silencedHosts: string[] | undefined, host: string | null): boolean {
-		if (!silencedHosts || host == null) return false;
-		return silencedHosts.some(x => host.toLowerCase() === x);
-	}
-
-	@bindThis
-	public concatNoteContentsForKeyWordCheck(content: {
-		cw?: string | null;
-		text?: string | null;
-		pollChoices?: string[] | null;
-		others?: string[] | null;
-	}): string {
-		/**
-		 * ノートの内容を結合してキーワードチェック用の文字列を生成する
-		 * cwとtextは内容が繋がっているかもしれないので間に何も入れずにチェックする
-		 */
-		return `${content.cw ?? ''}${content.text ?? ''}\n${(content.pollChoices ?? []).join('\n')}\n${(content.others ?? []).join('\n')}`;
-	}
-
-	@bindThis
-	public isKeyWordIncluded(text: string, keyWords: string[]): boolean {
-		if (keyWords.length === 0) return false;
+	public isSensitiveWordIncluded(text: string, sensitiveWords: string[]): boolean {
+		if (sensitiveWords.length === 0) return false;
 		if (text === '') return false;
 
 		const regexpregexp = /^\/(.+)\/(.*)$/;
 
-		const matched = keyWords.some(filter => {
+		const matched = sensitiveWords.some(filter => {
 			// represents RegExp
 			const regexp = filter.match(regexpregexp);
 			// This should never happen due to input sanitisation.

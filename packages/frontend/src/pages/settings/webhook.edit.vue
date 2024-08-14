@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -19,7 +19,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</MkInput>
 
 	<FormSection>
-		<template #label>{{ i18n.ts._webhookSettings.trigger }}</template>
+		<template #label>{{ i18n.ts._webhookSettings.events }}</template>
 
 		<div class="_gaps_s">
 			<MkSwitch v-model="event_follow">{{ i18n.ts._webhookSettings._events.follow }}</MkSwitch>
@@ -48,10 +48,9 @@ import FormSection from '@/components/form/section.vue';
 import MkSwitch from '@/components/MkSwitch.vue';
 import MkButton from '@/components/MkButton.vue';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
 import { i18n } from '@/i18n.js';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
-import { useRouter } from '@/router/supplier.js';
+import { useRouter } from '@/router.js';
 
 const router = useRouter();
 
@@ -59,7 +58,7 @@ const props = defineProps<{
 	webhookId: string;
 }>();
 
-const webhook = await misskeyApi('i/webhooks/show', {
+const webhook = await os.api('i/webhooks/show', {
 	webhookId: props.webhookId,
 });
 
@@ -99,7 +98,7 @@ async function save(): Promise<void> {
 async function del(): Promise<void> {
 	const { canceled } = await os.confirm({
 		type: 'warning',
-		text: i18n.tsx.deleteAreYouSure({ x: webhook.name }),
+		text: i18n.t('deleteAreYouSure', { x: webhook.name }),
 	});
 	if (canceled) return;
 
@@ -114,8 +113,8 @@ const headerActions = computed(() => []);
 
 const headerTabs = computed(() => []);
 
-definePageMetadata(() => ({
+definePageMetadata({
 	title: 'Edit webhook',
 	icon: 'ti ti-webhook',
-}));
+});
 </script>

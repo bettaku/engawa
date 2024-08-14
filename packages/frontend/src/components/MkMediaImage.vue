@@ -1,10 +1,10 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<div :data-is-hidden="hide ? 'true' : 'false'" :class="[hide ? $style.hidden : $style.visible, (image.isSensitive && defaultStore.state.highlightSensitiveMedia) && $style.sensitive]" :style="darkMode ? '--c: rgb(255 255 255 / 2%);' : '--c: rgb(0 0 0 / 2%);'" @click="onClick" @dblclick="onDblClick">
+<div :data-is-hidden="hide ? 'true' : 'false'" :class="[hide ? $style.hidden : $style.visible, (image.isSensitive && defaultStore.state.highlightSensitiveMedia) && $style.sensitive]" :style="darkMode ? '--c: rgb(255 255 255 / 2%);' : '--c: rgb(0 0 0 / 2%);'" @click="onClick" @dblclick="onDblclick">
 	<component
 		:is="(disableImageLink || hide) ? 'div' : 'a'"
 		v-bind="(disableImageLink || hide) ? {
@@ -23,7 +23,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			:forceBlurhash="hide"
 			:cover="hide || cover"
 			:alt="image.comment || image.name"
-			:title="image.name"
+			:title="image.comment || image.name"
 			:width="image.properties.width"
 			:height="image.properties.height"
 			:style="hide ? 'filter: brightness(0.7);' : null"
@@ -44,8 +44,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</template>
 	<template v-else-if="controls">
 		<div :class="$style.indicators">
-			<div v-if="['image/gif'].includes(image.type)" :class="$style.indicator">GIF</div>
-			<div v-if="['image/apng'].includes(image.type)" :class="$style.indicator">APNG</div>
+			<div v-if="['image/gif', 'image/apng'].includes(image.type)" :class="$style.indicator">GIF</div>
 			<div v-if="image.comment" :class="$style.indicator">ALT</div>
 			<div v-if="image.isSensitive" :class="$style.indicator" style="color: var(--warn);" :title="i18n.ts.sensitive"><i class="ti ti-eye-exclamation"></i></div>
 		</div>
@@ -64,7 +63,7 @@ import ImgWithBlurhash from '@/components/MkImgWithBlurhash.vue';
 import { defaultStore } from '@/store.js';
 import { i18n } from '@/i18n.js';
 import * as os from '@/os.js';
-import { $i, iAmModerator } from '@/account.js';
+import { iAmModerator } from '@/account.js';
 import MkRippleEffect from '@/components/MkRippleEffect.vue';
 
 const props = withDefaults(defineProps<{
@@ -100,31 +99,26 @@ const clickToShowMessage = computed(() => defaultStore.state.nsfwOpenBehavior ==
 		: '',
 );
 
-async function onClick(ev: MouseEvent) {
+function onClick(ev: MouseEvent) {
 	if (!props.controls) {
 		return;
 	}
-
-	if (hide.value) {
-		ev.stopPropagation();
-		if (props.image.isSensitive && defaultStore.state.confirmWhenRevealingSensitiveMedia) {
-			const { canceled } = await os.confirm({
-				type: 'question',
-				text: i18n.ts.sensitiveMediaRevealConfirm,
-			});
-			if (canceled) return;
-		}
-
+	if (!hide.value) return;
+	if (defaultStore.state.nsfwOpenBehavior === 'doubleClick') {
+		os.popup(MkRippleEffect, { x: ev.clientX, y: ev.clientY }, {}, 'end');
+	}
+	if (defaultStore.state.nsfwOpenBehavior === 'click') {
 		hide.value = false;
 	}
-
-	if (defaultStore.state.nsfwOpenBehavior === 'doubleClick') os.popup(MkRippleEffect, { x: ev.clientX, y: ev.clientY }, {}, 'end');
-	if (defaultStore.state.nsfwOpenBehavior === 'click') hide.value = false;
 }
 
-function onDblClick() {
-	if (!props.controls) return;
-	if (hide.value && defaultStore.state.nsfwOpenBehavior === 'doubleClick') hide.value = false;
+function onDblclick() {
+	if (!props.controls) {
+		return;
+	}
+	if (hide.value && defaultStore.state.nsfwOpenBehavior === 'doubleClick') {
+		hide.value = false;
+	}
 }
 
 function resetTimer() {
@@ -155,13 +149,6 @@ function showMenu(ev: MouseEvent) {
 		action: () => {
 			os.apiWithDialog('drive/files/update', { fileId: props.image.id, isSensitive: true });
 		},
-	}] : []), ...($i?.id === props.image.userId ? [{
-		type: 'divider' as const,
-	}, {
-		type: 'link' as const,
-		text: i18n.ts._fileViewer.title,
-		icon: 'ti ti-info-circle',
-		to: `/my/drive/file/${props.image.id}`,
 	}] : [])], ev.currentTarget ?? ev.target);
 }
 
@@ -221,9 +208,9 @@ onUnmounted(() => {
 	display: block;
 	position: absolute;
 	border-radius: 6px;
-	background-color: var(--bg);
+	background-color: var(--fg);
 	color: var(--accentLighten);
-	font-size: 18px;
+	font-size: 12px;
 	opacity: .5;
 	padding: 5px 8px;
 	text-align: center;

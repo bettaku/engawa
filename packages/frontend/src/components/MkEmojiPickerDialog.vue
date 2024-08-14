@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -9,12 +9,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 	v-slot="{ type, maxHeight }"
 	:zPriority="'middle'"
 	:preferType="!defaultStore.state.emojiPickerUseDrawerForMobile ? 'popup' : 'auto'"
-	:hasInteractionWithOtherFocusTrappedEls="true"
 	:transparentBg="true"
 	:manualShowing="manualShowing"
 	:src="src"
 	@click="modal?.close()"
-	@esc="modal?.close()"
 	@opening="opening"
 	@close="emit('close')"
 	@closed="emit('closed')"
@@ -26,17 +24,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 		:showPinned="showPinned"
 		:pinnedEmojis="pinnedEmojis"
 		:asReactionPicker="asReactionPicker"
-		:targetNote="targetNote"
 		:asDrawer="type === 'drawer'"
 		:max-height="maxHeight"
 		@chosen="chosen"
-		@esc="modal?.close()"
 	/>
 </MkModal>
 </template>
 
 <script lang="ts" setup>
-import * as Misskey from 'cherrypick-js';
 import { shallowRef } from 'vue';
 import MkModal from '@/components/MkModal.vue';
 import MkEmojiPicker from '@/components/MkEmojiPicker.vue';
@@ -48,7 +43,6 @@ const props = withDefaults(defineProps<{
 	showPinned?: boolean;
   pinnedEmojis?: string[],
 	asReactionPicker?: boolean;
-	targetNote?: Misskey.entities.Note;
   choseAndClose?: boolean;
 }>(), {
 	manualShowing: null,
@@ -59,7 +53,7 @@ const props = withDefaults(defineProps<{
 });
 
 const emit = defineEmits<{
-	(ev: 'done', v: string): void;
+	(ev: 'done', v: any): void;
 	(ev: 'close'): void;
 	(ev: 'closed'): void;
 }>();
@@ -67,7 +61,7 @@ const emit = defineEmits<{
 const modal = shallowRef<InstanceType<typeof MkModal>>();
 const picker = shallowRef<InstanceType<typeof MkEmojiPicker>>();
 
-function chosen(emoji: string) {
+function chosen(emoji: any) {
 	emit('done', emoji);
 	if (props.choseAndClose) {
 		modal.value?.close();

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -8,15 +8,12 @@ import type { Packed } from '@/misc/json-schema.js';
 import type { MiInstance } from '@/models/Instance.js';
 import { MetaService } from '@/core/MetaService.js';
 import { bindThis } from '@/decorators.js';
-import { UtilityService } from '@/core/UtilityService.js';
-import { RoleService } from '@/core/RoleService.js';
-import { MiUser } from '@/models/User.js';
+import { UtilityService } from '../UtilityService.js';
 
 @Injectable()
 export class InstanceEntityService {
 	constructor(
 		private metaService: MetaService,
-		private roleService: RoleService,
 
 		private utilityService: UtilityService,
 	) {
@@ -25,11 +22,8 @@ export class InstanceEntityService {
 	@bindThis
 	public async pack(
 		instance: MiInstance,
-		me?: { id: MiUser['id']; } | null | undefined,
 	): Promise<Packed<'FederationInstance'>> {
 		const meta = await this.metaService.fetch();
-		const iAmModerator = me ? await this.roleService.isModerator(me as MiUser) : false;
-
 		return {
 			id: instance.id,
 			firstRetrievedAt: instance.firstRetrievedAt.toISOString(),
@@ -39,8 +33,7 @@ export class InstanceEntityService {
 			followingCount: instance.followingCount,
 			followersCount: instance.followersCount,
 			isNotResponding: instance.isNotResponding,
-			isSuspended: instance.suspensionState !== 'none',
-			suspensionState: instance.suspensionState,
+			isSuspended: instance.isSuspended,
 			isBlocked: this.utilityService.isBlockedHost(meta.blockedHosts, instance.host),
 			softwareName: instance.softwareName,
 			softwareVersion: instance.softwareVersion,
@@ -50,13 +43,11 @@ export class InstanceEntityService {
 			maintainerName: instance.maintainerName,
 			maintainerEmail: instance.maintainerEmail,
 			isSilenced: this.utilityService.isSilencedHost(meta.silencedHosts, instance.host),
-			isMediaSilenced: this.utilityService.isMediaSilencedHost(meta.mediaSilencedHosts, instance.host),
 			iconUrl: instance.iconUrl,
 			faviconUrl: instance.faviconUrl,
 			themeColor: instance.themeColor,
 			infoUpdatedAt: instance.infoUpdatedAt ? instance.infoUpdatedAt.toISOString() : null,
 			latestRequestReceivedAt: instance.latestRequestReceivedAt ? instance.latestRequestReceivedAt.toISOString() : null,
-			moderationNote: iAmModerator ? instance.moderationNote : null,
 		};
 	}
 

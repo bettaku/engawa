@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -45,7 +45,6 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
 	(ev: 'update:modelValue', value: number): void;
-	(ev: 'dragEnded', value: number): void;
 }>();
 
 const containerEl = shallowRef<HTMLElement>();
@@ -88,7 +87,7 @@ onMounted(() => {
 	ro = new ResizeObserver((entries, observer) => {
 		calcThumbPosition();
 	});
-	if (containerEl.value) ro.observe(containerEl.value);
+	ro.observe(containerEl.value);
 });
 
 onUnmounted(() => {
@@ -103,21 +102,19 @@ const steps = computed(() => {
 	}
 });
 
-function onMousedown(ev: MouseEvent | TouchEvent) {
+const onMousedown = (ev: MouseEvent | TouchEvent) => {
 	vibrate(defaultStore.state.vibrateSystem ? 10 : []);
 
 	ev.preventDefault();
 
 	const tooltipShowing = ref(true);
-	const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkTooltip.vue')), {
+	os.popup(defineAsyncComponent(() => import('@/components/MkTooltip.vue')), {
 		showing: tooltipShowing,
 		text: computed(() => {
 			return props.textConverter(finalValue.value);
 		}),
 		targetElement: thumbEl,
-	}, {
-		closed: () => dispose(),
-	});
+	}, {}, 'closed');
 
 	const style = document.createElement('style');
 	style.appendChild(document.createTextNode('* { cursor: grabbing !important; } body * { pointer-events: none !important; }'));
@@ -128,7 +125,7 @@ function onMousedown(ev: MouseEvent | TouchEvent) {
 	const onDrag = (ev: MouseEvent | TouchEvent) => {
 		ev.preventDefault();
 		const containerRect = containerEl.value!.getBoundingClientRect();
-		const pointerX = 'touches' in ev && ev.touches.length > 0 ? ev.touches[0].clientX : 'clientX' in ev ? ev.clientX : 0;
+		const pointerX = ev.touches && ev.touches.length > 0 ? ev.touches[0].clientX : ev.clientX;
 		const pointerPositionOnContainer = pointerX - (containerRect.left + (thumbWidth / 2));
 		rawValue.value = Math.min(1, Math.max(0, pointerPositionOnContainer / (containerEl.value!.offsetWidth - thumbWidth)));
 
@@ -150,7 +147,6 @@ function onMousedown(ev: MouseEvent | TouchEvent) {
 		// 値が変わってたら通知
 		if (beforeValue !== finalValue.value) {
 			emit('update:modelValue', finalValue.value);
-			emit('dragEnded', finalValue.value);
 		}
 	};
 
@@ -158,7 +154,7 @@ function onMousedown(ev: MouseEvent | TouchEvent) {
 	window.addEventListener('touchmove', onDrag);
 	window.addEventListener('mouseup', onMouseup, { once: true });
 	window.addEventListener('touchend', onMouseup, { once: true });
-}
+};
 </script>
 
 <style lang="scss" scoped>

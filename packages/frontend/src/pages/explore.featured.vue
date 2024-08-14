@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -29,9 +29,6 @@ const paginationForPolls = {
 	endpoint: 'notes/polls/recommendation' as const,
 	limit: 10,
 	offsetMode: true,
-	params: {
-		excludeChannels: true,
-	},
 };
 
 const tab = ref('notes');

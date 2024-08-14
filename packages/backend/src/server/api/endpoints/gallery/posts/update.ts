@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -47,7 +47,7 @@ export const paramDef = {
 		} },
 		isSensitive: { type: 'boolean', default: false },
 	},
-	required: ['postId'],
+	required: ['postId', 'title', 'fileIds'],
 } as const;
 
 @Injectable()
@@ -62,19 +62,15 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private galleryPostEntityService: GalleryPostEntityService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
-			let files: Array<MiDriveFile> | undefined;
+			const files = (await Promise.all(ps.fileIds.map(fileId =>
+				this.driveFilesRepository.findOneBy({
+					id: fileId,
+					userId: me.id,
+				}),
+			))).filter((file): file is MiDriveFile => file != null);
 
-			if (ps.fileIds) {
-				files = (await Promise.all(ps.fileIds.map(fileId =>
-					this.driveFilesRepository.findOneBy({
-						id: fileId,
-						userId: me.id,
-					}),
-				))).filter(x => x != null);
-
-				if (files.length === 0) {
-					throw new Error();
-				}
+			if (files.length === 0) {
+				throw new Error();
 			}
 
 			await this.galleryPostsRepository.update({
@@ -85,7 +81,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				title: ps.title,
 				description: ps.description,
 				isSensitive: ps.isSensitive,
-				fileIds: files ? files.map(file => file.id) : undefined,
+				fileIds: files.map(file => file.id),
 			});
 
 			const post = await this.galleryPostsRepository.findOneByOrFail({ id: ps.postId });

@@ -1,39 +1,64 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 process.env.NODE_ENV = 'test';
 
 import * as assert from 'assert';
+import { JTDDataType } from 'ajv/dist/jtd';
 import { DEFAULT_POLICIES } from '@/core/RoleService.js';
-import { api, ApiRequest, failedApiCall, hiddenNote, post, signup, successfulApiCall } from '../utils.js';
-import type * as Misskey from 'cherrypick-js';
-
-type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
+import type { Packed } from '@/misc/json-schema.js';
+import { paramDef as CreateParamDef } from '@/server/api/endpoints/clips/create.js';
+import { paramDef as UpdateParamDef } from '@/server/api/endpoints/clips/update.js';
+import { paramDef as DeleteParamDef } from '@/server/api/endpoints/clips/delete.js';
+import { paramDef as ShowParamDef } from '@/server/api/endpoints/clips/show.js';
+import { paramDef as FavoriteParamDef } from '@/server/api/endpoints/clips/favorite.js';
+import { paramDef as UnfavoriteParamDef } from '@/server/api/endpoints/clips/unfavorite.js';
+import { paramDef as AddNoteParamDef } from '@/server/api/endpoints/clips/add-note.js';
+import { paramDef as RemoveNoteParamDef } from '@/server/api/endpoints/clips/remove-note.js';
+import { paramDef as NotesParamDef } from '@/server/api/endpoints/clips/notes.js';
+import {
+	signup,
+	post,
+	startServer,
+	api,
+	successfulApiCall,
+	failedApiCall,
+	ApiRequest,
+	hiddenNote,
+} from '../utils.js';
+import type { INestApplicationContext } from '@nestjs/common';
 
 describe('クリップ', () => {
-	let alice: Misskey.entities.SignupResponse;
-	let bob: Misskey.entities.SignupResponse;
-	let aliceNote: Misskey.entities.Note;
-	let aliceHomeNote: Misskey.entities.Note;
-	let aliceFollowersNote: Misskey.entities.Note;
-	let aliceSpecifiedNote: Misskey.entities.Note;
-	let bobNote: Misskey.entities.Note;
-	let bobHomeNote: Misskey.entities.Note;
-	let bobFollowersNote: Misskey.entities.Note;
-	let bobSpecifiedNote: Misskey.entities.Note;
+	type User = Packed<'User'>;
+	type Note = Packed<'Note'>;
+	type Clip = Packed<'Clip'>;
+
+	let app: INestApplicationContext;
+
+	let alice: User;
+	let bob: User;
+	let aliceNote: Note;
+	let aliceHomeNote: Note;
+	let aliceFollowersNote: Note;
+	let aliceSpecifiedNote: Note;
+	let bobNote: Note;
+	let bobHomeNote: Note;
+	let bobFollowersNote: Note;
+	let bobSpecifiedNote: Note;
 
 	const compareBy = <T extends { id: string }, >(selector: (s: T) => string = (s: T): string => s.id) => (a: T, b: T): number => {
 		return selector(a).localeCompare(selector(b));
 	};
 
-	const defaultCreate = (): Pick<Misskey.entities.ClipsCreateRequest, 'name'> => ({
+	type CreateParam = JTDDataType<typeof CreateParamDef>;
+	const defaultCreate = (): Partial<CreateParam> => ({
 		name: 'test',
 	});
-	const create = async (parameters: Partial<Misskey.entities.ClipsCreateRequest> = {}, request: Partial<ApiRequest<'clips/create'>> = {}): Promise<Misskey.entities.Clip> => {
-		const clip = await successfulApiCall({
-			endpoint: 'clips/create',
+	const create = async (parameters: Partial<CreateParam> = {}, request: Partial<ApiRequest> = {}): Promise<Clip> => {
+		const clip = await successfulApiCall<Clip>({
+			endpoint: '/clips/create',
 			parameters: {
 				...defaultCreate(),
 				...parameters,
@@ -51,16 +76,17 @@ describe('クリップ', () => {
 		return clip;
 	};
 
-	const createMany = async (parameters: Partial<Misskey.entities.ClipsCreateRequest>, count = 10, user = alice): Promise<Misskey.entities.Clip[]> => {
+	const createMany = async (parameters: Partial<CreateParam>, count = 10, user = alice): Promise<Clip[]> => {
 		return await Promise.all([...Array(count)].map((_, i) => create({
 			name: `test${i}`,
 			...parameters,
 		}, { user })));
 	};
 
-	const update = async (parameters: Optional<Misskey.entities.ClipsUpdateRequest, 'name'>, request: Partial<ApiRequest<'clips/update'>> = {}): Promise<Misskey.entities.Clip> => {
-		const clip = await successfulApiCall({
-			endpoint: 'clips/update',
+	type UpdateParam = JTDDataType<typeof UpdateParamDef>;
+	const update = async (parameters: Partial<UpdateParam>, request: Partial<ApiRequest> = {}): Promise<Clip> => {
+		const clip = await successfulApiCall<Clip>({
+			endpoint: '/clips/update',
 			parameters: {
 				name: 'updated',
 				...parameters,
@@ -78,9 +104,10 @@ describe('クリップ', () => {
 		return clip;
 	};
 
-	const deleteClip = async (parameters: Misskey.entities.ClipsDeleteRequest, request: Partial<ApiRequest<'clips/delete'>> = {}): Promise<void> => {
-		await successfulApiCall({
-			endpoint: 'clips/delete',
+	type DeleteParam = JTDDataType<typeof DeleteParamDef>;
+	const deleteClip = async (parameters: DeleteParam, request: Partial<ApiRequest> = {}): Promise<void> => {
+		return await successfulApiCall<void>({
+			endpoint: '/clips/delete',
 			parameters,
 			user: alice,
 			...request,
@@ -89,53 +116,60 @@ describe('クリップ', () => {
 		});
 	};
 
-	const show = async (parameters: Misskey.entities.ClipsShowRequest, request: Partial<ApiRequest<'clips/show'>> = {}): Promise<Misskey.entities.Clip> => {
-		return await successfulApiCall({
-			endpoint: 'clips/show',
+	type ShowParam = JTDDataType<typeof ShowParamDef>;
+	const show = async (parameters: ShowParam, request: Partial<ApiRequest> = {}): Promise<Clip> => {
+		return await successfulApiCall<Clip>({
+			endpoint: '/clips/show',
 			parameters,
 			user: alice,
 			...request,
 		});
 	};
 
-	const list = async (request: Partial<ApiRequest<'clips/list'>>): Promise<Misskey.entities.Clip[]> => {
-		return successfulApiCall({
-			endpoint: 'clips/list',
+	const list = async (request: Partial<ApiRequest>): Promise<Clip[]> => {
+		return successfulApiCall<Clip[]>({
+			endpoint: '/clips/list',
 			parameters: {},
 			user: alice,
 			...request,
 		});
 	};
 
-	const usersClips = async (parameters: Misskey.entities.UsersClipsRequest, request: Partial<ApiRequest<'users/clips'>> = {}): Promise<Misskey.entities.Clip[]> => {
-		return await successfulApiCall({
-			endpoint: 'users/clips',
-			parameters,
+	const usersClips = async (request: Partial<ApiRequest>): Promise<Clip[]> => {
+		return await successfulApiCall<Clip[]>({
+			endpoint: '/users/clips',
+			parameters: {},
 			user: alice,
 			...request,
 		});
 	};
 
 	beforeAll(async () => {
+		app = await startServer();
 		alice = await signup({ username: 'alice' });
 		bob = await signup({ username: 'bob' });
 
-		aliceNote = await post(alice, { text: 'test' });
-		aliceHomeNote = await post(alice, { text: 'home only', visibility: 'home' });
-		aliceFollowersNote = await post(alice, { text: 'followers only', visibility: 'followers' });
-		aliceSpecifiedNote = await post(alice, { text: 'specified only', visibility: 'specified' });
-		bobNote = await post(bob, { text: 'test' });
-		bobHomeNote = await post(bob, { text: 'home only', visibility: 'home' });
-		bobFollowersNote = await post(bob, { text: 'followers only', visibility: 'followers' });
-		bobSpecifiedNote = await post(bob, { text: 'specified only', visibility: 'specified' });
+		// FIXME: cherrypick-jsのNoteはoutdatedなので直接変換できない
+		aliceNote = await post(alice, { text: 'test' }) as any;
+		aliceHomeNote = await post(alice, { text: 'home only', visibility: 'home' }) as any;
+		aliceFollowersNote = await post(alice, { text: 'followers only', visibility: 'followers' }) as any;
+		aliceSpecifiedNote = await post(alice, { text: 'specified only', visibility: 'specified' }) as any;
+		bobNote = await post(bob, { text: 'test' }) as any;
+		bobHomeNote = await post(bob, { text: 'home only', visibility: 'home' }) as any;
+		bobFollowersNote = await post(bob, { text: 'followers only', visibility: 'followers' }) as any;
+		bobSpecifiedNote = await post(bob, { text: 'specified only', visibility: 'specified' }) as any;
 	}, 1000 * 60 * 2);
+
+	afterAll(async () => {
+		await app.close();
+	});
 
 	afterEach(async () => {
 		// テスト間で影響し合わないように毎回全部消す。
 		for (const user of [alice, bob]) {
-			const list = await api('clips/list', { limit: 11 }, user);
+			const list = await api('/clips/list', { limit: 11 }, user);
 			for (const clip of list.body) {
-				await api('clips/delete', { clipId: clip.id }, user);
+				await api('/clips/delete', { clipId: clip.id }, user);
 			}
 		}
 	});
@@ -153,13 +187,14 @@ describe('クリップ', () => {
 	});
 
 	test('の作成はポリシーで定められた数以上はできない。', async () => {
-		const clipLimit = DEFAULT_POLICIES.clipLimit;
+		// ポリシー + 1まで作れるという所がミソ
+		const clipLimit = DEFAULT_POLICIES.clipLimit + 1;
 		for (let i = 0; i < clipLimit; i++) {
 			await create();
 		}
 
 		await failedApiCall({
-			endpoint: 'clips/create',
+			endpoint: '/clips/create',
 			parameters: defaultCreate(),
 			user: alice,
 		}, {
@@ -186,8 +221,7 @@ describe('クリップ', () => {
 		{ label: 'descriptionが最大長+1', parameters: { description: 'a'.repeat(2049) } },
 	];
 	test.each(createClipDenyPattern)('の作成は$labelならできない', async ({ parameters }) => failedApiCall({
-		endpoint: 'clips/create',
-		// @ts-expect-error invalid params
+		endpoint: '/clips/create',
 		parameters: {
 			...defaultCreate(),
 			...parameters,
@@ -229,15 +263,15 @@ describe('クリップ', () => {
 			code: 'NO_SUCH_CLIP',
 			id: 'b4d92d70-b216-46fa-9a3f-a8c811699257',
 		} },
-		{ label: '他人のクリップ', user: () => bob, assertion: {
+		{ label: '他人のクリップ', user: (): User => bob, assertion: {
 			code: 'NO_SUCH_CLIP',
 			id: 'b4d92d70-b216-46fa-9a3f-a8c811699257',
 		} },
 		...createClipDenyPattern as any,
 	])('の更新は$labelならできない', async ({ parameters, user, assertion }) => failedApiCall({
-		endpoint: 'clips/update',
+		endpoint: '/clips/update',
 		parameters: {
-			clipId: (await create({}, { user: (user ?? (() => alice))() })).id,
+			clipId: (await create({}, { user: (user ?? ((): User => alice))() })).id,
 			name: 'updated',
 			...parameters,
 		},
@@ -262,15 +296,14 @@ describe('クリップ', () => {
 			code: 'NO_SUCH_CLIP',
 			id: '70ca08ba-6865-4630-b6fb-8494759aa754',
 		} },
-		{ label: '他人のクリップ', user: () => bob, assertion: {
+		{ label: '他人のクリップ', user: (): User => bob, assertion: {
 			code: 'NO_SUCH_CLIP',
 			id: '70ca08ba-6865-4630-b6fb-8494759aa754',
 		} },
 	])('の削除は$labelならできない', async ({ parameters, user, assertion }) => failedApiCall({
-		endpoint: 'clips/delete',
+		endpoint: '/clips/delete',
 		parameters: {
-			// @ts-expect-error clipId must not be null
-			clipId: (await create({}, { user: (user ?? (() => alice))() })).id,
+			clipId: (await create({}, { user: (user ?? ((): User => alice))() })).id,
 			...parameters,
 		},
 		user: alice,
@@ -290,7 +323,7 @@ describe('クリップ', () => {
 	test('のID指定取得は他人のPrivateなクリップは取得できない', async () => {
 		const clip = await create({ isPublic: false }, { user: bob } );
 		failedApiCall({
-			endpoint: 'clips/show',
+			endpoint: '/clips/show',
 			parameters: { clipId: clip.id },
 			user: alice,
 		}, {
@@ -307,8 +340,7 @@ describe('クリップ', () => {
 			id: 'c3c5fe33-d62c-44d2-9ea5-d997703f5c20',
 		} },
 	])('のID指定取得は$labelならできない', async ({ parameters, assetion }) => failedApiCall({
-		endpoint: 'clips/show',
-		// @ts-expect-error clipId must not be undefined
+		endpoint: '/clips/show',
 		parameters: {
 			...parameters,
 		},
@@ -326,7 +358,7 @@ describe('クリップ', () => {
 	});
 
 	test('の一覧(clips/list)が取得できる(上限いっぱい)', async () => {
-		const clipLimit = DEFAULT_POLICIES.clipLimit;
+		const clipLimit = DEFAULT_POLICIES.clipLimit + 1;
 		const clips = await createMany({}, clipLimit);
 		const res = await list({
 			parameters: { limit: 1 }, // FIXME: 無視されて11全部返ってくる
@@ -341,23 +373,27 @@ describe('クリップ', () => {
 
 	test('の一覧が取得できる(空)', async () => {
 		const res = await usersClips({
-			userId: alice.id,
+			parameters: {
+				userId: alice.id,
+			},
 		});
 		assert.deepStrictEqual(res, []);
 	});
 
 	test.each([
 		{ label: '' },
-		{ label: '他人アカウントから', user: () => bob },
+		{ label: '他人アカウントから', user: (): User => bob },
 	])('の一覧が$label取得できる', async () => {
 		const clips = await createMany({ isPublic: true });
 		const res = await usersClips({
-			userId: alice.id,
+			parameters: {
+				userId: alice.id,
+			},
 		});
 
 		// 返ってくる配列には順序保障がないのでidでソートして厳密比較
 		assert.deepStrictEqual(
-			res.sort(compareBy<Misskey.entities.Clip>(s => s.id)),
+			res.sort(compareBy<Clip>(s => s.id)),
 			clips.sort(compareBy(s => s.id)));
 
 		// 認証状態で見たときだけisFavoritedが入っている
@@ -367,16 +403,17 @@ describe('クリップ', () => {
 	});
 
 	test.each([
-		{ label: '未認証', user: () => undefined },
+		{ label: '未認証', user: (): undefined => undefined },
 		{ label: '存在しないユーザーのもの', parameters: { userId: 'xxxxxxx' } },
 	])('の一覧は$labelでも取得できる', async ({ parameters, user }) => {
 		const clips = await createMany({ isPublic: true });
 		const res = await usersClips({
-			userId: alice.id,
-			limit: clips.length,
-			...parameters,
-		}, {
-			user: (user ?? (() => alice))(),
+			parameters: {
+				userId: alice.id,
+				limit: clips.length,
+				...parameters,
+			},
+			user: (user ?? ((): User => alice))(),
 		});
 
 		// 未認証で見たときはisFavoritedは入らない
@@ -389,8 +426,10 @@ describe('クリップ', () => {
 		await create({ isPublic: false });
 		const aliceClip = await create({ isPublic: true });
 		const res = await usersClips({
-			userId: alice.id,
-			limit: 2,
+			parameters: {
+				userId: alice.id,
+				limit: 2,
+			},
 		});
 		assert.deepStrictEqual(res, [aliceClip]);
 	});
@@ -399,15 +438,17 @@ describe('クリップ', () => {
 		const clips = await createMany({ isPublic: true }, 7);
 		clips.sort(compareBy(s => s.id));
 		const res = await usersClips({
-			userId: alice.id,
-			sinceId: clips[1].id,
-			untilId: clips[5].id,
-			limit: 4,
+			parameters: {
+				userId: alice.id,
+				sinceId: clips[1].id,
+				untilId: clips[5].id,
+				limit: 4,
+			},
 		});
 
 		// Promise.allで返ってくる配列には順序保障がないのでidでソートして厳密比較
 		assert.deepStrictEqual(
-			res.sort(compareBy<Misskey.entities.Clip>(s => s.id)),
+			res.sort(compareBy<Clip>(s => s.id)),
 			[clips[2], clips[3], clips[4]], // sinceIdとuntilId自体は結果に含まれない
 			clips[1].id + ' ... ' + clips[3].id + ' with ' + clips.map(s => s.id) + ' vs. ' + res.map(s => s.id));
 	});
@@ -417,9 +458,8 @@ describe('クリップ', () => {
 		{ label: 'limitゼロ', parameters: { limit: 0 } },
 		{ label: 'limit最大+1', parameters: { limit: 101 } },
 	])('の一覧は$labelだと取得できない', async ({ parameters }) => failedApiCall({
-		endpoint: 'users/clips',
+		endpoint: '/users/clips',
 		parameters: {
-			// @ts-expect-error userId must not be undefined
 			userId: alice.id,
 			...parameters,
 		},
@@ -431,15 +471,15 @@ describe('クリップ', () => {
 	}));
 
 	test.each([
-		{ label: '作成', endpoint: 'clips/create' as const },
-		{ label: '更新', endpoint: 'clips/update' as const },
-		{ label: '削除', endpoint: 'clips/delete' as const },
-		{ label: '取得', endpoint: 'clips/list' as const },
-		{ label: 'お気に入り設定', endpoint: 'clips/favorite' as const },
-		{ label: 'お気に入り解除', endpoint: 'clips/unfavorite' as const },
-		{ label: 'お気に入り取得', endpoint: 'clips/my-favorites' as const },
-		{ label: 'ノート追加', endpoint: 'clips/add-note' as const },
-		{ label: 'ノート削除', endpoint: 'clips/remove-note' as const },
+		{ label: '作成', endpoint: '/clips/create' },
+		{ label: '更新', endpoint: '/clips/update' },
+		{ label: '削除', endpoint: '/clips/delete' },
+		{ label: '取得', endpoint: '/clips/list' },
+		{ label: 'お気に入り設定', endpoint: '/clips/favorite' },
+		{ label: 'お気に入り解除', endpoint: '/clips/unfavorite' },
+		{ label: 'お気に入り取得', endpoint: '/clips/my-favorites' },
+		{ label: 'ノート追加', endpoint: '/clips/add-note' },
+		{ label: 'ノート削除', endpoint: '/clips/remove-note' },
 	])('の$labelは未認証ではできない', async ({ endpoint }) => await failedApiCall({
 		endpoint: endpoint,
 		parameters: {},
@@ -451,11 +491,12 @@ describe('クリップ', () => {
 	}));
 
 	describe('のお気に入り', () => {
-		let aliceClip: Misskey.entities.Clip;
+		let aliceClip: Clip;
 
-		const favorite = async (parameters: Misskey.entities.ClipsFavoriteRequest, request: Partial<ApiRequest<'clips/favorite'>> = {}): Promise<void> => {
-			await successfulApiCall({
-				endpoint: 'clips/favorite',
+		type FavoriteParam = JTDDataType<typeof FavoriteParamDef>;
+		const favorite = async (parameters: FavoriteParam, request: Partial<ApiRequest> = {}): Promise<void> => {
+			return successfulApiCall<void>({
+				endpoint: '/clips/favorite',
 				parameters,
 				user: alice,
 				...request,
@@ -464,9 +505,10 @@ describe('クリップ', () => {
 			});
 		};
 
-		const unfavorite = async (parameters: Misskey.entities.ClipsUnfavoriteRequest, request: Partial<ApiRequest<'clips/unfavorite'>> = {}): Promise<void> => {
-			await successfulApiCall({
-				endpoint: 'clips/unfavorite',
+		type UnfavoriteParam = JTDDataType<typeof UnfavoriteParamDef>;
+		const unfavorite = async (parameters: UnfavoriteParam, request: Partial<ApiRequest> = {}): Promise<void> => {
+			return successfulApiCall<void>({
+				endpoint: '/clips/unfavorite',
 				parameters,
 				user: alice,
 				...request,
@@ -475,9 +517,9 @@ describe('クリップ', () => {
 			});
 		};
 
-		const myFavorites = async (request: Partial<ApiRequest<'clips/my-favorites'>> = {}): Promise<Misskey.entities.Clip[]> => {
-			return successfulApiCall({
-				endpoint: 'clips/my-favorites',
+		const myFavorites = async (request: Partial<ApiRequest> = {}): Promise<Clip[]> => {
+			return successfulApiCall<Clip[]>({
+				endpoint: '/clips/my-favorites',
 				parameters: {},
 				user: alice,
 				...request,
@@ -543,7 +585,7 @@ describe('クリップ', () => {
 		test('は同じクリップに対して二回設定できない。', async () => {
 			await favorite({ clipId: aliceClip.id });
 			await failedApiCall({
-				endpoint: 'clips/favorite',
+				endpoint: '/clips/favorite',
 				parameters: {
 					clipId: aliceClip.id,
 				},
@@ -561,15 +603,14 @@ describe('クリップ', () => {
 				code: 'NO_SUCH_CLIP',
 				id: '4c2aaeae-80d8-4250-9606-26cb1fdb77a5',
 			} },
-			{ label: '他人のクリップ', user: () => bob, assertion: {
+			{ label: '他人のクリップ', user: (): User => bob, assertion: {
 				code: 'NO_SUCH_CLIP',
 				id: '4c2aaeae-80d8-4250-9606-26cb1fdb77a5',
 			} },
 		])('の設定は$labelならできない', async ({ parameters, user, assertion }) => failedApiCall({
-			endpoint: 'clips/favorite',
+			endpoint: '/clips/favorite',
 			parameters: {
-				// @ts-expect-error clipId must not be null
-				clipId: (await create({}, { user: (user ?? (() => alice))() })).id,
+				clipId: (await create({}, { user: (user ?? ((): User => alice))() })).id,
 				...parameters,
 			},
 			user: alice,
@@ -595,7 +636,7 @@ describe('クリップ', () => {
 				code: 'NO_SUCH_CLIP',
 				id: '2603966e-b865-426c-94a7-af4a01241dc1',
 			} },
-			{ label: '他人のクリップ', user: () => bob, assertion: {
+			{ label: '他人のクリップ', user: (): User => bob, assertion: {
 				code: 'NOT_FAVORITED',
 				id: '90c3a9e8-b321-4dae-bf57-2bf79bbcc187',
 			} },
@@ -604,10 +645,9 @@ describe('クリップ', () => {
 				id: '90c3a9e8-b321-4dae-bf57-2bf79bbcc187',
 			} },
 		])('の設定解除は$labelならできない', async ({ parameters, user, assertion }) => failedApiCall({
-			endpoint: 'clips/unfavorite',
+			endpoint: '/clips/unfavorite',
 			parameters: {
-				// @ts-expect-error clipId must not be null
-				clipId: (await create({}, { user: (user ?? (() => alice))() })).id,
+				clipId: (await create({}, { user: (user ?? ((): User => alice))() })).id,
 				...parameters,
 			},
 			user: alice,
@@ -632,38 +672,41 @@ describe('クリップ', () => {
 	});
 
 	describe('に紐づくノート', () => {
-		let aliceClip: Misskey.entities.Clip;
+		let aliceClip: Clip;
 
-		const sampleNotes = (): Misskey.entities.Note[] => [
+		const sampleNotes = (): Note[] => [
 			aliceNote, aliceHomeNote, aliceFollowersNote, aliceSpecifiedNote,
 			bobNote, bobHomeNote, bobFollowersNote, bobSpecifiedNote,
 		];
 
-		const addNote = async (parameters: Misskey.entities.ClipsAddNoteRequest, request: Partial<ApiRequest<'clips/add-note'>> = {}): Promise<void> => {
-			return successfulApiCall({
-				endpoint: 'clips/add-note',
+		type AddNoteParam = JTDDataType<typeof AddNoteParamDef>;
+		const addNote = async (parameters: AddNoteParam, request: Partial<ApiRequest> = {}): Promise<void> => {
+			return successfulApiCall<void>({
+				endpoint: '/clips/add-note',
 				parameters,
 				user: alice,
 				...request,
 			}, {
 				status: 204,
-			}) as any as void;
+			});
 		};
 
-		const removeNote = async (parameters: Misskey.entities.ClipsRemoveNoteRequest, request: Partial<ApiRequest<'clips/remove-note'>> = {}): Promise<void> => {
-			return successfulApiCall({
-				endpoint: 'clips/remove-note',
+		type RemoveNoteParam = JTDDataType<typeof RemoveNoteParamDef>;
+		const removeNote = async (parameters: RemoveNoteParam, request: Partial<ApiRequest> = {}): Promise<void> => {
+			return successfulApiCall<void>({
+				endpoint: '/clips/remove-note',
 				parameters,
 				user: alice,
 				...request,
 			}, {
 				status: 204,
-			}) as any as void;
+			});
 		};
 
-		const notes = async (parameters: Misskey.entities.ClipsNotesRequest, request: Partial<ApiRequest<'clips/notes'>> = {}): Promise<Misskey.entities.Note[]> => {
-			return successfulApiCall({
-				endpoint: 'clips/notes',
+		type NotesParam = JTDDataType<typeof NotesParamDef>;
+		const notes = async (parameters: Partial<NotesParam>, request: Partial<ApiRequest> = {}): Promise<Note[]> => {
+			return successfulApiCall<Note[]>({
+				endpoint: '/clips/notes',
 				parameters,
 				user: alice,
 				...request,
@@ -689,7 +732,7 @@ describe('クリップ', () => {
 		test('として同じノートを二回紐づけることはできない', async () => {
 			await addNote({ clipId: aliceClip.id, noteId: aliceNote.id });
 			await failedApiCall({
-				endpoint: 'clips/add-note',
+				endpoint: '/clips/add-note',
 				parameters: {
 					clipId: aliceClip.id,
 					noteId: aliceNote.id,
@@ -704,14 +747,14 @@ describe('クリップ', () => {
 
 		// TODO: 17000msくらいかかる...
 		test('をポリシーで定められた上限いっぱい(200)を超えて追加はできない。', async () => {
-			const noteLimit = DEFAULT_POLICIES.noteEachClipsLimit;
+			const noteLimit = DEFAULT_POLICIES.noteEachClipsLimit + 1;
 			const noteList = await Promise.all([...Array(noteLimit)].map((_, i) => post(alice, {
 				text: `test ${i}`,
-			}) as unknown)) as Misskey.entities.Note[];
+			}) as unknown)) as Note[];
 			await Promise.all(noteList.map(s => addNote({ clipId: aliceClip.id, noteId: s.id })));
 
 			await failedApiCall({
-				endpoint: 'clips/add-note',
+				endpoint: '/clips/add-note',
 				parameters: {
 					clipId: aliceClip.id,
 					noteId: aliceNote.id,
@@ -725,7 +768,7 @@ describe('クリップ', () => {
 		});
 
 		test('は他人のクリップへ追加できない。', async () => await failedApiCall({
-			endpoint: 'clips/add-note',
+			endpoint: '/clips/add-note',
 			parameters: {
 				clipId: aliceClip.id,
 				noteId: aliceNote.id,
@@ -748,20 +791,18 @@ describe('クリップ', () => {
 				code: 'NO_SUCH_NOTE',
 				id: 'fc8c0b49-c7a3-4664-a0a6-b418d386bb8b',
 			} },
-			{ label: '他人のクリップ', user: () => bob, assetion: {
+			{ label: '他人のクリップ', user: (): object => bob, assetion: {
 				code: 'NO_SUCH_CLIP',
 				id: 'd6e76cc0-a1b5-4c7c-a287-73fa9c716dcf',
 			} },
 		])('の追加は$labelだとできない', async ({ parameters, user, assetion }) => failedApiCall({
-			endpoint: 'clips/add-note',
+			endpoint: '/clips/add-note',
 			parameters: {
-				// @ts-expect-error clipId must not be undefined
 				clipId: aliceClip.id,
-				// @ts-expect-error noteId must not be undefined
 				noteId: aliceNote.id,
 				...parameters,
 			},
-			user: (user ?? (() => alice))(),
+			user: (user ?? ((): User => alice))(),
 		}, {
 			status: 400,
 			code: 'INVALID_PARAM',
@@ -786,20 +827,18 @@ describe('クリップ', () => {
 				code: 'NO_SUCH_NOTE',
 				id: 'aff017de-190e-434b-893e-33a9ff5049d8', // add-noteと異なる
 			} },
-			{ label: '他人のクリップ', user: () => bob, assetion: {
+			{ label: '他人のクリップ', user: (): object => bob, assetion: {
 				code: 'NO_SUCH_CLIP',
 				id: 'b80525c6-97f7-49d7-a42d-ebccd49cfd52', // add-noteと異なる
 			} },
 		])('の削除は$labelだとできない', async ({ parameters, user, assetion }) => failedApiCall({
-			endpoint: 'clips/remove-note',
+			endpoint: '/clips/remove-note',
 			parameters: {
-				// @ts-expect-error clipId must not be undefined
 				clipId: aliceClip.id,
-				// @ts-expect-error noteId must not be undefined
 				noteId: aliceNote.id,
 				...parameters,
 			},
-			user: (user ?? (() => alice))(),
+			user: (user ?? ((): User => alice))(),
 		}, {
 			status: 400,
 			code: 'INVALID_PARAM',
@@ -903,22 +942,21 @@ describe('クリップ', () => {
 				code: 'NO_SUCH_CLIP',
 				id: '1d7645e6-2b6d-4635-b0fe-fe22b0e72e00',
 			} },
-			{ label: '他人のPrivateなクリップから', user: () => bob, assertion: {
+			{ label: '他人のPrivateなクリップから', user: (): object => bob, assertion: {
 				code: 'NO_SUCH_CLIP',
 				id: '1d7645e6-2b6d-4635-b0fe-fe22b0e72e00',
 			} },
-			{ label: '未認証でPrivateなクリップから', user: () => undefined, assertion: {
+			{ label: '未認証でPrivateなクリップから', user: (): undefined => undefined, assertion: {
 				code: 'NO_SUCH_CLIP',
 				id: '1d7645e6-2b6d-4635-b0fe-fe22b0e72e00',
 			} },
 		])('は$labelだと取得できない', async ({ parameters, user, assertion }) => failedApiCall({
-			endpoint: 'clips/notes',
+			endpoint: '/clips/notes',
 			parameters: {
-				// @ts-expect-error clipId must not be undefined
 				clipId: aliceClip.id,
 				...parameters,
 			},
-			user: (user ?? (() => alice))(),
+			user: (user ?? ((): User => alice))(),
 		}, {
 			status: 400,
 			code: 'INVALID_PARAM',

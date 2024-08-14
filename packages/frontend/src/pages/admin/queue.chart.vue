@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -51,7 +51,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 import { markRaw, onMounted, onUnmounted, ref, shallowRef } from 'vue';
 import XChart from './queue.chart.chart.vue';
 import number from '@/filters/number.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
+import * as os from '@/os.js';
 import { useStream } from '@/stream.js';
 import { i18n } from '@/i18n.js';
 import MkFolder from '@/components/MkFolder.vue';
@@ -105,7 +105,7 @@ const onStatsLog = (statsLog) => {
 
 onMounted(() => {
 	if (props.domain === 'inbox' || props.domain === 'deliver') {
-		misskeyApi(`admin/queue/${props.domain}-delayed`).then(result => {
+		os.api(`admin/queue/${props.domain}-delayed`).then(result => {
 			jobs.value = result;
 		});
 	}

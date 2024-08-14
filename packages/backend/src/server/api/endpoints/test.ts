@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -19,24 +19,20 @@ export const meta = {
 			id: {
 				type: 'string',
 				format: 'misskey:id',
-				optional: true, nullable: false,
 			},
 			required: {
 				type: 'boolean',
-				optional: false, nullable: false,
 			},
 			string: {
 				type: 'string',
-				optional: true, nullable: false,
 			},
 			default: {
 				type: 'string',
-				optional: true, nullable: false,
 			},
 			nullableDefault: {
 				type: 'string',
 				default: 'hello',
-				optional: true, nullable: true,
+				nullable: true,
 			},
 		},
 	},

@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -34,7 +34,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 import { ref } from 'vue';
 import * as Misskey from 'cherrypick-js';
 import MarqueeText from '@/components/MkMarquee.vue';
-import { misskeyApi } from '@/scripts/misskey-api.js';
+import * as os from '@/os.js';
 import { useInterval } from '@/scripts/use-interval.js';
 import { getProxiedImageUrlNullable } from '@/scripts/media-proxy.js';
 
@@ -52,7 +52,7 @@ const fetching = ref(true);
 const key = ref(0);
 
 const tick = () => {
-	misskeyApi('federation/instances', {
+	os.api('federation/instances', {
 		sort: '+latestRequestReceivedAt',
 		limit: 30,
 	}).then(res => {

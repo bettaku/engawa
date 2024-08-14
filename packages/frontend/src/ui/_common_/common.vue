@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -53,8 +53,7 @@ import { defineAsyncComponent, ref } from 'vue';
 import * as Misskey from 'cherrypick-js';
 import { swInject } from './sw-inject.js';
 import XNotification from './notification.vue';
-import { popups } from '@/os.js';
-import { pendingApiRequestsCount } from '@/scripts/misskey-api.js';
+import { popups, pendingApiRequestsCount } from '@/os.js';
 import { uploads } from '@/scripts/upload.js';
 import * as sound from '@/scripts/sound.js';
 import { $i } from '@/account.js';
@@ -88,7 +87,7 @@ function onNotification(notification: Misskey.entities.Notification, isClient = 
 		}, 6000);
 	}
 
-	sound.playMisskeySfx('notification');
+	sound.play('notification');
 	vibrate(defaultStore.state.vibrateNotification ? [20, 30, 30, 30] : []);
 }
 

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -12,12 +12,10 @@ export const QUEUE = {
 	INBOX: 'inbox',
 	SYSTEM: 'system',
 	ENDED_POLL_NOTIFICATION: 'endedPollNotification',
-	SCHEDULED_NOTE_DELETE: 'scheduledNoteDelete',
 	DB: 'db',
 	RELATIONSHIP: 'relationship',
 	OBJECT_STORAGE: 'objectStorage',
-	USER_WEBHOOK_DELIVER: 'userWebhookDeliver',
-	SYSTEM_WEBHOOK_DELIVER: 'systemWebhookDeliver',
+	WEBHOOK_DELIVER: 'webhookDeliver',
 };
 
 export function baseQueueOptions(config: Config, queueName: typeof QUEUE[keyof typeof QUEUE], redisConnection: Redis.Redis): Bull.QueueOptions {

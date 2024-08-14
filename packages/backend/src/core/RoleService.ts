@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -36,7 +36,6 @@ export type RolePolicies = {
 	ltlAvailable: boolean;
 	canPublicNote: boolean;
 	canEditNote: boolean;
-	mentionLimit: number;
 	canInvite: boolean;
 	inviteLimit: number;
 	inviteLimitCycle: number;
@@ -44,12 +43,10 @@ export type RolePolicies = {
 	canManageCustomEmojis: boolean;
 	canManageAvatarDecorations: boolean;
 	canSearchNotes: boolean;
-	canAdvancedSearchNotes: boolean;
 	canUseTranslator: boolean;
 	canHideAds: boolean;
 	driveCapacityMb: number;
 	alwaysMarkNsfw: boolean;
-	canUpdateBioMedia: boolean;
 	pinLimit: number;
 	antennaLimit: number;
 	wordMuteLimit: number;
@@ -60,7 +57,6 @@ export type RolePolicies = {
 	userEachUserListsLimit: number;
 	rateLimitFactor: number;
 	avatarDecorationLimit: number;
-	fileSizeLimit: number;
 };
 
 export const DEFAULT_POLICIES: RolePolicies = {
@@ -68,7 +64,6 @@ export const DEFAULT_POLICIES: RolePolicies = {
 	ltlAvailable: true,
 	canPublicNote: true,
 	canEditNote: true,
-	mentionLimit: 20,
 	canInvite: false,
 	inviteLimit: 0,
 	inviteLimitCycle: 60 * 24 * 7,
@@ -76,12 +71,10 @@ export const DEFAULT_POLICIES: RolePolicies = {
 	canManageCustomEmojis: false,
 	canManageAvatarDecorations: false,
 	canSearchNotes: false,
-	canAdvancedSearchNotes: false,
 	canUseTranslator: true,
 	canHideAds: false,
 	driveCapacityMb: 100,
 	alwaysMarkNsfw: false,
-	canUpdateBioMedia: true,
 	pinLimit: 5,
 	antennaLimit: 5,
 	wordMuteLimit: 200,
@@ -92,7 +85,6 @@ export const DEFAULT_POLICIES: RolePolicies = {
 	userEachUserListsLimit: 50,
 	rateLimitFactor: 1,
 	avatarDecorationLimit: 1,
-	fileSizeLimit: 50,
 };
 
 @Injectable()
@@ -187,11 +179,9 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 				case 'userRoleAssigned': {
 					const cached = this.roleAssignmentByUserIdCache.get(body.userId);
 					if (cached) {
-						cached.push({ // TODO: このあたりのデシリアライズ処理は各modelファイル内に関数としてexportしたい
+						cached.push({
 							...body,
 							expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
-							user: null, // joinなカラムは通常取ってこないので
-							role: null, // joinなカラムは通常取ってこないので
 						});
 					}
 					break;
@@ -210,82 +200,45 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 	}
 
 	@bindThis
-	private evalCond(user: MiUser, roles: MiRole[], value: RoleCondFormulaValue): boolean {
+	private evalCond(user: MiUser, value: RoleCondFormulaValue): boolean {
 		try {
 			switch (value.type) {
-				// ～かつ～
 				case 'and': {
-					return value.values.every(v => this.evalCond(user, roles, v));
+					return value.values.every(v => this.evalCond(user, v));
 				}
-				// ～または～
 				case 'or': {
-					return value.values.some(v => this.evalCond(user, roles, v));
+					return value.values.some(v => this.evalCond(user, v));
 				}
-				// ～ではない
 				case 'not': {
-					return !this.evalCond(user, roles, value.value);
+					return !this.evalCond(user, value.value);
 				}
-				// マニュアルロールがアサインされている
-				case 'roleAssignedTo': {
-					return roles.some(r => r.id === value.roleId);
-				}
-				// ローカルユーザのみ
 				case 'isLocal': {
 					return this.userEntityService.isLocalUser(user);
 				}
-				// リモートユーザのみ
 				case 'isRemote': {
 					return this.userEntityService.isRemoteUser(user);
 				}
-				// サスペンド済みユーザである
-				case 'isSuspended': {
-					return user.isSuspended;
-				}
-				// 鍵アカウントユーザである
-				case 'isLocked': {
-					return user.isLocked;
-				}
-				// botユーザである
-				case 'isBot': {
-					return user.isBot;
-				}
-				// 猫である
-				case 'isCat': {
-					return user.isCat;
-				}
-				// 「ユーザを見つけやすくする」が有効なアカウント
-				case 'isExplorable': {
-					return user.isExplorable;
-				}
-				// ユーザが作成されてから指定期間経過した
 				case 'createdLessThan': {
 					return this.idService.parse(user.id).date.getTime() > (Date.now() - (value.sec * 1000));
 				}
-				// ユーザが作成されてから指定期間経っていない
 				case 'createdMoreThan': {
 					return this.idService.parse(user.id).date.getTime() < (Date.now() - (value.sec * 1000));
 				}
-				// フォロワー数が指定値以下
 				case 'followersLessThanOrEq': {
 					return user.followersCount <= value.value;
 				}
-				// フォロワー数が指定値以上
 				case 'followersMoreThanOrEq': {
 					return user.followersCount >= value.value;
 				}
-				// フォロー数が指定値以下
 				case 'followingLessThanOrEq': {
 					return user.followingCount <= value.value;
 				}
-				// フォロー数が指定値以上
 				case 'followingMoreThanOrEq': {
 					return user.followingCount >= value.value;
 				}
-				// ノート数が指定値以下
 				case 'notesLessThanOrEq': {
 					return user.notesCount <= value.value;
 				}
-				// ノート数が指定値以上
 				case 'notesMoreThanOrEq': {
 					return user.notesCount >= value.value;
 				}
@@ -319,7 +272,7 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 		const assigns = await this.getUserAssigns(userId);
 		const assignedRoles = roles.filter(r => assigns.map(x => x.roleId).includes(r.id));
 		const user = roles.some(r => r.target === 'conditional') ? await this.cacheService.findUserById(userId) : null;
-		const matchedCondRoles = roles.filter(r => r.target === 'conditional' && this.evalCond(user!, assignedRoles, r.condFormula));
+		const matchedCondRoles = roles.filter(r => r.target === 'conditional' && this.evalCond(user!, r.condFormula));
 		return [...assignedRoles, ...matchedCondRoles];
 	}
 
@@ -332,13 +285,13 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 		let assigns = await this.roleAssignmentByUserIdCache.fetch(userId, () => this.roleAssignmentsRepository.findBy({ userId }));
 		// 期限切れのロールを除外
 		assigns = assigns.filter(a => a.expiresAt == null || (a.expiresAt.getTime() > now));
+		const assignedRoleIds = assigns.map(x => x.roleId);
 		const roles = await this.rolesCache.fetch(() => this.rolesRepository.findBy({}));
-		const assignedRoles = roles.filter(r => assigns.map(x => x.roleId).includes(r.id));
-		const assignedBadgeRoles = assignedRoles.filter(r => r.asBadge);
+		const assignedBadgeRoles = roles.filter(r => r.asBadge && assignedRoleIds.includes(r.id));
 		const badgeCondRoles = roles.filter(r => r.asBadge && (r.target === 'conditional'));
 		if (badgeCondRoles.length > 0) {
 			const user = roles.some(r => r.target === 'conditional') ? await this.cacheService.findUserById(userId) : null;
-			const matchedBadgeCondRoles = badgeCondRoles.filter(r => this.evalCond(user!, assignedRoles, r.condFormula));
+			const matchedBadgeCondRoles = badgeCondRoles.filter(r => this.evalCond(user!, r.condFormula));
 			return [...assignedBadgeRoles, ...matchedBadgeCondRoles];
 		} else {
 			return assignedBadgeRoles;
@@ -373,7 +326,6 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 			ltlAvailable: calc('ltlAvailable', vs => vs.some(v => v === true)),
 			canPublicNote: calc('canPublicNote', vs => vs.some(v => v === true)),
 			canEditNote: calc('canEditNote', vs => vs.some(v => v === true)),
-			mentionLimit: calc('mentionLimit', vs => Math.max(...vs)),
 			canInvite: calc('canInvite', vs => vs.some(v => v === true)),
 			inviteLimit: calc('inviteLimit', vs => Math.max(...vs)),
 			inviteLimitCycle: calc('inviteLimitCycle', vs => Math.max(...vs)),
@@ -381,12 +333,10 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 			canManageCustomEmojis: calc('canManageCustomEmojis', vs => vs.some(v => v === true)),
 			canManageAvatarDecorations: calc('canManageAvatarDecorations', vs => vs.some(v => v === true)),
 			canSearchNotes: calc('canSearchNotes', vs => vs.some(v => v === true)),
-			canAdvancedSearchNotes: calc('canAdvancedSearchNotes', vs => vs.some(v => v === true)),
 			canUseTranslator: calc('canUseTranslator', vs => vs.some(v => v === true)),
 			canHideAds: calc('canHideAds', vs => vs.some(v => v === true)),
 			driveCapacityMb: calc('driveCapacityMb', vs => Math.max(...vs)),
 			alwaysMarkNsfw: calc('alwaysMarkNsfw', vs => vs.some(v => v === true)),
-			canUpdateBioMedia: calc('canUpdateBioMedia', vs => vs.some(v => v === true)),
 			pinLimit: calc('pinLimit', vs => Math.max(...vs)),
 			antennaLimit: calc('antennaLimit', vs => Math.max(...vs)),
 			wordMuteLimit: calc('wordMuteLimit', vs => Math.max(...vs)),
@@ -397,7 +347,6 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 			userEachUserListsLimit: calc('userEachUserListsLimit', vs => Math.max(...vs)),
 			rateLimitFactor: calc('rateLimitFactor', vs => Math.max(...vs)),
 			avatarDecorationLimit: calc('avatarDecorationLimit', vs => Math.max(...vs)),
-			fileSizeLimit: calc('fileSizeLimit', vs => Math.max(...vs)),
 		};
 	}
 
@@ -422,32 +371,14 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 	}
 
 	@bindThis
-	public async getModeratorIds(includeAdmins = true, excludeExpire = false): Promise<MiUser['id'][]> {
+	public async getModeratorIds(includeAdmins = true): Promise<MiUser['id'][]> {
 		const roles = await this.rolesCache.fetch(() => this.rolesRepository.findBy({}));
-		const moderatorRoles = includeAdmins
-			? roles.filter(r => r.isModerator || r.isAdministrator)
-			: roles.filter(r => r.isModerator);
-
+		const moderatorRoles = includeAdmins ? roles.filter(r => r.isModerator || r.isAdministrator) : roles.filter(r => r.isModerator);
+		const assigns = moderatorRoles.length > 0 ? await this.roleAssignmentsRepository.findBy({
+			roleId: In(moderatorRoles.map(r => r.id)),
+		}) : [];
 		// TODO: isRootなアカウントも含める
-		const assigns = moderatorRoles.length > 0
-			? await this.roleAssignmentsRepository.findBy({ roleId: In(moderatorRoles.map(r => r.id)) })
-			: [];
-
-		const now = Date.now();
-		const result = [
-			// Setを経由して重複を除去（ユーザIDは重複する可能性があるので）
-			...new Set(
-				assigns
-					.filter(it =>
-						(excludeExpire)
-							? (it.expiresAt == null || it.expiresAt.getTime() > now)
-							: true,
-					)
-					.map(a => a.userId),
-			),
-		];
-
-		return result.sort((x, y) => x.localeCompare(y));
+		return assigns.map(a => a.userId);
 	}
 
 	@bindThis
@@ -501,12 +432,12 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 			}
 		}
 
-		const created = await this.roleAssignmentsRepository.insertOne({
+		const created = await this.roleAssignmentsRepository.insert({
 			id: this.idService.gen(now),
 			expiresAt: expiresAt,
 			roleId: roleId,
 			userId: userId,
-		});
+		}).then(x => this.roleAssignmentsRepository.findOneByOrFail(x.identifiers[0]));
 
 		this.rolesRepository.update(roleId, {
 			lastUsedAt: new Date(),
@@ -514,15 +445,14 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 
 		this.globalEventService.publishInternalEvent('userRoleAssigned', created);
 
-		const user = await this.usersRepository.findOneByOrFail({ id: userId });
-
-		if (role.isPublic && user.host === null) {
+		if (role.isPublic) {
 			this.notificationService.createNotification(userId, 'roleAssigned', {
 				roleId: roleId,
 			});
 		}
 
 		if (moderator) {
+			const user = await this.usersRepository.findOneByOrFail({ id: userId });
 			this.moderationLogService.log(moderator, 'assignRole', {
 				roleId: roleId,
 				roleName: role.name,
@@ -589,7 +519,7 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 	@bindThis
 	public async create(values: Partial<MiRole>, moderator?: MiUser): Promise<MiRole> {
 		const date = new Date();
-		const created = await this.rolesRepository.insertOne({
+		const created = await this.rolesRepository.insert({
 			id: this.idService.gen(date.getTime()),
 			updatedAt: date,
 			lastUsedAt: date,
@@ -607,7 +537,7 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 			canEditMembersByModerator: values.canEditMembersByModerator,
 			displayOrder: values.displayOrder,
 			policies: values.policies,
-		});
+		}).then(x => this.rolesRepository.findOneByOrFail(x.identifiers[0]));
 
 		this.globalEventService.publishInternalEvent('roleCreated', created);
 

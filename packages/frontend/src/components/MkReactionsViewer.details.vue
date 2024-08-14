@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -81,7 +81,6 @@ function getReactionName(reaction: string): string {
 }
 
 .user {
-	display: flex;
 	line-height: 24px;
 	padding-top: 4px;
 	white-space: nowrap;

@@ -1,22 +1,19 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
 <div>
-	<span v-if="!available">Loading<MkEllipsis/></span>
-	<div v-if="props.provider == 'mcaptcha'">
-		<div id="mcaptcha__widget-container" class="m-captcha-style"></div>
-		<div ref="captchaEl"></div>
-	</div>
-	<div v-else ref="captchaEl"></div>
+	<span v-if="!available">{{ i18n.ts.waiting }}<MkEllipsis/></span>
+	<div ref="captchaEl"></div>
 </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, shallowRef, computed, onMounted, onBeforeUnmount, watch, onUnmounted } from 'vue';
+import { ref, shallowRef, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { defaultStore } from '@/store.js';
+import { i18n } from '@/i18n.js';
 
 // APIs provided by Captcha services
 export type Captcha = {
@@ -29,7 +26,7 @@ export type Captcha = {
 	getResponse(id: string): string;
 };
 
-export type CaptchaProvider = 'hcaptcha' | 'recaptcha' | 'turnstile' | 'mcaptcha';
+export type CaptchaProvider = 'hcaptcha' | 'recaptcha' | 'turnstile';
 
 type CaptchaContainer = {
 	readonly [_ in CaptchaProvider]?: Captcha;
@@ -42,7 +39,6 @@ declare global {
 const props = defineProps<{
 	provider: CaptchaProvider;
 	sitekey: string | null; // null will show error on request
-	instanceUrl?: string | null;
 	modelValue?: string | null;
 }>();
 
@@ -59,7 +55,6 @@ const variable = computed(() => {
 		case 'hcaptcha': return 'hcaptcha';
 		case 'recaptcha': return 'grecaptcha';
 		case 'turnstile': return 'turnstile';
-		case 'mcaptcha': return 'mcaptcha';
 	}
 });
 
@@ -70,7 +65,6 @@ const src = computed(() => {
 		case 'hcaptcha': return 'https://js.hcaptcha.com/1/api.js?render=explicit&recaptchacompat=off';
 		case 'recaptcha': return 'https://www.recaptcha.net/recaptcha/api.js?render=explicit';
 		case 'turnstile': return 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
-		case 'mcaptcha': return null;
 	}
 });
 
@@ -78,9 +72,9 @@ const scriptId = computed(() => `script-${props.provider}`);
 
 const captcha = computed<Captcha>(() => window[variable.value] || {} as unknown as Captcha);
 
-if (loaded || props.provider === 'mcaptcha') {
+if (loaded) {
 	available.value = true;
-} else if (src.value !== null) {
+} else {
 	(document.getElementById(scriptId.value) ?? document.head.appendChild(Object.assign(document.createElement('script'), {
 		async: true,
 		id: scriptId.value,
@@ -93,7 +87,7 @@ function reset() {
 	if (captcha.value.reset) captcha.value.reset();
 }
 
-async function requestRender() {
+function requestRender() {
 	if (captcha.value.render && captchaEl.value instanceof Element) {
 		captcha.value.render(captchaEl.value, {
 			sitekey: props.sitekey,
@@ -101,14 +95,6 @@ async function requestRender() {
 			callback: callback,
 			'expired-callback': callback,
 			'error-callback': callback,
-		});
-	} else if (props.provider === 'mcaptcha' && props.instanceUrl && props.sitekey) {
-		const { default: Widget } = await import('@mcaptcha/vanilla-glue');
-		new Widget({
-			siteKey: {
-				instanceUrl: new URL(props.instanceUrl),
-				key: props.sitekey,
-			},
 		});
 	} else {
 		window.setTimeout(requestRender, 1);
@@ -119,25 +105,12 @@ function callback(response?: string) {
 	emit('update:modelValue', typeof response === 'string' ? response : null);
 }
 
-function onReceivedMessage(message: MessageEvent) {
-	if (message.data.token) {
-		if (props.instanceUrl && new URL(message.origin).host === new URL(props.instanceUrl).host) {
-			callback(message.data.token);
-		}
-	}
-}
-
 onMounted(() => {
 	if (available.value) {
-		window.addEventListener('message', onReceivedMessage);
 		requestRender();
 	} else {
 		watch(available, requestRender);
 	}
-});
-
-onUnmounted(() => {
-	window.removeEventListener('message', onReceivedMessage);
 });
 
 onBeforeUnmount(() => {
