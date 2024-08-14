@@ -1,9 +1,9 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { comparePassword } from '@/misc/password.js';
+import bcrypt from 'bcryptjs';
 import * as OTPAuth from 'otpauth';
 import * as QRCode from 'qrcode';
 import { Inject, Injectable } from '@nestjs/common';
@@ -77,7 +77,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				}
 			}
 
-			const passwordMatched = await comparePassword(ps.password, profile.password ?? '');
+			const passwordMatched = await bcrypt.compare(ps.password, profile.password ?? '');
 			if (!passwordMatched) {
 				throw new ApiError(meta.errors.incorrectPassword);
 			}

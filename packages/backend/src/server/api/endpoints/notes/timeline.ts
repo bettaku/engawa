@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -50,7 +50,6 @@ export const paramDef = {
 		withFiles: { type: 'boolean', default: false },
 		withRenotes: { type: 'boolean', default: true },
 		withCats: { type: 'boolean', default: false },
-		withoutBots: { type: 'boolean', default: false },
 	},
 	required: [],
 } as const;
@@ -90,7 +89,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					withFiles: ps.withFiles,
 					withRenotes: ps.withRenotes,
 					withCats: ps.withCats,
-					withoutBots: ps.withoutBots,
 				}, me);
 
 				process.nextTick(() => {
@@ -117,10 +115,9 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				alwaysIncludeMyNotes: true,
 				excludePureRenotes: !ps.withRenotes,
 				withCats: ps.withCats,
-				withoutBots: ps.withoutBots,
 				noteFilter: note => {
 					if (note.reply && note.reply.visibility === 'followers') {
-						if (!Object.hasOwn(followings, note.reply.userId) && note.reply.userId !== me.id) return false;
+						if (!Object.hasOwn(followings, note.reply.userId)) return false;
 					}
 
 					return true;
@@ -135,7 +132,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					withFiles: ps.withFiles,
 					withRenotes: ps.withRenotes,
 					withCats: ps.withCats,
-					withoutBots: ps.withoutBots,
 				}, me),
 			});
 
@@ -147,18 +143,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		});
 	}
 
-	private async getFromDb(ps: {
-		untilId: string | null;
-		sinceId: string | null;
-		limit: number;
-		includeMyRenotes: boolean;
-		includeRenotedMyNotes: boolean;
-		includeLocalRenotes: boolean;
-		withFiles: boolean;
-		withRenotes: boolean;
-		withCats: boolean;
-		withoutBots: boolean;
-	}, me: MiLocalUser) {
+	private async getFromDb(ps: { untilId: string | null; sinceId: string | null; limit: number; includeMyRenotes: boolean; includeRenotedMyNotes: boolean; includeLocalRenotes: boolean; withFiles: boolean; withRenotes: boolean; withCats: boolean; }, me: MiLocalUser) {
 		const followees = await this.userFollowingService.getFollowees(me.id);
 		const followingChannels = await this.channelFollowingsRepository.find({
 			where: {
@@ -172,8 +157,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			.leftJoinAndSelect('note.reply', 'reply')
 			.leftJoinAndSelect('note.renote', 'renote')
 			.leftJoinAndSelect('reply.user', 'replyUser')
-			.leftJoinAndSelect('renote.user', 'renoteUser')
-			.andWhere('user.isSensitive = FALSE');
+			.leftJoinAndSelect('renote.user', 'renoteUser');
 
 		if (followees.length > 0 && followingChannels.length > 0) {
 			// ユーザー・チャンネルともにフォローあり
@@ -264,10 +248,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 		if (ps.withCats) {
 			query.andWhere('(select "isCat" from "user" where id = note."userId")');
-		}
-
-		if (ps.withoutBots) {
-			query.andWhere('(SELECT "isBot" FROM "user" WHERE id = note."userId") = FALSE');
 		}
 		//#endregion
 

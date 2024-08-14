@@ -1,9 +1,9 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { hashPassword } from '@/misc/password.js';
+import bcrypt from 'bcryptjs';
 import { Inject, Injectable } from '@nestjs/common';
 import type { UserProfilesRepository, PasswordResetRequestsRepository } from '@/models/_.js';
 import { Endpoint } from '@/server/api/endpoint-base.js';
@@ -53,7 +53,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			}
 
 			// Generate hash of password
-			const hash = await hashPassword(ps.password);
+			const salt = await bcrypt.genSalt(8);
+			const hash = await bcrypt.hash(ps.password, salt);
 
 			await this.userProfilesRepository.update(req.userId, {
 				password: hash,

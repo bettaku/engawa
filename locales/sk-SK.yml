@@ -349,8 +349,6 @@ hcaptcha: "hCaptcha"
 enableHcaptcha: "Zapnúť hCaptchu"
 hcaptchaSiteKey: "Site key"
 hcaptchaSecretKey: "Secret key"
-mcaptchaSiteKey: "Site key"
-mcaptchaSecretKey: "Secret key"
 recaptcha: "reCAPTCHA"
 enableRecaptcha: "Zapnúť ReCAPTCHA"
 recaptchaSiteKey: "Site key"
@@ -933,13 +931,7 @@ youFollowing: "Sledované"
 icon: "Avatar"
 replies: "Odpovedať"
 renotes: "Preposlať"
-sourceCode: "Zdrojový kód"
 flip: "Preklopiť"
-lastNDays: "Posledných {n} dní"
-_delivery:
-  stop: "Zmrazené"
-  _type:
-    none: "Zverejňovanie"
 _role:
   priority: "Priorita"
   _priority:
@@ -1206,6 +1198,8 @@ _sfx:
   notification: "Oznámenia"
   chat: "Chat"
   chatBg: "Chat (pozadie)"
+  antenna: "Antény"
+  channel: "Upozornenia kanála"
 _ago:
   future: "Budúcnosť"
   justNow: "Teraz"
@@ -1373,7 +1367,6 @@ _profile:
   changeBanner: "Zmeniť banner"
 _exportOrImport:
   allNotes: "Všetky poznámky"
-  clips: "Klip"
   followingList: "Sledujete"
   muteList: "Vypnúť zvuk"
   blockingList: "Zablokovať"
@@ -1531,12 +1524,6 @@ _deck:
 _webhookSettings:
   name: "Názov"
   active: "Zapnuté"
-_abuseReport:
-  _notificationRecipient:
-    _recipientType:
-      mail: "Email"
 _moderationLogTypes:
   suspend: "Zmraziť"
   resetPassword: "Resetovať heslo"
-_reversi:
-  total: "Celkom"

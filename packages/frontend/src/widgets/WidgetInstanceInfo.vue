@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -81,19 +81,16 @@ defineExpose<WidgetComponentExpose>({
 .body {
 	text-overflow: ellipsis;
 	overflow: clip;
-	margin-left: -10px;
-	padding: 10px;
 }
 
 .name {
 	color: #fff;
-	filter: drop-shadow(0 0 4px #000) drop-shadow(0 0 0.1px rgba(0, 0, 0, 0.5));
+	filter: drop-shadow(0 0 4px #000);
 	font-weight: bold;
 }
 
 .host {
 	color: #fff;
-	filter: drop-shadow(0 0 4px #000) drop-shadow(0 0 0.1px rgba(0, 0, 0, 0.5));
-
+	filter: drop-shadow(0 0 4px #000);
 }
 </style>

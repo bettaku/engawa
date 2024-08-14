@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -15,19 +15,18 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</MkA>
 			<div v-if="note.user.isBot" :class="$style.isBot">bot</div>
 			<div v-if="note.user.badgeRoles" :class="$style.badgeRoles">
-				<img v-for="(role, i) in note.user.badgeRoles" :key="i" v-tooltip="role.name" :class="$style.badgeRole" :src="role.iconUrl!"/>
+				<img v-for="role in note.user.badgeRoles" :key="role.id" v-tooltip="role.name" :class="$style.badgeRole" :src="role.iconUrl"/>
 			</div>
 		</div>
 		<div :class="$style.username"><MkAcct :user="note.user"/></div>
 	</div>
 	<div :class="$style.section">
 		<div :class="$style.info">
-			<span v-if="note.updatedAt" style="margin-right: 0.5em;"><i v-tooltip="i18n.tsx.noteUpdatedAt({ date: (new Date(note.updatedAt)).toLocaleDateString(), time: (new Date(note.updatedAt)).toLocaleTimeString() })" class="ti ti-pencil"></i></span>
+			<span v-if="note.updatedAt" style="margin-right: 0.5em;"><i v-tooltip="i18n.t('noteUpdatedAt', { date: (new Date(note.updatedAt)).toLocaleDateString(), time: (new Date(note.updatedAt)).toLocaleTimeString() })" class="ti ti-pencil"></i></span>
 			<span v-if="note.visibility !== 'public'" style="margin-right: 0.5em;">
 				<i v-if="note.visibility === 'home'" v-tooltip="i18n.ts._visibility[note.visibility]" class="ti ti-home"></i>
 				<i v-else-if="note.visibility === 'followers'" v-tooltip="i18n.ts._visibility[note.visibility]" class="ti ti-lock"></i>
 				<i v-else-if="note.visibility === 'specified'" ref="specified" v-tooltip="i18n.ts._visibility[note.visibility]" class="ti ti-mail"></i>
-				<i v-else-if="note.visibility === 'private'" v-tooltip="i18n.ts._visibility[note.visibility]" class="ti ti-notebook"></i>
 			</span>
 			<span v-if="note.reactionAcceptance != null" style="margin-right: 0.5em;" :class="{ [$style.danger]: ['nonSensitiveOnly', 'nonSensitiveOnlyForLocalLikeOnlyForRemote', 'likeOnly'].includes(<string>note.reactionAcceptance) }" :title="i18n.ts.reactionAcceptance">
 				<i v-if="note.reactionAcceptance === 'likeOnlyForRemote'" v-tooltip="i18n.ts.likeOnlyForRemote" class="ti ti-heart-plus"></i>
@@ -37,7 +36,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</span>
 			<span v-if="note.localOnly" style="margin-right: 0.5em;"><i v-tooltip="i18n.ts._visibility['disableFederation']" class="ti ti-rocket-off"></i></span>
 			<span v-if="note.channel" style="margin-right: 0.5em;"><i v-tooltip="note.channel.name" class="ti ti-device-tv"></i></span>
-			<span v-if="note.deletedAt" style="margin-right: 0.5em;"><i class="ti ti-bomb"></i></span>
 			<div v-if="mock">
 				<MkTime :time="note.createdAt" colored/>
 			</div>
@@ -57,9 +55,8 @@ import { i18n } from '@/i18n.js';
 import { notePage } from '@/filters/note.js';
 import { userPage } from '@/filters/user.js';
 import { defaultStore } from '@/store.js';
-import { useRouter } from '@/router/supplier.js';
+import { useRouter } from '@/router.js';
 import MkInstanceTicker from '@/components/MkInstanceTicker.vue';
-import { dateTimeFormat } from '@/scripts/intl-const';
 
 const props = defineProps<{
 	note: Misskey.entities.Note;

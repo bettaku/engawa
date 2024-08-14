@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -10,6 +10,6 @@ import { I18n } from '@/scripts/i18n.js';
 
 export const i18n = markRaw(new I18n<Locale>(locale));
 
-export function updateI18n(newLocale: Locale) {
-	i18n.locale = newLocale;
+export function updateI18n(newLocale) {
+	i18n.ts = newLocale;
 }

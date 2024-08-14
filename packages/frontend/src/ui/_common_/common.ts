@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -89,46 +89,34 @@ export function openInstanceMenu(ev: MouseEvent) {
 		text: i18n.ts.tools,
 		icon: 'ti ti-tool',
 		children: toolsMenuItems(),
-	}, { type: 'divider' }, {
-		type: 'link',
-		text: i18n.ts.inquiry,
-		icon: 'ti ti-help-circle',
-		to: '/contact',
-	}, (instance.impressumUrl) ? {
-		type: 'a',
+	}, { type: 'divider' }, (instance.impressumUrl) ? {
 		text: i18n.ts.impressum,
 		icon: 'ti ti-file-invoice',
-		href: instance.impressumUrl,
-		target: '_blank',
+		action: () => {
+			window.open(instance.impressumUrl, '_blank', 'noopener');
+		},
 	} : undefined, (instance.tosUrl) ? {
-		type: 'a',
 		text: i18n.ts.termsOfService,
 		icon: 'ti ti-notebook',
-		href: instance.tosUrl,
-		target: '_blank',
+		action: () => {
+			window.open(instance.tosUrl, '_blank', 'noopener');
+		},
 	} : undefined, (instance.privacyPolicyUrl) ? {
-		type: 'a',
 		text: i18n.ts.privacyPolicy,
 		icon: 'ti ti-shield-lock',
 		action: () => {
 			window.open(instance.privacyPolicyUrl, '_blank', 'noopener');
 		},
-	} : undefined, (instance.statusUrl) ? {
-		text: i18n.ts.statusUrl,
-		icon: 'ti ti-activity',
-		action: () => {
-			window.open(instance.statusUrl, '_blank', 'noopener');
-		},
-	} : undefined, (!instance.impressumUrl && !instance.tosUrl && !instance.privacyPolicyUrl && !instance.statusUrl) ? undefined : { type: 'divider' }, {
+	} : undefined, (!instance.impressumUrl && !instance.tosUrl && !instance.privacyPolicyUrl) ? undefined : { type: 'divider' }, {
 		type: 'parent',
-		text: i18n.ts.document,
-		icon: 'ti ti-bulb',
+		text: i18n.ts.help,
+		icon: 'ti ti-help-circle',
 		children: [{
-			type: 'a',
-			text: i18n.ts.document,
-			icon: 'ti ti-bulb',
-			href: 'https://misskey-hub.net/docs/for-users/',
-			target: '_blank',
+			text: i18n.ts.help,
+			icon: 'ti ti-help-circle',
+			action: () => {
+				window.open('https://misskey-hub.net/docs/for-users/', '_blank', 'noopener');
+			},
 		}, {
 			type: 'link',
 			text: i18n.ts._mfm.cheatSheet,
@@ -139,9 +127,7 @@ export function openInstanceMenu(ev: MouseEvent) {
 		text: i18n.ts._initialTutorial.launchTutorial,
 		icon: 'ti ti-presentation',
 		action: () => {
-			const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkTutorialDialog.vue')), {}, {
-				closed: () => dispose(),
-			});
+			os.popup(defineAsyncComponent(() => import('@/components/MkTutorialDialog.vue')), {}, {}, 'closed');
 		},
 	} : undefined, {
 		type: 'link',

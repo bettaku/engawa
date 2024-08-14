@@ -1,22 +1,20 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<MkWindow
-	ref="windowEl"
-	:initialWidth="400"
-	:initialHeight="500"
-	:canResize="false"
-	@close="windowEl.close()"
+<MkModalWindow
+	ref="dialog"
+	:width="400"
+	@close="dialog.close()"
 	@closed="$emit('closed')"
 >
 	<template v-if="emoji" #header>:{{ emoji.name }}:</template>
 	<template v-else #header>New emoji</template>
 
-	<div style="display: flex; flex-direction: column; min-height: 100%;">
-		<MkSpacer :marginMin="20" :marginMax="28" style="flex-grow: 1;">
+	<div>
+		<MkSpacer :marginMin="20" :marginMax="28">
 			<div class="_gaps_m">
 				<div v-if="imgUrl != null" :class="$style.imgs">
 					<div style="background: #000;" :class="$style.imgContainer">
@@ -41,12 +39,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</MkInput>
 				<MkInput v-model="aliases" autocapitalize="off">
 					<template #label>{{ i18n.ts.tags }}</template>
-					<template #caption>
-						{{ i18n.ts.theKeywordWhenSearchingForCustomEmoji }}<br/>
-						{{ i18n.ts.setMultipleBySeparatingWithSpace }}
-					</template>
+					<template #caption>{{ i18n.ts.setMultipleBySeparatingWithSpace }}</template>
 				</MkInput>
-				<MkTextarea v-model="license" :mfmAutocomplete="true">
+				<MkTextarea v-model="license">
 					<template #label>{{ i18n.ts.license }}</template>
 				</MkTextarea>
 				<MkFolder>
@@ -75,20 +70,19 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<MkButton primary rounded style="margin: 0 auto;" @click="done"><i class="ti ti-check"></i> {{ props.emoji ? i18n.ts.update : i18n.ts.create }}</MkButton>
 		</div>
 	</div>
-</MkWindow>
+</MkModalWindow>
 </template>
 
 <script lang="ts" setup>
 import { computed, watch, ref } from 'vue';
 import * as Misskey from 'cherrypick-js';
-import MkWindow from '@/components/MkWindow.vue';
+import MkModalWindow from '@/components/MkModalWindow.vue';
 import MkButton from '@/components/MkButton.vue';
 import MkInput from '@/components/MkInput.vue';
 import MkTextarea from '@/components/MkTextarea.vue';
 import MkInfo from '@/components/MkInfo.vue';
 import MkFolder from '@/components/MkFolder.vue';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
 import { i18n } from '@/i18n.js';
 import { customEmojiCategories } from '@/custom-emojis.js';
 import MkSwitch from '@/components/MkSwitch.vue';
@@ -99,7 +93,7 @@ const props = defineProps<{
 	emoji?: any,
 }>();
 
-const windowEl = ref<InstanceType<typeof MkWindow> | null>(null);
+const dialog = ref<InstanceType<typeof MkModalWindow> | null>(null);
 const name = ref<string>(props.emoji ? props.emoji.name : '');
 const category = ref<string>(props.emoji ? props.emoji.category : '');
 const aliases = ref<string>(props.emoji ? props.emoji.aliases.join(' ') : '');
@@ -111,7 +105,7 @@ const rolesThatCanBeUsedThisEmojiAsReaction = ref<Misskey.entities.Role[]>([]);
 const file = ref<Misskey.entities.DriveFile>();
 
 watch(roleIdsThatCanBeUsedThisEmojiAsReaction, async () => {
-	rolesThatCanBeUsedThisEmojiAsReaction.value = (await Promise.all(roleIdsThatCanBeUsedThisEmojiAsReaction.value.map((id) => misskeyApi('admin/roles/show', { roleId: id }).catch(() => null)))).filter(x => x != null);
+	rolesThatCanBeUsedThisEmojiAsReaction.value = (await Promise.all(roleIdsThatCanBeUsedThisEmojiAsReaction.value.map((id) => os.api('admin/roles/show', { roleId: id }).catch(() => null)))).filter(x => x != null);
 }, { immediate: true });
 
 const imgUrl = computed(() => file.value ? file.value.url : props.emoji ? `/emoji/${props.emoji.name}.webp` : null);
@@ -130,13 +124,13 @@ async function changeImage(ev) {
 }
 
 async function addRole() {
-	const roles = await misskeyApi('admin/roles/list');
+	const roles = await os.api('admin/roles/list');
 	const currentRoleIds = rolesThatCanBeUsedThisEmojiAsReaction.value.map(x => x.id);
 
 	const { canceled, result: role } = await os.select({
 		items: roles.filter(r => r.isPublic).filter(r => !currentRoleIds.includes(r.id)).map(r => ({ text: r.name, value: r })),
 	});
-	if (canceled || role == null) return;
+	if (canceled) return;
 
 	rolesThatCanBeUsedThisEmojiAsReaction.value.push(role);
 }
@@ -173,7 +167,7 @@ async function done() {
 			},
 		});
 
-		windowEl.value.close();
+		dialog.value.close();
 	} else {
 		const created = await os.apiWithDialog('admin/emoji/add', params);
 
@@ -181,24 +175,24 @@ async function done() {
 			created: created,
 		});
 
-		windowEl.value.close();
+		dialog.value.close();
 	}
 }
 
 async function del() {
 	const { canceled } = await os.confirm({
 		type: 'warning',
-		text: i18n.tsx.removeAreYouSure({ x: name.value }),
+		text: i18n.t('removeAreYouSure', { x: name.value }),
 	});
 	if (canceled) return;
 
-	misskeyApi('admin/emoji/delete', {
+	os.api('admin/emoji/delete', {
 		id: props.emoji.id,
 	}).then(() => {
 		emit('done', {
 			deleted: true,
 		});
-		windowEl.value.close();
+		dialog.value.close();
 	});
 }
 </script>
@@ -240,12 +234,10 @@ async function del() {
 
 .footer {
 	position: sticky;
-	z-index: 10000;
 	bottom: 0;
 	left: 0;
 	padding: 12px;
 	border-top: solid 0.5px var(--divider);
-	background: var(--acrylicBg);
 	-webkit-backdrop-filter: var(--blur, blur(15px));
 	backdrop-filter: var(--blur, blur(15px));
 }

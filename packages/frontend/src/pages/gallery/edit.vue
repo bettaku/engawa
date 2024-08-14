@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -47,10 +47,9 @@ import MkSwitch from '@/components/MkSwitch.vue';
 import FormSuspense from '@/components/form/suspense.vue';
 import { selectFiles } from '@/scripts/select-file.js';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
+import { useRouter } from '@/router.js';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
 import { i18n } from '@/i18n.js';
-import { useRouter } from '@/router/supplier.js';
 
 const router = useRouter();
 
@@ -108,7 +107,7 @@ async function del() {
 }
 
 watch(() => props.postId, () => {
-	init.value = () => props.postId ? misskeyApi('gallery/posts/show', {
+	init.value = () => props.postId ? os.api('gallery/posts/show', {
 		postId: props.postId,
 	}).then(post => {
 		files.value = post.files ?? [];
@@ -122,8 +121,11 @@ const headerActions = computed(() => []);
 
 const headerTabs = computed(() => []);
 
-definePageMetadata(() => ({
-	title: props.postId ? i18n.ts.edit : i18n.ts.postToGallery,
+definePageMetadata(computed(() => props.postId ? {
+	title: i18n.ts.edit,
+	icon: 'ti ti-pencil',
+} : {
+	title: i18n.ts.postToGallery,
 	icon: 'ti ti-pencil',
 }));
 </script>

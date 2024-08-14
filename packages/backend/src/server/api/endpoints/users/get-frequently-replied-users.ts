@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -118,14 +118,12 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			const repliedUsersSorted = Object.keys(repliedUsers).sort((a, b) => repliedUsers[b] - repliedUsers[a]);
 
 			// Extract top replied users
-			const topRepliedUserIds = repliedUsersSorted.slice(0, ps.limit);
+			const topRepliedUsers = repliedUsersSorted.slice(0, ps.limit);
 
 			// Make replies object (includes weights)
-			const _userMap = await this.userEntityService.packMany(topRepliedUserIds, me, { schema: 'UserDetailed' })
-				.then(users => new Map(users.map(u => [u.id, u])));
-			const repliesObj = await Promise.all(topRepliedUserIds.map(async (userId) => ({
-				user: _userMap.get(userId) ?? await this.userEntityService.pack(userId, me, { schema: 'UserDetailed' }),
-				weight: repliedUsers[userId] / peak,
+			const repliesObj = await Promise.all(topRepliedUsers.map(async (user) => ({
+				user: await this.userEntityService.pack(user, me, { detail: true }),
+				weight: repliedUsers[user] / peak,
 			})));
 
 			return repliesObj;

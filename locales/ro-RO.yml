@@ -359,8 +359,6 @@ hcaptcha: "hCaptcha"
 enableHcaptcha: "Activează hCaptcha"
 hcaptchaSiteKey: "Site key"
 hcaptchaSecretKey: "Secret key"
-mcaptchaSiteKey: "Site key"
-mcaptchaSecretKey: "Secret key"
 recaptcha: "reCAPTCHA"
 enableRecaptcha: "Activează reCAPTCHA"
 recaptchaSiteKey: "Site key"
@@ -651,10 +649,6 @@ show: "Arată"
 icon: "Avatar"
 replies: "Răspunde"
 renotes: "Re-notează"
-_delivery:
-  stop: "Suspendat"
-  _type:
-    none: "Publicare"
 _role:
   _priority:
     middle: "Mediu"
@@ -729,12 +723,6 @@ _deck:
     mentions: "Mențiuni"
 _webhookSettings:
   name: "Nume"
-_abuseReport:
-  _notificationRecipient:
-    _recipientType:
-      mail: "Email"
 _moderationLogTypes:
   suspend: "Suspendă"
   resetPassword: "Resetează parola"
-_reversi:
-  total: "Total"

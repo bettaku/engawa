@@ -1,16 +1,16 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 import { Injectable } from '@nestjs/common';
+import { checkWordMute } from '@/misc/check-word-mute.js';
+import { isUserRelated } from '@/misc/is-user-related.js';
 import type { Packed } from '@/misc/json-schema.js';
 import { MetaService } from '@/core/MetaService.js';
 import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
 import { bindThis } from '@/decorators.js';
 import { RoleService } from '@/core/RoleService.js';
-import { isQuotePacked, isRenotePacked } from '@/misc/is-renote.js';
-import type { JsonObject } from '@/misc/json-value.js';
 import Channel, { type MiChannelService } from '../channel.js';
 
 class LocalTimelineChannel extends Channel {
@@ -20,7 +20,6 @@ class LocalTimelineChannel extends Channel {
 	private withRenotes: boolean;
 	private withReplies: boolean;
 	private withFiles: boolean;
-	private withoutBots: boolean;
 
 	constructor(
 		private metaService: MetaService,
@@ -35,14 +34,13 @@ class LocalTimelineChannel extends Channel {
 	}
 
 	@bindThis
-	public async init(params: JsonObject) {
+	public async init(params: any) {
 		const policies = await this.roleService.getUserPolicies(this.user ? this.user.id : null);
 		if (!policies.ltlAvailable) return;
 
-		this.withRenotes = !!(params.withRenotes ?? true);
-		this.withReplies = !!(params.withReplies ?? false);
-		this.withFiles = !!(params.withFiles ?? false);
-		this.withoutBots = !!(params.withoutBots ?? false);
+		this.withRenotes = params.withRenotes ?? true;
+		this.withReplies = params.withReplies ?? false;
+		this.withFiles = params.withFiles ?? false;
 
 		// Subscribe events
 		this.subscriber.on('notesStream', this.onNote);
@@ -51,7 +49,6 @@ class LocalTimelineChannel extends Channel {
 	@bindThis
 	private async onNote(note: Packed<'Note'>) {
 		if (this.withFiles && (note.fileIds == null || note.fileIds.length === 0)) return;
-		if (this.withoutBots && note.user.isBot) return;
 
 		if (note.user.host !== null) return;
 		if (note.visibility !== 'public') return;
@@ -64,11 +61,16 @@ class LocalTimelineChannel extends Channel {
 			if (reply.userId !== this.user.id && note.userId !== this.user.id && reply.userId !== note.userId) return;
 		}
 
-		if (isRenotePacked(note) && !isQuotePacked(note) && !this.withRenotes) return;
+		if (note.renote && note.text == null && (note.fileIds == null || note.fileIds.length === 0) && !this.withRenotes) return;
 
-		if (this.isNoteMutedOrBlocked(note)) return;
+		// 流れてきたNoteがミュートしているユーザーが関わるものだったら無視する
+		if (isUserRelated(note, this.userIdsWhoMeMuting)) return;
+		// 流れてきたNoteがブロックされているユーザーが関わるものだったら無視する
+		if (isUserRelated(note, this.userIdsWhoBlockingMe)) return;
 
-		if (this.user && isRenotePacked(note) && !isQuotePacked(note)) {
+		if (note.renote && !note.text && isUserRelated(note, this.userIdsWhoMeMutingRenotes)) return;
+
+		if (this.user && note.renoteId && !note.text) {
 			if (note.renote && Object.keys(note.renote.reactions).length > 0) {
 				const myRenoteReaction = await this.noteEntityService.populateMyReaction(note.renote, this.user.id);
 				note.renote.myReaction = myRenoteReaction;

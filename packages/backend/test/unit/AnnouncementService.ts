@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -10,14 +10,7 @@ import { ModuleMocker } from 'jest-mock';
 import { Test } from '@nestjs/testing';
 import { GlobalModule } from '@/GlobalModule.js';
 import { AnnouncementService } from '@/core/AnnouncementService.js';
-import { AnnouncementEntityService } from '@/core/entities/AnnouncementEntityService.js';
-import type {
-	AnnouncementReadsRepository,
-	AnnouncementsRepository,
-	MiAnnouncement,
-	MiUser,
-	UsersRepository,
-} from '@/models/_.js';
+import type { MiAnnouncement, AnnouncementsRepository, AnnouncementReadsRepository, UsersRepository, MiUser } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
 import { genAidx } from '@/misc/id/aidx.js';
 import { CacheService } from '@/core/CacheService.js';
@@ -52,7 +45,7 @@ describe('AnnouncementService', () => {
 
 	function createAnnouncement(data: Partial<MiAnnouncement & { createdAt: Date }> = {}) {
 		return announcementsRepository.insert({
-			id: genAidx(data.createdAt?.getTime() ?? Date.now()),
+			id: genAidx(data.createdAt ?? new Date()),
 			updatedAt: null,
 			title: 'Title',
 			text: 'Text',
@@ -68,7 +61,6 @@ describe('AnnouncementService', () => {
 			],
 			providers: [
 				AnnouncementService,
-				AnnouncementEntityService,
 				CacheService,
 				IdService,
 			],

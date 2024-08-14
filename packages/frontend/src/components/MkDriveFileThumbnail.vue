@@ -1,11 +1,11 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
 <div ref="thumbnail" :class="$style.root">
-	<ImgWithBlurhash v-if="isThumbnailAvailable" :hash="file.blurhash" :src="file.thumbnailUrl" :alt="file.comment" :title="file.name" :cover="fit !== 'contain'" :show-alt-indicator="showAltIndicator" />
+	<ImgWithBlurhash v-if="isThumbnailAvailable" :hash="file.blurhash" :src="file.thumbnailUrl" :alt="file.name" :title="file.name" :cover="fit !== 'contain'"/>
 	<i v-else-if="is === 'image'" class="ti ti-photo" :class="$style.icon"></i>
 	<i v-else-if="is === 'video'" class="ti ti-video" :class="$style.icon"></i>
 	<i v-else-if="is === 'audio' || is === 'midi'" class="ti ti-file-music" :class="$style.icon"></i>
@@ -24,13 +24,10 @@ import { computed } from 'vue';
 import * as Misskey from 'cherrypick-js';
 import ImgWithBlurhash from '@/components/MkImgWithBlurhash.vue';
 
-const props = withDefaults(defineProps<{
+const props = defineProps<{
 	file: Misskey.entities.DriveFile;
 	fit: string;
-	showAltIndicator: boolean;
-}>(), {
-	showAltIndicator: false,
-})
+}>();
 
 const is = computed(() => {
 	if (props.file.type.startsWith('image/')) return 'image';

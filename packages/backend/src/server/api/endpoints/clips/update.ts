@@ -1,9 +1,9 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import { ClipEntityService } from '@/core/entities/ClipEntityService.js';
 import { ClipService } from '@/core/ClipService.js';
@@ -41,7 +41,7 @@ export const paramDef = {
 		isPublic: { type: 'boolean' },
 		description: { type: 'string', nullable: true, minLength: 1, maxLength: 2048 },
 	},
-	required: ['clipId'],
+	required: ['clipId', 'name'],
 } as const;
 
 @Injectable()

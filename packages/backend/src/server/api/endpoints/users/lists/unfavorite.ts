@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -45,7 +45,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 		private userListFavoritesRepository: UserListFavoritesRepository,
 	) {
 		super(meta, paramDef, async (ps, me) => {
-			const userListExist = await this.userListsRepository.exists({
+			const userListExist = await this.userListsRepository.exist({
 				where: {
 					id: ps.listId,
 					isPublic: true,

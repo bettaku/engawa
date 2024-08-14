@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -30,7 +30,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 								<button v-if="$i && $i.id === post.user.id" v-tooltip="i18n.ts.edit" v-click-anime class="_button" @click="edit"><i class="ti ti-pencil ti-fw"></i></button>
 								<button v-tooltip="i18n.ts.shareWithNote" v-click-anime class="_button" @click="shareWithNote"><i class="ti ti-repeat ti-fw"></i></button>
 								<button v-tooltip="i18n.ts.copyLink" v-click-anime class="_button" @click="copyLink"><i class="ti ti-link ti-fw"></i></button>
-								<button v-tooltip="i18n.ts.getQrCode" v-click-anime class="_button" @click="shareQrCode"><i class="ti ti-qrcode ti-fw"></i></button>
 								<button v-if="isSupportShare()" v-tooltip="i18n.ts.share" v-click-anime class="_button" @click="share"><i class="ti ti-share ti-fw"></i></button>
 							</div>
 						</div>
@@ -67,19 +66,18 @@ import { computed, watch, ref } from 'vue';
 import * as Misskey from 'cherrypick-js';
 import MkButton from '@/components/MkButton.vue';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
 import MkContainer from '@/components/MkContainer.vue';
 import MkPagination from '@/components/MkPagination.vue';
 import MkGalleryPostPreview from '@/components/MkGalleryPostPreview.vue';
 import MkFollowButton from '@/components/MkFollowButton.vue';
 import { url } from '@/config.js';
+import { useRouter } from '@/router.js';
 import { i18n } from '@/i18n.js';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
 import { defaultStore } from '@/store.js';
 import { $i } from '@/account.js';
 import { isSupportShare } from '@/scripts/navigator.js';
-import { copyToClipboard } from '@/scripts/copy-to-clipboard.js';
-import { useRouter } from '@/router/supplier.js';
+import copyToClipboard from '@/scripts/copy-to-clipboard.js';
 
 const router = useRouter();
 
@@ -99,7 +97,7 @@ const otherPostsPagination = {
 
 function fetchPost() {
 	post.value = null;
-	misskeyApi('gallery/posts/show', {
+	os.api('gallery/posts/show', {
 		postId: props.postId,
 	}).then(_post => {
 		post.value = _post;
@@ -125,10 +123,6 @@ function shareWithNote() {
 	os.post({
 		initialText: `${post.value.title} ${url}/gallery/${post.value.id}`,
 	});
-}
-
-function shareQrCode() {
-	os.displayQrCode(`${url}/gallery/${post.value.id}`);
 }
 
 function like() {
@@ -168,12 +162,10 @@ const headerActions = computed(() => [{
 
 const headerTabs = computed(() => []);
 
-definePageMetadata(() => ({
-	title: post.value ? post.value.title : i18n.ts.gallery,
-	...post.value ? {
-		avatar: post.value.user,
-	} : {},
-}));
+definePageMetadata(computed(() => post.value ? {
+	title: post.value.title,
+	avatar: post.value.user,
+} : null));
 </script>
 
 <style lang="scss" scoped>
@@ -243,7 +235,7 @@ definePageMetadata(() => ({
 
 				> button {
 					padding: 8px;
-					margin: 0 6px;
+					margin: 0 8px;
 
 					&:hover {
 						color: var(--fgHighlighted);

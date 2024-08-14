@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -10,7 +10,6 @@ import { Interpreter, Parser, utils } from '@syuilo/aiscript';
 import type { Plugin } from '@/store.js';
 import { ColdDeviceStorage } from '@/store.js';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
 import { i18n } from '@/i18n.js';
 
 export type AiScriptPluginMeta = {
@@ -103,7 +102,7 @@ export async function installPlugin(code: string, meta?: AiScriptPluginMeta) {
 	}
 
 	const token = realMeta.permissions == null || realMeta.permissions.length === 0 ? null : await new Promise((res, rej) => {
-		const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkTokenGenerateWindow.vue')), {
+		os.popup(defineAsyncComponent(() => import('@/components/MkTokenGenerateWindow.vue')), {
 			title: i18n.ts.tokenRequested,
 			information: i18n.ts.pluginTokenRequestedDescription,
 			initialName: realMeta.name,
@@ -111,15 +110,14 @@ export async function installPlugin(code: string, meta?: AiScriptPluginMeta) {
 		}, {
 			done: async result => {
 				const { name, permissions } = result;
-				const { token } = await misskeyApi('miauth/gen-token', {
+				const { token } = await os.api('miauth/gen-token', {
 					session: null,
 					name: name,
 					permission: permissions,
 				});
 				res(token);
 			},
-			closed: () => dispose(),
-		});
+		}, 'closed');
 	});
 
 	savePlugin({

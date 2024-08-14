@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -9,7 +9,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 		v-for="announcement in $i.unreadAnnouncements.filter(x => x.display === 'banner')"
 		:key="announcement.id"
 		:class="$style.item"
-		:to="`/announcements/${announcement.id}`"
+		to="/announcements"
 	>
 		<span :class="$style.icon">
 			<i v-if="announcement.icon === 'info'" class="ti ti-info-circle"></i>

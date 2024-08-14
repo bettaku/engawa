@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -11,6 +11,9 @@ import { MiChannel } from './Channel.js';
 import type { MiDriveFile } from './DriveFile.js';
 
 @Entity('note')
+@Index('IDX_NOTE_TAGS', { synchronize: false })
+@Index('IDX_NOTE_MENTIONS', { synchronize: false })
+@Index('IDX_NOTE_VISIBLE_USER_IDS', { synchronize: false })
 export class MiNote {
 	@PrimaryColumn(id())
 	public id: string;
@@ -42,8 +45,7 @@ export class MiNote {
 	public replyId: MiNote['id'] | null;
 
 	@ManyToOne(type => MiNote, {
-		// onDelete: 'CASCADE',
-		onDelete: 'SET NULL',
+		onDelete: 'CASCADE',
 	})
 	@JoinColumn()
 	public reply: MiNote | null;
@@ -142,7 +144,6 @@ export class MiNote {
 	 * home ... ホームタイムライン(ユーザーページのタイムライン含む)のみに流す
 	 * followers ... フォロワーのみ
 	 * specified ... visibleUserIds で指定したユーザーのみ
-	 * private ... 投稿者のみ
 	 */
 	@Column('enum', { enum: noteVisibilities })
 	public visibility: typeof noteVisibilities[number];
@@ -160,7 +161,7 @@ export class MiNote {
 	})
 	public url: string | null;
 
-	@Index('IDX_NOTE_FILE_IDS', { synchronize: false })
+	@Index()
 	@Column({
 		...id(),
 		array: true, default: '{}',
@@ -172,14 +173,14 @@ export class MiNote {
 	})
 	public attachedFileTypes: string[];
 
-	@Index('IDX_NOTE_VISIBLE_USER_IDS', { synchronize: false })
+	@Index()
 	@Column({
 		...id(),
 		array: true, default: '{}',
 	})
 	public visibleUserIds: MiUser['id'][];
 
-	@Index('IDX_NOTE_MENTIONS', { synchronize: false })
+	@Index()
 	@Column({
 		...id(),
 		array: true, default: '{}',
@@ -201,7 +202,7 @@ export class MiNote {
 	})
 	public emojis: string[];
 
-	@Index('IDX_NOTE_TAGS', { synchronize: false })
+	@Index()
 	@Column('varchar', {
 		length: 128, array: true, default: '{}',
 	})
@@ -211,11 +212,6 @@ export class MiNote {
 		default: false,
 	})
 	public hasPoll: boolean;
-
-	@Column('timestamp with time zone', {
-		nullable: true,
-	})
-	public deleteAt: Date | null;
 
 	@Index()
 	@Column({

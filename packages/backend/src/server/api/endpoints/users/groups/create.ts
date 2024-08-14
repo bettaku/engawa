@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project & noridev and cherrypick-project
+ * SPDX-FileCopyrightText: syuilo and noridev and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -55,11 +55,11 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private idService: IdService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
-			const userGroup = await this.userGroupsRepository.insertOne({
+			const userGroup = await this.userGroupsRepository.insert({
 				id: this.idService.gen(),
 				userId: me.id,
 				name: ps.name,
-			} as MiUserGroup);
+			} as MiUserGroup).then(x => this.userGroupsRepository.findOneByOrFail(x.identifiers[0]));
 
 			// Push the owner
 			await this.userGroupJoiningsRepository.insert({

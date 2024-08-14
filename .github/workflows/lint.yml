@@ -5,21 +5,8 @@ on:
     branches:
       - master
       - develop
-    paths:
-      - packages/backend/**
-      - packages/frontend/**
-      - packages/sw/**
-      - packages/cherrypick-js/**
-      - packages/shared/eslint.config.js
-      - .github/workflows/lint.yml
   pull_request:
-    paths:
-      - packages/backend/**
-      - packages/frontend/**
-      - packages/sw/**
-      - packages/cherrypick-js/**
-      - packages/shared/eslint.config.js
-      - .github/workflows/lint.yml
+
 jobs:
   pnpm_install:
     runs-on: ubuntu-latest
@@ -28,8 +15,11 @@ jobs:
       with:
         fetch-depth: 0
         submodules: true
-    - uses: pnpm/action-setup@v4
-    - uses: actions/setup-node@v4.0.3
+    - uses: pnpm/action-setup@v2
+      with:
+        version: 8
+        run_install: false
+    - uses: actions/setup-node@v4.0.1
       with:
         node-version-file: '.node-version'
         cache: 'pnpm'
@@ -40,8 +30,6 @@ jobs:
     needs: [pnpm_install]
     runs-on: ubuntu-latest
     continue-on-error: true
-    env:
-      eslint-cache-version: v1
     strategy:
       matrix:
         workspace:
@@ -54,40 +42,17 @@ jobs:
       with:
         fetch-depth: 0
         submodules: true
-    - uses: pnpm/action-setup@v4
-    - uses: actions/setup-node@v4.0.3
+    - uses: pnpm/action-setup@v2
+      with:
+        version: 7
+        run_install: false
+    - uses: actions/setup-node@v4.0.1
       with:
         node-version-file: '.node-version'
         cache: 'pnpm'
     - run: corepack enable
     - run: pnpm i --frozen-lockfile
-    - run: pnpm --filter ${{ matrix.workspace }} run lint
-
-  format:
-    needs: [pnpm_install]
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    strategy:
-      matrix:
-        workspace:
-        - backend
-        - frontend
-        - cherrypick-js
-        - sw
-    steps:
-    - uses: actions/checkout@v4.1.1
-      with:
-        fetch-depth: 0
-        submodules: true
-    - uses: pnpm/action-setup@v4
-    - uses: actions/setup-node@v4.0.2
-      with:
-        node-version-file: '.node-version'
-        cache: 'pnpm'
-    - run: corepack enable
-    - run: pnpm i --frozen-lockfile
-    - run: pnpm --filter ${{ matrix.workspace }} run format
-
+    - run: pnpm --filter ${{ matrix.workspace }} run eslint
 
   typecheck:
     needs: [pnpm_install]
@@ -103,8 +68,11 @@ jobs:
       with:
         fetch-depth: 0
         submodules: true
-    - uses: pnpm/action-setup@v4
-    - uses: actions/setup-node@v4.0.3
+    - uses: pnpm/action-setup@v2
+      with:
+        version: 7
+        run_install: false
+    - uses: actions/setup-node@v4.0.1
       with:
         node-version-file: '.node-version'
         cache: 'pnpm'

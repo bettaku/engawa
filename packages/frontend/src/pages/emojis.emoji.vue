@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -14,15 +14,18 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import * as Misskey from 'cherrypick-js';
+import { } from 'vue';
 import * as os from '@/os.js';
-import { misskeyApiGet } from '@/scripts/misskey-api.js';
-import { copyToClipboard } from '@/scripts/copy-to-clipboard.js';
+import copyToClipboard from '@/scripts/copy-to-clipboard.js';
 import { i18n } from '@/i18n.js';
-import MkCustomEmojiDetailedDialog from '@/components/MkCustomEmojiDetailedDialog.vue';
 
 const props = defineProps<{
-  emoji: Misskey.entities.EmojiSimple;
+	emoji: {
+		name: string;
+		aliases: string[];
+		category: string;
+		url: string;
+	};
 }>();
 
 function menu(ev) {
@@ -39,13 +42,12 @@ function menu(ev) {
 	}, {
 		text: i18n.ts.info,
 		icon: 'ti ti-info-circle',
-		action: async () => {
-			const { dispose } = os.popup(MkCustomEmojiDetailedDialog, {
-				emoji: await misskeyApiGet('emoji', {
-					name: props.emoji.name,
-				}),
-			}, {
-				closed: () => dispose(),
+		action: () => {
+			os.apiGet('emoji', { name: props.emoji.name }).then(res => {
+				os.alert({
+					type: 'info',
+					text: `Name: ${res.name}\nAliases: ${res.aliases.join(' ')}\nCategory: ${res.category}\nisSensitive: ${res.isSensitive}\nlocalOnly: ${res.localOnly}\nLicense: ${res.license}\nURL: ${res.url}`,
+				});
 			});
 		},
 	}], ev.currentTarget ?? ev.target);

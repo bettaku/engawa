@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -49,7 +49,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				throw err;
 			});
 
-			const exist = await this.promoReadsRepository.exists({
+			const exist = await this.promoReadsRepository.exist({
 				where: {
 					noteId: note.id,
 					userId: me.id,

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -51,7 +51,6 @@ export class ChannelsService {
 			case 'main': return this.mainChannelService;
 			case 'homeTimeline': return this.homeTimelineChannelService;
 			case 'localTimeline': return this.localTimelineChannelService;
-			case 'mediaTimeline': return this.globalTimelineChannelService;
 			case 'hybridTimeline': return this.hybridTimelineChannelService;
 			case 'globalTimeline': return this.globalTimelineChannelService;
 			case 'userList': return this.userListChannelService;

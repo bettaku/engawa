@@ -1,12 +1,11 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 import { ref } from 'vue';
 import tinycolor from 'tinycolor2';
 import { deepClone } from './clone.js';
-import type { BundledTheme } from 'shiki/themes';
 import { globalEvents } from '@/events.js';
 import lightTheme from '@/themes/_light.json5';
 import darkTheme from '@/themes/_dark.json5';
@@ -19,13 +18,6 @@ export type Theme = {
 	desc?: string;
 	base?: 'dark' | 'light';
 	props: Record<string, string>;
-	codeHighlighter?: {
-		base: BundledTheme;
-		overrides?: Record<string, any>;
-	} | {
-		base: '_none_';
-		overrides: Record<string, any>;
-	};
 };
 
 export const themeProps = Object.keys(lightTheme.props).filter(key => !key.startsWith('X'));
@@ -48,20 +40,6 @@ export const getBuiltinThemes = () => Promise.all(
 		'l-cherry',
 		'l-sushi',
 		'l-u0',
-		'catppuccin-latte-blue',
-		'catppuccin-latte-flamingo',
-		'catppuccin-latte-blue',
-		'catppuccin-latte-lavender',
-		'catppuccin-latte-maroon',
-		'catppuccin-latte-mauve',
-		'catppuccin-latte-peach',
-		'catppuccin-latte-pink',
-		'catppuccin-latte-red',
-		'catppuccin-latte-rosewater',
-		'catppuccin-latte-sapphire',
-		'catppuccin-latte-sky',
-		'catppuccin-latte-teal',
-		'catppuccin-latte-yellow',
 
 		'd-cherrypick',
 		'd-rosepine',
@@ -82,50 +60,6 @@ export const getBuiltinThemes = () => Promise.all(
 		'd-cherry',
 		'd-ice',
 		'd-u0',
-		'catppuccin-frappe-blue',
-		'catppuccin-frappe-flamingo',
-		'catppuccin-frappe-green',
-		'catppuccin-frappe-lavender',
-		'catppuccin-frappe-maroon',
-		'catppuccin-frappe-mauve',
-		'catppuccin-frappe-peach',
-		'catppuccin-frappe-pink',
-		'catppuccin-frappe-red',
-		'catppuccin-frappe-rosewater',
-		'catppuccin-frappe-sapphire',
-		'catppuccin-frappe-sky',
-		'catppuccin-frappe-teal',
-		'catppuccin-frappe-yellow',
-
-		'catppuccin-macchiato-blue',
-		'catppuccin-macchiato-flamingo',
-		'catppuccin-macchiato-green',
-		'catppuccin-macchiato-lavender',
-		'catppuccin-macchiato-maroon',
-		'catppuccin-macchiato-mauve',
-		'catppuccin-macchiato-peach',
-		'catppuccin-macchiato-pink',
-		'catppuccin-macchiato-red',
-		'catppuccin-macchiato-rosewater',
-		'catppuccin-macchiato-sapphire',
-		'catppuccin-macchiato-sky',
-		'catppuccin-macchiato-teal',
-		'catppuccin-macchiato-yellow',
-
-		'catppuccin-mocha-blue',
-		'catppuccin-mocha-flamingo',
-		'catppuccin-mocha-green',
-		'catppuccin-mocha-lavender',
-		'catppuccin-mocha-maroon',
-		'catppuccin-mocha-mauve',
-		'catppuccin-mocha-peach',
-		'catppuccin-mocha-pink',
-		'catppuccin-mocha-red',
-		'catppuccin-mocha-rosewater',
-		'catppuccin-mocha-sapphire',
-		'catppuccin-mocha-sky',
-		'catppuccin-mocha-teal',
-		'catppuccin-mocha-yellow',
 	].map(name => import(`@/themes/${name}.json5`).then(({ default: _default }): Theme => _default)),
 );
 
@@ -135,7 +69,7 @@ export const getBuiltinThemesRef = () => {
 	return builtinThemes;
 };
 
-let timeout: number | null = null;
+let timeout = null;
 
 export function applyTheme(theme: Theme, persist = true) {
 	if (timeout) window.clearTimeout(timeout);

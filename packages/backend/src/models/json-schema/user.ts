@@ -1,40 +1,18 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-export const notificationRecieveConfig = {
+const notificationRecieveConfig = {
 	type: 'object',
-	oneOf: [
-		{
-			type: 'object',
-			nullable: false,
-			properties: {
-				type: {
-					type: 'string',
-					nullable: false,
-					enum: ['all', 'following', 'follower', 'mutualFollow', 'followingOrFollower', 'never'],
-				},
-			},
-			required: ['type'],
+	nullable: false, optional: true,
+	properties: {
+		type: {
+			type: 'string',
+			nullable: false, optional: false,
+			enum: ['all', 'following', 'follower', 'mutualFollow', 'list', 'never'],
 		},
-		{
-			type: 'object',
-			nullable: false,
-			properties: {
-				type: {
-					type: 'string',
-					nullable: false,
-					enum: ['list'],
-				},
-				userListId: {
-					type: 'string',
-					format: 'misskey:id',
-				},
-			},
-			required: ['type', 'userListId'],
-		},
-	],
+	},
 } as const;
 
 export const packedUserLiteSchema = {
@@ -156,9 +134,6 @@ export const packedUserLiteSchema = {
 		emojis: {
 			type: 'object',
 			nullable: false, optional: false,
-			additionalProperties: {
-				type: 'string',
-			},
 		},
 		onlineStatus: {
 			type: 'string',
@@ -250,11 +225,6 @@ export const packedUserDetailedNotMeOnlySchema = {
 			nullable: false, optional: false,
 		},
 		isSuspended: {
-			type: 'boolean',
-			nullable: false, optional: false,
-			example: false,
-		},
-		isSensitive: {
 			type: 'boolean',
 			nullable: false, optional: false,
 			example: false,
@@ -494,14 +464,6 @@ export const packedMeDetailedOnlySchema = {
 			type: 'boolean',
 			nullable: false, optional: false,
 		},
-		isIndexable: {
-			type: 'boolean',
-			nullable: false, optional: false,
-		},
-		isSensitive: {
-			type: 'boolean',
-			nullable: false, optional: false,
-		},
 		isDeleted: {
 			type: 'boolean',
 			nullable: false, optional: false,
@@ -596,21 +558,16 @@ export const packedMeDetailedOnlySchema = {
 			type: 'object',
 			nullable: false, optional: false,
 			properties: {
-				note: { optional: true, ...notificationRecieveConfig },
-				follow: { optional: true, ...notificationRecieveConfig },
-				mention: { optional: true, ...notificationRecieveConfig },
-				reply: { optional: true, ...notificationRecieveConfig },
-				renote: { optional: true, ...notificationRecieveConfig },
-				quote: { optional: true, ...notificationRecieveConfig },
-				reaction: { optional: true, ...notificationRecieveConfig },
-				pollEnded: { optional: true, ...notificationRecieveConfig },
-				receiveFollowRequest: { optional: true, ...notificationRecieveConfig },
-				followRequestAccepted: { optional: true, ...notificationRecieveConfig },
-				groupInvited: { optional: true, ...notificationRecieveConfig },
-				roleAssigned: { optional: true, ...notificationRecieveConfig },
-				achievementEarned: { optional: true, ...notificationRecieveConfig },
-				app: { optional: true, ...notificationRecieveConfig },
-				test: { optional: true, ...notificationRecieveConfig },
+				app: notificationRecieveConfig,
+				quote: notificationRecieveConfig,
+				reply: notificationRecieveConfig,
+				follow: notificationRecieveConfig,
+				renote: notificationRecieveConfig,
+				mention: notificationRecieveConfig,
+				reaction: notificationRecieveConfig,
+				pollEnded: notificationRecieveConfig,
+				receiveFollowRequest: notificationRecieveConfig,
+				groupInvited: notificationRecieveConfig,
 			},
 		},
 		emailNotificationTypes: {
@@ -646,7 +603,104 @@ export const packedMeDetailedOnlySchema = {
 		policies: {
 			type: 'object',
 			nullable: false, optional: false,
-			ref: 'RolePolicies',
+			properties: {
+				gtlAvailable: {
+					type: 'boolean',
+					nullable: false, optional: false,
+				},
+				ltlAvailable: {
+					type: 'boolean',
+					nullable: false, optional: false,
+				},
+				canPublicNote: {
+					type: 'boolean',
+					nullable: false, optional: false,
+				},
+				canInvite: {
+					type: 'boolean',
+					nullable: false, optional: false,
+				},
+				inviteLimit: {
+					type: 'number',
+					nullable: false, optional: false,
+				},
+				inviteLimitCycle: {
+					type: 'number',
+					nullable: false, optional: false,
+				},
+				inviteExpirationTime: {
+					type: 'number',
+					nullable: false, optional: false,
+				},
+				canManageCustomEmojis: {
+					type: 'boolean',
+					nullable: false, optional: false,
+				},
+				canManageAvatarDecorations: {
+					type: 'boolean',
+					nullable: false, optional: false,
+				},
+				canSearchNotes: {
+					type: 'boolean',
+					nullable: false, optional: false,
+				},
+				canUseTranslator: {
+					type: 'boolean',
+					nullable: false, optional: false,
+				},
+				canHideAds: {
+					type: 'boolean',
+					nullable: false, optional: false,
+				},
+				driveCapacityMb: {
+					type: 'number',
+					nullable: false, optional: false,
+				},
+				alwaysMarkNsfw: {
+					type: 'boolean',
+					nullable: false, optional: false,
+				},
+				pinLimit: {
+					type: 'number',
+					nullable: false, optional: false,
+				},
+				antennaLimit: {
+					type: 'number',
+					nullable: false, optional: false,
+				},
+				wordMuteLimit: {
+					type: 'number',
+					nullable: false, optional: false,
+				},
+				webhookLimit: {
+					type: 'number',
+					nullable: false, optional: false,
+				},
+				clipLimit: {
+					type: 'number',
+					nullable: false, optional: false,
+				},
+				noteEachClipsLimit: {
+					type: 'number',
+					nullable: false, optional: false,
+				},
+				userListLimit: {
+					type: 'number',
+					nullable: false, optional: false,
+				},
+				userEachUserListsLimit: {
+					type: 'number',
+					nullable: false, optional: false,
+				},
+				rateLimitFactor: {
+					type: 'number',
+					nullable: false, optional: false,
+				},
+				avatarDecorationLimit: {
+					type: 'number',
+					nullable: false, optional: false,
+				},
+			},
 		},
 		//#region secrets
 		email: {
@@ -740,6 +794,14 @@ export const packedUserSchema = {
 		{
 			type: 'object',
 			ref: 'UserDetailed',
+		},
+		{
+			type: 'object',
+			ref: 'UserDetailedNotMe',
+		},
+		{
+			type: 'object',
+			ref: 'MeDetailed',
 		},
 	],
 } as const;

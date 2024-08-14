@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -16,10 +16,7 @@ import { Endpoint } from '@/server/api/endpoint-base.js';
 import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
 import { NoteCreateService } from '@/core/NoteCreateService.js';
 import { DI } from '@/di-symbols.js';
-import { isQuote, isRenote } from '@/misc/is-renote.js';
-import { MetaService } from '@/core/MetaService.js';
-import { UtilityService } from '@/core/UtilityService.js';
-import { IdentifiableError } from '@/misc/identifiable-error.js';
+import { isPureRenote } from '@/misc/is-pure-renote.js';
 import { ApiError } from '../../error.js';
 
 export const meta = {
@@ -85,12 +82,6 @@ export const meta = {
 			id: '3ac74a84-8fd5-4bb0-870f-01804f82ce15',
 		},
 
-		cannotReplyToSpecifiedVisibilityNoteWithExtendedVisibility: {
-			message: 'You cannot reply to a specified visibility note with extended visibility.',
-			code: 'CANNOT_REPLY_TO_SPECIFIED_VISIBILITY_NOTE_WITH_EXTENDED_VISIBILITY',
-			id: 'ed940410-535c-4d5e-bfa3-af798671e93c',
-		},
-
 		cannotCreateAlreadyExpiredPoll: {
 			message: 'Poll is already expired.',
 			code: 'CANNOT_CREATE_ALREADY_EXPIRED_POLL',
@@ -120,31 +111,13 @@ export const meta = {
 			code: 'CANNOT_RENOTE_OUTSIDE_OF_CHANNEL',
 			id: '33510210-8452-094c-6227-4a6c05d99f00',
 		},
-
-		containsProhibitedWords: {
-			message: 'Cannot post because it contains prohibited words.',
-			code: 'CONTAINS_PROHIBITED_WORDS',
-			id: 'aa6e01d3-a85c-669d-758a-76aab43af334',
-		},
-
-		containsTooManyMentions: {
-			message: 'Cannot post because it exceeds the allowed number of mentions.',
-			code: 'CONTAINS_TOO_MANY_MENTIONS',
-			id: '4de0363a-3046-481b-9b0f-feff3e211025',
-		},
-
-		cannotScheduleDeleteEarlierThanNow: {
-			message: 'Cannot specify delete time earlier than now.',
-			code: 'CANNOT_SCHEDULE_DELETE_EARLIER_THAN_NOW',
-			id: '9f04994a-3aa2-11ef-a495-177eea74788f',
-		},
 	},
 } as const;
 
 export const paramDef = {
 	type: 'object',
 	properties: {
-		visibility: { type: 'string', enum: ['public', 'home', 'followers', 'specified', 'private'], default: 'public' },
+		visibility: { type: 'string', enum: ['public', 'home', 'followers', 'specified'], default: 'public' },
 		visibleUserIds: { type: 'array', uniqueItems: true, items: {
 			type: 'string', format: 'misskey:id',
 		} },
@@ -208,43 +181,15 @@ export const paramDef = {
 				metadata: { type: 'object' },
 			},
 		},
-		scheduledDelete: {
-			type: 'object',
-			nullable: true,
-			properties: {
-				deleteAt: { type: 'integer', nullable: true },
-				deleteAfter: { type: 'integer', nullable: true, minimum: 1 },
-			},
-		},
 	},
 	// (re)note with text, files and poll are optional
-	if: {
-		properties: {
-			renoteId: {
-				type: 'null',
-			},
-			fileIds: {
-				type: 'null',
-			},
-			mediaIds: {
-				type: 'null',
-			},
-			poll: {
-				type: 'null',
-			},
-		},
-	},
-	then: {
-		properties: {
-			text: {
-				type: 'string',
-				minLength: 1,
-				maxLength: MAX_NOTE_TEXT_LENGTH,
-				pattern: '[^\\s]+',
-			},
-		},
-		required: ['text'],
-	},
+	anyOf: [
+		{ required: ['text'] },
+		{ required: ['renoteId'] },
+		{ required: ['fileIds'] },
+		{ required: ['mediaIds'] },
+		{ required: ['poll'] },
+	],
 } as const;
 
 @Injectable()
@@ -300,13 +245,13 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 				if (renote == null) {
 					throw new ApiError(meta.errors.noSuchRenoteTarget);
-				} else if (isRenote(renote) && !isQuote(renote)) {
+				} else if (isPureRenote(renote)) {
 					throw new ApiError(meta.errors.cannotReRenote);
 				}
 
 				// Check blocking
 				if (renote.userId !== me.id) {
-					const blockExist = await this.blockingsRepository.exists({
+					const blockExist = await this.blockingsRepository.exist({
 						where: {
 							blockerId: renote.userId,
 							blockeeId: me.id,
@@ -346,17 +291,15 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 				if (reply == null) {
 					throw new ApiError(meta.errors.noSuchReplyTarget);
-				} else if (isRenote(reply) && !isQuote(reply)) {
+				} else if (isPureRenote(reply)) {
 					throw new ApiError(meta.errors.cannotReplyToPureRenote);
 				} else if (!await this.noteEntityService.isVisibleForMe(reply, me.id)) {
 					throw new ApiError(meta.errors.cannotReplyToInvisibleNote);
-				} else if (reply.visibility === 'specified' && ps.visibility !== 'specified') {
-					throw new ApiError(meta.errors.cannotReplyToSpecifiedVisibilityNoteWithExtendedVisibility);
 				}
 
 				// Check blocking
 				if (reply.userId !== me.id) {
-					const blockExist = await this.blockingsRepository.exists({
+					const blockExist = await this.blockingsRepository.exist({
 						where: {
 							blockerId: reply.userId,
 							blockeeId: me.id,
@@ -378,16 +321,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				}
 			}
 
-			if (ps.scheduledDelete) {
-				if (typeof ps.scheduledDelete.deleteAt === 'number') {
-					if (ps.scheduledDelete.deleteAt < Date.now()) {
-						throw new ApiError(meta.errors.cannotScheduleDeleteEarlierThanNow);
-					} else if (typeof ps.scheduledDelete.deleteAfter === 'number') {
-						ps.scheduledDelete.deleteAt = Date.now() + ps.scheduledDelete.deleteAfter;
-					}
-				}
-			}
-
 			let channel: MiChannel | null = null;
 			if (ps.channelId != null) {
 				channel = await this.channelsRepository.findOneBy({ id: ps.channelId, isArchived: false });
@@ -398,51 +331,38 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			}
 
 			// 投稿を作成
-			try {
-				const note = await this.noteCreateService.create(me, {
-					createdAt: new Date(),
-					files: files,
-					poll: ps.poll ? {
-						choices: ps.poll.choices,
-						multiple: ps.poll.multiple ?? false,
-						expiresAt: ps.poll.expiresAt ? new Date(ps.poll.expiresAt) : null,
-					} : undefined,
-					text: ps.text ?? undefined,
-					reply,
-					renote,
-					event: ps.event ? {
-						start: new Date(ps.event.start!),
-						end: ps.event.end ? new Date(ps.event.end) : null,
-						title: ps.event.title!,
-						metadata: ps.event.metadata ?? {},
-					} : undefined,
-					cw: ps.cw,
-					localOnly: ps.localOnly,
-					reactionAcceptance: ps.reactionAcceptance,
-					disableRightClick: ps.disableRightClick,
-					visibility: ps.visibility,
-					visibleUsers,
-					channel,
-					apMentions: ps.noExtractMentions ? [] : undefined,
-					apHashtags: ps.noExtractHashtags ? [] : undefined,
-					apEmojis: ps.noExtractEmojis ? [] : undefined,
-					deleteAt: ps.scheduledDelete?.deleteAt ? new Date(ps.scheduledDelete.deleteAt) : ps.scheduledDelete?.deleteAfter ? new Date(Date.now() + ps.scheduledDelete.deleteAfter) : null,
-				});
+			const note = await this.noteCreateService.create(me, {
+				createdAt: new Date(),
+				files: files,
+				poll: ps.poll ? {
+					choices: ps.poll.choices,
+					multiple: ps.poll.multiple ?? false,
+					expiresAt: ps.poll.expiresAt ? new Date(ps.poll.expiresAt) : null,
+				} : undefined,
+				text: ps.text ?? undefined,
+				reply,
+				renote,
+				event: ps.event ? {
+					start: new Date(ps.event.start!),
+					end: ps.event.end ? new Date(ps.event.end) : null,
+					title: ps.event.title!,
+					metadata: ps.event.metadata ?? {},
+				} : undefined,
+				cw: ps.cw,
+				localOnly: ps.localOnly,
+				reactionAcceptance: ps.reactionAcceptance,
+				disableRightClick: ps.disableRightClick,
+				visibility: ps.visibility,
+				visibleUsers,
+				channel,
+				apMentions: ps.noExtractMentions ? [] : undefined,
+				apHashtags: ps.noExtractHashtags ? [] : undefined,
+				apEmojis: ps.noExtractEmojis ? [] : undefined,
+			});
 
-				return {
-					createdNote: await this.noteEntityService.pack(note, me),
-				};
-			} catch (e) {
-				// TODO: 他のErrorもここでキャッチしてエラーメッセージを当てるようにしたい
-				if (e instanceof IdentifiableError) {
-					if (e.id === '689ee33f-f97c-479a-ac49-1b9f8140af99') {
-						throw new ApiError(meta.errors.containsProhibitedWords);
-					} else if (e.id === '9f466dab-c856-48cd-9e65-ff90ff750580') {
-						throw new ApiError(meta.errors.containsTooManyMentions);
-					}
-				}
-				throw e;
-			}
+			return {
+				createdNote: await this.noteEntityService.pack(note, me),
+			};
 		});
 	}
 }

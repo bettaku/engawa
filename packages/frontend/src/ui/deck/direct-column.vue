@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -34,7 +34,7 @@ const tlComponent = ref<InstanceType<typeof MkNotes>>();
 
 function reloadTimeline() {
 	return new Promise<void>((res) => {
-		tlComponent.value?.pagingComponent?.reload().then(() => {
+		tlComponent.value.pagingComponent?.reload().then(() => {
 			res();
 		});
 	});

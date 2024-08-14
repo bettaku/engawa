@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project & noridev and cherrypick-project
+SPDX-FileCopyrightText: syuilo and noridev and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -69,7 +69,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 <script lang="ts" setup>
 import { computed, onMounted, ref } from 'vue';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
 import FormInfo from '@/components/MkInfo.vue';
 import FormSection from '@/components/form/section.vue';
 import MkKeyValue from '@/components/MkKeyValue.vue';
@@ -89,7 +88,7 @@ const skipCherryPickVersion = ref<string | null | undefined>(null);
 const releasesCherryPick = ref();
 const releasesMisskey = ref();
 
-const meta = await misskeyApi('admin/meta');
+const meta = await os.api('admin/meta');
 
 async function init() {
 	enableReceivePrerelease.value = meta.enableReceivePrerelease;
@@ -126,7 +125,7 @@ onMounted(() => {
 			else releasesCherryPick.value = res.filter(x => x.prerelease === false);
 			if (skipCherryPickVersion.value < releasesCherryPick.value[0].tag_name) {
 				skipVersion.value = false;
-				misskeyApi('admin/update-meta', { skipVersion: skipVersion.value });
+				os.api('admin/update-meta', { skipVersion: skipVersion.value });
 			}
 		});
 
@@ -164,8 +163,8 @@ const headerActions = computed(() => [{
 
 const headerTabs = computed(() => []);
 
-definePageMetadata(() => ({
+definePageMetadata({
 	title: i18n.ts.cherrypickUpdate,
 	icon: 'ti ti-refresh',
-}));
+});
 </script>

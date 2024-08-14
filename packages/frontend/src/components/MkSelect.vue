@@ -1,34 +1,25 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
 <div>
 	<div :class="$style.label" @click="focus"><slot name="label"></slot></div>
-	<div
-		ref="container"
-		tabindex="0"
-		:class="[$style.input, { [$style.inline]: inline, [$style.disabled]: disabled, [$style.focused]: focused || opening }]"
-		@focus="focused = true"
-		@blur="focused = false"
-		@mousedown.prevent="show"
-		@keydown.space.enter="show"
-	>
+	<div ref="container" :class="[$style.input, { [$style.inline]: inline, [$style.disabled]: disabled, [$style.focused]: focused }]" @mousedown.prevent="show">
 		<div ref="prefixEl" :class="$style.prefix"><slot name="prefix"></slot></div>
 		<select
 			ref="inputEl"
 			v-model="v"
 			v-adaptive-border
-			tabindex="-1"
 			:class="$style.inputCore"
 			:disabled="disabled"
 			:required="required"
 			:readonly="readonly"
 			:placeholder="placeholder"
+			@focus="focused = true"
+			@blur="focused = false"
 			@input="onInput"
-			@mousedown.prevent="() => {}"
-			@keydown.prevent="() => {}"
 		>
 			<slot></slot>
 		</select>
@@ -36,17 +27,16 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</div>
 	<div :class="$style.caption"><slot name="caption"></slot></div>
 
-	<MkButton v-if="manualSave && changed" primary :class="$style.save" @click="updated"><i class="ti ti-device-floppy"></i> {{ i18n.ts.save }}</MkButton>
+	<MkButton v-if="manualSave && changed" primary @click="updated"><i class="ti ti-device-floppy"></i> {{ i18n.ts.save }}</MkButton>
 </div>
 </template>
 
 <script lang="ts" setup>
-import { onMounted, nextTick, ref, watch, computed, toRefs, VNode, useSlots, VNodeChild } from 'vue';
+import { onMounted, nextTick, ref, watch, computed, toRefs, VNode, useSlots } from 'vue';
 import MkButton from '@/components/MkButton.vue';
 import * as os from '@/os.js';
 import { useInterval } from '@/scripts/use-interval.js';
 import { i18n } from '@/i18n.js';
-import { MenuItem } from '@/types/menu.js';
 
 const props = defineProps<{
 	modelValue: string | null;
@@ -62,7 +52,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-	(ev: 'changeByUser', value: string | null): void;
+	(ev: 'change', _ev: KeyboardEvent): void;
 	(ev: 'update:modelValue', value: string | null): void;
 }>();
 
@@ -84,9 +74,10 @@ const height =
 	props.large ? 39 :
 	36;
 
-const focus = () => container.value?.focus();
+const focus = () => inputEl.value.focus();
 const onInput = (ev) => {
 	changed.value = true;
+	emit('change', ev);
 };
 
 const updated = () => {
@@ -98,19 +89,17 @@ watch(modelValue, newValue => {
 	v.value = newValue;
 });
 
-watch(v, () => {
+watch(v, newValue => {
 	if (!props.manualSave) {
 		updated();
 	}
 
-	invalid.value = inputEl.value?.validity.badInput ?? true;
+	invalid.value = inputEl.value.validity.badInput;
 });
 
 // このコンポーネントが作成された時、非表示状態である場合がある
 // 非表示状態だと要素の幅などは0になってしまうので、定期的に計算する
 useInterval(() => {
-	if (inputEl.value == null) return;
-
 	if (prefixEl.value) {
 		if (prefixEl.value.offsetWidth) {
 			inputEl.value.style.paddingLeft = prefixEl.value.offsetWidth + 'px';
@@ -134,44 +123,38 @@ onMounted(() => {
 	});
 });
 
-function show() {
+function show(ev: MouseEvent) {
 	if (inputEl.value && inputEl.value.hasAttribute('disabled')) {
 		return;
 	}
-
-	if (opening.value) return;
-	focus();
-
+	focused.value = true;
 	opening.value = true;
 
-	const menu: MenuItem[] = [];
+	const menu = [];
 	let options = slots.default!();
 
 	const pushOption = (option: VNode) => {
 		menu.push({
-			text: option.children as string,
-			active: computed(() => v.value === option.props?.value),
+			text: option.children,
+			active: computed(() => v.value === option.props.value),
 			action: () => {
-				v.value = option.props?.value;
-				changed.value = true;
-				emit('changeByUser', v.value);
+				v.value = option.props.value;
 			},
 		});
 	};
 
-	const scanOptions = (options: VNodeChild[]) => {
+	const scanOptions = (options: VNode[]) => {
 		for (const vnode of options) {
-			if (typeof vnode !== 'object' || vnode === null || Array.isArray(vnode)) continue;
 			if (vnode.type === 'optgroup') {
 				const optgroup = vnode;
 				menu.push({
 					type: 'label',
-					text: optgroup.props?.label,
+					text: optgroup.props.label,
 				});
-				if (Array.isArray(optgroup.children)) scanOptions(optgroup.children);
+				scanOptions(optgroup.children);
 			} else if (Array.isArray(vnode.children)) { // 何故かフラグメントになってくることがある
 				const fragment = vnode;
-				if (Array.isArray(fragment.children)) scanOptions(fragment.children);
+				scanOptions(fragment.children);
 			} else if (vnode.props == null) { // v-if で条件が false のときにこうなる
 				// nop?
 			} else {
@@ -184,10 +167,12 @@ function show() {
 	scanOptions(options);
 
 	os.popupMenu(menu, container.value, {
-		width: container.value?.offsetWidth,
+		width: container.value.offsetWidth,
 		onClosing: () => {
 			opening.value = false;
 		},
+	}).then(() => {
+		focused.value = false;
 	});
 }
 </script>
@@ -236,10 +221,6 @@ function show() {
 		> .inputCore {
 			cursor: not-allowed !important;
 		}
-	}
-
-	&:focus {
-		outline: none;
 	}
 
 	&:hover {
@@ -304,10 +285,6 @@ function show() {
 .suffix {
 	right: 0;
 	padding-left: 6px;
-}
-
-.save {
-	margin: 8px 0 0 0;
 }
 
 .chevron {

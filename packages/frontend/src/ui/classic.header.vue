@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -51,7 +51,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 import { computed, defineAsyncComponent, onMounted, ref } from 'vue';
 import { openInstanceMenu } from './_common_/common.js';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
 import { navbarItemDef } from '@/navbar.js';
 import { openAccountMenu as openAccountMenu_, $i } from '@/account.js';
 import MkButton from '@/components/MkButton.vue';
@@ -77,7 +76,7 @@ const controlPanelIndicated = ref(false);
 const releasesCherryPick = ref();
 
 if ($i.isAdmin ?? $i.isModerator) {
-	misskeyApi('admin/abuse-user-reports', {
+	os.api('admin/abuse-user-reports', {
 		state: 'unresolved',
 		limit: 1,
 	}).then(reports => {
@@ -88,7 +87,7 @@ if ($i.isAdmin ?? $i.isModerator) {
 		method: 'GET',
 	}).then(res => res.json())
 		.then(async res => {
-			const meta = await misskeyApi('admin/meta');
+			const meta = await os.api('admin/meta');
 			if (meta.enableReceivePrerelease) releasesCherryPick.value = res;
 			else releasesCherryPick.value = res.filter(x => x.prerelease === false);
 			if ((version < releasesCherryPick.value[0].tag_name) && (meta.skipCherryPickVersion < releasesCherryPick.value[0].tag_name)) controlPanelIndicated.value = true;
@@ -96,12 +95,11 @@ if ($i.isAdmin ?? $i.isModerator) {
 }
 
 function more(ev: MouseEvent) {
-	const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkLaunchPad.vue')), {
+	os.popup(defineAsyncComponent(() => import('@/components/MkLaunchPad.vue')), {
 		src: ev.currentTarget ?? ev.target,
 		anchor: { x: 'center', y: 'bottom' },
 	}, {
-		closed: () => dispose(),
-	});
+	}, 'closed');
 }
 
 function openAccountMenu(ev: MouseEvent) {
@@ -167,7 +165,7 @@ onMounted(() => {
 					left: 0;
 					color: var(--navIndicator);
 					font-size: 8px;
-					animation: global-blink 1s infinite;
+					animation: blink 1s infinite;
 				}
 
 				&:hover {

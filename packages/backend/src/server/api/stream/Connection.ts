@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -15,7 +15,6 @@ import { MiFollowing, MiUserProfile } from '@/models/_.js';
 import type { MiUserGroup } from '@/models/UserGroup.js';
 import type { StreamEventEmitter, GlobalEvents } from '@/core/GlobalEventService.js';
 import { ChannelFollowingService } from '@/core/ChannelFollowingService.js';
-import type { JsonObject } from '@/misc/json-value.js';
 import type { ChannelsService } from './ChannelsService.js';
 import type { EventEmitter } from 'events';
 import type Channel from './channel.js';
@@ -30,7 +29,7 @@ export default class Connection {
 	private wsConnection: WebSocket.WebSocket;
 	public subscriber: StreamEventEmitter;
 	private channels: Channel[] = [];
-	private subscribingNotes: Partial<Record<string, number>> = {};
+	private subscribingNotes: any = {};
 	private cachedNotes: Packed<'Note'>[] = [];
 	public userProfile: MiUserProfile | null = null;
 	public following: Record<string, Pick<MiFollowing, 'withReplies'> | undefined> = {};
@@ -103,7 +102,7 @@ export default class Connection {
 	 */
 	@bindThis
 	private async onWsConnectionMessage(data: WebSocket.RawData) {
-		let obj: JsonObject;
+		let obj: Record<string, any>;
 
 		try {
 			obj = JSON.parse(data.toString());
@@ -112,8 +111,6 @@ export default class Connection {
 		}
 
 		const { type, body } = obj;
-
-		if (typeof body !== 'object' || body === null || Array.isArray(body)) return;
 
 		switch (type) {
 			case 'readNotification': this.onReadNotification(body); break;
@@ -160,7 +157,7 @@ export default class Connection {
 	}
 
 	@bindThis
-	private readNote(body: JsonObject) {
+	private readNote(body: any) {
 		const id = body.id;
 
 		const note = this.cachedNotes.find(n => n.id === id);
@@ -172,7 +169,7 @@ export default class Connection {
 	}
 
 	@bindThis
-	private onReadNotification(payload: JsonObject) {
+	private onReadNotification(payload: any) {
 		this.notificationService.readAllNotification(this.user!.id);
 	}
 
@@ -180,14 +177,16 @@ export default class Connection {
 	 * 投稿購読要求時
 	 */
 	@bindThis
-	private onSubscribeNote(payload: JsonObject) {
-		if (!payload.id || typeof payload.id !== 'string') return;
+	private onSubscribeNote(payload: any) {
+		if (!payload.id) return;
 
-		const current = this.subscribingNotes[payload.id] ?? 0;
-		const updated = current + 1;
-		this.subscribingNotes[payload.id] = updated;
+		if (this.subscribingNotes[payload.id] == null) {
+			this.subscribingNotes[payload.id] = 0;
+		}
 
-		if (updated === 1) {
+		this.subscribingNotes[payload.id]++;
+
+		if (this.subscribingNotes[payload.id] === 1) {
 			this.subscriber.on(`noteStream:${payload.id}`, this.onNoteStreamMessage);
 		}
 	}
@@ -196,14 +195,11 @@ export default class Connection {
 	 * 投稿購読解除要求時
 	 */
 	@bindThis
-	private onUnsubscribeNote(payload: JsonObject) {
-		if (!payload.id || typeof payload.id !== 'string') return;
+	private onUnsubscribeNote(payload: any) {
+		if (!payload.id) return;
 
-		const current = this.subscribingNotes[payload.id];
-		if (current == null) return;
-		const updated = current - 1;
-		this.subscribingNotes[payload.id] = updated;
-		if (updated <= 0) {
+		this.subscribingNotes[payload.id]--;
+		if (this.subscribingNotes[payload.id] <= 0) {
 			delete this.subscribingNotes[payload.id];
 			this.subscriber.off(`noteStream:${payload.id}`, this.onNoteStreamMessage);
 		}
@@ -222,22 +218,17 @@ export default class Connection {
 	 * チャンネル接続要求時
 	 */
 	@bindThis
-	private onChannelConnectRequested(payload: JsonObject) {
+	private onChannelConnectRequested(payload: any) {
 		const { channel, id, params, pong } = payload;
-		if (typeof id !== 'string') return;
-		if (typeof channel !== 'string') return;
-		if (typeof pong !== 'boolean' && typeof pong !== 'undefined' && pong !== null) return;
-		if (typeof params !== 'undefined' && (typeof params !== 'object' || params === null || Array.isArray(params))) return;
-		this.connectChannel(id, params, channel, pong ?? undefined);
+		this.connectChannel(id, params, channel, pong);
 	}
 
 	/**
 	 * チャンネル切断要求時
 	 */
 	@bindThis
-	private onChannelDisconnectRequested(payload: JsonObject) {
+	private onChannelDisconnectRequested(payload: any) {
 		const { id } = payload;
-		if (typeof id !== 'string') return;
 		this.disconnectChannel(id);
 	}
 
@@ -245,7 +236,7 @@ export default class Connection {
 	 * クライアントにメッセージ送信
 	 */
 	@bindThis
-	public sendMessageToWs(type: string, payload: JsonObject) {
+	public sendMessageToWs(type: string, payload: any) {
 		this.wsConnection.send(JSON.stringify({
 			type: type,
 			body: payload,
@@ -256,7 +247,7 @@ export default class Connection {
 	 * チャンネルに接続
 	 */
 	@bindThis
-	public connectChannel(id: string, params: JsonObject | undefined, channel: string, pong = false) {
+	public connectChannel(id: string, params: any, channel: string, pong = false) {
 		const channelService = this.channelsService.getChannelService(channel);
 
 		if (channelService.requireCredential && this.user == null) {
@@ -303,11 +294,7 @@ export default class Connection {
 	 * @param data メッセージ
 	 */
 	@bindThis
-	private onChannelMessageRequested(data: JsonObject) {
-		if (typeof data.id !== 'string') return;
-		if (typeof data.type !== 'string') return;
-		if (typeof data.body === 'undefined') return;
-
+	private onChannelMessageRequested(data: any) {
 		const channel = this.channels.find(c => c.id === data.id);
 		if (channel != null && channel.onMessage != null) {
 			channel.onMessage(data.type, data.body);

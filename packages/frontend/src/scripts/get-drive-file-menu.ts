@@ -1,14 +1,13 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 import * as Misskey from 'cherrypick-js';
 import { defineAsyncComponent } from 'vue';
 import { i18n } from '@/i18n.js';
-import { copyToClipboard } from '@/scripts/copy-to-clipboard.js';
+import copyToClipboard from '@/scripts/copy-to-clipboard.js';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
 import { MenuItem } from '@/types/menu.js';
 import { defaultStore } from '@/store.js';
 
@@ -19,7 +18,7 @@ function rename(file: Misskey.entities.DriveFile) {
 		default: file.name,
 	}).then(({ canceled, result: name }) => {
 		if (canceled) return;
-		misskeyApi('drive/files/update', {
+		os.api('drive/files/update', {
 			fileId: file.id,
 			name: name,
 		});
@@ -27,31 +26,21 @@ function rename(file: Misskey.entities.DriveFile) {
 }
 
 function describe(file: Misskey.entities.DriveFile) {
-	const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkFileCaptionEditWindow.vue')), {
+	os.popup(defineAsyncComponent(() => import('@/components/MkFileCaptionEditWindow.vue')), {
 		default: file.comment ?? '',
 		file: file,
 	}, {
 		done: caption => {
-			misskeyApi('drive/files/update', {
+			os.api('drive/files/update', {
 				fileId: file.id,
 				comment: caption.length === 0 ? null : caption,
 			});
 		},
-		closed: () => dispose(),
-	});
-}
-
-function move(file: Misskey.entities.DriveFile) {
-	os.selectDriveFolder(false).then(folder => {
-		misskeyApi('drive/files/update', {
-			fileId: file.id,
-			folderId: folder[0] ? folder[0].id : null,
-		});
-	});
+	}, 'closed');
 }
 
 function toggleSensitive(file: Misskey.entities.DriveFile) {
-	misskeyApi('drive/files/update', {
+	os.api('drive/files/update', {
 		fileId: file.id,
 		isSensitive: !file.isSensitive,
 	}).catch(err => {
@@ -76,11 +65,11 @@ function addApp() {
 async function deleteFile(file: Misskey.entities.DriveFile) {
 	const { canceled } = await os.confirm({
 		type: 'warning',
-		text: i18n.tsx.driveFileDeleteConfirm({ name: file.name }),
+		text: i18n.t('driveFileDeleteConfirm', { name: file.name }),
 	});
 
 	if (canceled) return;
-	misskeyApi('drive/files/delete', {
+	os.api('drive/files/delete', {
 		fileId: file.id,
 	});
 }
@@ -97,10 +86,6 @@ export function getDriveFileMenu(file: Misskey.entities.DriveFile, folder?: Miss
 		text: i18n.ts.rename,
 		icon: 'ti ti-forms',
 		action: () => rename(file),
-	}, {
-		text: i18n.ts.move,
-		icon: 'ti ti-folder-symlink',
-		action: () => move(file),
 	}, {
 		text: file.isSensitive ? i18n.ts.unmarkAsSensitive : i18n.ts.markAsSensitive,
 		icon: file.isSensitive ? 'ti ti-eye' : 'ti ti-eye-exclamation',

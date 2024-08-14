@@ -1,13 +1,14 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { action } from '@storybook/addon-actions';
-import { expect, userEvent, waitFor, within } from '@storybook/test';
+import { expect } from '@storybook/jest';
+import { userEvent, waitFor, within } from '@storybook/testing-library';
 import { StoryObj } from '@storybook/vue3';
-import { HttpResponse, http } from 'msw';
+import { rest } from 'msw';
 import { userDetailed } from '../../.storybook/fakes.js';
 import { commonHandlers } from '../../.storybook/mocks.js';
 import MkAutocomplete from './MkAutocomplete.vue';
@@ -98,11 +99,11 @@ export const User = {
 		msw: {
 			handlers: [
 				...commonHandlers,
-				http.post('/api/users/search-by-username-and-host', () => {
-					return HttpResponse.json([
+				rest.post('/api/users/search-by-username-and-host', (req, res, ctx) => {
+					return res(ctx.json([
 						userDetailed('44', 'mizuki', 'misskey-hub.net', 'Mizuki'),
 						userDetailed('49', 'momoko', 'misskey-hub.net', 'Momoko'),
-					]);
+					]));
 				}),
 			],
 		},
@@ -131,12 +132,12 @@ export const Hashtag = {
 		msw: {
 			handlers: [
 				...commonHandlers,
-				http.post('/api/hashtags/search', () => {
-					return HttpResponse.json([
+				rest.post('/api/hashtags/search', (req, res, ctx) => {
+					return res(ctx.json([
 						'気象警報注意報',
 						'気象警報',
 						'気象情報',
-					]);
+					]));
 				}),
 			],
 		},

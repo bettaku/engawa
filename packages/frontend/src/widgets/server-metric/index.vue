@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -25,7 +25,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 <script lang="ts" setup>
 import { onUnmounted, ref } from 'vue';
 import * as Misskey from 'cherrypick-js';
-import { useWidgetPropsManager, WidgetComponentEmits, WidgetComponentExpose, WidgetComponentProps } from '../widget.js';
+import { useWidgetPropsManager, Widget, WidgetComponentExpose } from '../widget.js';
 import XCpuMemory from './cpu-mem.vue';
 import XCpuMemoryCompact from './cpu-mem-pie.vue';
 import XNet from './net.vue';
@@ -36,7 +36,7 @@ import XMemory from './mem.vue';
 import XDisk from './disk.vue';
 import MkContainer from '@/components/MkContainer.vue';
 import { GetFormResultType } from '@/scripts/form.js';
-import { misskeyApiGet } from '@/scripts/misskey-api.js';
+import * as os from '@/os.js';
 import { useStream } from '@/stream.js';
 import { i18n } from '@/i18n.js';
 
@@ -60,8 +60,11 @@ const widgetPropsDef = {
 
 type WidgetProps = GetFormResultType<typeof widgetPropsDef>;
 
-const props = defineProps<WidgetComponentProps<WidgetProps>>();
-const emit = defineEmits<WidgetComponentEmits<WidgetProps>>();
+// 現時点ではvueの制限によりimportしたtypeをジェネリックに渡せない
+//const props = defineProps<WidgetComponentProps<WidgetProps>>();
+//const emit = defineEmits<WidgetComponentEmits<WidgetProps>>();
+const props = defineProps<{ widget?: Widget<WidgetProps>; }>();
+const emit = defineEmits<{ (ev: 'updateProps', props: WidgetProps); }>();
 
 const { widgetProps, configure, save } = useWidgetPropsManager(name,
 	widgetPropsDef,
@@ -71,7 +74,7 @@ const { widgetProps, configure, save } = useWidgetPropsManager(name,
 
 const meta = ref<Misskey.entities.ServerInfoResponse | null>(null);
 
-misskeyApiGet('server-info', {}).then(res => {
+os.apiGet('server-info', {}).then(res => {
 	meta.value = res;
 });
 

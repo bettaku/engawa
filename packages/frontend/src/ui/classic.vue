@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -52,21 +52,19 @@ import XCommon from './_common_/common.vue';
 import { instanceName } from '@/config.js';
 import { StickySidebar } from '@/scripts/sticky-sidebar.js';
 import * as os from '@/os.js';
-import { PageMetadata, provideMetadataReceiver, provideReactiveMetadata } from '@/scripts/page-metadata.js';
+import { mainRouter } from '@/router.js';
+import { PageMetadata, provideMetadataReceiver } from '@/scripts/page-metadata.js';
 import { defaultStore } from '@/store.js';
 import { i18n } from '@/i18n.js';
 import { miLocalStorage } from '@/local-storage.js';
-import { mainRouter } from '@/router/main.js';
 const XHeaderMenu = defineAsyncComponent(() => import('./classic.header.vue'));
 const XWidgets = defineAsyncComponent(() => import('./universal.widgets.vue'));
-
-const isRoot = computed(() => mainRouter.currentRoute.value.name === 'index');
 
 const DESKTOP_THRESHOLD = 1100;
 
 const isDesktop = ref(window.innerWidth >= DESKTOP_THRESHOLD);
 
-const pageMetadata = ref<null | PageMetadata>(null);
+const pageMetadata = ref<null | PageMetadata>();
 const widgetsShowing = ref(false);
 const fullView = ref(false);
 const globalHeaderHeight = ref(0);
@@ -77,18 +75,12 @@ const widgetsLeft = ref<HTMLElement>();
 const widgetsRight = ref<HTMLElement>();
 
 provide('router', mainRouter);
-provideMetadataReceiver((metadataGetter) => {
-	const info = metadataGetter();
-	pageMetadata.value = info;
+provideMetadataReceiver((info) => {
+	pageMetadata.value = info.value;
 	if (pageMetadata.value) {
-		if (isRoot.value && pageMetadata.value.title === instanceName) {
-			document.title = pageMetadata.value.title;
-		} else {
-			document.title = `${pageMetadata.value.title} | ${instanceName}`;
-		}
+		document.title = `${pageMetadata.value.title} | ${instanceName}`;
 	}
 });
-provideReactiveMetadata(pageMetadata);
 provide('shouldHeaderThin', showMenuOnTop.value);
 provide('forceSpacerMin', true);
 
@@ -112,7 +104,7 @@ function onContextmenu(ev: MouseEvent) {
 	};
 	if (isLink(ev.target)) return;
 	if (['INPUT', 'TEXTAREA', 'IMG', 'VIDEO', 'CANVAS'].includes(ev.target.tagName) || ev.target.attributes['contenteditable']) return;
-	if (window.getSelection()?.toString() !== '') return;
+	if (window.getSelection().toString() !== '') return;
 	const path = mainRouter.getCurrentPath();
 	os.contextMenu([{
 		type: 'label',

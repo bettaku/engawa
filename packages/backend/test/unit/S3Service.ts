@@ -1,18 +1,12 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 process.env.NODE_ENV = 'test';
 
 import { Test } from '@nestjs/testing';
-import {
-	CompleteMultipartUploadCommand,
-	CreateMultipartUploadCommand,
-	PutObjectCommand,
-	S3Client,
-	UploadPartCommand,
-} from '@aws-sdk/client-s3';
+import { UploadPartCommand, CompleteMultipartUploadCommand, CreateMultipartUploadCommand, S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
 import { GlobalModule } from '@/GlobalModule.js';
 import { CoreModule } from '@/core/CoreModule.js';

@@ -1,18 +1,18 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
 <div :class="$style.root">
-	<MkAvatar v-if="!defaultStore.state.hideAvatarsInNote && showProfile" :class="$style.avatar" :user="user"/>
+	<MkAvatar v-if="!defaultStore.state.hideAvatarsInNote && showProfile" :class="$style.avatar" :user="user" link preview/>
 	<div :class="$style.main">
 		<div v-if="showProfile" :class="$style.header">
 			<MkUserName :user="user" :nowrap="true"/>
 		</div>
 		<div>
 			<p v-if="useCw" :class="$style.cw">
-				<Mfm v-if="cw != null && cw != ''" :text="cw" :author="user" :nyaize="'respect'" :i="user" style="margin-right: 8px;"/>
+				<Mfm v-if="cw != ''" :text="cw" :author="user" :nyaize="'respect'" :i="user" style="margin-right: 8px;"/>
 				<MkCwButton v-model="showContent" :text="text.trim()" :files="files" :poll="poll" style="margin: 4px 0;"/>
 			</p>
 			<div v-show="!useCw || showContent">
@@ -26,7 +26,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 <script lang="ts" setup>
 import { ref } from 'vue';
 import * as Misskey from 'cherrypick-js';
-import type { PollEditorModelValue } from '@/components/MkPollEditor.vue';
 import MkCwButton from '@/components/MkCwButton.vue';
 import { defaultStore } from '@/store.js';
 
@@ -35,7 +34,12 @@ const showContent = ref(false);
 const props = defineProps<{
 	text: string;
 	files: Misskey.entities.DriveFile[];
-	poll?: PollEditorModelValue;
+	poll?: {
+		choices: string[];
+		multiple: boolean;
+		expiresAt: string | null;
+		expiredAfter: string | null;
+	};
 	useCw: boolean;
 	cw: string | null;
 	user: Misskey.entities.User;

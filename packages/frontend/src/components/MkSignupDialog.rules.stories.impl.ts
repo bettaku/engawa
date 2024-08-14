@@ -1,10 +1,11 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-import { expect, userEvent, waitFor, within } from '@storybook/test';
+import { expect } from '@storybook/jest';
+import { userEvent, waitFor, within } from '@storybook/testing-library';
 import { StoryObj } from '@storybook/vue3';
 import { onBeforeUnmount } from 'vue';
 import MkSignupServerRules from './MkSignupDialog.rules.vue';
@@ -51,16 +52,13 @@ export const Empty = {
 		expect(buttons.at(-1)).toBeEnabled();
 	},
 	args: {
-		// @ts-expect-error serverRules is for test
 		serverRules: [],
 		tosUrl: null,
 	},
 	decorators: [
 		(_, context) => ({
 			setup() {
-				// @ts-expect-error serverRules is for test
 				instance.serverRules = context.args.serverRules;
-				// @ts-expect-error tosUrl is for test
 				instance.tosUrl = context.args.tosUrl;
 				onBeforeUnmount(() => {
 					// FIXME: 呼び出されない
@@ -79,7 +77,6 @@ export const ServerRulesOnly = {
 	...Empty,
 	args: {
 		...Empty.args,
-		// @ts-expect-error serverRules is for test
 		serverRules: [
 			'ルール',
 		],
@@ -89,7 +86,6 @@ export const TOSOnly = {
 	...Empty,
 	args: {
 		...Empty.args,
-		// @ts-expect-error tosUrl is for test
 		tosUrl: 'https://example.com/tos',
 	},
 } satisfies StoryObj<typeof MkSignupServerRules>;
@@ -97,7 +93,6 @@ export const ServerRulesAndTOS = {
 	...Empty,
 	args: {
 		...Empty.args,
-		// @ts-expect-error serverRules is for test
 		serverRules: ServerRulesOnly.args.serverRules,
 		tosUrl: TOSOnly.args.tosUrl,
 	},

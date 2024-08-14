@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -28,7 +28,7 @@ const omitted = ref(false);
 const ignoreOmit = ref(false);
 
 const calcOmit = () => {
-	if (omitted.value || ignoreOmit.value || content.value == null) return;
+	if (omitted.value || ignoreOmit.value) return;
 	omitted.value = content.value.offsetHeight > props.maxHeight;
 };
 
@@ -38,7 +38,7 @@ const omitObserver = new ResizeObserver((entries, observer) => {
 
 onMounted(() => {
 	calcOmit();
-	omitObserver.observe(content.value as HTMLElement);
+	omitObserver.observe(content.value);
 });
 
 onUnmounted(() => {

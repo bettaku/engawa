@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -25,29 +25,33 @@ type Level = 'error' | 'success' | 'warning' | 'debug' | 'info';
 export default class Logger {
 	private context: Context;
 	private parentLogger: Logger | null = null;
+	private store: boolean;
 	private cloudLogging: Log | null | undefined;
 
-	constructor(context: string, color?: KEYWORD, cloudLogging?: Log) {
+	constructor(context: string, color?: KEYWORD, store = true, cloudLogging?: Log) {
 		this.context = {
 			name: context,
 			color: color,
 		};
+		this.store = store;
 		this.cloudLogging = cloudLogging;
 	}
 
 	@bindThis
-	public createSubLogger(context: string, color?: KEYWORD): Logger {
-		const logger = new Logger(context, color);
+	public createSubLogger(context: string, color?: KEYWORD, store = true): Logger {
+		const logger = new Logger(context, color, store);
 		logger.parentLogger = this;
 		return logger;
 	}
 
 	@bindThis
-	private log(level: Level, message: string, data?: Record<string, any> | null, important = false, subContexts: Context[] = []): void {
+	private log(level: Level, message: string, data?: Record<string, any> | null, important = false, subContexts: Context[] = [], store = true): void {
 		if (envOption.quiet) return;
+		if (!this.store) store = false;
+		if (level === 'debug') store = false;
 
 		if (this.parentLogger) {
-			this.parentLogger.log(level, message, data, important, [this.context].concat(subContexts));
+			this.parentLogger.log(level, message, data, important, [this.context].concat(subContexts), store);
 			return;
 		}
 
@@ -73,11 +77,8 @@ export default class Logger {
 		let log = `${l} ${worker}\t[${contexts.join(' ')}]\t${m}`;
 		if (envOption.withLogTime) log = chalk.gray(time) + ' ' + log;
 
-		const args: unknown[] = [important ? chalk.bold(log) : log];
-		if (data != null) {
-			args.push(data);
-		}
-		console.log(...args);
+		console.log(important ? chalk.bold(log) : log);
+		if (level === 'error' && data) console.log(data);
 		this.writeCloudLogging(level, log, timestamp, level === 'error' || level === 'warning' ? data : null);
 	}
 

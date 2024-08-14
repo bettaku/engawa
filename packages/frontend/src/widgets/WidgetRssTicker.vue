@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -28,7 +28,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <script lang="ts" setup>
 import { ref, watch, computed } from 'vue';
-import * as Misskey from 'cherrypick-js';
 import { useWidgetPropsManager, WidgetComponentEmits, WidgetComponentExpose, WidgetComponentProps } from './widget.js';
 import MarqueeText from '@/components/MkMarquee.vue';
 import { GetFormResultType } from '@/scripts/form.js';
@@ -88,7 +87,7 @@ const { widgetProps, configure } = useWidgetPropsManager(name,
 	emit,
 );
 
-const rawItems = ref<Misskey.entities.FetchRssResponse['items']>([]);
+const rawItems = ref([]);
 const items = computed(() => {
 	const newItems = rawItems.value.slice(0, widgetProps.maxEntries);
 	if (widgetProps.shuffle) {
@@ -111,8 +110,8 @@ const tick = () => {
 
 	window.fetch(fetchEndpoint.value, {})
 		.then(res => res.json())
-		.then((feed: Misskey.entities.FetchRssResponse) => {
-			rawItems.value = feed.items;
+		.then(feed => {
+			rawItems.value = feed.items ?? [];
 			fetching.value = false;
 			key.value++;
 		});

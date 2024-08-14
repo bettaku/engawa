@@ -1,5 +1,5 @@
 import { expectType } from 'tsd';
-import * as Misskey from '../src/index.js';
+import * as Misskey from '../src';
 
 describe('API', () => {
 	test('success', async () => {

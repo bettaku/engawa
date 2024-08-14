@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -10,7 +10,6 @@ import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import Fastify, { FastifyInstance } from 'fastify';
 import fastifyStatic from '@fastify/static';
 import fastifyRawBody from 'fastify-raw-body';
-import rateLimit from '@fastify/rate-limit'
 import { IsNull } from 'typeorm';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import type { Config } from '@/config.js';
@@ -19,6 +18,7 @@ import { DI } from '@/di-symbols.js';
 import type Logger from '@/logger.js';
 import * as Acct from '@/misc/acct.js';
 import { genIdenticon } from '@/misc/gen-identicon.js';
+import { createTemp } from '@/misc/create-temp.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { LoggerService } from '@/core/LoggerService.js';
 import { bindThis } from '@/decorators.js';
@@ -29,7 +29,6 @@ import { ApiServerService } from './api/ApiServerService.js';
 import { StreamingApiServerService } from './api/StreamingApiServerService.js';
 import { WellKnownServerService } from './WellKnownServerService.js';
 import { FileServerService } from './FileServerService.js';
-import { HealthServerService } from './HealthServerService.js';
 import { ClientServerService } from './web/ClientServerService.js';
 import { OpenApiServerService } from './api/openapi/OpenApiServerService.js';
 import { OAuth2ProviderService } from './oauth/OAuth2ProviderService.js';
@@ -63,13 +62,12 @@ export class ServerService implements OnApplicationShutdown {
 		private wellKnownServerService: WellKnownServerService,
 		private nodeinfoServerService: NodeinfoServerService,
 		private fileServerService: FileServerService,
-		private healthServerService: HealthServerService,
 		private clientServerService: ClientServerService,
 		private globalEventService: GlobalEventService,
 		private loggerService: LoggerService,
 		private oauth2ProviderService: OAuth2ProviderService,
 	) {
-		this.logger = this.loggerService.getLogger('server', 'gray');
+		this.logger = this.loggerService.getLogger('server', 'gray', false);
 	}
 
 	@bindThis
@@ -111,7 +109,6 @@ export class ServerService implements OnApplicationShutdown {
 		fastify.register(this.wellKnownServerService.createServer);
 		fastify.register(this.oauth2ProviderService.createServer, { prefix: '/oauth' });
 		fastify.register(this.oauth2ProviderService.createTokenServer, { prefix: '/oauth/token' });
-		fastify.register(this.healthServerService.createServer, { prefix: '/healthz' });
 
 		fastify.get<{ Params: { path: string }; Querystring: { static?: any; badge?: any; }; }>('/emoji/:path(.*)', async (request, reply) => {
 			const path = request.params.path;
@@ -123,20 +120,12 @@ export class ServerService implements OnApplicationShutdown {
 				return;
 			}
 
-			const emojiPath = path.replace(/\.webp$/i, '');
-			const pathChunks = emojiPath.split('@');
-
-			if (pathChunks.length > 2) {
-				reply.code(400);
-				return;
-			}
-
-			const name = pathChunks.shift();
-			const host = pathChunks.pop();
+			const name = path.split('@')[0].replace(/\.webp$/i, '');
+			const host = path.split('@')[1]?.replace(/\.webp$/i, '');
 
 			const emoji = await this.emojisRepository.findOneBy({
 				// `@.` is the spec of ReactionService.decodeReaction
-				host: (host === undefined || host === '.') ? IsNull() : host,
+				host: (host == null || host === '.') ? IsNull() : host,
 				name: name,
 			});
 
@@ -195,7 +184,9 @@ export class ServerService implements OnApplicationShutdown {
 			reply.header('Cache-Control', 'public, max-age=86400');
 
 			if ((await this.metaService.fetch()).enableIdenticonGeneration) {
-				return await genIdenticon(request.params.x);
+				const [temp, cleanup] = await createTemp();
+				await genIdenticon(request.params.x, fs.createWriteStream(temp));
+				return fs.createReadStream(temp).on('close', () => cleanup());
 			} else {
 				return reply.redirect('/static-assets/avatar.png');
 			}
@@ -213,7 +204,7 @@ export class ServerService implements OnApplicationShutdown {
 				});
 
 				this.globalEventService.publishMainStream(profile.userId, 'meUpdated', await this.userEntityService.pack(profile.userId, { id: profile.userId }, {
-					schema: 'MeDetailed',
+					detail: true,
 					includeSecrets: true,
 				}));
 

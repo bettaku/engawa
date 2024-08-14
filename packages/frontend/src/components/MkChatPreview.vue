@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project & noridev and cherrypick-project
+SPDX-FileCopyrightText: syuilo and noridev and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -65,7 +65,7 @@ function isMe(message): boolean {
     }
   }
 
-  &::after {
+  &:after {
     content: "";
     display: block;
     clear: both;
@@ -74,7 +74,7 @@ function isMe(message): boolean {
   > div {
     padding: 25px 30px;
 
-    &::after {
+    &:after {
       content: "";
       display: block;
       clear: both;

@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -77,14 +77,7 @@ const emit = defineEmits<{
 	(ev: 'end'): void;
 }>();
 
-const particles: {
-	size: number;
-	xA: number;
-	yA: number;
-	xB: number;
-	yB: number;
-	color: string;
-}[] = [];
+const particles = [];
 const origin = 64;
 const colors = ['#FF1493', '#00FFFF', '#FFE202'];
 const zIndex = os.claimZIndex('high');

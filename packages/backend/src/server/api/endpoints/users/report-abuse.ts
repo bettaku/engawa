@@ -1,13 +1,16 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import type { AbuseUserReportsRepository } from '@/models/_.js';
+import { IdService } from '@/core/IdService.js';
 import { Endpoint } from '@/server/api/endpoint-base.js';
+import { DI } from '@/di-symbols.js';
 import { GetterService } from '@/server/api/GetterService.js';
 import { RoleService } from '@/core/RoleService.js';
-import { AbuseReportService } from '@/core/AbuseReportService.js';
+import { QueueService } from '@/core/QueueService.js';
 import { ApiError } from '../../error.js';
 
 export const meta = {
@@ -51,32 +54,39 @@ export const paramDef = {
 @Injectable()
 export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-disable-line import/no-default-export
 	constructor(
+		@Inject(DI.abuseUserReportsRepository)
+		private abuseUserReportsRepository: AbuseUserReportsRepository,
+
+		private idService: IdService,
 		private getterService: GetterService,
 		private roleService: RoleService,
-		private abuseReportService: AbuseReportService,
+		private queueService: QueueService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			// Lookup user
-			const targetUser = await this.getterService.getUser(ps.userId).catch(err => {
+			const user = await this.getterService.getUser(ps.userId).catch(err => {
 				if (err.id === '15348ddd-432d-49c2-8a5a-8069753becff') throw new ApiError(meta.errors.noSuchUser);
 				throw err;
 			});
 
-			if (targetUser.id === me.id) {
+			if (user.id === me.id) {
 				throw new ApiError(meta.errors.cannotReportYourself);
 			}
 
-			if (await this.roleService.isAdministrator(targetUser)) {
+			if (await this.roleService.isAdministrator(user)) {
 				throw new ApiError(meta.errors.cannotReportAdmin);
 			}
 
-			await this.abuseReportService.report([{
-				targetUserId: targetUser.id,
-				targetUserHost: targetUser.host,
+			const report = await this.abuseUserReportsRepository.insert({
+				id: this.idService.gen(),
+				targetUserId: user.id,
+				targetUserHost: user.host,
 				reporterId: me.id,
 				reporterHost: null,
 				comment: ps.comment,
-			}]);
+			}).then(x => this.abuseUserReportsRepository.findOneByOrFail(x.identifiers[0]));
+
+			this.queueService.createReportAbuseJob(report);
 		});
 	}
 }

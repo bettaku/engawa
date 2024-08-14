@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -44,7 +44,7 @@ import { Interpreter, Parser, utils } from '@syuilo/aiscript';
 import MkContainer from '@/components/MkContainer.vue';
 import MkButton from '@/components/MkButton.vue';
 import MkCodeEditor from '@/components/MkCodeEditor.vue';
-import { aiScriptReadline, createAiScriptEnv } from '@/scripts/aiscript/api.js';
+import { createAiScriptEnv } from '@/scripts/aiscript/api.js';
 import * as os from '@/os.js';
 import { $i } from '@/account.js';
 import { i18n } from '@/i18n.js';
@@ -86,7 +86,19 @@ async function run() {
 			root.value = _root.value;
 		}),
 	}), {
-		in: aiScriptReadline,
+		in: (q) => {
+			return new Promise(ok => {
+				os.inputText({
+					title: q,
+				}).then(({ canceled, result: a }) => {
+					if (canceled) {
+						ok('');
+					} else {
+						ok(a);
+					}
+				});
+			});
+		},
 		out: (value) => {
 			if (value.type === 'str' && value.value.toLowerCase().replace(',', '').includes('hello world')) {
 				claimAchievement('outputHelloWorldOnScratchpad');
@@ -152,10 +164,10 @@ const headerActions = computed(() => []);
 
 const headerTabs = computed(() => []);
 
-definePageMetadata(() => ({
+definePageMetadata({
 	title: i18n.ts.scratchpad,
 	icon: 'ti ti-terminal-2',
-}));
+});
 </script>
 
 <style lang="scss" module>

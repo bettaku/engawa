@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -17,7 +17,7 @@ import { bindThis } from '@/decorators.js';
 import { checkHttps } from '@/misc/check-https.js';
 import { ApResolverService } from '../ApResolverService.js';
 import { ApLoggerService } from '../ApLoggerService.js';
-import { isDocument, type IObject } from '../type.js';
+import type { IObject } from '../type.js';
 
 @Injectable()
 export class ApImageService {
@@ -39,7 +39,7 @@ export class ApImageService {
 	 * Imageを作成します。
 	 */
 	@bindThis
-	public async createImage(actor: MiRemoteUser, value: string | IObject): Promise<MiDriveFile | null> {
+	public async createImage(actor: MiRemoteUser, value: string | IObject): Promise<MiDriveFile> {
 		// 投稿者が凍結されていたらスキップ
 		if (actor.isSuspended) {
 			throw new Error('actor has been suspended');
@@ -47,18 +47,16 @@ export class ApImageService {
 
 		const image = await this.apResolverService.createResolver().resolve(value);
 
-		if (!isDocument(image)) return null;
-
 		if (image.url == null) {
-			return null;
+			throw new Error('invalid image: url not provided');
 		}
 
 		if (typeof image.url !== 'string') {
-			return null;
+			throw new Error('invalid image: unexpected type of url: ' + JSON.stringify(image.url, null, 2));
 		}
 
 		if (!checkHttps(image.url)) {
-			return null;
+			throw new Error('invalid image: unexpected schema of url: ' + image.url);
 		}
 
 		this.logger.info(`Creating the Image: ${image.url}`);
@@ -88,11 +86,12 @@ export class ApImageService {
 	/**
 	 * Imageを解決します。
 	 *
-	 * ImageをリモートサーバーからフェッチしてMisskeyに登録しそれを返します。
+	 * Misskeyに対象のImageが登録されていればそれを返し、そうでなければ
+	 * リモートサーバーからフェッチしてMisskeyに登録しそれを返します。
 	 */
 	@bindThis
-	public async resolveImage(actor: MiRemoteUser, value: string | IObject): Promise<MiDriveFile | null> {
-		// TODO: Misskeyに対象のImageが登録されていればそれを返す
+	public async resolveImage(actor: MiRemoteUser, value: string | IObject): Promise<MiDriveFile> {
+		// TODO
 
 		// リモートサーバーからフェッチしてきて登録
 		return await this.createImage(actor, value);

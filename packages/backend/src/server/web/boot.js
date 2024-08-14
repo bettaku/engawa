@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -29,8 +29,7 @@
 
 	let forceError = localStorage.getItem('forceError');
 	if (forceError != null) {
-		renderError('FORCED_ERROR', 'This error is forced by having forceError in local storage.');
-		return;
+		renderError('FORCED_ERROR', 'This error is forced by having forceError in local storage.')
 	}
 
 	//#region Detect language & fetch translations
@@ -92,8 +91,8 @@
 	//#endregion
 
 	//#region Script
-	async function importAppScript() {
-		await import(`/vite/${CLIENT_ENTRY}`)
+	function importAppScript() {
+		import(`/vite/${CLIENT_ENTRY}`)
 			.catch(async e => {
 				console.error(e);
 				renderError('APP_IMPORT', e);
@@ -166,12 +165,7 @@
 		document.head.appendChild(css);
 	}
 
-	async function renderError(code, details) {
-		// Cannot set property 'innerHTML' of null を回避
-		if (document.readyState === 'loading') {
-			await new Promise(resolve => window.addEventListener('DOMContentLoaded', resolve));
-		}
-
+	function renderError(code, details) {
 		let errorsElement = document.getElementById('errors');
 
 		if (!errorsElement) {
@@ -334,6 +328,7 @@
 			#errorInfo {
 				width: 50%;
 			}
-		}`)
+		}
+		`)
 	}
 })();

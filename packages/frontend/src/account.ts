@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -12,8 +12,7 @@ import { miLocalStorage } from '@/local-storage.js';
 import { MenuButton } from '@/types/menu.js';
 import { del, get, set } from '@/scripts/idb-proxy.js';
 import { apiUrl } from '@/config.js';
-import { waiting, popup, popupMenu, success, alert } from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
+import { waiting, api, popup, popupMenu, success, alert } from '@/os.js';
 import { unisonReload, reloadChannel } from '@/scripts/unison-reload.js';
 
 // TODO: 他のタブと永続化されたstateを同期
@@ -25,13 +24,8 @@ const accountData = miLocalStorage.getItem('account');
 // TODO: 外部からはreadonlyに
 export const $i = accountData ? reactive(JSON.parse(accountData) as Account) : null;
 
-export const iAmModerator = $i != null && ($i.isAdmin === true || $i.isModerator === true);
+export const iAmModerator = $i != null && ($i.isAdmin || $i.isModerator);
 export const iAmAdmin = $i != null && $i.isAdmin;
-
-export function signinRequired() {
-	if ($i == null) throw new Error('signin required');
-	return $i;
-}
 
 export let notesCount = $i == null ? 0 : $i.notesCount;
 export function incNotesCount() {
@@ -158,7 +152,7 @@ function fetchAccount(token: string, id?: string, forceShowDialog?: boolean): Pr
 				res.json().then(done2, fail2);
 			}))
 			.then(async res => {
-				if ('error' in res) {
+				if (res.error) {
 					if (res.error.id === 'a8c724b3-6e9c-4b46-b1a8-bc3ed6258370') {
 						// SUSPENDED
 						if (forceShowDialog || $i && (token === $i.token || id === $i.id)) {
@@ -222,12 +216,10 @@ export async function refreshAccount() {
 
 export async function login(token: Account['token'], redirect?: string) {
 	const showing = ref(true);
-	const { dispose } = popup(defineAsyncComponent(() => import('@/components/MkWaitingDialog.vue')), {
+	popup(defineAsyncComponent(() => import('@/components/MkWaitingDialog.vue')), {
 		success: false,
 		showing: showing,
-	}, {
-		closed: () => dispose(),
-	});
+	}, {}, 'closed');
 	if (_DEV_) console.log('logging as token ', token);
 	const me = await fetchAccount(token, undefined, true)
 		.catch(reason => {
@@ -264,23 +256,21 @@ export async function openAccountMenu(opts: {
 	if (!$i) return;
 
 	function showSigninDialog() {
-		const { dispose } = popup(defineAsyncComponent(() => import('@/components/MkSigninDialog.vue')), {}, {
+		popup(defineAsyncComponent(() => import('@/components/MkSigninDialog.vue')), {}, {
 			done: res => {
 				addAccount(res.id, res.i);
 				success();
 			},
-			closed: () => dispose(),
-		});
+		}, 'closed');
 	}
 
 	function createAccount() {
-		const { dispose } = popup(defineAsyncComponent(() => import('@/components/MkSignupDialog.vue')), {}, {
+		popup(defineAsyncComponent(() => import('@/components/MkSignupDialog.vue')), {}, {
 			done: res => {
 				addAccount(res.id, res.i);
 				switchAccountWithToken(res.i);
 			},
-			closed: () => dispose(),
-		});
+		}, 'closed');
 	}
 
 	async function switchAccount(account: Misskey.entities.UserDetailed) {
@@ -295,7 +285,7 @@ export async function openAccountMenu(opts: {
 	}
 
 	const storedAccounts = await getAccounts().then(accounts => accounts.filter(x => x.id !== $i.id));
-	const accountsPromise = misskeyApi('users/show', { userIds: storedAccounts.map(x => x.id) });
+	const accountsPromise = api('users/show', { userIds: storedAccounts.map(x => x.id) });
 
 	function createItem(account: Misskey.entities.UserDetailed) {
 		return {
@@ -333,7 +323,7 @@ export async function openAccountMenu(opts: {
 			text: i18n.ts.profile,
 			to: `/@${ $i.username }`,
 			avatar: $i,
-		}, { type: 'divider' as const }, ...(opts.includeCurrentAccount ? [createItem($i)] : []), ...accountItemPromises, {
+		}, { type: 'divider' }, ...(opts.includeCurrentAccount ? [createItem($i)] : []), ...accountItemPromises, {
 			type: 'parent' as const,
 			icon: 'ti ti-plus',
 			text: i18n.ts.addAccount,

@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -14,9 +14,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 		:enterToClass="defaultStore.state.animation && props.transition?.enterToClass || undefined"
 		:leaveFromClass="defaultStore.state.animation && props.transition?.leaveFromClass || undefined"
 	>
-		<canvas v-show="hide" key="canvas" ref="canvas" :class="$style.canvas" :width="canvasWidth" :height="canvasHeight" :title="title ?? undefined" tabindex="-1"/>
-		<img v-show="!hide" key="img" ref="img" :height="imgHeight ?? undefined" :width="imgWidth ?? undefined" :class="[$style.img, { [$style.noDrag]: noDrag }]" :src="src ?? undefined" :title="title ?? undefined" :alt="alt ?? undefined" loading="eager" decoding="async" tabindex="-1"/>
-		<i v-if="alt && showAltIndicator" :class="$style.altIndicator" class="ti ti-alt"></i>
+		<canvas v-show="hide" key="canvas" ref="canvas" :class="$style.canvas" :width="canvasWidth" :height="canvasHeight" :title="title ?? undefined"/>
+		<img v-show="!hide" key="img" ref="img" :height="imgHeight" :width="imgWidth" :class="[$style.img, { [$style.noDrag]: noDrag }]" :src="src ?? undefined" :title="title ?? undefined" :alt="alt ?? undefined" loading="eager" decoding="async"/>
 	</TransitionGroup>
 </div>
 </template>
@@ -74,7 +73,7 @@ const props = withDefaults(defineProps<{
 		leaveFromClass?: string;
 	} | null;
 	src?: string | null;
-	hash?: string | null;
+	hash?: string;
 	alt?: string | null;
 	title?: string | null;
 	height?: number;
@@ -83,7 +82,6 @@ const props = withDefaults(defineProps<{
 	forceBlurhash?: boolean;
 	onlyAvgColor?: boolean; // 軽量化のためにBlurhashを使わずに平均色だけを描画
 	noDrag?: boolean;
-	showAltIndicator?: boolean;
 }>(), {
 	transition: null,
 	src: null,
@@ -95,7 +93,6 @@ const props = withDefaults(defineProps<{
 	forceBlurhash: false,
 	onlyAvgColor: false,
 	noDrag: false,
-	showAltIndicator: false,
 });
 
 const viewId = uuid();
@@ -156,25 +153,21 @@ function drawImage(bitmap: CanvasImageSource) {
 }
 
 function drawAvg() {
-	if (!canvas.value) return;
-
-	const color = (props.hash != null && extractAvgColorFromBlurhash(props.hash)) || '#888';
+	if (!canvas.value || !props.hash) return;
 
 	const ctx = canvas.value.getContext('2d');
 	if (!ctx) return;
 
 	// avgColorでお茶をにごす
 	ctx.beginPath();
-	ctx.fillStyle = color;
+	ctx.fillStyle = extractAvgColorFromBlurhash(props.hash) ?? '#888';
 	ctx.fillRect(0, 0, canvasWidth.value, canvasHeight.value);
 }
 
 async function draw() {
-	if (import.meta.env.MODE === 'test' && props.hash == null) return;
+	if (props.hash == null) return;
 
 	drawAvg();
-
-	if (props.hash == null) return;
 
 	if (props.onlyAvgColor) return;
 
@@ -271,22 +264,5 @@ onUnmounted(() => {
 	&.noDrag {
 		-webkit-user-drag: none;
 	}
-}
-
-.altIndicator {
-	display: flex;
-	gap: 4px;
-	position: absolute;
-	border-radius: 8px;
-	overflow: hidden;
-	top: 0;
-	right: 0;
-	background-color: var(--bg);
-	-webkit-backdrop-filter: var(--blur, blur(15px));
-	backdrop-filter: var(--blur, blur(15px));
-	color: var(--accent);
-	font-size: 1em;
-	padding: 6px 8px;
-	text-align: center;
 }
 </style>

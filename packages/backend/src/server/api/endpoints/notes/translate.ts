@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -25,7 +25,7 @@ export const meta = {
 
 	res: {
 		type: 'object',
-		optional: true, nullable: false,
+		optional: false, nullable: false,
 		properties: {
 			sourceLang: { type: 'string' },
 			text: { type: 'string' },
@@ -42,11 +42,6 @@ export const meta = {
 			message: 'No such note.',
 			code: 'NO_SUCH_NOTE',
 			id: 'bea9b03f-36e0-49c5-a4db-627a029f8971',
-		},
-		cannotTranslateInvisibleNote: {
-			message: 'Cannot translate invisible note.',
-			code: 'CANNOT_TRANSLATE_INVISIBLE_NOTE',
-			id: 'ea29f2ca-c368-43b3-aaf1-5ac3e74bbe5d',
 		},
 		noTranslateService: {
 			message: 'Translate service is not available.',
@@ -86,11 +81,11 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			});
 
 			if (!(await this.noteEntityService.isVisibleForMe(note, me.id))) {
-				throw new ApiError(meta.errors.cannotTranslateInvisibleNote);
+				return 204; // TODO: 良い感じのエラー返す
 			}
 
 			if (note.text == null) {
-				return;
+				return 204;
 			}
 
 			const instance = await this.metaService.fetch();
@@ -111,7 +106,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			let translationResult;
 			if (instance.translatorType === 'deepl') {
 				if (instance.deeplAuthKey == null) {
-					throw new ApiError(meta.errors.unavailable);
+					return 204; // TODO: 良い感じのエラー返す
 				}
 				translationResult = await this.translateDeepL((note.cw ? note.cw + '\n' : '') + note.text, targetLang, instance.deeplAuthKey, instance.deeplIsPro, instance.translatorType);
 			} else if (instance.translatorType === 'google_no_api') {
@@ -126,9 +121,9 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					translator: translatorServices,
 				};
 			} else if (instance.translatorType === 'ctav3') {
-				if (instance.ctav3SaKey == null) return Promise.resolve(204);
-				else if (instance.ctav3ProjectId == null) return Promise.resolve(204);
-				else if (instance.ctav3Location == null) return Promise.resolve(204);
+				if (instance.ctav3SaKey == null) return 204;
+				else if (instance.ctav3ProjectId == null) return 204;
+				else if (instance.ctav3Location == null) return 204;
 				translationResult = await this.apiCloudTranslationAdvanced(
 					(note.cw ? note.cw + '\n' : '') + note.text, targetLang, instance.ctav3SaKey, instance.ctav3ProjectId, instance.ctav3Location, instance.ctav3Model, instance.ctav3Glossary, instance.translatorType,
 				);
@@ -136,11 +131,11 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				throw new Error('Unsupported translator type');
 			}
 
-			return Promise.resolve({
-				sourceLang: translationResult.sourceLang || '',
-				text: translationResult.text || '',
-				translator: translationResult.translator || [],
-			});
+			return {
+				sourceLang: translationResult.sourceLang,
+				text: translationResult.text,
+				translator: translationResult.translator,
+			};
 		});
 	}
 
@@ -162,11 +157,11 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		});
 
 		const json = (await res.json()) as {
-			translations: {
-				detected_source_language: string;
-				text: string;
-			}[];
-		};
+      translations: {
+        detected_source_language: string;
+        text: string;
+      }[];
+    };
 
 		return {
 			sourceLang: json.translations[0].detected_source_language,

@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -13,11 +13,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { onMounted, shallowRef, ref, nextTick } from 'vue';
+import { onMounted, shallowRef, ref } from 'vue';
 import { Chart } from 'chart.js';
 import gradient from 'chartjs-plugin-gradient';
 import tinycolor from 'tinycolor2';
-import { misskeyApi } from '@/scripts/misskey-api.js';
+import * as os from '@/os.js';
 import { defaultStore } from '@/store.js';
 import { useChartTooltip } from '@/scripts/use-chart-tooltip.js';
 import { chartVLine } from '@/scripts/chart-vline.js';
@@ -25,9 +25,9 @@ import { initChart } from '@/scripts/init-chart.js';
 
 initChart();
 
-const chartEl = shallowRef<HTMLCanvasElement | null>(null);
+const chartEl = shallowRef<HTMLCanvasElement>(null);
 const now = new Date();
-let chartInstance: Chart | null = null;
+let chartInstance: Chart = null;
 const chartLimit = 30;
 const fetching = ref(true);
 
@@ -53,11 +53,7 @@ async function renderChart() {
 		}));
 	};
 
-	const raw = await misskeyApi('charts/active-users', { limit: chartLimit, span: 'day' });
-
-	fetching.value = false;
-
-	await nextTick();
+	const raw = await os.api('charts/active-users', { limit: chartLimit, span: 'day' });
 
 	const vLineColor = defaultStore.state.darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)';
 
@@ -68,8 +64,6 @@ async function renderChart() {
 	const colorWrite = '#2ecc71';
 
 	const max = Math.max(...raw.read);
-
-	if (chartEl.value == null) return;
 
 	chartInstance = new Chart(chartEl.value, {
 		type: 'bar',
@@ -103,6 +97,7 @@ async function renderChart() {
 					type: 'time',
 					offset: true,
 					time: {
+						stepSize: 1,
 						unit: 'day',
 						displayFormats: {
 							day: 'M/d',
@@ -113,7 +108,6 @@ async function renderChart() {
 						display: false,
 					},
 					ticks: {
-						stepSize: 1,
 						display: true,
 						maxRotation: 0,
 						autoSkipPadding: 8,
@@ -147,10 +141,13 @@ async function renderChart() {
 					},
 					external: externalTooltipHandler,
 				},
+				gradient,
 			},
 		},
 		plugins: [chartVLine(vLineColor)],
 	});
+
+	fetching.value = false;
 }
 
 onMounted(async () => {

@@ -5,38 +5,10 @@ import { type UserConfig, defineConfig } from 'vite';
 
 import locales from '../../locales/index.js';
 import meta from '../../package.json';
-import packageInfo from './package.json' with { type: 'json' };
 import pluginUnwindCssModuleClassName from './lib/rollup-plugin-unwind-css-module-class-name.js';
 import pluginJson5 from './vite.json5.js';
 
 const extensions = ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.json', '.json5', '.svg', '.sass', '.scss', '.css', '.vue'];
-
-/**
- * Misskeyのフロントエンドにバンドルせず、CDNなどから別途読み込むリソースを記述する。
- * CDNを使わずにバンドルしたい場合、以下の配列から該当要素を削除orコメントアウトすればOK
- */
-const externalPackages = [
-	// shiki（コードブロックのシンタックスハイライトで使用中）はテーマ・言語の定義の容量が大きいため、それらはCDNから読み込む
-	{
-		name: 'shiki',
-		match: /^shiki\/(?<subPkg>(langs|themes))$/,
-		path(id: string, pattern: RegExp): string {
-			const match = pattern.exec(id)?.groups;
-			return match
-				? `https://esm.sh/shiki@${packageInfo.dependencies.shiki}/${match['subPkg']}`
-				: id;
-		},
-	},
-	// tinyld가 특수 UTF-8 문자를 사용하므로 Vite 빌드 과정에서 제외하고 CDN을 통해 로드함.
-	// https://github.com/komodojp/tinyld/issues/29#issuecomment-2165835459
-	{
-		name: 'tinyld',
-		match: /^tinyld$/,
-		path(): string {
-			return `https://cdn.jsdelivr.net/npm/tinyld@${packageInfo.dependencies.tinyld}/dist/tinyld.normal.node.mjs`
-		},
-	},
-];
 
 const hash = (str: string, seed = 0): number => {
 	let h1 = 0xdeadbeef ^ seed,
@@ -130,6 +102,11 @@ export function getConfig(): UserConfig {
 			__VUE_PROD_DEVTOOLS__: false,
 		},
 
+		// https://vitejs.dev/guide/dep-pre-bundling.html#monorepos-and-linked-dependencies
+		optimizeDeps: {
+			include: ['cherrypick-js'],
+		},
+
 		build: {
 			target: [
 				'chrome116',
@@ -141,24 +118,14 @@ export function getConfig(): UserConfig {
 				input: {
 					app: './src/_boot_.ts',
 				},
-				external: externalPackages.map(p => p.match),
 				output: {
 					manualChunks: {
 						vue: ['vue'],
 						photoswipe: ['photoswipe', 'photoswipe/lightbox', 'photoswipe/style.css'],
 					},
-					entryFileNames: process.env.NODE_ENV === 'production' ? `${meta.version}.[hash:8].js` : `${meta.version}.[name]-[hash:8].js`,
-					chunkFileNames: process.env.NODE_ENV === 'production' ? `${meta.version}.[hash:8].js` : `${meta.version}.[name]-[hash:8].js`,
-					assetFileNames: process.env.NODE_ENV === 'production' ? `${meta.version}.[hash:8][extname]` : `${meta.version}.[name]-[hash:8][extname]`,
-					paths(id) {
-						for (const p of externalPackages) {
-							if (p.match.test(id)) {
-								return p.path(id, p.match);
-							}
-						}
-
-						return id;
-					},
+					entryFileNames: `${meta.version}.[hash].js`,
+					chunkFileNames: `${meta.version}.[hash].js`,
+					assetFileNames: `${meta.version}.[hash][extname]`,
 				},
 			},
 			cssCodeSplit: true,
@@ -170,7 +137,7 @@ export function getConfig(): UserConfig {
 
 			// https://vitejs.dev/guide/dep-pre-bundling.html#monorepos-and-linked-dependencies
 			commonjsOptions: {
-				include: [/cherrypick-js/, /misskey-bubble-game/, /node_modules/],
+				include: [/cherrypick-js/, /node_modules/],
 			},
 		},
 
@@ -190,7 +157,6 @@ export function getConfig(): UserConfig {
 					},
 				},
 			},
-			includeSource: ['src/**/*.ts'],
 		},
 	};
 }

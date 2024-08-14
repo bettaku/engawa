@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -37,6 +37,11 @@ export const meta = {
 				'Destination account doesn\'t have proper \'Known As\' alias, or has already moved.',
 			code: 'DESTINATION_ACCOUNT_FORBIDS',
 			id: 'b5c90186-4ab0-49c8-9bba-a1f766282ba4',
+		},
+		rootForbidden: {
+			message: 'The root can\'t migrate.',
+			code: 'NOT_ROOT_FORBIDDEN',
+			id: '4362e8dc-731f-4ad8-a694-be2a88922a24',
 		},
 		noSuchUser: {
 			message: 'No such user.',
@@ -86,6 +91,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		super(meta, paramDef, async (ps, me) => {
 			// check parameter
 			if (!ps.moveToAccount) throw new ApiError(meta.errors.noSuchUser);
+			// abort if user is the root
+			if (me.isRoot) throw new ApiError(meta.errors.rootForbidden);
 			// abort if user has already moved
 			if (me.movedToUri) throw new ApiError(meta.errors.alreadyMoved);
 

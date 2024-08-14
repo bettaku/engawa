@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -85,7 +85,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			});
 
 			// Check not following
-			const exist = await this.followingsRepository.exists({
+			const exist = await this.followingsRepository.exist({
 				where: {
 					followerId: follower.id,
 					followeeId: followee.id,

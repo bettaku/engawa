@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -137,7 +137,7 @@ export class ApiServerService {
 			const instances = await this.instancesRepository.find({
 				select: ['host'],
 				where: {
-					suspensionState: 'none',
+					isSuspended: false,
 				},
 			});
 
@@ -157,7 +157,7 @@ export class ApiServerService {
 				return {
 					ok: true,
 					token: token.token,
-					user: await this.userEntityService.pack(token.userId, null, { schema: 'UserDetailedNotMe' }),
+					user: await this.userEntityService.pack(token.userId, null, { detail: true }),
 				};
 			} else {
 				return {

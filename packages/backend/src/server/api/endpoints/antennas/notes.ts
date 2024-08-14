@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -14,7 +14,6 @@ import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
 import { IdService } from '@/core/IdService.js';
 import { FanoutTimelineService } from '@/core/FanoutTimelineService.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
-import { trackPromise } from '@/misc/promise-tracker.js';
 import { ApiError } from '../../error.js';
 
 export const meta = {
@@ -93,7 +92,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			antenna.isActive = true;
 			antenna.lastUsedAt = new Date();
-			trackPromise(this.antennasRepository.update(antenna.id, antenna));
+			this.antennasRepository.update(antenna.id, antenna);
 
 			if (needPublishEvent) {
 				this.globalEventService.publishInternalEvent('antennaUpdated', antenna);
@@ -111,8 +110,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				.leftJoinAndSelect('note.reply', 'reply')
 				.leftJoinAndSelect('note.renote', 'renote')
 				.leftJoinAndSelect('reply.user', 'replyUser')
-				.leftJoinAndSelect('renote.user', 'renoteUser')
-				.andWhere('user.isIndexable = true');
+				.leftJoinAndSelect('renote.user', 'renoteUser');
 
 			this.queryService.generateVisibilityQuery(query, me);
 			this.queryService.generateMutedUserQuery(query, me);
@@ -125,7 +123,9 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				notes.sort((a, b) => a.id > b.id ? -1 : 1);
 			}
 
-			this.noteReadService.read(me.id, notes);
+			if (notes.length > 0) {
+				this.noteReadService.read(me.id, notes);
+			}
 
 			return await this.noteEntityService.packMany(notes, me);
 		});

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -29,9 +29,6 @@ export class BlockingEntityService {
 	public async pack(
 		src: MiBlocking['id'] | MiBlocking,
 		me?: { id: MiUser['id'] } | null | undefined,
-		hint?: {
-			blockee?: Packed<'UserDetailedNotMe'>,
-		},
 	): Promise<Packed<'Blocking'>> {
 		const blocking = typeof src === 'object' ? src : await this.blockingsRepository.findOneByOrFail({ id: src });
 
@@ -39,20 +36,17 @@ export class BlockingEntityService {
 			id: blocking.id,
 			createdAt: this.idService.parse(blocking.id).date.toISOString(),
 			blockeeId: blocking.blockeeId,
-			blockee: hint?.blockee ?? this.userEntityService.pack(blocking.blockeeId, me, {
-				schema: 'UserDetailedNotMe',
+			blockee: this.userEntityService.pack(blocking.blockeeId, me, {
+				detail: true,
 			}),
 		});
 	}
 
 	@bindThis
-	public async packMany(
-		blockings: MiBlocking[],
+	public packMany(
+		blockings: any[],
 		me: { id: MiUser['id'] },
 	) {
-		const _blockees = blockings.map(({ blockee, blockeeId }) => blockee ?? blockeeId);
-		const _userMap = await this.userEntityService.packMany(_blockees, me, { schema: 'UserDetailedNotMe' })
-			.then(users => new Map(users.map(u => [u.id, u])));
-		return Promise.all(blockings.map(blocking => this.pack(blocking, me, { blockee: _userMap.get(blocking.blockeeId) })));
+		return Promise.all(blockings.map(x => this.pack(x, me)));
 	}
 }

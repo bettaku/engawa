@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
@@ -16,6 +16,7 @@ import { appendQuery, query } from '@/misc/prelude/url.js';
 import { deepClone } from '@/misc/clone.js';
 import { bindThis } from '@/decorators.js';
 import { isMimeImage } from '@/misc/is-mime-image.js';
+import { isNotNull } from '@/misc/is-not-null.js';
 import { IdService } from '@/core/IdService.js';
 import { UtilityService } from '../UtilityService.js';
 import { VideoProcessingService } from '../VideoProcessingService.js';
@@ -109,18 +110,6 @@ export class DriveFileEntityService {
 
 	@bindThis
 	public getPublicUrl(file: MiDriveFile, mode?: 'avatar', ap?: boolean): string { // static = thumbnail
-		// PublicUrlにはexternalMediaProxyEnabledでもremoteProxyを使う
-		// https://github.com/yojo-art/cherrypick/issues/84
-		if (file.uri != null && file.userHost != null && mode !== 'avatar' && this.config.remoteProxy != null) {
-			//下のローカルプロキシからコピペで持ってきた
-			const key = file.webpublicAccessKey;
-			if (key && !key.match('/')) {	// 古いものはここにオブジェクトストレージキーが入ってるので除外
-				if (this.config.remoteProxy.startsWith('/')) {
-					return `${this.config.url}${this.config.remoteProxy}/${key}`;
-				}
-				return `${this.config.remoteProxy}/${key}`;
-			}
-		}
 		// リモートかつメディアプロキシ
 		if (file.uri != null && file.userHost != null && this.config.externalMediaProxyEnabled) {
 			return this.getProxiedUrl(file.uri, mode);
@@ -243,9 +232,6 @@ export class DriveFileEntityService {
 	public async packNullable(
 		src: MiDriveFile['id'] | MiDriveFile,
 		options?: PackOptions,
-		hint?: {
-			packedUser?: Packed<'UserLite'>
-		},
 	): Promise<Packed<'DriveFile'> | null> {
 		const opts = Object.assign({
 			detail: false,
@@ -272,8 +258,8 @@ export class DriveFileEntityService {
 			folder: opts.detail && file.folderId ? this.driveFolderEntityService.pack(file.folderId, {
 				detail: true,
 			}) : null,
-			userId: file.userId,
-			user: (opts.withUser && file.userId) ? hint?.packedUser ?? this.userEntityService.pack(file.userId) : null,
+			userId: opts.withUser ? file.userId : null,
+			user: (opts.withUser && file.userId) ? this.userEntityService.pack(file.userId) : null,
 		});
 	}
 
@@ -282,11 +268,8 @@ export class DriveFileEntityService {
 		files: MiDriveFile[],
 		options?: PackOptions,
 	): Promise<Packed<'DriveFile'>[]> {
-		const _user = files.map(({ user, userId }) => user ?? userId).filter(x => x != null);
-		const _userMap = await this.userEntityService.packMany(_user)
-			.then(users => new Map(users.map(user => [user.id, user])));
-		const items = await Promise.all(files.map(f => this.packNullable(f, options, f.userId ? { packedUser: _userMap.get(f.userId) } : {})));
-		return items.filter(x => x != null);
+		const items = await Promise.all(files.map(f => this.packNullable(f, options)));
+		return items.filter((x): x is Packed<'DriveFile'> => x != null);
 	}
 
 	@bindThis
@@ -311,6 +294,6 @@ export class DriveFileEntityService {
 	): Promise<Packed<'DriveFile'>[]> {
 		if (fileIds.length === 0) return [];
 		const filesMap = await this.packManyByIdsMap(fileIds, options);
-		return fileIds.map(id => filesMap.get(id)).filter(x => x != null);
+		return fileIds.map(id => filesMap.get(id)).filter(isNotNull);
 	}
 }

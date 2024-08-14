@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -10,49 +10,61 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<MkPageHeader v-else v-model:tab="src" :actions="headerActions" :tabs="$i ? headerTabs : headerTabsWhenNotLogin" :displayMyAvatar="true"/>
 	</template>
 	<MkSpacer :contentMax="800">
-		<MkHorizontalSwipe v-model:tab="src" :tabs="$i ? headerTabs : headerTabsWhenNotLogin">
-			<div :key="src" ref="rootEl">
-				<MkInfo v-if="isBasicTimeline(src) && !defaultStore.reactiveState.timelineTutorials.value[src]" style="margin-bottom: var(--margin);" closable @close="closeTutorial()">
-					{{ i18n.ts._timelineDescription[src] }}
-				</MkInfo>
-				<MkPostForm v-if="defaultStore.reactiveState.showFixedPostForm.value" :class="$style.postForm" class="post-form _panel" fixed style="margin-bottom: var(--margin);" :autofocus="false"/>
+		<div ref="rootEl" v-hotkey.global="keymap">
+			<MkInfo v-if="['home', 'local', 'social', 'global'].includes(src) && !defaultStore.reactiveState.timelineTutorials.value[src]" style="margin-bottom: var(--margin);" closable @close="closeTutorial()">
+				{{ i18n.ts._timelineDescription[src] }}
+			</MkInfo>
+			<MkPostForm v-if="defaultStore.reactiveState.showFixedPostForm.value" :class="$style.postForm" class="post-form _panel" fixed style="margin-bottom: var(--margin);" :autofocus="false"/>
 
-				<transition
-					:enterActiveClass="defaultStore.state.animation ? $style.transition_new_enterActive : ''"
-					:leaveActiveClass="defaultStore.state.animation ? $style.transition_new_leaveActive : ''"
-					:enterFromClass="defaultStore.state.animation ? $style.transition_new_enterFrom : ''"
-					:leaveToClass="defaultStore.state.animation ? $style.transition_new_leaveTo : ''"
+			<transition
+				:enterActiveClass="defaultStore.state.animation ? $style.transition_new_enterActive : ''"
+				:leaveActiveClass="defaultStore.state.animation ? $style.transition_new_leaveActive : ''"
+				:enterFromClass="defaultStore.state.animation ? $style.transition_new_enterFrom : ''"
+				:leaveToClass="defaultStore.state.animation ? $style.transition_new_leaveTo : ''"
+			>
+				<div
+					v-if="queue > 0 && defaultStore.state.newNoteReceivedNotificationBehavior === 'default'"
+					:class="[$style.new, { [$style.showEl]: (showEl && ['hideHeaderOnly', 'hideHeaderFloatBtn', 'hide'].includes(<string>defaultStore.state.displayHeaderNavBarWhenScroll)) && isMobile && !isFriendly, [$style.showElTab]: (showEl && ['hideHeaderOnly', 'hideHeaderFloatBtn', 'hide'].includes(<string>defaultStore.state.displayHeaderNavBarWhenScroll)) && isMobile && isFriendly, [$style.reduceAnimation]: !defaultStore.state.animation }]"
 				>
-					<div
-						v-if="queue > 0 && ['default', 'count'].includes(defaultStore.state.newNoteReceivedNotificationBehavior)"
-						:class="[$style.new, { [$style.showEl]: (showEl && ['hideHeaderOnly', 'hideHeaderFloatBtn', 'hide'].includes(<string>defaultStore.state.displayHeaderNavBarWhenScroll)) && isMobile && !isFriendly, [$style.showElTab]: (showEl && ['hideHeaderOnly', 'hideHeaderFloatBtn', 'hide'].includes(<string>defaultStore.state.displayHeaderNavBarWhenScroll)) && isMobile && isFriendly, [$style.reduceAnimation]: !defaultStore.state.animation }]"
-					>
-						<button class="_buttonPrimary" :class="$style.newButton" @click="top()">
-							<i class="ti ti-arrow-up"></i>
-							<I18n :src="defaultStore.state.newNoteReceivedNotificationBehavior === 'count' ? i18n.ts.newNoteRecivedCount : defaultStore.state.newNoteReceivedNotificationBehavior === 'default' ? i18n.ts.newNoteRecived : null" textTag="span">
-								<template v-if="defaultStore.state.newNoteReceivedNotificationBehavior === 'count'" #n>{{ queue > 19 ? queue + '+' : queue }}</template>
-							</I18n>
-						</button>
-					</div>
-				</transition>
-
-				<div :class="$style.tl">
-					<MkTimeline
-						ref="tlComponent"
-						:key="src + withRenotes + withReplies + onlyFiles + onlyCats + withoutBots"
-						:src="src.split(':')[0]"
-						:list="src.split(':')[1]"
-						:withRenotes="withRenotes"
-						:withReplies="withReplies"
-						:onlyFiles="onlyFiles"
-						:onlyCats="onlyCats"
-						:withoutBots="withoutBots"
-						:sound="true"
-						@queue="queueUpdated"
-					/>
+					<button class="_buttonPrimary" :class="$style.newButton" @click="top()">
+						<i class="ti ti-arrow-up"></i>
+						{{ i18n.ts.newNoteRecived }}
+					</button>
 				</div>
+			</transition>
+			<transition
+				:enterActiveClass="defaultStore.state.animation ? $style.transition_new_enterActive : ''"
+				:leaveActiveClass="defaultStore.state.animation ? $style.transition_new_leaveActive : ''"
+				:enterFromClass="defaultStore.state.animation ? $style.transition_new_enterFrom : ''"
+				:leaveToClass="defaultStore.state.animation ? $style.transition_new_leaveTo : ''"
+			>
+				<div
+					v-if="queue > 0 && defaultStore.state.newNoteReceivedNotificationBehavior === 'count'"
+					:class="[$style.new, { [$style.showEl]: (showEl && ['hideHeaderOnly', 'hideHeaderFloatBtn', 'hide'].includes(<string>defaultStore.state.displayHeaderNavBarWhenScroll)) && isMobile && !isFriendly, [$style.showElTab]: (showEl && ['hideHeaderOnly', 'hideHeaderFloatBtn', 'hide'].includes(<string>defaultStore.state.displayHeaderNavBarWhenScroll)) && isMobile && isFriendly, [$style.reduceAnimation]: !defaultStore.state.animation }]"
+				>
+					<button class="_buttonPrimary" :class="$style.newButton" @click="top()">
+						<i class="ti ti-arrow-up"></i>
+						<I18n :src="i18n.ts.newNoteRecivedCount" textTag="span">
+							<template #n>{{ queue > 19 ? queue + '+' : queue }}</template>
+						</I18n>
+					</button>
+				</div>
+			</transition>
+			<div :class="$style.tl">
+				<MkTimeline
+					ref="tlComponent"
+					:key="src + withRenotes + withReplies + onlyFiles + onlyCats"
+					:src="src.split(':')[0]"
+					:list="src.split(':')[1]"
+					:withRenotes="withRenotes"
+					:withReplies="withReplies"
+					:onlyFiles="onlyFiles"
+					:onlyCats="onlyCats"
+					:sound="true"
+					@queue="queueUpdated"
+				/>
 			</div>
-		</MkHorizontalSwipe>
+		</div>
 	</MkSpacer>
 </MkStickyContainer>
 </template>
@@ -63,22 +75,19 @@ import type { Tab } from '@/components/global/MkPageHeader.tabs.vue';
 import MkTimeline from '@/components/MkTimeline.vue';
 import MkInfo from '@/components/MkInfo.vue';
 import MkPostForm from '@/components/MkPostForm.vue';
-import MkHorizontalSwipe from '@/components/MkHorizontalSwipe.vue';
 import { scroll } from '@/scripts/scroll.js';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
 import { defaultStore } from '@/store.js';
 import { i18n } from '@/i18n.js';
+import { instance } from '@/instance.js';
 import { $i } from '@/account.js';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
-import { antennasCache, userListsCache, favoritedChannelsCache } from '@/cache.js';
+import { antennasCache, userListsCache } from '@/cache.js';
 import { globalEvents } from '@/events.js';
 import { deviceKind } from '@/scripts/device-kind.js';
-import { deepMerge } from '@/scripts/merge.js';
+import { unisonReload } from '@/scripts/unison-reload.js';
 import { MenuItem } from '@/types/menu.js';
 import { miLocalStorage } from '@/local-storage.js';
-import { availableBasicTimelines, hasWithReplies, isAvailableBasicTimeline, isBasicTimeline, basicTimelineIconClass } from '@/timelines.js';
-import { unisonReload } from '@/scripts/unison-reload.js';
 
 const showEl = ref(false);
 const isFriendly = ref(miLocalStorage.getItem('ui') === 'friendly');
@@ -92,73 +101,22 @@ window.addEventListener('resize', () => {
 
 if (!isFriendly.value) provide('shouldOmitHeaderTitle', true);
 
+const isLocalTimelineAvailable = ($i == null && instance.policies.ltlAvailable) || ($i != null && $i.policies.ltlAvailable);
+const isGlobalTimelineAvailable = ($i == null && instance.policies.gtlAvailable) || ($i != null && $i.policies.gtlAvailable);
+const keymap = {
+	't': focus,
+};
+
 const tlComponent = shallowRef<InstanceType<typeof MkTimeline>>();
 const rootEl = shallowRef<HTMLElement>();
 
 const queue = ref(0);
-const srcWhenNotSignin = ref<'local' | 'global'>(isAvailableBasicTimeline('local') ? 'local' : 'global');
-const src = computed<'home' | 'local' | 'media' | 'social' | 'global' | `list:${string}`>({
-	get: () => ($i ? defaultStore.reactiveState.tl.value.src : srcWhenNotSignin.value),
-	set: (x) => saveSrc(x),
-});
-const withRenotes = computed<boolean>({
-	get: () => defaultStore.reactiveState.tl.value.filter.withRenotes,
-	set: (x) => saveTlFilter('withRenotes', x),
-});
-
-// computed内での無限ループを防ぐためのフラグ
-const localSocialTLFilterSwitchStore = ref<'withReplies' | 'onlyFiles' | false>(
-	defaultStore.reactiveState.tl.value.filter.withReplies ? 'withReplies' :
-	defaultStore.reactiveState.tl.value.filter.onlyFiles ? 'onlyFiles' :
-	false,
-);
-
-const withReplies = computed<boolean>({
-	get: () => {
-		if (!$i) return false;
-		if (['local', 'social'].includes(src.value) && localSocialTLFilterSwitchStore.value === 'onlyFiles') {
-			return false;
-		} else {
-			return defaultStore.reactiveState.tl.value.filter.withReplies;
-		}
-	},
-	set: (x) => saveTlFilter('withReplies', x),
-});
-const onlyFiles = computed<boolean>({
-	get: () => {
-		if (['local', 'social'].includes(src.value) && localSocialTLFilterSwitchStore.value === 'withReplies') {
-			return false;
-		} else {
-			return defaultStore.reactiveState.tl.value.filter.onlyFiles;
-		}
-	},
-	set: (x) => saveTlFilter('onlyFiles', x),
-});
-const onlyCats = computed({
-	get: () => defaultStore.reactiveState.tl.value.filter.onlyCats,
-	set: (x: boolean) => saveTlFilter('onlyCats', x),
-});
-
-const withoutBots = computed({
-	get: () => defaultStore.reactiveState.tl.value.filter.withoutBots,
-	set: (x: boolean) => saveTlFilter('withoutBots', x),
-});
-
-watch([withReplies, onlyFiles], ([withRepliesTo, onlyFilesTo]) => {
-	if (withRepliesTo) {
-		localSocialTLFilterSwitchStore.value = 'withReplies';
-	} else if (onlyFilesTo) {
-		localSocialTLFilterSwitchStore.value = 'onlyFiles';
-	} else {
-		localSocialTLFilterSwitchStore.value = false;
-	}
-});
-
-const withSensitive = computed<boolean>({
-	get: () => defaultStore.reactiveState.tl.value.filter.withSensitive,
-	set: (x) => saveTlFilter('withSensitive', x),
-});
-
+const srcWhenNotSignin = ref(isLocalTimelineAvailable ? 'local' : 'global');
+const src = computed({ get: () => ($i ? defaultStore.reactiveState.tl.value.src : srcWhenNotSignin.value), set: (x) => saveSrc(x) });
+const withRenotes = ref(true);
+const withReplies = ref($i ? defaultStore.state.tlWithReplies : false);
+const onlyFiles = ref(false);
+const onlyCats = ref(false);
 const friendlyEnableNotifications = ref(defaultStore.state.friendlyEnableNotifications);
 const friendlyEnableWidgets = ref(defaultStore.state.friendlyEnableWidgets);
 
@@ -167,9 +125,8 @@ watch(src, () => {
 	queueUpdated(queue);
 });
 
-watch(withSensitive, () => {
-	// これだけはクライアント側で完結する処理なので手動でリロード
-	tlComponent.value?.reloadTimeline();
+watch(withReplies, (x) => {
+	if ($i) defaultStore.set('tlWithReplies', x);
 });
 
 watch(friendlyEnableNotifications, (x) => {
@@ -237,7 +194,9 @@ async function chooseAntenna(ev: MouseEvent): Promise<void> {
 }
 
 async function chooseChannel(ev: MouseEvent): Promise<void> {
-	const channels = await favoritedChannelsCache.fetch();
+	const channels = await os.api('channels/my-favorites', {
+		limit: 100,
+	});
 	const items: MenuItem[] = [
 		...channels.map(channel => {
 			const lastReadedAt = miLocalStorage.getItemAsJson(`channelLastReadedAt:${channel.id}`) ?? null;
@@ -261,25 +220,17 @@ async function chooseChannel(ev: MouseEvent): Promise<void> {
 	os.popupMenu(items, ev.currentTarget ?? ev.target);
 }
 
-function saveSrc(newSrc: 'home' | 'local' | 'media' | 'social' | 'global' | `list:${string}`): void {
-	const out = deepMerge({ src: newSrc }, defaultStore.state.tl);
-
+function saveSrc(newSrc: 'home' | 'local' | 'social' | 'global' | `list:${string}`): void {
+	let userList = null;
 	if (newSrc.startsWith('userList:')) {
 		const id = newSrc.substring('userList:'.length);
-		out.userList = defaultStore.reactiveState.pinnedUserLists.value.find(l => l.id === id) ?? null;
+		userList = defaultStore.reactiveState.pinnedUserLists.value.find(l => l.id === id);
 	}
-
-	defaultStore.set('tl', out);
-	if (['local', 'global'].includes(newSrc)) {
-		srcWhenNotSignin.value = newSrc as 'local' | 'global';
-	}
-}
-
-function saveTlFilter(key: keyof typeof defaultStore.state.tl.filter, newValue: boolean) {
-	if (key !== 'withReplies' || $i) {
-		const out = deepMerge({ filter: { [key]: newValue } }, defaultStore.state.tl);
-		defaultStore.set('tl', out);
-	}
+	defaultStore.set('tl', {
+		src: newSrc,
+		userList,
+	});
+	srcWhenNotSignin.value = newSrc;
 }
 
 async function timetravel(): Promise<void> {
@@ -296,7 +247,7 @@ function focus(): void {
 }
 
 function closeTutorial(): void {
-	if (!isBasicTimeline(src.value)) return;
+	if (!['home', 'local', 'social', 'global'].includes(src.value)) return;
 	const before = defaultStore.state.timelineTutorials;
 	before[src.value] = true;
 	defaultStore.set('timelineTutorials', before);
@@ -332,28 +283,20 @@ const headerActions = computed(() => {
 					type: 'switch',
 					text: i18n.ts.showRenotes,
 					ref: withRenotes,
-				}, isBasicTimeline(src.value) && hasWithReplies(src.value) ? {
+				}, src.value === 'local' || src.value === 'social' ? {
 					type: 'switch',
 					text: i18n.ts.showRepliesToOthersInTimeline,
 					ref: withReplies,
 					disabled: onlyFiles,
 				} : undefined, {
 					type: 'switch',
-					text: i18n.ts.withSensitive,
-					ref: withSensitive,
-				}, {
-					type: 'switch',
 					text: i18n.ts.fileAttachedOnly,
 					ref: onlyFiles,
-					disabled: isBasicTimeline(src.value) && hasWithReplies(src.value) ? withReplies : false,
+					disabled: src.value === 'local' || src.value === 'social' ? withReplies : false,
 				}, {
 					type: 'switch',
 					text: i18n.ts.showCatOnly,
 					ref: onlyCats,
-				}, {
-					type: 'switch',
-					text: i18n.ts.antennaExcludeBots,
-					ref: withoutBots,
 				}], ev.currentTarget ?? ev.target);
 			},
 		},
@@ -363,7 +306,7 @@ const headerActions = computed(() => {
 			icon: 'ti ti-refresh',
 			text: i18n.ts.reload,
 			handler: (ev: Event) => {
-				tlComponent.value?.reloadTimeline();
+				tlComponent.value.reloadTimeline();
 			},
 		});
 	}
@@ -375,12 +318,27 @@ const headerTabs = computed(() => [...(defaultStore.reactiveState.pinnedUserList
 	title: l.name,
 	icon: 'ti ti-star',
 	iconOnly: true,
-}))), ...availableBasicTimelines().map(tl => ({
-	key: tl,
-	title: i18n.ts._timelines[tl],
-	icon: basicTimelineIconClass(tl),
+}))), ...(defaultStore.state.enableHomeTimeline ? [{
+	key: 'home',
+	title: i18n.ts._timelines.home,
+	icon: 'ti ti-home',
 	iconOnly: true,
-})), ...(defaultStore.state.enableListTimeline ? [{
+}] : []), ...(isLocalTimelineAvailable && defaultStore.state.enableLocalTimeline ? [{
+	key: 'local',
+	title: i18n.ts._timelines.local,
+	icon: 'ti ti-planet',
+	iconOnly: true,
+}, ...(defaultStore.state.enableSocialTimeline ? [{
+	key: 'social',
+	title: i18n.ts._timelines.social,
+	icon: 'ti ti-universe',
+	iconOnly: true,
+}] : [])] : []), ...(isGlobalTimelineAvailable && defaultStore.state.enableGlobalTimeline ? [{
+	key: 'global',
+	title: i18n.ts._timelines.global,
+	icon: 'ti ti-world',
+	iconOnly: true,
+}] : []), ...(defaultStore.state.enableListTimeline ? [{
 	icon: 'ti ti-list',
 	title: i18n.ts.lists,
 	iconOnly: true,
@@ -397,17 +355,25 @@ const headerTabs = computed(() => [...(defaultStore.reactiveState.pinnedUserList
 	onClick: chooseChannel,
 }] : [])] as Tab[]);
 
-const headerTabsWhenNotLogin = computed(() => [...availableBasicTimelines().map(tl => ({
-	key: tl,
-	title: i18n.ts._timelines[tl],
-	icon: basicTimelineIconClass(tl),
-	iconOnly: true,
-}))] as Tab[]);
+const headerTabsWhenNotLogin = computed(() => [
+	...(isLocalTimelineAvailable ? [{
+		key: 'local',
+		title: i18n.ts._timelines.local,
+		icon: 'ti ti-planet',
+		iconOnly: true,
+	}] : []),
+	...(isGlobalTimelineAvailable ? [{
+		key: 'global',
+		title: i18n.ts._timelines.global,
+		icon: 'ti ti-world',
+		iconOnly: true,
+	}] : []),
+] as Tab[]);
 
-definePageMetadata(() => ({
+definePageMetadata(computed(() => ({
 	title: i18n.ts.timeline,
-	icon: isBasicTimeline(src.value) ? basicTimelineIconClass(src.value) : 'ti ti-home',
-}));
+	icon: src.value === 'local' ? 'ti ti-planet' : src.value === 'social' ? 'ti ti-universe' : src.value === 'global' ? 'ti ti-world' : 'ti ti-home',
+})));
 </script>
 
 <style lang="scss" module>

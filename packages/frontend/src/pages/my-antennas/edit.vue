@@ -1,25 +1,23 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<MkStickyContainer>
-	<template #header><MkPageHeader :actions="headerActions" :tabs="headerTabs"/></template>
-
-	<MkAntennaEditor v-if="antenna" :antenna="antenna" @updated="onAntennaUpdated"/>
-</MkStickyContainer>
+<div class="">
+	<XAntenna v-if="antenna" :antenna="antenna" @updated="onAntennaUpdated"/>
+</div>
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import * as Misskey from 'cherrypick-js';
-import MkAntennaEditor from '@/components/MkAntennaEditor.vue';
-import { misskeyApi } from '@/scripts/misskey-api.js';
+import XAntenna from './editor.vue';
+import * as os from '@/os.js';
 import { i18n } from '@/i18n.js';
+import { useRouter } from '@/router.js';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
 import { antennasCache } from '@/cache.js';
-import { useRouter } from '@/router/supplier.js';
 
 const router = useRouter();
 
@@ -34,15 +32,12 @@ function onAntennaUpdated() {
 	router.push('/my/antennas');
 }
 
-misskeyApi('antennas/show', { antennaId: props.antennaId }).then((antennaResponse) => {
+os.api('antennas/show', { antennaId: props.antennaId }).then((antennaResponse) => {
 	antenna.value = antennaResponse;
 });
 
-const headerActions = computed(() => []);
-const headerTabs = computed(() => []);
-
-definePageMetadata(() => ({
-	title: i18n.ts.editAntenna,
+definePageMetadata({
+	title: i18n.ts.manageAntennas,
 	icon: 'ti ti-antenna',
-}));
+});
 </script>

@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -37,7 +37,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 import { watch, computed, ref } from 'vue';
 import * as Misskey from 'cherrypick-js';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
 import { userPage } from '@/filters/user.js';
 import { i18n } from '@/i18n.js';
 import MkUserCardMini from '@/components/MkUserCardMini.vue';
@@ -54,12 +53,12 @@ const error = ref();
 const users = ref<Misskey.entities.UserDetailed[]>([]);
 
 function fetchList(): void {
-	misskeyApi('users/lists/show', {
+	os.api('users/lists/show', {
 		listId: props.listId,
 		forPublic: true,
 	}).then(_list => {
 		list.value = _list;
-		misskeyApi('users/show', {
+		os.api('users/show', {
 			userIds: list.value.userIds,
 		}).then(_users => {
 			users.value = _users;
@@ -101,10 +100,10 @@ const headerActions = computed(() => []);
 
 const headerTabs = computed(() => []);
 
-definePageMetadata(() => ({
-	title: list.value ? list.value.name : i18n.ts.lists,
+definePageMetadata(computed(() => list.value ? {
+	title: list.value.name,
 	icon: 'ti ti-list',
-}));
+} : null));
 </script>
 <style lang="scss" module>
 .main {

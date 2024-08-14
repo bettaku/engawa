@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -120,9 +120,8 @@ function onTabWheel(ev: WheelEvent) {
 
 let entering = false;
 
-async function enter(element: Element) {
+async function enter(el: HTMLElement) {
 	entering = true;
-	const el = element as HTMLElement;
 	const elementWidth = el.getBoundingClientRect().width;
 	el.style.width = '0';
 	el.style.paddingLeft = '0';
@@ -136,12 +135,11 @@ async function enter(element: Element) {
 	setTimeout(renderTab, 170);
 }
 
-function afterEnter(element: Element) {
+function afterEnter(el: HTMLElement) {
 	//el.style.width = '';
 }
 
-async function leave(element: Element) {
-	const el = element as HTMLElement;
+async function leave(el: HTMLElement) {
 	const elementWidth = el.getBoundingClientRect().width;
 	el.style.width = elementWidth + 'px';
 	el.style.paddingLeft = '';
@@ -150,8 +148,7 @@ async function leave(element: Element) {
 	el.style.paddingLeft = '0';
 }
 
-function afterLeave(element: Element) {
-	const el = element as HTMLElement;
+function afterLeave(el: HTMLElement) {
 	el.style.width = '';
 }
 

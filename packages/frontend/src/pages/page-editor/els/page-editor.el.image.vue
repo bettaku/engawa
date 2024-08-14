@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -26,7 +26,6 @@ import * as Misskey from 'cherrypick-js';
 import XContainer from '../page-editor.container.vue';
 import MkDriveFileThumbnail from '@/components/MkDriveFileThumbnail.vue';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
 import { i18n } from '@/i18n.js';
 
 const props = defineProps<{
@@ -53,7 +52,7 @@ onMounted(async () => {
 	if (props.modelValue.fileId == null) {
 		await choose();
 	} else {
-		misskeyApi('drive/files/show', {
+		os.api('drive/files/show', {
 			fileId: props.modelValue.fileId,
 		}).then(fileResponse => {
 			file.value = fileResponse;

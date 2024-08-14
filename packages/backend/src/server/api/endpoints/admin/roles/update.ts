@@ -1,11 +1,12 @@
 /*
- * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-FileCopyrightText: syuilo and other misskey, cherrypick contributors
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
 import { Inject, Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import type { RolesRepository } from '@/models/_.js';
+import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { DI } from '@/di-symbols.js';
 import { ApiError } from '@/server/api/error.js';
 import { RoleService } from '@/core/RoleService.js';
@@ -49,6 +50,19 @@ export const paramDef = {
 	},
 	required: [
 		'roleId',
+		'name',
+		'description',
+		'color',
+		'iconUrl',
+		'target',
+		'condFormula',
+		'isPublic',
+		'isModerator',
+		'isAdministrator',
+		'asBadge',
+		'canEditMembersByModerator',
+		'displayOrder',
+		'policies',
 	],
 } as const;
 
