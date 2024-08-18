@@ -44,7 +44,7 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 		private globalEventService: GlobalEventService,
 		private httpRequestService: HttpRequestService,
 	) {
-		this.cache = new MemorySingleCache<MiAvatarDecoration[]>(1000 * 60 * 30);
+		this.cache = new MemorySingleCache<MiAvatarDecoration[]>(1000 * 60 * 30); // 30s
 		this.cacheWithRemote = new MemorySingleCache<MiAvatarDecoration[]>(1000 * 60 * 30);
 
 		this.redisForSub.on('message', this.onMessage);
