@@ -66,6 +66,11 @@ const reactionName = computed(() => {
 	return r.slice(0, r.indexOf('@'));
 });
 
+const reactionHost = computed(() => {
+	const r = props.reaction.replace(':', '');
+	return r.slice(r.indexOf('@') + 1);
+});
+
 const alternative: ComputedRef<string | null> = computed(() => defaultStore.state.reactableRemoteReactionEnabled ? (customEmojis.value.find(it => it.name === reactionName.value)?.name ?? null) : null);
 
 async function toggleReaction(ev: MouseEvent) {
@@ -131,7 +136,7 @@ function stealReaction(ev: MouseEvent) {
 		action: async () => {
 			await os.apiWithDialog('admin/emoji/steal', {
 				name: reactionName.value,
-				host: props.note.user.host,
+				host: reactionHost.value,
 			});
 		},
 	}, {
@@ -140,7 +145,7 @@ function stealReaction(ev: MouseEvent) {
 		action: async () => {
 			await os.apiWithDialog('admin/emoji/steal', {
 				name: reactionName.value,
-				host: props.note.user.host,
+				host: reactionHost.value,
 			});
 
 			await misskeyApi('notes/reactions/create', {
