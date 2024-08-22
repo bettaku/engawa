@@ -15,7 +15,24 @@
 ### Misc
 
 -->
-## 0.5.1(unreleased)
+## 0.5.2
+
+### Release Date
+
+### General
+-
+
+### Client
+- 設定ページ下部の不要なスペースを削除
+- - なんのためにあったのこれ
+
+### Server
+-
+
+### Misc
+
+
+## 0.5.1
 
 ### Release Date
 
