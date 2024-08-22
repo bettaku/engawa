@@ -93,6 +93,7 @@ import { misskeyApi } from '@/scripts/misskey-api.js';
 import { login } from '@/account.js';
 import { instance } from '@/instance.js';
 import { i18n } from '@/i18n.js';
+import { zxcvbnScore } from '@/scripts/zxcvbn';
 
 const props = withDefaults(defineProps<{
 	autoSet?: boolean;
@@ -148,7 +149,7 @@ function getPasswordStrength(source: string): number {
 
 	// 英数字
 	if (/[a-zA-Z]/.test(source) && /[0-9]/.test(source)) {
-		power += 0.020;
+		power += 0.010;
 	}
 
 	// 大文字と小文字が混ざってたら
@@ -158,7 +159,20 @@ function getPasswordStrength(source: string): number {
 
 	// 記号が混ざってたら
 	if (/[!\x22\#$%&@'()*+,-./_]/.test(source)) {
+		power += 0.01;
+	}
+
+	// 3文字同じ文字が続いていなかったら
+	if (/(.)\1{2,}/.test(source)) {
+		power += 0.01;
+	}
+
+	if (zxcvbnScore(source) > 3) {
 		power += 0.02;
+	}
+
+	if (zxcvbnScore(source) < 2) {
+		power -= 0.10;
 	}
 
 	strength = power * source.length;
