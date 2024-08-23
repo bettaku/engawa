@@ -33,19 +33,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</MkRadios>
 
 	<FormSection>
-		<div class="_gaps_s">
-			<MkSwitch v-model="showFixedPostForm">{{ i18n.ts.showFixedPostForm }}</MkSwitch>
-			<MkSwitch v-model="showFixedPostFormInChannel">{{ i18n.ts.showFixedPostFormInChannel }}</MkSwitch>
-			<MkFolder>
-				<template #label>{{ i18n.ts.pinnedList }}</template>
-				<!-- 複数ピン止め管理できるようにしたいけどめんどいので一旦ひとつのみ -->
-				<MkButton v-if="defaultStore.reactiveState.pinnedUserLists.value.length === 0" @click="setPinnedList()">{{ i18n.ts.add }}</MkButton>
-				<MkButton v-else danger @click="removePinnedList()"><i class="ti ti-trash"></i> {{ i18n.ts.remove }}</MkButton>
-			</MkFolder>
-		</div>
-	</FormSection>
-
-	<FormSection>
 		<template #label>{{ i18n.ts.displayOfNote }}</template>
 
 		<div class="_gaps_m">
@@ -434,7 +421,6 @@ const highlightSensitiveMedia = computed(defaultStore.makeGetterSetter('highligh
 const imageNewTab = computed(defaultStore.makeGetterSetter('imageNewTab'));
 const nsfw = computed(defaultStore.makeGetterSetter('nsfw'));
 const showFixedPostForm = computed(defaultStore.makeGetterSetter('showFixedPostForm'));
-const showFixedPostFormInChannel = computed(defaultStore.makeGetterSetter('showFixedPostFormInChannel'));
 const numberOfPageCache = computed(defaultStore.makeGetterSetter('numberOfPageCache'));
 const instanceTicker = computed(defaultStore.makeGetterSetter('instanceTicker'));
 const enableInfiniteScroll = computed(defaultStore.makeGetterSetter('enableInfiniteScroll'));
