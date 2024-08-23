@@ -236,31 +236,6 @@ async function chooseAntenna(ev: MouseEvent): Promise<void> {
 	os.popupMenu(items, ev.currentTarget ?? ev.target);
 }
 
-async function chooseChannel(ev: MouseEvent): Promise<void> {
-	const channels = await favoritedChannelsCache.fetch();
-	const items: MenuItem[] = [
-		...channels.map(channel => {
-			const lastReadedAt = miLocalStorage.getItemAsJson(`channelLastReadedAt:${channel.id}`) ?? null;
-			const hasUnreadNote = (lastReadedAt && channel.lastNotedAt) ? Date.parse(channel.lastNotedAt) > lastReadedAt : !!(!lastReadedAt && channel.lastNotedAt);
-
-			return {
-				type: 'link' as const,
-				text: channel.name,
-				indicate: hasUnreadNote,
-				to: `/channels/${channel.id}`,
-			};
-		}),
-		(channels.length === 0 ? undefined : { type: 'divider' }),
-		{
-			type: 'link' as const,
-			icon: 'ti ti-plus',
-			text: i18n.ts.createNew,
-			to: '/channels',
-		},
-	];
-	os.popupMenu(items, ev.currentTarget ?? ev.target);
-}
-
 function saveSrc(newSrc: 'home' | 'local' | 'media' | 'social' | 'global' | `list:${string}`): void {
 	const out = deepMerge({ src: newSrc }, defaultStore.state.tl);
 
@@ -390,11 +365,6 @@ const headerTabs = computed(() => [...(defaultStore.reactiveState.pinnedUserList
 	title: i18n.ts.antennas,
 	iconOnly: true,
 	onClick: chooseAntenna,
-}] : []), ...(defaultStore.state.enableChannelTimeline ? [{
-	icon: 'ti ti-device-tv',
-	title: i18n.ts.channel,
-	iconOnly: true,
-	onClick: chooseChannel,
 }] : [])] as Tab[]);
 
 const headerTabsWhenNotLogin = computed(() => [...availableBasicTimelines().map(tl => ({

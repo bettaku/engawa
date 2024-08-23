@@ -19,7 +19,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<div class="_gaps_m">
 			<MkSwitch v-model="enableListTimeline"><i class="ti ti-list"></i> {{ i18n.ts.lists }}</MkSwitch>
 			<MkSwitch v-model="enableAntennaTimeline"><i class="ti ti-antenna"></i> {{ i18n.ts.antennas }}</MkSwitch>
-			<MkSwitch v-model="enableChannelTimeline"><i class="ti ti-device-tv"></i> {{ i18n.ts.channel }}</MkSwitch>
 		</div>
 	</FormSection>
 
@@ -58,7 +57,6 @@ const enableSocialTimeline = computed(defaultStore.makeGetterSetter('enableSocia
 const enableGlobalTimeline = computed(defaultStore.makeGetterSetter('enableGlobalTimeline'));
 const enableListTimeline = computed(defaultStore.makeGetterSetter('enableListTimeline'));
 const enableAntennaTimeline = computed(defaultStore.makeGetterSetter('enableAntennaTimeline'));
-const enableChannelTimeline = computed(defaultStore.makeGetterSetter('enableChannelTimeline'));
 
 const headerActions = computed(() => []);
 
