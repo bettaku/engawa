@@ -164,26 +164,6 @@ import type {
 	BlockingDeleteResponse,
 	BlockingListRequest,
 	BlockingListResponse,
-	ChannelsCreateRequest,
-	ChannelsCreateResponse,
-	ChannelsFeaturedResponse,
-	ChannelsFollowRequest,
-	ChannelsFollowedRequest,
-	ChannelsFollowedResponse,
-	ChannelsOwnedRequest,
-	ChannelsOwnedResponse,
-	ChannelsShowRequest,
-	ChannelsShowResponse,
-	ChannelsTimelineRequest,
-	ChannelsTimelineResponse,
-	ChannelsUnfollowRequest,
-	ChannelsUpdateRequest,
-	ChannelsUpdateResponse,
-	ChannelsFavoriteRequest,
-	ChannelsUnfavoriteRequest,
-	ChannelsMyFavoritesResponse,
-	ChannelsSearchRequest,
-	ChannelsSearchResponse,
 	ChartsActiveUsersRequest,
 	ChartsActiveUsersResponse,
 	ChartsApRequestRequest,
@@ -725,19 +705,6 @@ export type Endpoints = {
 	'blocking/create': { req: BlockingCreateRequest; res: BlockingCreateResponse };
 	'blocking/delete': { req: BlockingDeleteRequest; res: BlockingDeleteResponse };
 	'blocking/list': { req: BlockingListRequest; res: BlockingListResponse };
-	'channels/create': { req: ChannelsCreateRequest; res: ChannelsCreateResponse };
-	'channels/featured': { req: EmptyRequest; res: ChannelsFeaturedResponse };
-	'channels/follow': { req: ChannelsFollowRequest; res: EmptyResponse };
-	'channels/followed': { req: ChannelsFollowedRequest; res: ChannelsFollowedResponse };
-	'channels/owned': { req: ChannelsOwnedRequest; res: ChannelsOwnedResponse };
-	'channels/show': { req: ChannelsShowRequest; res: ChannelsShowResponse };
-	'channels/timeline': { req: ChannelsTimelineRequest; res: ChannelsTimelineResponse };
-	'channels/unfollow': { req: ChannelsUnfollowRequest; res: EmptyResponse };
-	'channels/update': { req: ChannelsUpdateRequest; res: ChannelsUpdateResponse };
-	'channels/favorite': { req: ChannelsFavoriteRequest; res: EmptyResponse };
-	'channels/unfavorite': { req: ChannelsUnfavoriteRequest; res: EmptyResponse };
-	'channels/my-favorites': { req: EmptyRequest; res: ChannelsMyFavoritesResponse };
-	'channels/search': { req: ChannelsSearchRequest; res: ChannelsSearchResponse };
 	'charts/active-users': { req: ChartsActiveUsersRequest; res: ChartsActiveUsersResponse };
 	'charts/ap-request': { req: ChartsApRequestRequest; res: ChartsApRequestResponse };
 	'charts/drive': { req: ChartsDriveRequest; res: ChartsDriveResponse };
@@ -1134,19 +1101,6 @@ export const endpointReqTypes: Record<keyof Endpoints, 'application/json' | 'mul
 	'blocking/create': 'application/json',
 	'blocking/delete': 'application/json',
 	'blocking/list': 'application/json',
-	'channels/create': 'application/json',
-	'channels/featured': 'application/json',
-	'channels/follow': 'application/json',
-	'channels/followed': 'application/json',
-	'channels/owned': 'application/json',
-	'channels/show': 'application/json',
-	'channels/timeline': 'application/json',
-	'channels/unfollow': 'application/json',
-	'channels/update': 'application/json',
-	'channels/favorite': 'application/json',
-	'channels/unfavorite': 'application/json',
-	'channels/my-favorites': 'application/json',
-	'channels/search': 'application/json',
 	'charts/active-users': 'application/json',
 	'charts/ap-request': 'application/json',
 	'charts/drive': 'application/json',
