@@ -217,6 +217,11 @@ export class MiNote {
 	})
 	public deleteAt: Date | null;
 
+	@Column('timestamp with time zone', {
+		nullable: true,
+	})
+	public scheduledAt: Date | null;
+
 	@Index()
 	@Column({
 		...id(),

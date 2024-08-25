@@ -138,6 +138,12 @@ export const meta = {
 			code: 'CANNOT_SCHEDULE_DELETE_EARLIER_THAN_NOW',
 			id: '9f04994a-3aa2-11ef-a495-177eea74788f',
 		},
+
+		scheduledTimeIsPast: {
+			message: 'The scheduled time is past.',
+			code: 'SCHEDULED_TIME_IS_PAST',
+			id: 'd6ccda8e-5430-11ef-8876-0242ac120002',
+		},
 	},
 } as const;
 
@@ -216,6 +222,7 @@ export const paramDef = {
 				deleteAfter: { type: 'integer', nullable: true, minimum: 1 },
 			},
 		},
+		scheduledAt: { type: 'integer', nullable: true },
 	},
 	// (re)note with text, files and poll are optional
 	if: {
@@ -373,8 +380,15 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					if (ps.poll.expiresAt < Date.now()) {
 						throw new ApiError(meta.errors.cannotCreateAlreadyExpiredPoll);
 					}
+					if (ps.poll.expiresAt && ps.scheduledAt && ps.poll.expiresAt < ps.scheduledAt) {
+						throw new ApiError(meta.errors.cannotCreateAlreadyExpiredPoll);
+					}
 				} else if (typeof ps.poll.expiredAfter === 'number') {
-					ps.poll.expiresAt = Date.now() + ps.poll.expiredAfter;
+					if (ps.scheduledAt != null) {
+						ps.poll.expiresAt = ps.scheduledAt + ps.poll.expiredAfter;
+					} else {
+						ps.poll.expiresAt = Date.now() + ps.poll.expiredAfter;
+					}
 				}
 			}
 
@@ -385,6 +399,15 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					} else if (typeof ps.scheduledDelete.deleteAfter === 'number') {
 						ps.scheduledDelete.deleteAt = Date.now() + ps.scheduledDelete.deleteAfter;
 					}
+				}
+			}
+
+			let delay: number | null = null;
+			if (ps.scheduledAt) {
+				delay = ps.scheduledAt - Date.now();
+				if (delay < 0) {
+					delay = null;
+					throw new ApiError(meta.errors.scheduledTimeIsPast);
 				}
 			}
 
@@ -427,6 +450,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					apHashtags: ps.noExtractHashtags ? [] : undefined,
 					apEmojis: ps.noExtractEmojis ? [] : undefined,
 					deleteAt: ps.scheduledDelete?.deleteAt ? new Date(ps.scheduledDelete.deleteAt) : ps.scheduledDelete?.deleteAfter ? new Date(Date.now() + ps.scheduledDelete.deleteAfter) : null,
+					scheduledAt: delay != null ? new Date(ps.scheduledAt!) : null,
 				});
 
 				return {

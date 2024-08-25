@@ -10,6 +10,7 @@ import type { MiUser } from '@/models/User.js';
 import type { MiAbuseUserReport } from '@/models/AbuseUserReport.js';
 import type { MiWebhook } from '@/models/Webhook.js';
 import type { IActivity } from '@/core/activitypub/type.js';
+import type { IPoll } from '@/models/Poll.js';
 import type httpSignature from '@peertube/http-signature';
 
 export type DeliverJobData = {
@@ -59,6 +60,7 @@ export type DbJobMap = {
 	importUserLists: DbUserImportJobData;
 	importCustomEmojis: DbUserImportJobData;
 	deleteAccount: DbUserDeleteJobData;
+	scheduledNotePost: DbScheduledNotePostData;
 }
 
 export type DbJobDataWithUser = {
@@ -96,6 +98,18 @@ export type DbUserImportToDbJobData = {
 	target: string;
 	withReplies?: boolean;
 };
+
+export type DbScheduledNotePostData = {
+	user: ThinUser;
+	option: {
+		visibility: MiNote['visibility'];
+		visibleUserIds: MiUser['id'][] | null;
+		replyId?: MiNote['replyId'];
+		renoteId?: MiNote['renoteId'];
+		poll?: IPoll;
+	};
+	noteId: MiNote['id'];
+}
 
 export type DbAbuseReportJobData = MiAbuseUserReport;
 

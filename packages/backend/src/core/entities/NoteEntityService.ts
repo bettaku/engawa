@@ -408,6 +408,7 @@ export class NoteEntityService implements OnModuleInit {
 				poll: note.hasPoll ? this.populatePoll(note, meId) : undefined,
 				event: note.hasEvent ? this.populateEvent(note) : undefined,
 				deleteAt: note.deleteAt?.toISOString() ?? undefined,
+				scheduledAt: note.scheduledAt == null ? undefined : typeof note.scheduledAt === 'string' ? note.scheduledAt : note.scheduledAt.toISOString(),
 
 				...(meId && Object.keys(note.reactions).length > 0 ? {
 					myReaction: this.populateMyReaction(note, meId, options?._hint_),
