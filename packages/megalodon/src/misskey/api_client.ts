@@ -13,31 +13,31 @@ import NotificationType, { UnknownNotificationTypeError } from '../notification'
 
 namespace MisskeyAPI {
   export namespace Entity {
-    export type Announcement = MisskeyEntity.Announcement
-    export type App = MisskeyEntity.App
-    export type Blocking = MisskeyEntity.Blocking
-    export type Choice = MisskeyEntity.Choice
-    export type CreatedNote = MisskeyEntity.CreatedNote
-    export type Emoji = MisskeyEntity.Emoji
-    export type Favorite = MisskeyEntity.Favorite
-    export type File = MisskeyEntity.File
-    export type Follower = MisskeyEntity.Follower
-    export type Following = MisskeyEntity.Following
-    export type FollowRequest = MisskeyEntity.FollowRequest
-    export type Hashtag = MisskeyEntity.Hashtag
-    export type List = MisskeyEntity.List
-    export type Meta = MisskeyEntity.Meta
-    export type Mute = MisskeyEntity.Mute
-    export type Note = MisskeyEntity.Note
-    export type Notification = MisskeyEntity.Notification
-    export type Poll = MisskeyEntity.Poll
-    export type Reaction = MisskeyEntity.Reaction
-    export type Relation = MisskeyEntity.Relation
-    export type User = MisskeyEntity.User
-    export type UserDetail = MisskeyEntity.UserDetail
-    export type UserKey = MisskeyEntity.UserKey
-    export type Session = MisskeyEntity.Session
-    export type Stats = MisskeyEntity.Stats
+    export type Announcement = MisskeyEntity.MiAnnouncement;
+    export type App = MisskeyEntity.MiApp
+    export type Blocking = MisskeyEntity.MiBlocking
+    export type Choice = MisskeyEntity.MiPollChoice
+    export type CreatedNote = MisskeyEntity.MiCreatedNote
+    export type Emoji = MisskeyEntity.MiEmoji
+    export type Favorite = MisskeyEntity.MiFavorite
+    export type File = MisskeyEntity.MiFile
+    export type Follower = MisskeyEntity.MiFollowers
+    export type Following = MisskeyEntity.MiFollowing
+    export type FollowRequest = MisskeyEntity.MiFollowRequest
+    export type Hashtag = MisskeyEntity.MiHashTag
+    export type List = MisskeyEntity.MiList
+    export type Meta = MisskeyEntity.MiMeta
+    export type Mute = MisskeyEntity.MiMute
+    export type Note = MisskeyEntity.MiNote
+    export type Notification = MisskeyEntity.MiNotification
+    export type Poll = MisskeyEntity.MiPoll
+    export type Reaction = MisskeyEntity.MiReaction
+    export type Relation = MisskeyEntity.MiRelation
+    export type User = MisskeyEntity.MiUser
+    export type UserDetail = MisskeyEntity.MiUserDetail
+    export type UserKey = MisskeyEntity.MiUserKey
+    export type Session = MisskeyEntity.MiSession
+    export type Stats = MisskeyEntity.MiStats
   }
 
   export namespace Converter {
@@ -359,7 +359,7 @@ namespace MisskeyAPI {
 
     export const encodeNotificationType = (
       e: MegalodonEntity.NotificationType
-    ): MisskeyEntity.NotificationType | UnknownNotificationTypeError => {
+    ): MisskeyEntity.MiNotificationType | UnknownNotificationTypeError => {
       switch (e) {
         case NotificationType.Follow:
           return MisskeyNotificationType.Follow
@@ -380,7 +380,7 @@ namespace MisskeyAPI {
     }
 
     export const decodeNotificationType = (
-      e: MisskeyEntity.NotificationType
+      e: MisskeyEntity.MiNotificationType
     ): MegalodonEntity.NotificationType | UnknownNotificationTypeError => {
       switch (e) {
         case MisskeyNotificationType.Follow:
