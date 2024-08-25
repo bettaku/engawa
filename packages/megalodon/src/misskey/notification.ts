@@ -1,16 +1,18 @@
-import MisskeyEntity from './entity'
+import type MisskeyEntity from "./entity";
 
 namespace MisskeyNotificationType {
-  export const Follow: MisskeyEntity.NotificationType = 'follow'
-  export const Mention: MisskeyEntity.NotificationType = 'mention'
-  export const Reply: MisskeyEntity.NotificationType = 'reply'
-  export const Renote: MisskeyEntity.NotificationType = 'renote'
-  export const Quote: MisskeyEntity.NotificationType = 'quote'
-  export const Reaction: MisskeyEntity.NotificationType = 'reaction'
-  export const PollVote: MisskeyEntity.NotificationType = 'pollVote'
-  export const ReceiveFollowRequest: MisskeyEntity.NotificationType = 'receiveFollowRequest'
-  export const FollowRequestAccepted: MisskeyEntity.NotificationType = 'followRequestAccepted'
-  export const GroupInvited: MisskeyEntity.NotificationType = 'groupInvited'
+	export const Follow: MisskeyEntity.MiNotificationType = "follow";
+	export const Mention: MisskeyEntity.MiNotificationType = "mention";
+	export const Reply: MisskeyEntity.MiNotificationType = "reply";
+	export const Renote: MisskeyEntity.MiNotificationType = "renote";
+	export const Quote: MisskeyEntity.MiNotificationType = "quote";
+	export const Reaction: MisskeyEntity.MiNotificationType = "reaction";
+	export const PollVote: MisskeyEntity.MiNotificationType = "pollVote";
+	export const ReceiveFollowRequest: MisskeyEntity.MiNotificationType =
+		"receiveFollowRequest";
+	export const FollowRequestAccepted: MisskeyEntity.MiNotificationType =
+		"followRequestAccepted";
+	export const GroupInvited: MisskeyEntity.MiNotificationType = "groupInvited";
 }
 
-export default MisskeyNotificationType
+export default MisskeyNotificationType;
