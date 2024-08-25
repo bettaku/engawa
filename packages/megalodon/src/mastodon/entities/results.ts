@@ -1,11 +1,9 @@
-/// <reference path="account.ts" />
-/// <reference path="status.ts" />
-/// <reference path="tag.ts" />
+import type { Account } from "./account"
+import type { Status } from "./status"
+import type { Tag } from "./tag"
 
-namespace MastodonEntity {
-  export type Results = {
-    accounts: Array<Account>
-    statuses: Array<Status>
-    hashtags: Array<Tag>
-  }
+export type Results = {
+	accounts: Array<Account>
+	statuses: Array<Status>
+	hashtags: Array<Tag>
 }
