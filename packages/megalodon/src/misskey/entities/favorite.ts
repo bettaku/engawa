@@ -1,8 +1,8 @@
-import type { Note } from "./note"
+import type { Note } from "./note";
 
 export type Favorite = {
-	id: string
-	createdAt: string
-	noteId: string
-	note: Note
-}
+	id: string;
+	createdAt: string;
+	noteId: string;
+	note: Note;
+};

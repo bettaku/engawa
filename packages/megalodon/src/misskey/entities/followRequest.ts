@@ -1,7 +1,7 @@
-import type { User } from "./user"
+import type { User } from "./user";
 
 export type FollowRequest = {
-	id: string
-	follower: User
-	followee: User
-}
+	id: string;
+	follower: User;
+	followee: User;
+};

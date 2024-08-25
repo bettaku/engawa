@@ -1,4 +1,4 @@
 export type Session = {
-	token: string
-	url: string
-}
+	token: string;
+	url: string;
+};

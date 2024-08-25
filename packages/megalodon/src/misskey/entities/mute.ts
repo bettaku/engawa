@@ -1,8 +1,8 @@
-import type { UserDetail } from "./userDetail"
+import type { UserDetail } from "./userDetail";
 
 export type Mute = {
-	id: string
-	createdAt: string
-	muteeId: string
-	mutee: UserDetail
-}
+	id: string;
+	createdAt: string;
+	muteeId: string;
+	mutee: UserDetail;
+};

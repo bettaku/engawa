@@ -1,5 +1,5 @@
-import type { Note } from "./note"
+import type { Note } from "./note";
 
 export type CreatedNote = {
-	createdNote: Note
-}
+	createdNote: Note;
+};

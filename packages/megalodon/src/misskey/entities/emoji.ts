@@ -1,6 +1,6 @@
 export type Emoji = {
-	name: string
-	url: string
-	aliases: Array<string>
-	category: string
-}
+	name: string;
+	url: string;
+	aliases: Array<string>;
+	category: string;
+};

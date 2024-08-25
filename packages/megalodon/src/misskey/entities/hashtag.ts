@@ -1,5 +1,5 @@
 export type Hashtag = {
-	tag: string
-	chart: Array<number>
-	usersCount: number
-}
+	tag: string;
+	chart: Array<number>;
+	usersCount: number;
+};

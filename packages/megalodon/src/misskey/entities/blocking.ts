@@ -1,8 +1,8 @@
-import type { UserDetail } from "./userDetail"
+import type { UserDetail } from "./userDetail";
 
 export type Blocking = {
-	id: string
-	createdAt: string
-	blockeeId: string
-	blockee: UserDetail
-}
+	id: string;
+	createdAt: string;
+	blockeeId: string;
+	blockee: UserDetail;
+};
