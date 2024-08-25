@@ -1,12 +1,12 @@
-import axios, { AxiosResponse, AxiosRequestConfig } from 'axios'
+import axios, { type AxiosResponse, type AxiosRequestConfig } from 'axios'
 import dayjs from 'dayjs'
 import FormData from 'form-data'
 
 import { DEFAULT_UA } from '../default'
-import proxyAgent, { ProxyConfig } from '../proxy_config'
-import Response from '../response'
-import MisskeyEntity from './entity'
-import MegalodonEntity from '../entity'
+import proxyAgent, { type ProxyConfig } from '../proxy_config'
+import type Response from '../response'
+import type MisskeyEntity from './entity'
+import type MegalodonEntity from '../entity'
 import WebSocket from './web_socket'
 import MisskeyNotificationType from './notification'
 import NotificationType, { UnknownNotificationTypeError } from '../notification'
@@ -536,8 +536,8 @@ namespace MisskeyAPI {
       let options: AxiosRequestConfig = {
         params: params,
         headers: headers,
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity
+        maxContentLength: Number.POSITIVE_INFINITY,
+        maxBodyLength: Number.POSITIVE_INFINITY
       }
       if (this.proxyConfig) {
         options = Object.assign(options, {
@@ -565,8 +565,8 @@ namespace MisskeyAPI {
     public async post<T>(path: string, params: any = {}, headers: { [key: string]: string } = {}): Promise<Response<T>> {
       let options: AxiosRequestConfig = {
         headers: headers,
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity
+        maxContentLength: Number.POSITIVE_INFINITY,
+        maxBodyLength: Number.POSITIVE_INFINITY
       }
       if (this.proxyConfig) {
         options = Object.assign(options, {
