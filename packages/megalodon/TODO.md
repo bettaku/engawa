@@ -1,0 +1,6 @@
+- [ ] cherrypick-jsを参照するようにする
+- [ ] 各ソフトウェアのEntity名を直す(ex. misskey/entities/UserならMiUserでエクスポートする)
+- [ ] Firefish、GoToSocialに対応する
+- [ ] `src/entities`の整理
+- [ ] 自動生成する
+- [ ] フォーマット直す(極力エイリアス使ってインポートする)
