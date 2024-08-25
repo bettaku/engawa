@@ -1,8 +1,8 @@
-import type { Account } from "./account"
+import type { Account } from "./account";
 
 export type Reaction = {
-	count: number
-	me: boolean
-	name: string
-	accounts?: Array<Account>
-}
+	count: number;
+	me: boolean;
+	name: string;
+	accounts?: Array<Account>;
+};

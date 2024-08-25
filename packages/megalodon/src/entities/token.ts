@@ -3,4 +3,4 @@ export type Token = {
 	token_type: string;
 	scope: string;
 	created_at: number;
-}
+};
