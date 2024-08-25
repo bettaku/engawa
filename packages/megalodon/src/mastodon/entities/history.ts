@@ -1,5 +1,5 @@
 export type History = {
-	day: string
-	uses: number
-	accounts: number
-}
+	day: string;
+	uses: number;
+	accounts: number;
+};

@@ -1,7 +1,7 @@
 export type List = {
-	id: string
-	title: string
-	replies_policy: RepliesPolicy
-}
+	id: string;
+	title: string;
+	replies_policy: RepliesPolicy;
+};
 
-export type RepliesPolicy = 'followed' | 'list' | 'none'
+export type RepliesPolicy = "followed" | "list" | "none";

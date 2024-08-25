@@ -1,5 +1,5 @@
 export type StatusSource = {
-	id: string
-	text: string
-	spoiler_text: string
-}
+	id: string;
+	text: string;
+	spoiler_text: string;
+};

@@ -1,40 +1,40 @@
-import * as Account from './entities/account'
-import * as Activity from './entities/activity'
-import * as Announcement from './entities/announcement'
-import * as Application from './entities/application'
-import * as AsyncAttachment from './entities/async_attachment'
-import * as Attachment from './entities/attachment'
-import * as Card from './entities/card'
-import * as Context from './entities/context'
-import * as Conversation from './entities/conversation'
-import * as Emoji from './entities/emoji'
-import * as FeaturedTag from './entities/featured_tag'
-import * as Field from './entities/field'
-import * as Filter from './entities/filter'
-import * as History from './entities/history'
-import * as IdentityProof from './entities/identity_proof'
-import * as Instance from 	'./entities/instance'
-import * as List from './entities/list'
-import * as Marker from './entities/marker'
-import * as Mention from './entities/mention'
-import * as Notification from './entities/notification'
-import * as PollOption from './entities/poll_option'
-import * as Poll from './entities/poll'
-import * as Preferences from './entities/preferences'
-import * as PushSubscription from './entities/push_subscription'
-import * as Relationship from './entities/relationship'
-import * as Report from './entities/report'
-import * as Results from './entities/results'
-import * as Role from './entities/role'
-import * as ScheduledStatus from './entities/scheduled_status'
-import * as Source from './entities/source'
-import * as Stats from './entities/stats'
-import * as Status from './entities/status'
-import * as StatusParams from './entities/status_params'
-import * as StatusSource from './entities/status_source'
-import * as Tag from './entities/tag'
-import * as Token from './entities/token'
-import * as URLs from './entities/urls'
+import type * as Account from "./entities/account";
+import type * as Activity from "./entities/activity";
+import type * as Announcement from "./entities/announcement";
+import type * as Application from "./entities/application";
+import type * as AsyncAttachment from "./entities/async_attachment";
+import type * as Attachment from "./entities/attachment";
+import type * as Card from "./entities/card";
+import type * as Context from "./entities/context";
+import type * as Conversation from "./entities/conversation";
+import type * as Emoji from "./entities/emoji";
+import type * as FeaturedTag from "./entities/featured_tag";
+import type * as Field from "./entities/field";
+import type * as Filter from "./entities/filter";
+import type * as History from "./entities/history";
+import type * as IdentityProof from "./entities/identity_proof";
+import type * as Instance from "./entities/instance";
+import type * as List from "./entities/list";
+import type * as Marker from "./entities/marker";
+import type * as Mention from "./entities/mention";
+import type * as Notification from "./entities/notification";
+import type * as PollOption from "./entities/poll_option";
+import type * as Poll from "./entities/poll";
+import type * as Preferences from "./entities/preferences";
+import type * as PushSubscription from "./entities/push_subscription";
+import type * as Relationship from "./entities/relationship";
+import type * as Report from "./entities/report";
+import type * as Results from "./entities/results";
+import type * as Role from "./entities/role";
+import type * as ScheduledStatus from "./entities/scheduled_status";
+import type * as Source from "./entities/source";
+import type * as Stats from "./entities/stats";
+import type * as Status from "./entities/status";
+import type * as StatusParams from "./entities/status_params";
+import type * as StatusSource from "./entities/status_source";
+import type * as Tag from "./entities/tag";
+import type * as Token from "./entities/token";
+import type * as URLs from "./entities/urls";
 
 export namespace MastodonEntity {
 	export type Account = Account.Account;
@@ -87,4 +87,4 @@ export namespace MastodonEntity {
 	export type URLs = URLs.URLs;
 }
 
-export default MastodonEntity
+export default MastodonEntity;
