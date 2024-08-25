@@ -89,3 +89,5 @@ export namespace Entity {
 	export type Token = token.Token;
 	export type URLs = urls.URLs;
 }
+
+export default Entity;
