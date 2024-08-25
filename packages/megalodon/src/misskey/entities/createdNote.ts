@@ -1,7 +1,5 @@
-/// <reference path="note.ts" />
+import type { Note } from "./note"
 
-namespace MisskeyEntity {
-  export type CreatedNote = {
-    createdNote: Note
-  }
+export type CreatedNote = {
+	createdNote: Note
 }

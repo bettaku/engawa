@@ -1,13 +1,11 @@
-/// <reference path="emoji.ts" />
+import type { Emoji } from "./emoji"
 
-namespace MisskeyEntity {
-  export type User = {
-    id: string
-    name: string
-    username: string
-    host: string | null
-    avatarUrl: string
-    avatarColor: string
-    emojis: Array<Emoji> | { [key: string]: string }
-  }
+export type User = {
+	id: string
+	name: string
+	username: string
+	host: string | null
+	avatarUrl: string
+	avatarColor: string
+	emojis: Array<Emoji> | { [key: string]: string }
 }

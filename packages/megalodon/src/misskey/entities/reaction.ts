@@ -1,10 +1,8 @@
-/// <reference path="user.ts" />
+import type { User } from "./user"
 
-namespace MisskeyEntity {
-  export type Reaction = {
-    id: string
-    createdAt: string
-    user: User
-    type: string
-  }
+export type Reaction = {
+	id: string
+	createdAt: string
+	user: User
+	type: string
 }
