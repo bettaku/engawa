@@ -1,13 +1,13 @@
-import axios, { AxiosResponse, AxiosRequestConfig } from 'axios'
+import axios, { type AxiosResponse, type AxiosRequestConfig } from 'axios'
 import objectAssignDeep from 'object-assign-deep'
 
 import WebSocket from './web_socket'
-import Response from '../response'
+import type Response from '../response'
 import { RequestCanceledError } from '../cancel'
-import proxyAgent, { ProxyConfig } from '../proxy_config'
+import proxyAgent, { type ProxyConfig } from '../proxy_config'
 import { NO_REDIRECT, DEFAULT_SCOPE, DEFAULT_UA } from '../default'
-import MastodonEntity from './entity'
-import MegalodonEntity from '../entity'
+import type MastodonEntity from './entity'
+import type MegalodonEntity from '../entity'
 import NotificationType, { UnknownNotificationTypeError } from '../notification'
 import MastodonNotificationType from './notification'
 
@@ -79,8 +79,8 @@ namespace MastodonAPI {
       let options: AxiosRequestConfig = {
         params: params,
         headers: headers,
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity
+        maxContentLength: Number.POSITIVE_INFINITY,
+        maxBodyLength: Number.POSITIVE_INFINITY
       }
       if (this.accessToken) {
         options = objectAssignDeep({}, options, {
@@ -124,8 +124,8 @@ namespace MastodonAPI {
     public async put<T>(path: string, params = {}, headers: { [key: string]: string } = {}): Promise<Response<T>> {
       let options: AxiosRequestConfig = {
         headers: headers,
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity
+        maxContentLength: Number.POSITIVE_INFINITY,
+        maxBodyLength: Number.POSITIVE_INFINITY
       }
       if (this.accessToken) {
         options = objectAssignDeep({}, options, {
@@ -169,8 +169,8 @@ namespace MastodonAPI {
     public async putForm<T>(path: string, params = {}, headers: { [key: string]: string } = {}): Promise<Response<T>> {
       let options: AxiosRequestConfig = {
         headers: headers,
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity
+        maxContentLength: Number.POSITIVE_INFINITY,
+        maxBodyLength: Number.POSITIVE_INFINITY
       }
       if (this.accessToken) {
         options = objectAssignDeep({}, options, {
@@ -214,8 +214,8 @@ namespace MastodonAPI {
     public async patch<T>(path: string, params = {}, headers: { [key: string]: string } = {}): Promise<Response<T>> {
       let options: AxiosRequestConfig = {
         headers: headers,
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity
+        maxContentLength: Number.POSITIVE_INFINITY,
+        maxBodyLength: Number.POSITIVE_INFINITY
       }
       if (this.accessToken) {
         options = objectAssignDeep({}, options, {
@@ -259,8 +259,8 @@ namespace MastodonAPI {
     public async patchForm<T>(path: string, params = {}, headers: { [key: string]: string } = {}): Promise<Response<T>> {
       let options: AxiosRequestConfig = {
         headers: headers,
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity
+        maxContentLength: Number.POSITIVE_INFINITY,
+        maxBodyLength: Number.POSITIVE_INFINITY
       }
       if (this.accessToken) {
         options = objectAssignDeep({}, options, {
@@ -304,8 +304,8 @@ namespace MastodonAPI {
     public async post<T>(path: string, params = {}, headers: { [key: string]: string } = {}): Promise<Response<T>> {
       let options: AxiosRequestConfig = {
         headers: headers,
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity
+        maxContentLength: Number.POSITIVE_INFINITY,
+        maxBodyLength: Number.POSITIVE_INFINITY
       }
       if (this.accessToken) {
         options = objectAssignDeep({}, options, {
@@ -340,8 +340,8 @@ namespace MastodonAPI {
     public async postForm<T>(path: string, params = {}, headers: { [key: string]: string } = {}): Promise<Response<T>> {
       let options: AxiosRequestConfig = {
         headers: headers,
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity
+        maxContentLength: Number.POSITIVE_INFINITY,
+        maxBodyLength: Number.POSITIVE_INFINITY
       }
       if (this.accessToken) {
         options = objectAssignDeep({}, options, {
@@ -377,8 +377,8 @@ namespace MastodonAPI {
       let options: AxiosRequestConfig = {
         data: params,
         headers: headers,
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity
+        maxContentLength: Number.POSITIVE_INFINITY,
+        maxBodyLength: Number.POSITIVE_INFINITY
       }
       if (this.accessToken) {
         options = objectAssignDeep({}, options, {

@@ -1,4 +1,4 @@
-import MastodonEntity from './entity'
+import type MastodonEntity from './entity'
 
 namespace MastodonNotificationType {
   export const Mention: MastodonEntity.NotificationType = 'mention'

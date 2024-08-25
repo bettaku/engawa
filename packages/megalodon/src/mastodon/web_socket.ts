@@ -1,8 +1,8 @@
 import WS from 'ws'
-import dayjs, { Dayjs } from 'dayjs'
+import dayjs, { type Dayjs } from 'dayjs'
 import { EventEmitter } from 'events'
-import proxyAgent, { ProxyConfig } from '../proxy_config'
-import { WebSocketInterface } from '../megalodon'
+import proxyAgent, { type ProxyConfig } from '../proxy_config'
+import type { WebSocketInterface } from '../megalodon'
 import MastodonAPI from './api_client'
 import { UnknownNotificationTypeError } from '../notification'
 
@@ -25,8 +25,8 @@ export default class WebSocket extends EventEmitter implements WebSocketInterfac
   private _connectionClosed: boolean
   private _client: WS | null
   private _pongReceivedTimestamp: Dayjs
-  private _heartbeatInterval: number = 60000
-  private _pongWaiting: boolean = false
+  private _heartbeatInterval = 60000
+  private _pongWaiting = false
 
   /**
    * @param url Full url of websocket: e.g. https://pleroma.io/api/v1/streaming
@@ -58,7 +58,7 @@ export default class WebSocket extends EventEmitter implements WebSocketInterfac
     this.proxyConfig = proxyConfig
     this._accessToken = accessToken
     this._reconnectInterval = 10000
-    this._reconnectMaxAttempts = Infinity
+    this._reconnectMaxAttempts = Number.POSITIVE_INFINITY
     this._reconnectCurrentAttempts = 0
     this._connectionClosed = false
     this._client = null
