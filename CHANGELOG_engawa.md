@@ -15,6 +15,22 @@
 ### Misc
 
 -->
+## 0.5.3
+
+### Release Date
+
+### General
+-
+
+### Client
+- 
+
+### Server
+- 検索対象にCWのテキストも含むように
+
+### Misc
+
+
 ## 0.5.2
 
 ### Release Date
