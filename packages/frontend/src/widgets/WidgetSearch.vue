@@ -134,11 +134,12 @@ async function search() {
 
 	key.value++;
 
-	os.popup(defineAsyncComponent(() => import('@/components/MkSearchResultWindow.vue')), {
+	const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkSearchResultWindow.vue')), {
 		noteKey: key.value,
 		notePagination: notePagination.value,
 	}, {
-	}, 'closed');
+		closed: () => dispose(),
+	});
 	}
 
 defineExpose<WidgetComponentExpose>({
