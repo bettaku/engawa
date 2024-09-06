@@ -7,6 +7,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	<MkContainer :showHeader="widgetProps.showHeader" class="skw-search">
 		<MkInput v-model="searchQuery" :large="true" type="search" @keydown="onInputKeydown">
 			<template #suffix>
+				<button style="border: none; background: none; margin-right: 0.5em; z-index: 2; pointer-events: auto; position: relative; margin-top: 0 auto;" @click="onFilterClick"><i class="ti ti-filter"></i></button>
 				<button style="border: none; background: none; z-index: 2; pointer-events: auto; position: relative; margin: 0 auto;" @click="search"><i class="ti ti-zoom"></i></button>
 			</template>
 		</MkInput>
@@ -52,6 +53,28 @@ function onInputKeydown(evt: KeyboardEvent) {
 	}
 }
 
+function onFilterClick(ev) {
+	os.popupMenu([{
+		type: 'parent',
+		text: i18n.ts.options,
+		icon: 'ti ti-filter',
+		children: [
+			{
+				type: 'switch',
+				icon: 'ti ti-eye-off',
+				text: i18n.ts._advancedSearch._searchOption.toggleCW,
+				ref: excludeNsfw,
+			},
+			{
+				type: 'switch',
+				icon: 'ti ti-ufo-off',
+				text: i18n.ts.antennaExcludeBots,
+				ref: excludeBots,
+			},
+		],
+	}], ev.currentTarget ?? ev.target);
+}
+
 const router = useRouter();
 
 let key = ref(0);
@@ -59,7 +82,8 @@ let searchQuery = ref('');
 let notePagination = ref();
 let isLocalOnly = ref(false);
 let order = ref(true);
-let filetype = ref<null | string>(null);
+let excludeNsfw = ref(false);
+let excludeBots = ref(false);
 
 async function search() {
 	const query = searchQuery.value.toString().trim();
@@ -101,7 +125,8 @@ async function search() {
 			query: searchQuery,
 			userId: null,
 			order: order.value ? 'desc' : 'asc',
-			filetype: filetype.value,
+			excludeNsfw: excludeNsfw.value,
+			excludeBots: excludeBots.value,
 		},
 	};
 
