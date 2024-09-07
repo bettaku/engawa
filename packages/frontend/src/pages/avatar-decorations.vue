@@ -29,6 +29,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<MkTextarea v-model="avatarDecoration.description">
 								<template #label>{{ i18n.ts.description }}</template>
 							</MkTextarea>
+							<MkButton @click="ev => changeImage(ev, avatarDecoration)">
+								<template #label>{{ i18n.ts.image }}</template>
+								{{ i18n.ts.selectFile }}
+							</MkButton>
 							<MkInput v-model="avatarDecoration.url">
 								<template #label>{{ i18n.ts.imageUrl }}</template>
 							</MkInput>
