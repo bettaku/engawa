@@ -78,6 +78,28 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<canvas ref="pubDoughnutEl"></canvas>
 				</div>
 			</div>
+			<div class="diffs">
+				<div class="item2 _panel sub">
+					<div class="icon"><i class="ti ti-world-download"></i></div>
+					<div class="body">
+						<div class="value">
+							{{ number(federationSubActive) }}
+							<MkNumberDiff v-tooltip="i18n.ts.dayOverDayChanges" class="diff" :value="federationSubActiveDiff"></MkNumberDiff>
+						</div>
+						<div class="label">Sub</div>
+					</div>
+				</div>
+				<div class="item2 _panel pub">
+					<div class="icon"><i class="ti ti-world-upload"></i></div>
+					<div class="body">
+						<div class="value">
+							{{ number(federationPubActive) }}
+							<MkNumberDiff v-tooltip="i18n.ts.dayOverDayChanges" class="diff" :value="federationPubActiveDiff"></MkNumberDiff>
+						</div>
+						<div class="label">Pub</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</MkFoldableSection>
 </div>
@@ -97,6 +119,8 @@ import MkFoldableSection from '@/components/MkFoldableSection.vue';
 import MkRetentionHeatmap from '@/components/MkRetentionHeatmap.vue';
 import MkRetentionLineChart from '@/components/MkRetentionLineChart.vue';
 import { initChart } from '@/scripts/init-chart.js';
+import number from '@/filters/number';
+import MkNumberDiff from './MkNumberDiff.vue';
 
 initChart();
 
@@ -106,6 +130,10 @@ const chartSrc = ref('active-users');
 const heatmapSrc = ref<HeatmapSource>('active-users');
 const subDoughnutEl = shallowRef<HTMLCanvasElement>();
 const pubDoughnutEl = shallowRef<HTMLCanvasElement>();
+const federationPubActive = ref<number | null>(null);
+const federationPubActiveDiff = ref<number | null>(null);
+const federationSubActive = ref<number | null>(null);
+const federationSubActiveDiff = ref<number | null>(null);
 
 const { handler: externalTooltipHandler1 } = useChartTooltip({
 	position: 'middle',
@@ -162,6 +190,14 @@ function createDoughnut(chartEl, tooltip, data) {
 
 	return chartInstance;
 }
+
+onMounted(async () => {
+	const chart = await misskeyApiGet('charts/federation', { limit: 2, span: 'day' });
+	federationPubActive.value = chart.pubActive[0];
+	federationPubActiveDiff.value = chart.pubActive[0] - chart.pubActive[1];
+	federationSubActive.value = chart.subActive[0];
+	federationSubActiveDiff.value = chart.subActive[0] - chart.subActive[1];
+})
 
 onMounted(() => {
 	misskeyApiGet('federation/stats', { limit: 30 }).then(fedStats => {
@@ -251,6 +287,7 @@ onMounted(() => {
 		> .pies {
 			display: flex;
 			gap: 16px;
+			margin-bottom: 12px;
 
 			> .sub, > .pub {
 				flex: 1;
@@ -267,10 +304,67 @@ onMounted(() => {
 					left: 24px;
 				}
 			}
-
 			@media (max-width: 600px) {
 				flex-direction: column;
 			}
+		}
+		> .diffs {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+			grid-gap:16px;
+			position: relative;
+
+			> .item2 {
+				display: flex;
+				box-sizing: border-box;
+				padding: 12px;
+				position: relative;
+
+				> .icon {
+					display: grid;
+					place-items: center;
+					height: 100%;
+					aspect-ratio: 1;
+					margin-right: 12px;
+					background: var(--accentedBg);
+					color: var(--accent);
+					border-radius: 10px;
+				}
+
+				&.sub {
+					> .icon {
+						background: #d5ba0026;
+						color: #dfc300;
+					}
+				}
+
+				&.pub {
+					> .icon {
+						background: #00cf2326;
+						color: #00cd5b;
+					}
+				}
+
+				> .body {
+					padding: 2px 0;
+
+					> .value {
+						font-size: 1.2em;
+						font-weight: bold;
+
+						> .diff {
+							font-size: 0.65em;
+							font-weight: normal;
+						}
+					}
+
+					> .label {
+						font-size: 0.8em;
+						opacity: 0.5;
+					}
+				}
+			}
+
 		}
 	}
 }
