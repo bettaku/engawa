@@ -285,9 +285,10 @@ onMounted(() => {
 .federation {
 	&:global {
 		> .pies {
-			display: flex;
-			gap: 16px;
-			margin-bottom: 12px;
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+			grid-gap: 16px;
+			margin-bottom: 16px;
 
 			> .sub, > .pub {
 				flex: 1;
@@ -310,9 +311,10 @@ onMounted(() => {
 		}
 		> .diffs {
 			display: grid;
-			grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+			grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
 			grid-gap:16px;
 			position: relative;
+			margin-top: 8px;
 
 			> .item2 {
 				display: flex;
