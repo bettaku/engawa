@@ -78,12 +78,11 @@ export class SearchService {
 			query
 				.andWhere('note.text ILIKE :q', { q: `%${ sqlLikeEscape(q) }%` })
 				.orWhere('note.cw ILIKE :q', { q: `%${ sqlLikeEscape(q) }%` })
-				.innerJoinAndSelect('note.user', 'user')
+				.innerJoinAndSelect('note.user', 'user', 'user.isIndexable = true')
 				.leftJoinAndSelect('note.reply', 'reply')
 				.leftJoinAndSelect('note.renote', 'renote')
 				.leftJoinAndSelect('reply.user', 'replyUser')
 				.leftJoinAndSelect('renote.user', 'renoteUser')
-				.andWhere('user.isIndexable = true')
 				.andWhere('user.isSensitive = false');
 
 			if (opts.host) {
