@@ -27,6 +27,8 @@
 
 ### Server
 - fix: `ApPersonService`で`isIndexable`を考慮してなかった箇所がある問題
+- fix: `toot:indexable`がfalseなユーザーを検索できてしまっていた問題
+- fix: `toot:indexable`がfalseなユーザーがアンテナに載っていた問題
 
 ### Misc
 
