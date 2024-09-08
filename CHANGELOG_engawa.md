@@ -15,6 +15,21 @@
 ### Misc
 
 -->
+## 0.5.4
+
+### Release Date
+
+### General
+-
+
+### Client
+- 
+
+### Server
+- fix: `ApPersonService`で`isIndexable`を考慮してなかった箇所がある問題
+
+### Misc
+
 ## 0.5.3
 
 ### Release Date

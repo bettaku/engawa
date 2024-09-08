@@ -648,7 +648,7 @@ export class ApPersonService implements OnModuleInit {
 			alsoKnownAs: person.alsoKnownAs ?? null,
 			isExplorable: person.discoverable,
 			...(await this.resolveAvatarAndBanner(exist, person.icon, person.image).catch(() => ({}))),
-		} as Partial<MiRemoteUser> & Pick<MiRemoteUser, 'isBot' | 'isCat' | 'isLocked' | 'movedToUri' | 'alsoKnownAs' | 'isExplorable'>;
+		} as Partial<MiRemoteUser> & Pick<MiRemoteUser, 'isBot' | 'isCat' | 'isLocked' | 'movedToUri' | 'alsoKnownAs' | 'isExplorable' | 'isIndexable'>;
 
 		const moving = ((): boolean => {
 			// 移行先がない→ある
