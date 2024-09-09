@@ -379,6 +379,19 @@ export class ApRendererService {
 			to = mentions;
 		}
 
+		let searchableBy: string[] = [];
+		if (note.searchableBy === 'public') {
+			searchableBy = ['https://www.w3.org/ns/activitystreams#Public'];
+		} else if (note.searchableBy === 'followers') {
+			searchableBy = [`${attributedTo}/followers`];
+		} else if (note.searchableBy === 'limited') {
+			searchableBy = ['as:Limited', 'kmyblue:Limited'];
+		} else if (note.searchableBy === 'reacted') {
+			searchableBy = [];
+		} else {
+			searchableBy = [];
+		}
+
 		const mentionedUsers = note.mentions.length > 0 ? await this.usersRepository.findBy({
 			id: In(note.mentions),
 		}) : [];
@@ -463,6 +476,7 @@ export class ApRendererService {
 			to,
 			cc,
 			inReplyTo,
+			searchableBy,
 			attachment: files.map(x => this.renderDocument(x)),
 			sensitive: note.cw != null || files.some(file => file.isSensitive),
 			tag,
