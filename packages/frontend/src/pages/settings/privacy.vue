@@ -48,6 +48,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 		{{ i18n.ts._isIndexable.title }}
 		<template #caption>{{ i18n.ts._isIndexable.description }}</template>
 	</MkSwitch>
+	<MkSelect v-model="defaultSearchableBy">
+		<template #label>{{ i18n.ts._searchableBy.searchableBy }}</template>
+		<option value="public">{{ i18n.ts._searchableBy.public }}</option>
+		<option value="followers">{{ i18n.ts._searchableBy.followers }}</option>
+		<option value="reacted" disabled>{{ i18n.ts._searchableBy.reacted }}</option>
+		<option value="limited">{{ i18n.ts._searchableBy.limited }}</option>
+	</MkSelect>
 
 	<FormSection>
 		<div class="_gaps_m">
@@ -108,6 +115,7 @@ const defaultNoteVisibility = computed(defaultStore.makeGetterSetter('defaultNot
 const defaultNoteLocalOnly = computed(defaultStore.makeGetterSetter('defaultNoteLocalOnly'));
 const rememberNoteVisibility = computed(defaultStore.makeGetterSetter('rememberNoteVisibility'));
 const keepCw = computed(defaultStore.makeGetterSetter('keepCw'));
+const defaultSearchableBy = computed(defaultStore.makeGetterSetter('searchableBy'));
 
 function save() {
 	misskeyApi('i/update', {

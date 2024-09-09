@@ -600,7 +600,7 @@ async function toggleSearchableBy() {
 			{ value: 'public' as const, text: i18n.ts._searchableBy.public },
 			{ value: 'followers' as const, text: i18n.ts._searchableBy.followers },
 			{ value: 'reacted' as const, text: i18n.ts._searchableBy.reacted },
-			{ value: 'limited' as const, text: i18n.ts._searchableBy.specified },
+			{ value: 'limited' as const, text: i18n.ts._searchableBy.limited },
 		],
 		default: searchableBy.value,
 	});
