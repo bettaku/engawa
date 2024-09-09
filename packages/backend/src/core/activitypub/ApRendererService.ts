@@ -379,17 +379,17 @@ export class ApRendererService {
 			to = mentions;
 		}
 
-		let searchableBy: string[] = [];
+		let searchable: string[] = [];
 		if (note.searchableBy === 'public') {
-			searchableBy = ['https://www.w3.org/ns/activitystreams#Public'];
+			searchable = ['https://www.w3.org/ns/activitystreams#Public'];
 		} else if (note.searchableBy === 'followers') {
-			searchableBy = [`${attributedTo}/followers`];
+			searchable = [`${attributedTo}/followers`];
 		} else if (note.searchableBy === 'limited') {
-			searchableBy = ['as:Limited', 'kmyblue:Limited'];
+			searchable = ['as:Limited', 'kmyblue:Limited'];
 		} else if (note.searchableBy === 'reacted') {
-			searchableBy = [];
+			searchable = [];
 		} else {
-			searchableBy = [];
+			searchable = [];
 		}
 
 		const mentionedUsers = note.mentions.length > 0 ? await this.usersRepository.findBy({
@@ -476,7 +476,7 @@ export class ApRendererService {
 			to,
 			cc,
 			inReplyTo,
-			searchableBy,
+			searchableBy: [...searchable],
 			attachment: files.map(x => this.renderDocument(x)),
 			sensitive: note.cw != null || files.some(file => file.isSensitive),
 			tag,
