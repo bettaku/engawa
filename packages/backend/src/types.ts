@@ -47,6 +47,7 @@ export const groupedNotificationTypes = [
 export const obsoleteNotificationTypes = ['pollVote'/*, 'groupInvited'*/] as const;
 
 export const noteVisibilities = ['public', 'home', 'followers', 'specified', 'private'] as const;
+export const noteSearchableBy = ['public', 'followers', 'reacted', 'limited'] as const;
 
 export const mutedNoteReasons = ['word', 'manual', 'spam', 'other'] as const;
 
