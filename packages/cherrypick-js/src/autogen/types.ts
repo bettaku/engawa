@@ -4297,6 +4297,8 @@ export type components = {
       reactionAndUserPairCache?: string[];
       clippedCount?: number;
       myReaction?: string | null;
+      /** @enum {string} */
+      searchableBy?: 'public' | 'followers' | 'reacted' | 'limited';
     };
     NoteReaction: {
       /**
