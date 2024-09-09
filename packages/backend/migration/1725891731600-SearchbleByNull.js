@@ -1,6 +1,4 @@
-const { MigrationInterface, QueryRunner } = require("typeorm");
-
-module.exports = class SearchbleByNull1725891731600 {
+export class SearchbleByNull1725891731600 {
     name = 'SearchbleByNull1725891731600'
 
     async up(queryRunner) {
