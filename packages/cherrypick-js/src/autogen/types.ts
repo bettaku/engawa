@@ -21787,6 +21787,11 @@ export type operations = {
           cw: string | null;
           /** @default false */
           disableRightClick?: boolean;
+          /**
+           * @default public
+           * @enum {string}
+           */
+          searchableBy?: 'public' | 'followers' | 'reacted' | 'limited';
         };
       };
     };

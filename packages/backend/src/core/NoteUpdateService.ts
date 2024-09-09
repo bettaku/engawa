@@ -139,6 +139,7 @@ export class NoteUpdateService implements OnApplicationShutdown {
 			attachedFileTypes: data.files ? data.files.map(file => file.type) : [],
 			updatedAtHistory: [...updatedAtHistory, new Date()],
 			noteEditHistory: [...note.noteEditHistory, (note.cw ? note.cw + '\n' : '') + note.text!],
+			searchableBy: note.searchableBy,
 		});
 
 		// 投稿を更新
