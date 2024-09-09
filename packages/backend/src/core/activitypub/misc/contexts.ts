@@ -559,6 +559,15 @@ const extension_context_definition = {
 	'isCat': 'misskey:isCat',
 	// vcard
 	vcard: 'http://www.w3.org/2006/vcard/ns#',
+	// Fedibird
+	fedibird: 'http://fedibird.com/ns#',
+	searchableBy: {
+		'@id': 'fedibird:searchableBy',
+		'@type': '@id',
+	},
+	// kmyblue
+	kmyblue: 'http://kmy.blue/ns#',
+	limitedScope: 'kmyblue:limitedScope',
 } satisfies Context;
 
 export const CONTEXT: (string | Context)[] = [...context_iris, extension_context_definition];
