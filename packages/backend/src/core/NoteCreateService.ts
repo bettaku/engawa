@@ -152,7 +152,7 @@ type Option = {
 	url?: string | null;
 	app?: MiApp | null;
 	deleteAt?: Date | null;
-	searchableBy?: string[] | string;
+	searchableBy: string[] | string;
 };
 
 @Injectable()
