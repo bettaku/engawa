@@ -21650,6 +21650,11 @@ export type operations = {
             deleteAt?: number | null;
             deleteAfter?: number | null;
           }) | null;
+          /**
+           * @default public
+           * @enum {string}
+           */
+          searchableBy?: 'public' | 'followers' | 'reacted' | 'limited';
         };
       };
     };

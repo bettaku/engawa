@@ -216,6 +216,7 @@ export const paramDef = {
 				deleteAfter: { type: 'integer', nullable: true, minimum: 1 },
 			},
 		},
+		searchableBy: { type: 'string', enum: ['public', 'followers', 'reacted', 'limited' ], default: 'public' },
 	},
 	// (re)note with text, files and poll are optional
 	if: {
@@ -427,6 +428,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					apHashtags: ps.noExtractHashtags ? [] : undefined,
 					apEmojis: ps.noExtractEmojis ? [] : undefined,
 					deleteAt: ps.scheduledDelete?.deleteAt ? new Date(ps.scheduledDelete.deleteAt) : ps.scheduledDelete?.deleteAfter ? new Date(Date.now() + ps.scheduledDelete.deleteAfter) : null,
+					searchableBy: ps.searchableBy,
 				});
 
 				return {
