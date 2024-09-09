@@ -3156,3 +3156,10 @@ _altWarning:
   noAltWarning: "ファイルに代替テキストが設定されていません。"
   showNoAltWarning: "画像に代替テキストが設定されていない場合に警告を表示する"
   postAnyWay: "投稿フォームへ"
+
+_searchableBy:
+  searchableBy: "検索可能範囲"
+  public: "公開(検索)"
+  followers: "フォロワー限定(検索)"
+  reacted: "リアクション限定(検索)"
+  limited: "自分限定(検索)"

@@ -140,6 +140,10 @@ export const defaultStore = markRaw(new Storage('base', {
 		where: 'account',
 		default: true,
 	},
+	searchableBy: {
+		where: 'account',
+		default: 'public' as 'public' | 'followers' | 'reacted' | 'limited',
+	},
 
 	menu: {
 		where: 'deviceAccount',
