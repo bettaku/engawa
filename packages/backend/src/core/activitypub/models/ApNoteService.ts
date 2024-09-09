@@ -348,6 +348,7 @@ export class ApNoteService {
 				event,
 				uri: note.id,
 				url: url,
+				searchableBy: note.searchableBy,
 			}, silent);
 		} catch (err: any) {
 			if (err.name !== 'duplicated') {
