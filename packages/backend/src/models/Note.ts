@@ -265,7 +265,10 @@ export class MiNote {
 	})
 	public renoteUserHost: string | null;
 
-	@Column('enum', { enum: noteSearchableBy })
+	@Column('enum', {
+		enum: noteSearchableBy,
+		nullable: true,
+	})
 	public searchableBy: typeof noteSearchableBy[number];
 	//#endregion
 
