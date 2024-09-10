@@ -229,7 +229,7 @@ export class ApNoteService {
 		} else if (searchableActivity.includes('kmyblue:Limited') || searchableActivity.includes('as:Limited')) {
 			searchable = ['limited'];
 		} else {
-			searchable = [];
+			searchable = ['public'];
 		}
 
 		// 添付ファイル
