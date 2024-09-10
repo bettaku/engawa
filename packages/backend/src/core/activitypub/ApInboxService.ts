@@ -354,30 +354,6 @@ export class ApInboxService {
 				throw err;
 			}
 
-			let searchableActivity = activity.searchableBy;
-			let searchable: string[] = [];
-			if (typeof searchableActivity === 'string') {
-				if (searchableActivity.includes('https://www.w3.org/ns/activitystreams#Public')) {
-					searchable = ['public'];
-				} else if (searchableActivity.includes('kmyblue:Limited') || searchableActivity.includes('as:Limited')) {
-					searchable = ['limited'];
-				} else if (searchableActivity.includes('followers')) {
-					searchable = ['followers'];
-				} else {
-					searchable = ['reacted'];
-				}
-			} else if (Array.isArray(searchableActivity)) {
-				if (searchableActivity.some(url => url.includes('https://www.w3.org/ns/activitystreams#Public'))) {
-					searchable = ['public'];
-				} else if (searchableActivity.some(url => url.includes('kmyblue:Limited')) || searchableActivity.some(url => url.includes('as:Limited'))) {
-					searchable = ['limited'];
-				} else if (searchableActivity.some(url => url.includes('followers'))) {
-					searchable = ['followers'];
-				} else {
-					searchable = ['reacted'];
-				}
-			}
-
 			if (!await this.noteEntityService.isVisibleForMe(renote, actor.id)) {
 				return 'skip: invalid actor for this activity';
 			}
@@ -403,7 +379,6 @@ export class ApInboxService {
 				visibility: activityAudience.visibility,
 				visibleUsers: activityAudience.visibleUsers,
 				uri,
-				searchableBy: searchable,
 			});
 		} finally {
 			unlock();
