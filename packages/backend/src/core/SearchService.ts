@@ -4,7 +4,7 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { In } from 'typeorm';
+import { Brackets, In } from 'typeorm';
 import { DI } from '@/di-symbols.js';
 import type { Config } from '@/config.js';
 import { bindThis } from '@/decorators.js';
@@ -77,6 +77,14 @@ export class SearchService {
 
 			query
 				.andWhere('note.text ILIKE :q', { q: `%${ sqlLikeEscape(q) }%` })
+				.andWhere(new Brackets(qb => {
+					qb.andWhere('note.searchableBy = :public', { public: 'public' })
+						.orWhere(new Brackets(qb2 => {
+							qb2.where('note.searchableBy = :followers AND (note."userId" IN (SELECT "followeeId" FROM following WHERE following."followerId" = :meId) OR note."userId" = :meId)', { followers: 'followers', meId: me?.id })
+								.orWhere('note.searchableBy = :limited AND note."userId" = :meId', { limited: 'limited', meId: me?.id })
+								.orWhere('note.searchableBy = :reacted AND (note."userId" IN (SELECT "userId" FROM note_reaction) OR note."userId" = :meId)', { reacted: 'reacted', meId: me?.id })
+						}))
+				}))
 				.orWhere('note.cw ILIKE :q', { q: `%${ sqlLikeEscape(q) }%` })
 				.innerJoinAndSelect('note.user', 'user', 'user.isIndexable = true')
 				.leftJoinAndSelect('note.reply', 'reply')
@@ -107,7 +115,7 @@ export class SearchService {
 			}
 
 			if (opts.excludeBot) {
-				query.andWhere(' (SELECT "isBot" FROM "user" WHERE id = note."userId") = FALSE ');
+				query.leftJoinAndSelect('note.user', 'user', 'user.isBot = FALSE');
 			}
 
 			/**
