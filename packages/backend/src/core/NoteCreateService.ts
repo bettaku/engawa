@@ -447,7 +447,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 			attachedFileTypes: data.files ? data.files.map(file => file.type) : [],
 
-			searchableBy: data.searchableBy as any,
+			searchableBy: data.searchableBy ? data.searchableBy as any : 'public',
 
 			// 以下非正規化データ
 			replyUserId: data.reply ? data.reply.userId : null,
