@@ -356,14 +356,26 @@ export class ApInboxService {
 
 			let searchableActivity = activity.searchableBy;
 			let searchable: string[] = [];
-			if (searchableActivity?.includes('https://www.w3.org/ns/activitystreams#Public')) {
-				searchable = ['public'];
-			} else if (searchableActivity?.includes('kmyblue:Limited') || searchableActivity?.includes('as:Limited')) {
-				searchable = ['limited'];
-			} else if (searchableActivity?.includes('/followers')) {
-				searchable = ['followers'];
-			} else {
-				searchable = ['reacted'];
+			if (typeof searchableActivity === 'string') {
+				if (searchableActivity.includes('https://www.w3.org/ns/activitystreams#Public')) {
+					searchable = ['public'];
+				} else if (searchableActivity.includes('kmyblue:Limited') || searchableActivity.includes('as:Limited')) {
+					searchable = ['limited'];
+				} else if (searchableActivity.includes('followers')) {
+					searchable = ['followers'];
+				} else {
+					searchable = ['reacted'];
+				}
+			} else if (Array.isArray(searchableActivity)) {
+				if (searchableActivity.some(url => url.includes('https://www.w3.org/ns/activitystreams#Public'))) {
+					searchable = ['public'];
+				} else if (searchableActivity.some(url => url.includes('kmyblue:Limited')) || searchableActivity.some(url => url.includes('as:Limited'))) {
+					searchable = ['limited'];
+				} else if (searchableActivity.some(url => url.includes('followers'))) {
+					searchable = ['followers'];
+				} else {
+					searchable = ['reacted'];
+				}
 			}
 
 			if (!await this.noteEntityService.isVisibleForMe(renote, actor.id)) {
