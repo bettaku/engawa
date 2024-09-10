@@ -41,6 +41,7 @@ import { ApPersonService } from './models/ApPersonService.js';
 import { ApQuestionService } from './models/ApQuestionService.js';
 import type { Resolver } from './ApResolverService.js';
 import type { IAccept, IAdd, IAnnounce, IBlock, ICreate, IDelete, IFlag, IFollow, ILike, IObject, IRead, IReject, IRemove, IUndo, IUpdate, IMove, IPost } from './type.js';
+import search from '@/server/api/endpoints/hashtags/search.js';
 
 @Injectable()
 export class ApInboxService {
@@ -353,6 +354,18 @@ export class ApInboxService {
 				throw err;
 			}
 
+			let searchableActivity = activity.searchableBy;
+			let searchable: string[] = [];
+			if (searchableActivity?.includes('https://www.w3.org/ns/activitystreams#Public')) {
+				searchable = ['public'];
+			} else if (searchableActivity?.includes('kmyblue:Limited') || searchableActivity?.includes('as:Limited')) {
+				searchable = ['limited'];
+			} else if (searchableActivity?.includes('/followers')) {
+				searchable = ['followers'];
+			} else {
+				searchable = ['reacted'];
+			}
+
 			if (!await this.noteEntityService.isVisibleForMe(renote, actor.id)) {
 				return 'skip: invalid actor for this activity';
 			}
@@ -378,6 +391,7 @@ export class ApInboxService {
 				visibility: activityAudience.visibility,
 				visibleUsers: activityAudience.visibleUsers,
 				uri,
+				searchableBy: searchable,
 			});
 		} finally {
 			unlock();
