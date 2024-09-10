@@ -228,8 +228,10 @@ export class ApNoteService {
 			searchable = ['public'];
 		} else if (searchableActivity.includes('kmyblue:Limited') || searchableActivity.includes('as:Limited')) {
 			searchable = ['limited'];
+		} else if (searchableActivity.includes('/followers')) {
+			searchable = ['followers'];
 		} else {
-			searchable = ['public'];
+			searchable = ['reacted'];
 		}
 
 		// 添付ファイル
