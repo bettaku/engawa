@@ -31,6 +31,7 @@ export interface IObject {
 	href?: string;
 	tag?: IObject | IObject[];
 	sensitive?: boolean;
+	searchableBy?: string[] | string;
 }
 
 /**
