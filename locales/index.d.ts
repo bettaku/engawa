@@ -11708,7 +11708,7 @@ export interface Locale extends ILocale {
         };
         "_searchOption": {
             /**
-             * CW付きを除外する
+             * NSFWを除外する
              */
             "toggleCW": string;
             /**

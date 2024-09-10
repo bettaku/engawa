@@ -3121,7 +3121,7 @@ _advancedSearch:
     noFile: "なし"
     combined: "全て"
   _searchOption:
-    toggleCW: "CW付きを除外する"
+    toggleCW: "NSFWを除外する"
     toggleReply: "リプライを除外する"
     toggleDate: "日時を指定する"
     toggleAdvancedSearch: "高度な検索を有効にする"
