@@ -85,8 +85,6 @@ export class SearchService {
 								.orWhere('note.searchableBy = :reacted AND (note."userId" IN (SELECT "userId" FROM note_reaction) OR note."userId" = :meId)', { reacted: 'reacted', meId: me?.id })
 						}))
 				}))
-				.orWhere('note.cw ILIKE :q', { q: `%${ sqlLikeEscape(q) }%` })
-				.innerJoinAndSelect('note.user', 'user', 'user.isIndexable = true')
 				.leftJoinAndSelect('note.reply', 'reply')
 				.leftJoinAndSelect('note.renote', 'renote')
 				.leftJoinAndSelect('reply.user', 'replyUser')
@@ -103,19 +101,23 @@ export class SearchService {
 
 			if (opts.fileOption) {
 				if (opts.fileOption === 'fileOnly') {
-					query.andWhere('note.fileIds != \'{}\' ')
+					query.andWhere('note."fileIds" != \'{}\' ')
 				} else if (opts.fileOption === 'noFile') {
-					query.andWhere('note.fileIds = \'{}\' ')
+					query.andWhere('note."fileIds" = \'{}\' ')
 				}
 			}
 
 			if (opts.excludeNsfw) {
-				query.andWhere('note.cw IS NULL');
-				query.andWhere('0 = (SELECT COUNT(*) FROM drive_file df WHERE df.id = ANY(note."fileIds") AND df."isSensitive" = TRUE )');
+				query.andWhere('note."cw" IS NULL');
+				query.andWhere('0 = (SELECT COUNT(*) FROM drive_file df WHERE df.id = ANY(note."fileIds") AND df."isSensitive" = true)');
+			} else {
+				query.orWhere('note."cw" ILIKE :q', { q: `%${ sqlLikeEscape(q) }%` });
 			}
 
 			if (opts.excludeBot) {
-				query.leftJoinAndSelect('note.user', 'user', 'user.isBot = FALSE');
+				query.innerJoinAndSelect('note.user', 'user', 'user.isIndexable = true AND user.isBot = false');
+			} else {
+				query.innerJoinAndSelect('note.user', 'user', 'user.isIndexable = true');
 			}
 
 			/**
