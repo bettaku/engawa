@@ -15,6 +15,23 @@
 ### Misc
 
 -->
+## 0.6.0
+
+### Release Date
+
+### General
+- feat: `fedibird:searchableBy`に対応
+  - 対応しているソフトウェア(fedibird, kmyblue)に対して、自身の投稿を検索できる範囲を制限することができます。
+
+### Client
+- 
+
+### Server
+- fix: 検索のオプションが効かなくなっていた問題を修正
+
+### Misc
+
+
 ## 0.5.4
 
 ### Release Date
