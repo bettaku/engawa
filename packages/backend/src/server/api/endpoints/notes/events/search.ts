@@ -112,7 +112,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			query
 				.innerJoinAndSelect(MiEvent, 'event', 'event.noteId = note.id')
-				.innerJoinAndSelect('note.user', 'user');
+				.innerJoinAndSelect('note.user', 'user', 'user.isIndexable = true');
 
 			if (ps.query && ps.query.trim() !== '') {
 				query.andWhere(new Brackets((qb) => {
