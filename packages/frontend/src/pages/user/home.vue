@@ -26,9 +26,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 							</div>
 							<div class="bottom">
 								<span class="username"><MkAcct :user="user" :detail="true"/></span>
-								<span v-if="user.isAdmin" :title="i18n.ts.isAdmin" style="color: var(--badge);"><i class="ti ti-shield"></i></span>
-								<span v-if="user.isLocked" :title="i18n.ts.isLocked"><i class="ti ti-lock"></i></span>
-								<span v-if="user.isBot" :title="i18n.ts.isBot"><i class="ti ti-robot"></i></span>
+								<span v-if="user.isAdmin" v-tooltip="i18n.ts._role._condition.isAdmin" style="color: var(--badge);"><i class="ti ti-shield"></i></span>
+								<span v-if="user.isLocked" v-tooltip="i18n.ts._role._condition.isLocked"><i class="ti ti-lock"></i></span>
+								<span v-if="user.isBot" v-tooltip="i18n.ts._role._condition.isBot"><i class="ti ti-robot"></i></span>
 								<button v-if="$i && !isEditingMemo && !memoDraft" class="_button add-note-button" @click="showMemoTextarea">
 									<i class="ti ti-edit"/> {{ i18n.ts.addMemo }}
 								</button>
@@ -45,9 +45,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<MkUserName :user="user" :nowrap="false" class="name" @click="editNickname(props.user)"/>
 						<div class="bottom">
 							<span class="username"><MkAcct :user="user" :detail="true"/></span>
-							<span v-if="user.isAdmin" :title="i18n.ts.isAdmin" style="color: var(--badge);"><i class="ti ti-shield"></i></span>
-							<span v-if="user.isLocked" :title="i18n.ts.isLocked"><i class="ti ti-lock"></i></span>
-							<span v-if="user.isBot" :title="i18n.ts.isBot"><i class="ti ti-robot"></i></span>
+							<span v-if="user.isAdmin" v-tooltip="i18n.ts._role._condition.isAdmin" style="color: var(--badge);"><i class="ti ti-shield"></i></span>
+							<span v-if="user.isLocked" v-tooltip="i18n.ts._role._condition.isLocked"><i class="ti ti-lock"></i></span>
+							<span v-if="user.isBot" v-tooltip="i18n.ts._role._condition.isBot"><i class="ti ti-robot"></i></span>
 						</div>
 					</div>
 					<div v-if="user.roles.length > 0" class="roles">
@@ -79,11 +79,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 					</div>
 					<div class="description">
 						<MkOmit>
-							<Mfm v-if="user.description" :text="user.description" :isNote="false" :author="user"/>
+							<Mfm v-if="user.description" :text="user.description" :isNote="false" :author="user" :class="descClass" />
 							<p v-else class="empty">{{ i18n.ts.noAccountDescription }}</p>
 							<div v-if="user.description && isForeignLanguage">
 								<MkButton v-if="!(translating || translation)" class="translateButton" small @click="translate"><i class="ti ti-language-hiragana"></i> {{ i18n.ts.translateProfile }}</MkButton>
 								<MkButton v-else class="translateButton" small @click="translation = null"><i class="ti ti-x"></i> {{ i18n.ts.close }}</MkButton>
+							</div>
+							<div v-if="user.description">
+								<MkButton v-if="!isVertical" class="translateButton" small @click="toggleDescriptionClass"><i class="ti ti-dots-vertical"></i>{{ i18n.ts._profile.makeVertical}}</MkButton>
+								<MkButton v-else class="translateButton" small @click="toggleDescriptionClass"><i class="ti ti-dots"></i>{{ i18n.ts._profile.makeHorizontal }}</MkButton>
 							</div>
 							<div v-if="translating || translation" class="translation">
 								<MkLoading v-if="translating" mini/>
@@ -242,6 +246,9 @@ const editModerationNote = ref(false);
 const translation = ref<Misskey.entities.UsersTranslateResponse | null>(null);
 const translating = ref(false);
 
+const descClass = ref('horizontal');
+const isVertical = ref(false);
+
 watch(moderationNote, async () => {
 	await misskeyApi('admin/update-user-note', { userId: props.user.id, text: moderationNote.value });
 });
@@ -331,6 +338,11 @@ async function translate(): Promise<void> {
 	translation.value = res;
 
 	vibrate(defaultStore.state.vibrateSystem ? [5, 5, 10] : []);
+}
+
+function toggleDescriptionClass() {
+	descClass.value = descClass.value === 'vertical' ? 'horizontal' : 'vertical';
+	isVertical.value = !isVertical.value;
 }
 
 function resetTimer() {
@@ -784,6 +796,17 @@ onUnmounted(() => {
 			}
 		}
 	}
+}
+
+.vertical {
+						-ms-writing-mode: tb-rl;
+						writing-mode: vertical-rl;
+}
+
+.horizontal {
+						-webkit-text-combine: none;
+						-ms-text-combine-horizontal: none;
+						text-combine-upright: none;
 }
 </style>
 

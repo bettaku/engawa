@@ -2015,6 +2015,7 @@ _role:
     isBot: "botユーザー"
     isSuspended: "サスペンド済みユーザー"
     isLocked: "鍵アカウントユーザー"
+    isAdmin: "管理者"
     isExplorable: "「アカウントを見つけやすくする」が有効なユーザー"
     createdLessThan: "アカウント作成から～以内"
     createdMoreThan: "アカウント作成から～経過"
@@ -2643,6 +2644,8 @@ _profile:
   changeBanner: "バナー画像を変更"
   verifiedLinkDescription: "内容にURLを設定すると、リンク先のWebサイトに自分のプロフィールへのリンクが含まれている場合に所有者確認済みアイコンを表示させることができます。"
   avatarDecorationMax: "最大{max}つまでデコレーションを付けられます。"
+  makeVertical: "縦書きにする"
+  makeHorizontal: "横書きにする"
 
 _exportOrImport:
   allNotes: "全てのノート"

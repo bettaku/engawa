@@ -15,6 +15,22 @@
 ### Misc
 
 -->
+## x.x.x (unreleased)
+
+### Release Date
+
+### General
+-
+
+### Client
+- feat: プロフィールを縦書き表示にするボタン
+
+### Server
+-
+
+### Misc
+
+
 ## 0.6.0
 
 ### Release Date

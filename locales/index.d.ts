@@ -7772,6 +7772,10 @@ export interface Locale extends ILocale {
              */
             "isLocked": string;
             /**
+             * 管理者
+             */
+            "isAdmin": string;
+            /**
              * 「アカウントを見つけやすくする」が有効なユーザー
              */
             "isExplorable": string;
@@ -10034,6 +10038,14 @@ export interface Locale extends ILocale {
          * 最大{max}つまでデコレーションを付けられます。
          */
         "avatarDecorationMax": ParameterizedString<"max">;
+        /**
+         * 縦書きにする
+         */
+        "makeVertical": string;
+        /**
+         * 横書きにする
+         */
+        "makeHorizontal": string;
     };
     "_exportOrImport": {
         /**
