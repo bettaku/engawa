@@ -56,6 +56,7 @@ function createRandomNote(actor: NonTransientIActor): NonTransientIPost {
 		type: 'Note',
 		attributedTo: actor.id,
 		content: 'test test foo',
+		searchableBy: 'public',
 	};
 }
 

@@ -31,6 +31,7 @@ export interface IObject {
 	href?: string;
 	tag?: IObject | IObject[];
 	sensitive?: boolean;
+	searchableBy?: string[] | string;
 }
 
 /**
@@ -127,6 +128,7 @@ export interface IPost extends IObject {
 	_misskey_content?: string;
 	quoteUrl?: string;
 	_misskey_talk?: boolean;
+	searchableBy?: string[] | string;
 }
 
 export interface IQuestion extends IObject {

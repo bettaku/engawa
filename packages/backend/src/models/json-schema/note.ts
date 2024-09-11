@@ -292,5 +292,10 @@ export const packedNoteSchema = {
 			type: 'string',
 			optional: true, nullable: true,
 		},
+		searchableBy: {
+			type: 'string',
+			optional: true, nullable: false,
+			enum: ['public', 'followers', 'reacted', 'limited'],
+		},
 	},
 } as const;

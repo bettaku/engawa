@@ -90,6 +90,7 @@ export const paramDef = {
 		},
 		cw: { type: 'string', nullable: true, maxLength: 100 },
 		disableRightClick: { type: 'boolean', default: false },
+		searchableBy: { type: 'string', enum: ['public', 'followers', 'reacted', 'limited'], default: 'public' },
 	},
 	required: ['noteId', 'text', 'cw'],
 } as const;
@@ -153,6 +154,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 					multiple: ps.poll.multiple ?? false,
 					expiresAt: ps.poll.expiresAt ? new Date(ps.poll.expiresAt) : null,
 				} : undefined,
+				searchableBy: ps.searchableBy,
 			};
 
 			const updatedNote = await this.noteUpdateService.update(me, data, note, false);

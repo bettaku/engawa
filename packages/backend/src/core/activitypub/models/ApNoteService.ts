@@ -40,6 +40,7 @@ import { ApEventService } from './ApEventService.js';
 import { ApImageService } from './ApImageService.js';
 import type { Resolver } from '../ApResolverService.js';
 import type { IObject, IPost } from '../type.js';
+import search from '@/server/api/endpoints/hashtags/search.js';
 
 @Injectable()
 export class ApNoteService {
@@ -221,6 +222,18 @@ export class ApNoteService {
 
 		let isMessaging = note._misskey_talk && visibility === 'specified';
 
+		let searchableActivity = toArray(note.searchableBy);
+		let searchable: string[] = [];
+		if (searchableActivity.includes('https://www.w3.org/ns/activitystreams#Public')) {
+			searchable = ['public'];
+		} else if (searchableActivity.includes('kmyblue:Limited') || searchableActivity.includes('as:Limited')) {
+			searchable = ['limited'];
+		} else if (searchableActivity.includes('/followers')) {
+			searchable = ['followers'];
+		} else {
+			searchable = ['reacted'];
+		}
+
 		// 添付ファイル
 		const files: MiDriveFile[] = [];
 
@@ -348,6 +361,7 @@ export class ApNoteService {
 				event,
 				uri: note.id,
 				url: url,
+				searchableBy: note.searchableBy ? searchable : ['public'],
 			}, silent);
 		} catch (err: any) {
 			if (err.name !== 'duplicated') {

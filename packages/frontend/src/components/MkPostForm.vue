@@ -82,6 +82,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<button v-if="postFormActions.length > 0" v-tooltip="i18n.ts.plugins" class="_button" :class="$style.footerButton" @click="showActions"><i class="ti ti-plug"></i></button>
 			<button v-tooltip="i18n.ts.emoji" :class="['_button', $style.footerButton]" @click="insertEmoji"><i class="ti ti-mood-happy"></i></button>
 			<button v-if="showAddMfmFunction" v-tooltip="i18n.ts.addMfmFunction" :class="['_button', $style.footerButton]" @click="insertMfmFunction"><i class="ti ti-palette"></i></button>
+			<button v-click-anime v-tooltip="i18n.ts._searchableBy.searchableBy" class="_button" :class="[$style.footerButton, { [$style.footerButtonActive]: searchableBy }]" @click="toggleSearchableBy">
+				<span v-if="searchableBy === 'public'"><i class="ti ti-world"></i></span>
+				<span v-else-if="searchableBy === 'followers'"><i class="ti ti-lock"></i></span>
+				<span v-else-if="searchableBy === 'reacted'"><i class="ti ti-mood-smile"></i></span>
+				<span v-else><i class="ti ti-at"></i></span>
+			</button>
 		</div>
 		<div :class="$style.footerRight">
 			<button v-tooltip="i18n.ts.previewNoteText" class="_button" :class="$style.footerButton" @click="showPreviewMenu"><i class="ti ti-eye"></i></button>
@@ -213,6 +219,7 @@ const showingOptions = ref(false);
 const disableRightClick = ref(false);
 const textAreaReadOnly = ref(false);
 const scheduledNoteDelete = ref<DeleteScheduleEditorModelValue | null>(null);
+const searchableBy = ref(defaultStore.state.searchableBy);
 
 const draftKey = computed((): string => {
 	let key = props.channel ? `channel:${props.channel.id}` : '';
@@ -586,6 +593,21 @@ async function toggleReactionAcceptance() {
 	reactionAcceptance.value = select.result;
 }
 
+async function toggleSearchableBy() {
+	const select = await os.select({
+		title: i18n.ts._searchableBy.searchableBy,
+		items: [
+			{ value: 'public' as const, text: i18n.ts._searchableBy.public },
+			{ value: 'followers' as const, text: i18n.ts._searchableBy.followers },
+			{ value: 'reacted' as const, text: i18n.ts._searchableBy.reacted },
+			{ value: 'limited' as const, text: i18n.ts._searchableBy.limited },
+		],
+		default: searchableBy.value,
+	});
+	if (select.canceled) return;
+	searchableBy.value = select.result;
+}
+
 function pushVisibleUser(user: Misskey.entities.UserDetailed) {
 	if (!visibleUsers.value.some(u => u.username === user.username && u.host === user.host)) {
 		visibleUsers.value.push(user);
@@ -861,6 +883,7 @@ async function post(ev?: MouseEvent) {
 		disableRightClick: disableRightClick.value,
 		noteId: props.updateMode ? props.initialNote?.id : undefined,
 		scheduledDelete: scheduledNoteDelete.value,
+		searchableBy: searchableBy.value,
 	};
 
 	if (withHashtags.value && hashtags.value && hashtags.value.trim() !== '') {

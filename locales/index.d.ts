@@ -11708,7 +11708,7 @@ export interface Locale extends ILocale {
         };
         "_searchOption": {
             /**
-             * CW付きを除外する
+             * NSFWを除外する
              */
             "toggleCW": string;
             /**
@@ -11818,6 +11818,28 @@ export interface Locale extends ILocale {
          * 投稿フォームへ
          */
         "postAnyWay": string;
+    };
+    "_searchableBy": {
+        /**
+         * 検索可能範囲
+         */
+        "searchableBy": string;
+        /**
+         * 公開(検索)
+         */
+        "public": string;
+        /**
+         * フォロワー限定(検索)
+         */
+        "followers": string;
+        /**
+         * リアクション限定(検索)
+         */
+        "reacted": string;
+        /**
+         * 自分限定(検索)
+         */
+        "limited": string;
     };
 }
 declare const locales: {

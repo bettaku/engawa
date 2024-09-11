@@ -107,6 +107,19 @@ export class ApRendererService {
 			throw new Error('renderAnnounce: cannot render non-public note');
 		}
 
+		let searchable: string[] = [];
+		if (note.searchableBy === 'public') {
+			searchable = ['https://www.w3.org/ns/activitystreams#Public'];
+		} else if (note.searchableBy === 'followers') {
+			searchable = [`${attributedTo}/followers`];
+		} else if (note.searchableBy === 'limited') {
+			searchable = ['as:Limited', 'kmyblue:Limited'];
+		} else if (note.searchableBy === 'reacted') {
+			searchable = [];
+		} else {
+			searchable = [];
+		}
+
 		return {
 			id: `${this.config.url}/notes/${note.id}/activity`,
 			actor: this.userEntityService.genLocalUserUri(note.userId),
@@ -379,6 +392,19 @@ export class ApRendererService {
 			to = mentions;
 		}
 
+		let searchable: string[] = [];
+		if (note.searchableBy === 'public') {
+			searchable = ['https://www.w3.org/ns/activitystreams#Public'];
+		} else if (note.searchableBy === 'followers') {
+			searchable = [`${attributedTo}/followers`];
+		} else if (note.searchableBy === 'limited') {
+			searchable = ['as:Limited', 'kmyblue:Limited'];
+		} else if (note.searchableBy === 'reacted') {
+			searchable = [];
+		} else {
+			searchable = [];
+		}
+
 		const mentionedUsers = note.mentions.length > 0 ? await this.usersRepository.findBy({
 			id: In(note.mentions),
 		}) : [];
@@ -463,6 +489,7 @@ export class ApRendererService {
 			to,
 			cc,
 			inReplyTo,
+			searchableBy: [...searchable],
 			attachment: files.map(x => this.renderDocument(x)),
 			sensitive: note.cw != null || files.some(file => file.isSensitive),
 			tag,
