@@ -3149,8 +3149,8 @@ _dice:
   diceFaces: "サイコロの面数"
 
 _isIndexable:
-  title: "公開ノートをインデックス化"
-  description: "kmy互換機能。公開ノートをインデックス化するかどうかを設定します。"
+  title: "公開インデックス化"
+  description: "自身のアカウントや投稿を検索することを許可します"
 
 _altWarning:
   noAltWarning: "ファイルに代替テキストが設定されていません。"

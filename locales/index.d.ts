@@ -11797,11 +11797,11 @@ export interface Locale extends ILocale {
     };
     "_isIndexable": {
         /**
-         * 公開ノートをインデックス化
+         * 公開インデックス化
          */
         "title": string;
         /**
-         * kmy互換機能。公開ノートをインデックス化するかどうかを設定します。
+         * 自身のアカウントや投稿を検索することを許可します
          */
         "description": string;
     };
