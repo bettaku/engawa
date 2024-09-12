@@ -105,7 +105,6 @@ describe('Webリソース', () => {
 		{ path: '/flush', type: HTML },
 		{ path: '/robots.txt', type: 'text/plain; charset=UTF-8' },
 		{ path: '/favicon.ico', type: 'image/vnd.microsoft.icon' },
-		{ path: '/opensearch.xml', type: 'application/opensearchdescription+xml' },
 		{ path: '/apple-touch-icon.png', type: 'image/png' },
 		{ path: '/twemoji/2764.svg', type: 'image/svg+xml' },
 		{ path: '/twemoji/2764-fe0f-200d-1f525.svg', type: 'image/svg+xml' },
