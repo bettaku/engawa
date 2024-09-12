@@ -27,7 +27,7 @@
 - fix: 設定画面でリロードすべきところでリロードしない問題
 
 ### Server
--
+- Breaking: OpenSearchを利用不可に
 
 ### Misc
 
