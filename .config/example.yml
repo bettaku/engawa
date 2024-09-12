@@ -129,9 +129,6 @@ dbReplications: false
 #    user:
 #    pass:
 
-# You can use PGroonga when enabled.
-#pgroonga: false
-
 #   ┌─────────────────────┐
 #───┘ Redis configuration └─────────────────────────────────────
 

@@ -45,7 +45,6 @@ type Source = {
 		user: string;
 		pass: string;
 	}[];
-	pgroonga?: boolean;
 	redis: RedisOptionsSource;
 	redisForPubsub?: RedisOptionsSource;
 	redisForJobQueue?: RedisOptionsSource;
@@ -131,7 +130,6 @@ export type Config = {
 		user: string;
 		pass: string;
 	}[] | undefined;
-	pgroonga: boolean | undefined;
 	meilisearch: {
 		host: string;
 		port: string;
@@ -266,7 +264,6 @@ export function loadConfig(): Config {
 		db: { ...config.db, db: dbDb, user: dbUser, pass: dbPass },
 		dbReplications: config.dbReplications,
 		dbSlaves: config.dbSlaves,
-		pgroonga: config.pgroonga,
 		meilisearch: config.meilisearch,
 		redis,
 		redisForPubsub: config.redisForPubsub ? convertRedisOptions(config.redisForPubsub, host) : redis,

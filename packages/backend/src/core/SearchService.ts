@@ -105,11 +105,6 @@ export class SearchService {
 			}
 
 			/**
-			 * if (this.config.pgroonga) {
-			 *	query.andWhere('note.text &@~ :q', { q: `%${sqlLikeEscape(q)}%` });
-			 *} else {
-			 *	query.andWhere('note.text ILIKE :q', { q: `%${sqlLikeEscape(q)}%` });
-			 *}
 			 * TODO: PGroongaの統合
 			 */
 
