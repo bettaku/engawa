@@ -16,22 +16,6 @@ import { isUserRelated } from '@/misc/is-user-related.js';
 import { CacheService } from '@/core/CacheService.js';
 import { QueryService } from '@/core/QueryService.js';
 import { IdService } from '@/core/IdService.js';
-import type { Index, MeiliSearch } from 'meilisearch';
-
-type K = string;
-type V = string | number | boolean;
-type Q =
-	{ op: '=', k: K, v: V } |
-	{ op: '!=', k: K, v: V } |
-	{ op: '>', k: K, v: number } |
-	{ op: '<', k: K, v: number } |
-	{ op: '>=', k: K, v: number } |
-	{ op: '<=', k: K, v: number } |
-	{ op: 'is null', k: K} |
-	{ op: 'is not null', k: K} |
-	{ op: 'and', qs: Q[] } |
-	{ op: 'or', qs: Q[] } |
-	{ op: 'not', q: Q };
 
 @Injectable()
 export class SearchService {
