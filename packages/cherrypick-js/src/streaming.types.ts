@@ -147,7 +147,7 @@ export type Channels = {
 	};
 	hashtag: {
 		params: {
-			q?: string;
+			q?: string[][];
 		};
 		events: {
 			note: (payload: Note) => void;
