@@ -28,6 +28,7 @@
 
 ### Server
 - Breaking: OpenSearchを利用不可に
+- ハッシュタグをストリーミングで流すように
 
 ### Misc
 
