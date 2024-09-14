@@ -27,7 +27,7 @@ export class MiNote {
 	public updatedAtHistory: Date[] | null;
 
 	@Column('varchar', {
-		length: 5120,
+		length: 3000,
 		array: true,
 		default: '{}',
 	})
