@@ -15,7 +15,7 @@
 ### Misc
 
 -->
-## x.x.x (unreleased)
+## 0.6.1
 
 ### Release Date
 
@@ -29,6 +29,7 @@
 ### Server
 - Breaking: OpenSearchを利用不可に
 - feat: ハッシュタグをストリーミングで流すように
+- indexableで正しいプロパティを連合するように
 
 ### Misc
 
