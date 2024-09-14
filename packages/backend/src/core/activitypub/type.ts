@@ -111,7 +111,7 @@ export interface IOrderedCollection extends IObject {
 	orderedItems: ApObject;
 }
 
-export const validPost = ['Note', 'Question', 'Article', 'Audio', 'Document', 'Image', 'Page', 'Video', 'Event'];
+export const validPost = ['Note', 'Question', 'Article', 'Audio', 'Document', 'Image', 'Page', 'Video', 'Event', 'ChatMessage'];
 
 export const isPost = (object: IObject): object is IPost => {
 	const type = getApType(object);
@@ -119,7 +119,7 @@ export const isPost = (object: IObject): object is IPost => {
 };
 
 export interface IPost extends IObject {
-	type: 'Note' | 'Question' | 'Article' | 'Audio' | 'Document' | 'Image' | 'Page' | 'Video' | 'Event';
+	type: 'Note' | 'Question' | 'Article' | 'Audio' | 'Document' | 'Image' | 'Page' | 'Video' | 'Event' | 'ChatMessage';
 	source?: {
 		content: string;
 		mediaType: string;
