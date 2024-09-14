@@ -428,7 +428,7 @@ export class ApPersonService implements OnModuleInit {
 					tags,
 					isBot,
 					isCat: (person as any).isCat === true,
-					isIndexable: person.isIndexable ?? true,
+					isIndexable: person.indexable ?? true,
 					emojis,
 				})) as MiRemoteUser;
 
@@ -642,7 +642,7 @@ export class ApPersonService implements OnModuleInit {
 			tags,
 			isBot: getApType(object) === 'Service' || getApType(object) === 'Application',
 			isCat: (person as any).isCat === true,
-			isIndexable: person.isIndexable ?? true,
+			isIndexable: person.indexable ?? true,
 			isLocked: person.manuallyApprovesFollowers,
 			movedToUri: person.movedTo ?? null,
 			alsoKnownAs: person.alsoKnownAs ?? null,
