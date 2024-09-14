@@ -29,6 +29,7 @@
 ### Server
 - Breaking: OpenSearchを利用不可に
 - feat: ハッシュタグをストリーミングで流すように
+- indexableで正しいプロパティを連合するように
 
 ### Misc
 
