@@ -498,6 +498,10 @@ export const packedMeDetailedOnlySchema = {
 			type: 'boolean',
 			nullable: false, optional: false,
 		},
+		acceptDirectMessage: {
+			type: 'boolean',
+			nullable: false, optional: false,
+		},
 		isSensitive: {
 			type: 'boolean',
 			nullable: false, optional: false,

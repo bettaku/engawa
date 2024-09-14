@@ -152,6 +152,10 @@ export class ApNoteService {
 			throw new Error('unexpected schema of note.id: ' + note.id);
 		}
 
+		if (note.type === "ChatMessage") {
+			note.url = note.id;
+		}
+
 		const url = getOneApHrefNullable(note.url);
 
 		if (url && !checkHttps(url)) {
@@ -220,7 +224,7 @@ export class ApNoteService {
 			}
 		}
 
-		let isMessaging = note._misskey_talk && visibility === 'specified';
+		let isMessaging = (note._misskey_talk || note.type === "ChatMessage") && visibility === 'specified';
 
 		let searchableActivity = toArray(note.searchableBy);
 		let searchable: string[] = [];

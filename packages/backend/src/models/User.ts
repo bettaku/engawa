@@ -270,6 +270,13 @@ export class MiUser {
 	})
 	public isSensitive: boolean;
 
+	@Index()
+	@Column('boolean', {
+		default: false,
+		comment: 'Whether the User can accept direct messages from Litepub',
+	})
+	public acceptDirectMessages: boolean;
+
 	constructor(data: Partial<MiUser>) {
 		if (data == null) return;
 

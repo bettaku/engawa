@@ -572,6 +572,7 @@ const extension_context_definition = {
 	litepub: 'http://litepub.social/ns#',
 	ChatMessage: 'litepub: ChatMessage',
 	directMessage: 'litepub:directMessage',
+	capabilities: 'litepub:capabilities',
 } satisfies Context;
 
 export const CONTEXT: (string | Context)[] = [...context_iris, extension_context_definition];

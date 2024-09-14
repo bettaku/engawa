@@ -11853,6 +11853,16 @@ export interface Locale extends ILocale {
          */
         "limited": string;
     };
+    "_acceptDirectMessage": {
+        /**
+         * ダイレクトメッセージを受け付ける
+         */
+        "acceptDirectMessage": string;
+        /**
+         * Pleromaなどからのダイレクトメッセージを受け付けるかどうかを設定します
+         */
+        "acceptDirectMessageDescription": string;
+    };
 }
 declare const locales: {
     [lang: string]: Locale;

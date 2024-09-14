@@ -3166,3 +3166,7 @@ _searchableBy:
   followers: "フォロワー限定(検索)"
   reacted: "リアクション限定(検索)"
   limited: "自分限定(検索)"
+
+_acceptDirectMessage:
+  acceptDirectMessage: "ダイレクトメッセージを受け付ける"
+  acceptDirectMessageDescription: "Pleromaなどからのダイレクトメッセージを受け付けるかどうかを設定します"

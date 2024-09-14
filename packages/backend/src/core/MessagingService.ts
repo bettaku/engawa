@@ -15,10 +15,11 @@ import type { MiUserGroup } from '@/models/UserGroup.js';
 import { QueueService } from '@/core/QueueService.js';
 import { toArray } from '@/misc/prelude/array.js';
 import { IdentifiableError } from '@/misc/identifiable-error.js';
-import type { MessagingMessagesRepository, MutingsRepository, UserGroupJoiningsRepository, UsersRepository, UserProfilesRepository } from '@/models/_.js';
+import type { MessagingMessagesRepository, MutingsRepository, UserGroupJoiningsRepository, UsersRepository, UserProfilesRepository, InstancesRepository } from '@/models/_.js';
 import { IdService } from '@/core/IdService.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
+import { UtilityService } from '@/core/UtilityService.js';
 import { ApRendererService } from '@/core/activitypub/ApRendererService.js';
 import { MessagingMessageEntityService } from '@/core/entities/MessagingMessageEntityService.js';
 import { PushNotificationService } from '@/core/PushNotificationService.js';
@@ -44,6 +45,10 @@ export class MessagingService {
 
 		@Inject(DI.mutingsRepository)
 		private mutingsRepository: MutingsRepository,
+
+		@Inject(DI.instancesRepository)
+		private instancesRepository: InstancesRepository,
+
 		private userEntityService: UserEntityService,
 		private messagingMessageEntityService: MessagingMessageEntityService,
 		private idService: IdService,
@@ -51,6 +56,7 @@ export class MessagingService {
 		private apRendererService: ApRendererService,
 		private queueService: QueueService,
 		private pushNotificationService: PushNotificationService,
+		private utilityService: UtilityService,
 	) {
 	}
 
@@ -129,6 +135,7 @@ export class MessagingService {
 			const profiles = await this.userProfilesRepository.findBy({ userId: In([recipientUser.id]) });
 			const profile = profiles.find(p => p.userId === recipientUser.id);
 			const url = profile != null ? profile.url : null;
+			const instance = await this.instancesRepository.findOneBy({ host: this.utilityService.toPuny(recipientUser.host) });
 
 			const note = {
 				id: message.id,
@@ -147,6 +154,8 @@ export class MessagingService {
 				} as IMentionedRemoteUsers[0]
 				))),
 			} as unknown as MiNote;
+
+			let renderedNote = await this.apRendererService.renderNote(note, false, true);
 
 			const activity = this.apRendererService.addContext(this.apRendererService.renderCreate(await this.apRendererService.renderNote(note, false, true), note));
 

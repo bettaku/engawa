@@ -3935,6 +3935,7 @@ export type components = {
       preventAiLearning: boolean;
       isExplorable: boolean;
       isIndexable: boolean;
+      acceptDirectMessage: boolean;
       isSensitive: boolean;
       isDeleted: boolean;
       /** @enum {string} */
@@ -19621,6 +19622,7 @@ export type operations = {
           isIndexable?: boolean;
           isBot?: boolean;
           isCat?: boolean;
+          acceptDirectMessages?: boolean;
           injectFeaturedNote?: boolean;
           receiveAnnouncementEmail?: boolean;
           alwaysMarkNsfw?: boolean;

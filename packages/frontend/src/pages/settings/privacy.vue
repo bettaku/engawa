@@ -82,6 +82,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</FormSection>
 
 	<MkSwitch v-model="keepCw" @update:modelValue="save()">{{ i18n.ts.keepCw }}</MkSwitch>
+	<MkSwitch v-model="acceptDirectMessages" @update:modelValue="save()">
+		{{ i18n.ts._acceptDirectMessage.acceptDirectMessage }}
+		<template #caption>{{ i18n.ts._acceptDirectMessage.acceptDirectMessageDescription }}</template>
+	</MkSwitch>
 </div>
 </template>
 
@@ -110,6 +114,7 @@ const hideOnlineStatus = ref($i.hideOnlineStatus);
 const publicReactions = ref($i.publicReactions);
 const followingVisibility = ref($i.followingVisibility);
 const followersVisibility = ref($i.followersVisibility);
+const acceptDirectMessages = ref($i.acceptDirectMessage);
 
 const defaultNoteVisibility = computed(defaultStore.makeGetterSetter('defaultNoteVisibility'));
 const defaultNoteLocalOnly = computed(defaultStore.makeGetterSetter('defaultNoteLocalOnly'));
@@ -130,6 +135,7 @@ function save() {
 		publicReactions: !!publicReactions.value,
 		followingVisibility: followingVisibility.value,
 		followersVisibility: followersVisibility.value,
+		acceptDirectMessages: !!acceptDirectMessages.value,
 	});
 }
 
