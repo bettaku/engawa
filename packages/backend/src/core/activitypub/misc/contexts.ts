@@ -568,6 +568,10 @@ const extension_context_definition = {
 	// kmyblue
 	kmyblue: 'http://kmy.blue/ns#',
 	limitedScope: 'kmyblue:limitedScope',
+	// Litepub
+	litepub: 'http://litepub.social/ns#',
+	ChatMessage: 'litepub: ChatMessage',
+	directMessage: 'litepub:directMessage',
 } satisfies Context;
 
 export const CONTEXT: (string | Context)[] = [...context_iris, extension_context_definition];
