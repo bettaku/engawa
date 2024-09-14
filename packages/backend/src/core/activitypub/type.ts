@@ -196,7 +196,7 @@ export interface IActor extends IObject {
 	};
 	'vcard:bday'?: string;
 	'vcard:Address'?: string;
-	isIndexable?: boolean;
+	indexable?: boolean;
 }
 
 export const isCollection = (object: IObject): object is ICollection =>
