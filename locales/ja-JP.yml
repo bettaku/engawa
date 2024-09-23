@@ -3141,6 +3141,9 @@ _advancedSearch:
     withOutSensitive: "除外"
     includeSensitive: "含むもの"
     sensitiveOnly: "全てセンシティブ"
+  _orderBy:
+    asc: "昇順"
+    desc: "降順"
 
 _searchOrApShow:
   question: "照会を行いますか？"

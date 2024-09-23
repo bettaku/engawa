@@ -142,7 +142,7 @@
 		"json5": "2.2.3",
 		"jsonld": "8.3.2",
 		"jsrsasign": "11.1.0",
-		"meilisearch": "0.41.0",
+		"meilisearch": "0.42.0",
 		"microformats-parser": "2.0.2",
 		"mime-types": "2.1.35",
 		"ms": "3.0.0-canary.1",

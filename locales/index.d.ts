@@ -11782,6 +11782,16 @@ export interface Locale extends ILocale {
              */
             "sensitiveOnly": string;
         };
+        "_orderBy": {
+            /**
+             * 昇順
+             */
+            "asc": string;
+            /**
+             * 降順
+             */
+            "desc": string;
+        };
     };
     "_searchOrApShow": {
         /**
