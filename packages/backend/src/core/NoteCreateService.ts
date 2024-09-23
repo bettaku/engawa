@@ -9,6 +9,7 @@ import { In, DataSource, IsNull, LessThan } from 'typeorm';
 import * as Redis from 'ioredis';
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import RE2 from 're2';
+import { Data } from 'ws';
 import { extractMentions } from '@/misc/extract-mentions.js';
 import { extractCustomEmojisFromMfm } from '@/misc/extract-custom-emojis-from-mfm.js';
 import { extractHashtags } from '@/misc/extract-hashtags.js';
@@ -61,7 +62,6 @@ import { UserBlockingService } from '@/core/UserBlockingService.js';
 import { isReply } from '@/misc/is-reply.js';
 import { trackPromise } from '@/misc/promise-tracker.js';
 import { IdentifiableError } from '@/misc/identifiable-error.js';
-import { Data } from 'ws';
 
 type NotificationType = 'reply' | 'renote' | 'quote' | 'mention';
 
@@ -515,7 +515,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 					}
 
 					if (insert.visibility === 'private') {
-						insert.localOnly = true
+						insert.localOnly = true;
 					}
 				});
 			} else {
@@ -772,7 +772,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 				}
 			});
 		}
-
 	}
 
 	@bindThis

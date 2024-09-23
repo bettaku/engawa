@@ -216,7 +216,7 @@ export const paramDef = {
 				deleteAfter: { type: 'integer', nullable: true, minimum: 1 },
 			},
 		},
-		searchableBy: { type: 'string', enum: ['public', 'followers', 'reacted', 'limited' ], default: 'public' },
+		searchableBy: { type: 'string', enum: ['public', 'followers', 'reacted', 'limited'], default: 'public' },
 	},
 	// (re)note with text, files and poll are optional
 	if: {
