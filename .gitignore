@@ -60,7 +60,8 @@ temp
 /packages/frontend/src/**/*.stories.ts
 tsdoc-metadata.json
 misskey-assets
-
+/.devcontainer/meilidata/
+.devcontainer/meili_data
 # blender backups
 *.blend1
 *.blend2

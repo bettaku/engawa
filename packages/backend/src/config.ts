@@ -137,6 +137,7 @@ export type Config = {
 		ssl?: boolean;
 		index: string;
 		scope?: 'local' | 'global' | string[];
+		locale?: string[];
 	} | undefined;
 	proxy: string | undefined;
 	proxySmtp: string | undefined;

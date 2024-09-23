@@ -76,6 +76,10 @@ export class DeleteAccountProcessorService {
 
 				cursor = notes.at(-1)?.id ?? null;
 
+				for (const note of notes) {
+					await this.searchService.unindexNote(note);
+				}
+
 				await this.notesRepository.delete(notes.map(note => note.id));
 			}
 

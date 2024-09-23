@@ -22881,6 +22881,7 @@ export type operations = {
           excludeNsfw?: boolean;
           /** @default false */
           excludeBot?: boolean;
+          orderBy?: string;
         };
       };
     };

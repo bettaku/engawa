@@ -50,6 +50,7 @@ import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { ApRendererService } from '@/core/activitypub/ApRendererService.js';
 import { ApDeliverManagerService } from '@/core/activitypub/ApDeliverManagerService.js';
 import { NoteReadService } from '@/core/NoteReadService.js';
+import { SearchService } from '@/core/SearchService.js';
 import { RemoteUserResolveService } from '@/core/RemoteUserResolveService.js';
 import { bindThis } from '@/decorators.js';
 import { DB_MAX_NOTE_TEXT_LENGTH } from '@/const.js';
@@ -220,6 +221,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		private apRendererService: ApRendererService,
 		private roleService: RoleService,
 		private metaService: MetaService,
+		private searchService: SearchService,
 		private notesChart: NotesChart,
 		private perUserNotesChart: PerUserNotesChart,
 		private activeUsersChart: ActiveUsersChart,
@@ -772,6 +774,8 @@ export class NoteCreateService implements OnApplicationShutdown {
 				}
 			});
 		}
+
+		if (user.isIndexable) this.index(note);
 	}
 
 	@bindThis
@@ -861,6 +865,13 @@ export class NoteCreateService implements OnApplicationShutdown {
 			: this.apRendererService.renderCreate(await this.apRendererService.renderNote(note, false), note);
 
 		return this.apRendererService.addContext(content);
+	}
+
+	@bindThis
+	private index(note: MiNote) {
+		if (note.text == null && note.cw == null) return;
+
+		this.searchService.indexNote(note);
 	}
 
 	@bindThis

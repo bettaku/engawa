@@ -22,6 +22,7 @@ import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
 import { bindThis } from '@/decorators.js';
 import { MetaService } from '@/core/MetaService.js';
+import { SearchService } from '@/core/SearchService.js';
 import { ModerationLogService } from '@/core/ModerationLogService.js';
 import { isQuote, isRenote } from '@/misc/is-renote.js';
 
@@ -48,6 +49,7 @@ export class NoteDeleteService {
 		private apRendererService: ApRendererService,
 		private apDeliverManagerService: ApDeliverManagerService,
 		private metaService: MetaService,
+		private searchService: SearchService,
 		private moderationLogService: ModerationLogService,
 		private notesChart: NotesChart,
 		private perUserNotesChart: PerUserNotesChart,
@@ -118,6 +120,8 @@ export class NoteDeleteService {
 				});
 			}
 		}
+
+		this.searchService.unindexNote(note);
 
 		await this.notesRepository.delete({
 			id: note.id,
