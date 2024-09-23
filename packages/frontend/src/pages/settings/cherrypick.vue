@@ -63,6 +63,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				{{ i18n.ts._cherrypick.renameTheButtonInPostFormToNya }}
 				<template #caption>{{ i18n.ts._cherrypick.renameTheButtonInPostFormToNyaDescription }}</template>
 			</MkSwitch>
+			<MkSwitch v-model="mobileHideAvatars">{{ i18n.ts._cherrypick.mobileHideAvatars }}</MkSwitch>
 		</div>
 	</FormSection>
 
@@ -125,6 +126,7 @@ const friendlyEnableNotifications = computed(defaultStore.makeGetterSetter('frie
 const friendlyEnableWidgets = computed(defaultStore.makeGetterSetter('friendlyEnableWidgets'));
 const enableLongPressOpenAccountMenu = computed(defaultStore.makeGetterSetter('enableLongPressOpenAccountMenu'));
 const friendlyShowAvatarDecorationsInNavBtn = computed(defaultStore.makeGetterSetter('friendlyShowAvatarDecorationsInNavBtn'));
+const mobileHideAvatars = computed(defaultStore.makeGetterSetter('mobileHideAvatars'));
 
 watch([
 	renameTheButtonInPostFormToNya,

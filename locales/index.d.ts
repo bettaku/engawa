@@ -5952,6 +5952,10 @@ export interface Locale extends ILocale {
          * フローティングボタンにアイコンのデコレーションを表示
          */
         "friendlyShowAvatarDecorationsInNavBtn": string;
+        /**
+         * モバイル環境でヘッダーのアイコンを非表示
+         */
+        "mobileHideAvatars": string;
     };
     "_bannerDisplay": {
         /**
