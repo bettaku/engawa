@@ -841,7 +841,7 @@ importers:
         version: 3.4.34
       aiscript-vscode:
         specifier: github:aiscript-dev/aiscript-vscode#v0.1.11
-        version: https://codeload.github.com/aiscript-dev/aiscript-vscode/tar.gz/e1e1b27f2f72cd28a473e004b6da0d8fc0bd40d9
+        version: git+https://git@github.com:aiscript-dev/aiscript-vscode.git#e1e1b27f2f72cd28a473e004b6da0d8fc0bd40d9
       astring:
         specifier: 1.8.6
         version: 1.8.6
@@ -879,8 +879,8 @@ importers:
         specifier: 0.24.0-cherrypick.4
         version: 0.24.0-cherrypick.4
       chromatic:
-        specifier: 11.5.6
-        version: 11.5.6
+        specifier: 11.11.0
+        version: 11.11.0
       compare-versions:
         specifier: 6.1.1
         version: 6.1.1
@@ -1172,7 +1172,7 @@ importers:
         version: 8.2.6(@babel/preset-env@7.24.7(@babel/core@7.24.7))(bufferutil@4.0.7)(utf-8-validate@6.0.3)
       storybook-addon-misskey-theme:
         specifier: github:misskey-dev/storybook-addon-misskey-theme
-        version: https://codeload.github.com/misskey-dev/storybook-addon-misskey-theme/tar.gz/cf583db098365b2ccc81a82f63ca9c93bc32b640(n5ig4kxlpkmvofe3l23foe7eiq)
+        version: git+https://git@github.com:misskey-dev/storybook-addon-misskey-theme.git#cf583db098365b2ccc81a82f63ca9c93bc32b640(n5ig4kxlpkmvofe3l23foe7eiq)
       vite-plugin-turbosnap:
         specifier: 1.0.3
         version: 1.0.3
@@ -1213,37 +1213,6 @@ importers:
       '@types/seedrandom':
         specifier: 3.0.8
         version: 3.0.8
-      '@typescript-eslint/eslint-plugin':
-        specifier: 7.1.0
-        version: 7.1.0(@typescript-eslint/parser@7.1.0(eslint@9.8.0)(typescript@5.4.5))(eslint@9.8.0)(typescript@5.4.5)
-      '@typescript-eslint/parser':
-        specifier: 7.1.0
-        version: 7.1.0(eslint@9.8.0)(typescript@5.4.5)
-      esbuild:
-        specifier: 0.19.11
-        version: 0.19.11
-      execa:
-        specifier: 8.0.1
-        version: 8.0.1
-      glob:
-        specifier: 10.3.10
-        version: 10.3.10
-      nodemon:
-        specifier: 3.0.2
-        version: 3.0.2
-      typescript:
-        specifier: 5.4.5
-        version: 5.4.5
-
-  packages/misskey-reversi:
-    dependencies:
-      crc-32:
-        specifier: 1.2.2
-        version: 1.2.2
-    devDependencies:
-      '@types/node':
-        specifier: 20.11.5
-        version: 20.11.5
       '@typescript-eslint/eslint-plugin':
         specifier: 7.1.0
         version: 7.1.0(@typescript-eslint/parser@7.1.0(eslint@9.8.0)(typescript@5.4.5))(eslint@9.8.0)(typescript@5.4.5)
@@ -5775,8 +5744,8 @@ packages:
     resolution: {integrity: sha512-gOsf2YwSlleG6IjRYG2A7k0HmBMEo6qVNk9Bp/EaLgAJT5ngH6PXbqa4ItvnEwCm/velL5jAnQgsHsWnjhGmvw==}
     engines: {node: '>=18'}
 
-  aiscript-vscode@https://codeload.github.com/aiscript-dev/aiscript-vscode/tar.gz/e1e1b27f2f72cd28a473e004b6da0d8fc0bd40d9:
-    resolution: {tarball: https://codeload.github.com/aiscript-dev/aiscript-vscode/tar.gz/e1e1b27f2f72cd28a473e004b6da0d8fc0bd40d9}
+  aiscript-vscode@git+https://git@github.com:aiscript-dev/aiscript-vscode.git#e1e1b27f2f72cd28a473e004b6da0d8fc0bd40d9:
+    resolution: {commit: e1e1b27f2f72cd28a473e004b6da0d8fc0bd40d9, repo: git@github.com:aiscript-dev/aiscript-vscode.git, type: git}
     version: 0.1.11
     engines: {vscode: ^1.83.0}
 
@@ -6391,8 +6360,8 @@ packages:
     resolution: {integrity: sha512-bIomtDF5KGpdogkLd9VspvFzk9KfpyyGlS8YFVZl7TGPBHL5snIOnxeshwVgPteQ9b4Eydl+pVbIyE1DcvCWgQ==}
     engines: {node: '>=10'}
 
-  chromatic@11.5.6:
-    resolution: {integrity: sha512-ycX/hlZLs69BltwwBNsEXr+As6x5/0rlwp6W/CiHMZ3tpm7dmkd+hQCsb8JGHb1h49W3qPOKQ/Lh9evqcJ1yeQ==}
+  chromatic@11.11.0:
+    resolution: {integrity: sha512-mwmYsNMsZlRLtlfFUEtac5zhoVRhc+O/lsuMdOpwkiDQiKX6WdSNIhic+dkLenfuzao2r18s50nphcOgFoatBg==}
     hasBin: true
     peerDependencies:
       '@chromatic-com/cypress': ^0.*.* || ^1.0.0
@@ -11244,8 +11213,8 @@ packages:
   store2@2.14.3:
     resolution: {integrity: sha512-4QcZ+yx7nzEFiV4BMLnr/pRa5HYzNITX2ri0Zh6sT9EyQHbBHacC6YigllUPU9X3D0f/22QCgfokpKs52YRrUg==}
 
-  storybook-addon-misskey-theme@https://codeload.github.com/misskey-dev/storybook-addon-misskey-theme/tar.gz/cf583db098365b2ccc81a82f63ca9c93bc32b640:
-    resolution: {tarball: https://codeload.github.com/misskey-dev/storybook-addon-misskey-theme/tar.gz/cf583db098365b2ccc81a82f63ca9c93bc32b640}
+  storybook-addon-misskey-theme@git+https://git@github.com:misskey-dev/storybook-addon-misskey-theme.git#cf583db098365b2ccc81a82f63ca9c93bc32b640:
+    resolution: {commit: cf583db098365b2ccc81a82f63ca9c93bc32b640, repo: git@github.com:misskey-dev/storybook-addon-misskey-theme.git, type: git}
     version: 0.0.0
     peerDependencies:
       '@storybook/blocks': ^7.0.0-rc.4
@@ -18120,7 +18089,7 @@ snapshots:
       clean-stack: 5.2.0
       indent-string: 5.0.0
 
-  aiscript-vscode@https://codeload.github.com/aiscript-dev/aiscript-vscode/tar.gz/e1e1b27f2f72cd28a473e004b6da0d8fc0bd40d9:
+  aiscript-vscode@git+https://git@github.com:aiscript-dev/aiscript-vscode.git#e1e1b27f2f72cd28a473e004b6da0d8fc0bd40d9:
     dependencies:
       '@aiscript-dev/aiscript-languageserver': https://github.com/aiscript-dev/aiscript-languageserver/releases/download/0.1.6/aiscript-dev-aiscript-languageserver-0.1.6.tgz
       vscode-languageclient: 9.0.1
@@ -18881,7 +18850,7 @@ snapshots:
 
   chownr@2.0.0: {}
 
-  chromatic@11.5.6: {}
+  chromatic@11.11.0: {}
 
   ci-info@3.9.0: {}
 
@@ -24777,7 +24746,7 @@ snapshots:
 
   store2@2.14.3: {}
 
-  storybook-addon-misskey-theme@https://codeload.github.com/misskey-dev/storybook-addon-misskey-theme/tar.gz/cf583db098365b2ccc81a82f63ca9c93bc32b640(n5ig4kxlpkmvofe3l23foe7eiq):
+  storybook-addon-misskey-theme@git+https://git@github.com:misskey-dev/storybook-addon-misskey-theme.git#cf583db098365b2ccc81a82f63ca9c93bc32b640(n5ig4kxlpkmvofe3l23foe7eiq):
     dependencies:
       '@storybook/blocks': 8.2.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(storybook@8.2.6(@babel/preset-env@7.24.7(@babel/core@7.24.7))(bufferutil@4.0.7)(utf-8-validate@6.0.3))
       '@storybook/components': 8.2.6(storybook@8.2.6(@babel/preset-env@7.24.7(@babel/core@7.24.7))(bufferutil@4.0.7)(utf-8-validate@6.0.3))
