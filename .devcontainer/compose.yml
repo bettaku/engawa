@@ -42,18 +42,27 @@ services:
       interval: 5s
       retries: 20
 
-  meilisearch:
+  elasticsearch:
     restart: always
-    image: getmeili/meilisearch:v1.10.1
+    build: ../es
     environment:
-      - MEILI_NO_ANALYTICS=true
-      - MEILI_ENV=production
-    env_file:
-      - ../.config/meilisearch.env
+      - discovery.type=single-node
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xms512m"
     networks:
       - internal_network
-    volumes:
-      - ./meili_data:/meili_data
+
+  kibana:
+    image: elastic/kibana:8.13.4
+    ports:
+      - 5601:5601
+    networks:
+      - internal_network
+      - external_network
 
 volumes:
   postgres-data:
