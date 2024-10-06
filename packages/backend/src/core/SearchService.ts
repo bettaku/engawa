@@ -210,6 +210,8 @@ export class SearchService {
 		} else if (this.elasticsearch) {
 			const Quote = isRenote(note) && isQuote(note);
 
+			const isBot = note.user?.isBot;
+
 			const document = {
 				text: note.text,
 				cw: note.cw,
@@ -220,10 +222,10 @@ export class SearchService {
 				tags: note.tags,
 				replyId: note.replyId,
 				renoteId: note.renoteId,
-				filleIds: note.fileIds,
+				fileIds: note.fileIds,
 				isQuote: Quote,
 				searchableBy: note.searchableBy,
-				isBot: note.user?.isBot,
+				isBot: isBot,
 			};
 
 			switch (this.elasticsearchIndexScope) {
