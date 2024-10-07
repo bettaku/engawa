@@ -15,9 +15,10 @@ import { extractCustomEmojisFromMfm } from '@/misc/extract-custom-emojis-from-mf
 import { extractHashtags } from '@/misc/extract-hashtags.js';
 import type { IMentionedRemoteUsers } from '@/models/Note.js';
 import { MiNote } from '@/models/Note.js';
+import { LatestNote } from '@/models/LatestNote.js';
 import { MiEvent } from '@/models/Event.js';
 import type { IEvent } from '@/models/Event.js';
-import type { ChannelFollowingsRepository, ChannelsRepository, FollowingsRepository, InstancesRepository, MiFollowing, MiMeta, MutingsRepository, NotesRepository, NoteThreadMutingsRepository, UserListMembershipsRepository, UserProfilesRepository, UsersRepository } from '@/models/_.js';
+import type { ChannelFollowingsRepository, ChannelsRepository, FollowingsRepository, InstancesRepository, LatestNotesRepository, MiFollowing, MiMeta, MutingsRepository, NotesRepository, NoteThreadMutingsRepository, UserListMembershipsRepository, UserProfilesRepository, UsersRepository } from '@/models/_.js';
 import type { MiDriveFile } from '@/models/DriveFile.js';
 import type { MiApp } from '@/models/App.js';
 import { concat } from '@/misc/prelude/array.js';
@@ -59,6 +60,7 @@ import { UserBlockingService } from '@/core/UserBlockingService.js';
 import { isReply } from '@/misc/is-reply.js';
 import { trackPromise } from '@/misc/promise-tracker.js';
 import { IdentifiableError } from '@/misc/identifiable-error.js';
+import { isQuote, isRenote } from '@/misc/is-renote.js';
 import { CollapsedQueue } from '@/misc/collapsed-queue.js';
 import { CacheService } from '@/core/CacheService.js';
 
@@ -179,6 +181,9 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 		@Inject(DI.notesRepository)
 		private notesRepository: NotesRepository,
+
+		@Inject(DI.latestNotesRepository)
+		private latestNotesRepository: LatestNotesRepository,
 
 		@Inject(DI.mutingsRepository)
 		private mutingsRepository: MutingsRepository,
@@ -442,7 +447,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 			localOnly: data.localOnly!,
 			reactionAcceptance: data.reactionAcceptance,
 			disableRightClick: data.disableRightClick!,
-			deleteAt: data.deleteAt,
 			visibility: data.visibility as any,
 			visibleUserIds: data.visibility === 'specified'
 				? data.visibleUsers
@@ -526,6 +530,8 @@ export class NoteCreateService implements OnApplicationShutdown {
 			} else {
 				await this.notesRepository.insert(insert);
 			}
+
+			await this.updateLatestNote(insert);
 
 			return insert;
 		} catch (e) {
@@ -1125,5 +1131,28 @@ export class NoteCreateService implements OnApplicationShutdown {
 	@bindThis
 	public async onApplicationShutdown(signal?: string | undefined): Promise<void> {
 		await this.dispose();
+	}
+
+
+
+	private async updateLatestNote(note: MiNote) {
+		// Ignore DMs.
+		// Followers-only posts are *included*, as this table is used to back the "following" feed.
+		if (note.visibility === 'specified') return;
+
+		// Ignore pure renotes
+		if (isRenote(note) && !isQuote(note)) return;
+
+		// Make sure that this isn't an *older* post.
+		// We can get older posts through replies, lookups, etc.
+		const currentLatest = await this.latestNotesRepository.findOneBy({ userId: note.userId });
+		if (currentLatest != null && currentLatest.noteId >= note.id) return;
+
+		// Record this as the latest note for the given user
+		const latestNote = new LatestNote({
+			userId: note.userId,
+			noteId: note.id,
+		});
+		await this.latestNotesRepository.upsert(latestNote, ['userId']);
 	}
 }

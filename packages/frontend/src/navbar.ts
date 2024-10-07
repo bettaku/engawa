@@ -74,6 +74,11 @@ export const navbarItemDef = reactive({
 			lookup();
 		},
 	},
+	following: {
+		title: i18n.ts.following,
+		icon: 'ti ti-user-check',
+		to: '/following-feed',
+	},
 	lists: {
 		title: i18n.ts.lists,
 		icon: 'ti ti-list',
