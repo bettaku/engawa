@@ -361,7 +361,7 @@ export class SearchService {
 
 			await this.fullIndexNote().catch((e) => {
 				console.error(e);
-			})
+			});
 		}
 	}
 
@@ -465,7 +465,16 @@ export class SearchService {
 				}
 			};
 
-			if (opts.excludeBot) esFilter.bool.must_not.push({ term: { isBot: true } });
+			if (opts.excludeBot) {
+				const botIds = await this.usersRepository.createQueryBuilder('user')
+					.where('user.isBot = true')
+					.select('user.id')
+					.limit(100)
+					.getMany();
+
+				console.log(botIds);
+				esFilter.bool.must_not.push({ terms: { userId: botIds.map(b => b.id) } });
+			}
 
 			if (q !== '') {
 				const orQueries = q.split(',').map(q => q.trim());
