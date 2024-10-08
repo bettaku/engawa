@@ -213,7 +213,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 					<FormSection>
 						<template #label>{{ i18n.ts._serverSettings.index }}</template> <!-- todo: 後で変える -->
-						<template #caption>{{ i18n.ts._serverSettings.indexDesc }}</template>
 
 						<div class="_gaps_m">
 							<MkButton primary @click="fullIndex">{{ i18n.ts._serverSettings.fullIndex }}</MkButton>
