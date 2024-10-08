@@ -10,7 +10,7 @@ import type { Config } from '@/config.js';
 import { bindThis } from '@/decorators.js';
 import { MiNote } from '@/models/Note.js';
 import { MiUser } from '@/models/_.js';
-import type { NotesRepository, UsersRepository, FollowingsRepository } from '@/models/_.js';
+import type { NotesRepository, UsersRepository, FollowingsRepository, DriveFilesRepository } from '@/models/_.js';
 import { sqlLikeEscape } from '@/misc/sql-like-escape.js';
 import { isUserRelated } from '@/misc/is-user-related.js';
 import { CacheService } from '@/core/CacheService.js';
@@ -87,6 +87,9 @@ export class SearchService {
 
 		@Inject(DI.followingsRepository)
 		private followingsRepository: FollowingsRepository,
+
+		@Inject(DI.driveFilesRepository)
+		private driveFilesRepository: DriveFilesRepository,
 
 		@Inject(DI.meilisearch)
 		private meilisearch: Meilisearch | null,
@@ -487,6 +490,11 @@ export class SearchService {
 			if (q !== '') {
 				const orQueries = q.split(',').map(q => q.trim());
 				const shouldQueries = orQueries.filter(q => !q.startsWith("not:"));
+				const sensitiveFileIds = await this.driveFilesRepository.createQueryBuilder('drive_file')
+					.where('drive_file."isSensitive" = TRUE')
+					.select('drive_file.id')
+					.limit(100)
+					.getMany();
 				if (opts.excludeNsfw) {
 					esFilter.bool.must.push({
 						bool: {
@@ -497,6 +505,7 @@ export class SearchService {
 							minimum_should_match: 1,
 						},
 					});
+					esFilter.bool.must_not.push({ terms: { fileIds: sensitiveFileIds.map(f => f.id)} });
 				} else {
 					esFilter.bool.must.push({
 						bool: {
