@@ -210,6 +210,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 							</MkInput>
 						</div>
 					</FormSection>
+
+					<FormSection>
+						<template #label>{{ i18n.ts._serverSettings.index }}</template> <!-- todo: 後で変える -->
+
+						<div class="_gaps_m">
+							<MkButton primary @click="fullIndex">{{ i18n.ts._serverSettings.fullIndex }}</MkButton>
+							<MkButton @click="reIndex">{{ i18n.ts._serverSettings.reIndex }}</MkButton>
+						</div>
+					</FormSection>
 				</div>
 			</FormSuspense>
 		</MkSpacer>
@@ -340,6 +349,42 @@ async function save() {
 	});
 
 	fetchInstance(true);
+}
+
+async function fullIndex() {
+	const { canceled, result: select } = await os.select({
+		title: i18n.ts._serverSettings.fanoutTimelineDbFallback,
+		items: [
+			{ value: 'all', text: i18n.ts.all },
+			{ value: 'notes', text: i18n.ts.notes },
+			{ value: 'users', text: i18n.ts.users },
+		],
+		default: 'all',
+	});
+
+	if (!canceled) {
+		await os.apiWithDialog('admin/index/full', {
+			index: select,
+		});
+	}
+}
+
+async function reIndex() {
+	const { canceled, result: select } = await os.select({
+		title: i18n.ts._serverSettings.fanoutTimelineDbFallback,
+		items: [
+			{ value: 'all', text: i18n.ts.all },
+			{ value: 'notes', text: i18n.ts.notes },
+			{ value: 'users', text: i18n.ts.users },
+		],
+		default: 'all',
+	})
+
+	if (!canceled) {
+		await os.apiWithDialog('admin/index/reindex', {
+			index: select,
+		});
+	}
 }
 
 const headerTabs = computed(() => []);

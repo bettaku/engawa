@@ -48,10 +48,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<option value="fileOnly">{{ i18n.ts._advancedSearch._fileOption.fileAttachedOnly }}</option>
 							<option value="noFile">{{ i18n.ts._advancedSearch._fileOption.noFile }}</option>
 						</MkRadios>
-						<MkRadios v-model="orderBy">
-							<option value="desc">{{ i18n.ts._advancedSearch._orderBy.desc }}</option>
-							<option value="asc">{{ i18n.ts._advancedSearch._orderBy.asc }}</option>
-						</MkRadios>
 					</div>
 				</MkFolder>
 			</div>

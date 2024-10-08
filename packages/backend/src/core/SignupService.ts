@@ -22,6 +22,7 @@ import UsersChart from '@/core/chart/charts/users.js';
 import { UtilityService } from '@/core/UtilityService.js';
 import { MetaService } from '@/core/MetaService.js';
 import { UserService } from '@/core/UserService.js';
+import { SearchService } from '@/core/SearchService.js';
 
 @Injectable()
 export class SignupService {
@@ -42,6 +43,7 @@ export class SignupService {
 		private metaService: MetaService,
 		private instanceActorService: InstanceActorService,
 		private usersChart: UsersChart,
+		private searchService: SearchService,
 	) {
 	}
 
@@ -148,6 +150,8 @@ export class SignupService {
 				username: username.toLowerCase(),
 			}));
 		});
+
+		await this.searchService.indexUser(account);
 
 		this.usersChart.update(account, true).then();
 		this.userService.notifySystemWebhook(account, 'userCreated').then();

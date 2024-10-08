@@ -57,6 +57,18 @@ type Source = {
 		index: string;
 		scope?: 'local' | 'global' | string[];
 	};
+	elasticsearch?: {
+		host: string;
+		port: number;
+		user: string;
+		pass: string;
+		ssl?: boolean;
+		index: string;
+		rejectUnauthorized?: boolean;
+		scope?: 'local' | 'global' | string[];
+		pingTimeout?: number;
+		requestTimeout?: number;
+	};
 	sentryForBackend?: { options: Partial<Sentry.NodeOptions>; enableNodeProfiling: boolean; };
 	sentryForFrontend?: { options: Partial<Sentry.NodeOptions> };
 
@@ -138,6 +150,18 @@ export type Config = {
 		index: string;
 		scope?: 'local' | 'global' | string[];
 		locale?: string[];
+	} | undefined;
+	elasticsearch: {
+		host: string;
+		port: number;
+		user: string;
+		pass: string;
+		ssl?: boolean;
+		index: string;
+		rejectUnauthorized?: boolean;
+		scope?: 'local' | 'global' | string[];
+		pingTimeout?: number;
+		requestTimeout?: number;
 	} | undefined;
 	proxy: string | undefined;
 	proxySmtp: string | undefined;
@@ -266,6 +290,7 @@ export function loadConfig(): Config {
 		dbReplications: config.dbReplications,
 		dbSlaves: config.dbSlaves,
 		meilisearch: config.meilisearch,
+		elasticsearch: config.elasticsearch,
 		redis,
 		redisForPubsub: config.redisForPubsub ? convertRedisOptions(config.redisForPubsub, host) : redis,
 		redisForJobQueue: config.redisForJobQueue ? convertRedisOptions(config.redisForJobQueue, host) : redis,

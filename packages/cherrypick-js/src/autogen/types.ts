@@ -517,6 +517,24 @@ export type paths = {
      */
     post: operations['admin___get-user-ips'];
   };
+  '/admin/index/full': {
+    /**
+     * admin/index/full
+     * @description No description provided.
+     *
+     * **Credential required**: *Yes* / **Permission**: *write:index:full*
+     */
+    post: operations['admin___index___full'];
+  };
+  '/admin/index/reindex': {
+    /**
+     * admin/index/reindex
+     * @description No description provided.
+     *
+     * **Credential required**: *Yes* / **Permission**: *write:index:full*
+     */
+    post: operations['admin___index___reindex'];
+  };
   '/admin/invite/create': {
     /**
      * admin/invite/create
@@ -8480,6 +8498,110 @@ export type operations = {
               createdAt: string;
             }[];
         };
+      };
+      /** @description Client error */
+      400: {
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+      /** @description Authentication error */
+      401: {
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+      /** @description Forbidden error */
+      403: {
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+      /** @description I'm Ai */
+      418: {
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+      /** @description Internal server error */
+      500: {
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  /**
+   * admin/index/full
+   * @description No description provided.
+   *
+   * **Credential required**: *Yes* / **Permission**: *write:index:full*
+   */
+  admin___index___full: {
+    requestBody: {
+      content: {
+        'application/json': {
+          /** @enum {string} */
+          index: 'all' | 'notes' | 'users';
+        };
+      };
+    };
+    responses: {
+      /** @description OK (without any results) */
+      204: {
+        content: never;
+      };
+      /** @description Client error */
+      400: {
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+      /** @description Authentication error */
+      401: {
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+      /** @description Forbidden error */
+      403: {
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+      /** @description I'm Ai */
+      418: {
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+      /** @description Internal server error */
+      500: {
+        content: {
+          'application/json': components['schemas']['Error'];
+        };
+      };
+    };
+  };
+  /**
+   * admin/index/reindex
+   * @description No description provided.
+   *
+   * **Credential required**: *Yes* / **Permission**: *write:index:full*
+   */
+  admin___index___reindex: {
+    requestBody: {
+      content: {
+        'application/json': {
+          /** @enum {string} */
+          index: 'all' | 'notes' | 'users';
+        };
+      };
+    };
+    responses: {
+      /** @description OK (without any results) */
+      204: {
+        content: never;
       };
       /** @description Client error */
       400: {

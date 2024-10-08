@@ -10,6 +10,7 @@ import { QueueService } from '@/core/QueueService.js';
 import { UserSuspendService } from '@/core/UserSuspendService.js';
 import { DI } from '@/di-symbols.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
+import { SearchService } from '@/core/SearchService.js';
 
 export const meta = {
 	tags: ['admin'],
@@ -36,6 +37,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private userEntityService: UserEntityService,
 		private queueService: QueueService,
 		private userSuspendService: UserSuspendService,
+		private searchService: SearchService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const user = await this.usersRepository.findOneBy({ id: ps.userId });
@@ -47,6 +49,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			if (user.isRoot) {
 				throw new Error('cannot delete a root account');
 			}
+
+			await this.searchService.unindexUser(user);
 
 			if (this.userEntityService.isLocalUser(user)) {
 				// 物理削除する前にDelete activityを送信する

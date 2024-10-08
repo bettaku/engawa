@@ -7,6 +7,7 @@ export const DI = {
 	config: Symbol('config'),
 	db: Symbol('db'),
 	meilisearch: Symbol('meilisearch'),
+	elasticsearch: Symbol('elasticsearch'),
 	cloudLogging: Symbol('cloudLogging'),
 	redis: Symbol('redis'),
 	redisForPub: Symbol('redisForPub'),
