@@ -1648,6 +1648,10 @@ _serverSettings:
   fanoutTimelineDbFallbackDescription: "有効にすると、タイムラインがキャッシュされていない場合にDBへ追加で問い合わせを行うフォールバック処理を行います。無効にすると、フォールバック処理を行わないことでさらにサーバーの負荷を軽減することができますが、タイムラインが取得できる範囲に制限が生じます。"
   inquiryUrl: "問い合わせ先URL"
   inquiryUrlDescription: "サーバー運営者へのお問い合わせフォームのURLや、運営者の連絡先等が記載されたWebページのURLを指定します。"
+  index: "検索エンジンのインデックス"
+  indexDesc: "Elasticsearchに対してインデックスを貼る処理を実行します。"
+  fullIndex: "全てにインデックスを貼る"
+  reIndex: "インデックスを貼り直す"
 
 _accountMigration:
   moveFrom: "別のアカウントからこのアカウントに移行"
