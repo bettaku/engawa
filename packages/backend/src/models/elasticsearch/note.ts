@@ -47,7 +47,6 @@ export const noteSettings: IndicesIndexSettings = {
 					sudachi_tokenizer: {
 						type: 'sudachi_tokenizer',
 						discard_punctuation: true,
-						mode: 'extended',
 						additional_settings: '{"systemDict": "system_full.dic"}',
 					},
 				},

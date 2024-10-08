@@ -67,6 +67,8 @@ import * as ep___admin_federation_updateInstance from './endpoints/admin/federat
 import * as ep___admin_getIndexStats from './endpoints/admin/get-index-stats.js';
 import * as ep___admin_getTableStats from './endpoints/admin/get-table-stats.js';
 import * as ep___admin_getUserIps from './endpoints/admin/get-user-ips.js';
+import * as ep___admin_index_full from './endpoints/admin/index/full.js';
+import * as ep___admin_index_reindex from './endpoints/admin/index/reindex.js';
 import * as ep___admin_invite_create from './endpoints/admin/invite/create.js';
 import * as ep___admin_invite_list from './endpoints/admin/invite/list.js';
 import * as ep___admin_invite_revoke from './endpoints/admin/invite/revoke.js';
@@ -462,6 +464,8 @@ const eps = [
 	['admin/get-index-stats', ep___admin_getIndexStats],
 	['admin/get-table-stats', ep___admin_getTableStats],
 	['admin/get-user-ips', ep___admin_getUserIps],
+	['admin/index/full', ep___admin_index_full],
+	['admin/index/reindex', ep___admin_index_reindex],
 	['admin/invite/create', ep___admin_invite_create],
 	['admin/invite/list', ep___admin_invite_list],
 	['admin/invite/revoke', ep___admin_invite_revoke],
