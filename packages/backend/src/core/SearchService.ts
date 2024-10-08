@@ -482,7 +482,7 @@ export class SearchService {
 				if (opts.excludeNsfw) {
 					esFilter.bool.must.push({
 						bool: {
-							should: shouldQueries.map(q => [
+							should: shouldQueries.flatMap(q => [
 								{ wildcard: { 'text': `*${q}*` }},
 								{ simple_query_string: { fields: ['text'], 'query': q, default_operator: 'and' }},
 							]),
