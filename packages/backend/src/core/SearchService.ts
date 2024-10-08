@@ -465,6 +465,14 @@ export class SearchService {
 				}
 			};
 
+			if (opts.fileOption) {
+				if (opts.fileOption === 'fileOnly') {
+					esFilter.bool.must.push({ exists: { field: 'fileIds' } });
+				} else if (opts.fileOption === 'noFile') {
+					esFilter.bool.must_not.push({ exists: { field: 'fileIds' } });
+				}
+			}
+
 			if (opts.excludeBot) {
 				const botIds = await this.usersRepository.createQueryBuilder('user')
 					.where('user.isBot = true')
