@@ -483,7 +483,6 @@ export class SearchService {
 					.limit(100)
 					.getMany();
 
-				console.log(botIds);
 				esFilter.bool.must_not.push({ terms: { userId: botIds.map(b => b.id) } });
 			}
 
@@ -567,8 +566,6 @@ export class SearchService {
 				_source: ['id', 'createdAt'],
 				size: pagination.limit,
 			});
-
-			console.log(res);
 
 			const noteIds = res.hits.hits.map((hit: any) => hit._id)
 
