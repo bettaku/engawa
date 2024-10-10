@@ -20,6 +20,7 @@ class GlobalTimelineChannel extends Channel {
 	private withRenotes: boolean;
 	private withFiles: boolean;
 	private withoutBots: boolean;
+	private withCats: boolean;
 
 	constructor(
 		private metaService: MetaService,
@@ -41,6 +42,7 @@ class GlobalTimelineChannel extends Channel {
 		this.withRenotes = !!(params.withRenotes ?? true);
 		this.withFiles = !!(params.withFiles ?? false);
 		this.withoutBots = !!(params.withoutBots ?? false);
+		this.withCats = !!(params.withCats ?? false);
 
 		// Subscribe events
 		this.subscriber.on('notesStream', this.onNote);
@@ -50,6 +52,7 @@ class GlobalTimelineChannel extends Channel {
 	private async onNote(note: Packed<'Note'>) {
 		if (this.withFiles && (note.fileIds == null || note.fileIds.length === 0)) return;
 		if (this.withoutBots && note.user.isBot) return;
+		if (this.withCats && (note.user.isCat == null || note.user.isCat === false)) return;
 
 		if (note.visibility !== 'public') return;
 		if (note.channelId != null) return;

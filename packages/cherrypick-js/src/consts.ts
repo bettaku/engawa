@@ -1,11 +1,18 @@
 import type { operations } from './autogen/types.js';
 import type {
-	AbuseReportNotificationRecipient, Ad,
+	AbuseReportNotificationRecipient,
+	Ad,
 	Announcement,
-	EmojiDetailed, InviteCode,
+	EmojiDetailed,
+	Flash,
+	GalleryPost,
+	InviteCode,
 	MetaDetailed,
 	Note,
-	Role, SystemWebhook, UserLite,
+	Page,
+	Role,
+	SystemWebhook,
+	UserLite,
 } from './autogen/models.js';
 
 export const notificationTypes = ['note', 'follow', 'mention', 'reply', 'renote', 'quote', 'reaction', 'pollVote', 'pollEnded', 'receiveFollowRequest', 'followRequestAccepted', 'groupInvited', 'app', 'roleAssigned', 'achievementEarned'] as const;
@@ -102,6 +109,8 @@ export const permissions = [
 	'read:clip-favorite',
 	'read:federation',
 	'write:report-abuse',
+	'write:index:full',
+	'write:index:reindex',
 ] as const;
 
 export const moderationLogTypes = [
@@ -149,6 +158,10 @@ export const moderationLogTypes = [
 	'createAbuseReportNotificationRecipient',
 	'updateAbuseReportNotificationRecipient',
 	'deleteAbuseReportNotificationRecipient',
+	'deleteAccount',
+	'deletePage',
+	'deleteFlash',
+	'deleteGalleryPost',
 ] as const;
 
 type AvatarDecoration = UserLite['avatarDecorations'][number];
@@ -374,5 +387,28 @@ export type ModerationLogPayloads = {
 	deleteAbuseReportNotificationRecipient: {
 		recipientId: string;
 		recipient: AbuseReportNotificationRecipient;
+	};
+	deleteAccount: {
+		userId: string;
+		userUsername: string;
+		userHost: string | null;
+	};
+	deletePage: {
+		pageId: string;
+		pageUserId: string;
+		pageUserUsername: string;
+		page: Page;
+	};
+	deleteFlash: {
+		flashId: string;
+		flashUserId: string;
+		flashUserUsername: string;
+		flash: Flash;
+	};
+	deleteGalleryPost: {
+		postId: string;
+		postUserId: string;
+		postUserUsername: string;
+		post: GalleryPost;
 	};
 };

@@ -62,6 +62,8 @@ import * as ep___admin_federation_updateInstance from './endpoints/admin/federat
 import * as ep___admin_getIndexStats from './endpoints/admin/get-index-stats.js';
 import * as ep___admin_getTableStats from './endpoints/admin/get-table-stats.js';
 import * as ep___admin_getUserIps from './endpoints/admin/get-user-ips.js';
+import * as ep___admin_index_full from './endpoints/admin/index/full.js';
+import * as ep___admin_index_reindex from './endpoints/admin/index/reindex.js';
 import * as ep___admin_invite_create from './endpoints/admin/invite/create.js';
 import * as ep___admin_invite_list from './endpoints/admin/invite/list.js';
 import * as ep___admin_invite_revoke from './endpoints/admin/invite/revoke.js';
@@ -102,6 +104,7 @@ import * as ep___admin_systemWebhook_delete from './endpoints/admin/system-webho
 import * as ep___admin_systemWebhook_list from './endpoints/admin/system-webhook/list.js';
 import * as ep___admin_systemWebhook_show from './endpoints/admin/system-webhook/show.js';
 import * as ep___admin_systemWebhook_update from './endpoints/admin/system-webhook/update.js';
+import * as ep___admin_systemWebhook_test from './endpoints/admin/system-webhook/test.js';
 import * as ep___announcements from './endpoints/announcements.js';
 import * as ep___announcements_show from './endpoints/announcements/show.js';
 import * as ep___antennas_create from './endpoints/antennas/create.js';
@@ -121,19 +124,6 @@ import * as ep___auth_session_userkey from './endpoints/auth/session/userkey.js'
 import * as ep___blocking_create from './endpoints/blocking/create.js';
 import * as ep___blocking_delete from './endpoints/blocking/delete.js';
 import * as ep___blocking_list from './endpoints/blocking/list.js';
-import * as ep___channels_create from './endpoints/channels/create.js';
-import * as ep___channels_featured from './endpoints/channels/featured.js';
-import * as ep___channels_follow from './endpoints/channels/follow.js';
-import * as ep___channels_followed from './endpoints/channels/followed.js';
-import * as ep___channels_owned from './endpoints/channels/owned.js';
-import * as ep___channels_show from './endpoints/channels/show.js';
-import * as ep___channels_timeline from './endpoints/channels/timeline.js';
-import * as ep___channels_unfollow from './endpoints/channels/unfollow.js';
-import * as ep___channels_update from './endpoints/channels/update.js';
-import * as ep___channels_favorite from './endpoints/channels/favorite.js';
-import * as ep___channels_unfavorite from './endpoints/channels/unfavorite.js';
-import * as ep___channels_myFavorites from './endpoints/channels/my-favorites.js';
-import * as ep___channels_search from './endpoints/channels/search.js';
 import * as ep___charts_activeUsers from './endpoints/charts/active-users.js';
 import * as ep___charts_apRequest from './endpoints/charts/ap-request.js';
 import * as ep___charts_drive from './endpoints/charts/drive.js';
@@ -270,6 +260,7 @@ import * as ep___i_webhooks_show from './endpoints/i/webhooks/show.js';
 import * as ep___i_webhooks_list from './endpoints/i/webhooks/list.js';
 import * as ep___i_webhooks_update from './endpoints/i/webhooks/update.js';
 import * as ep___i_webhooks_delete from './endpoints/i/webhooks/delete.js';
+import * as ep___i_webhooks_test from './endpoints/i/webhooks/test.js';
 import * as ep___invite_create from './endpoints/invite/create.js';
 import * as ep___invite_delete from './endpoints/invite/delete.js';
 import * as ep___invite_list from './endpoints/invite/list.js';
@@ -472,6 +463,8 @@ const $admin_federation_updateInstance: Provider = { provide: 'ep:admin/federati
 const $admin_getIndexStats: Provider = { provide: 'ep:admin/get-index-stats', useClass: ep___admin_getIndexStats.default };
 const $admin_getTableStats: Provider = { provide: 'ep:admin/get-table-stats', useClass: ep___admin_getTableStats.default };
 const $admin_getUserIps: Provider = { provide: 'ep:admin/get-user-ips', useClass: ep___admin_getUserIps.default };
+const $admin_index_full: Provider = { provide: 'ep:admin/index/full', useClass: ep___admin_index_full.default };
+const $admin_index_reindex: Provider = { provide: 'ep:admin/index/reindex', useClass: ep___admin_index_reindex.default };
 const $admin_invite_create: Provider = { provide: 'ep:admin/invite/create', useClass: ep___admin_invite_create.default };
 const $admin_invite_list: Provider = { provide: 'ep:admin/invite/list', useClass: ep___admin_invite_list.default };
 const $admin_invite_revoke: Provider = { provide: 'ep:admin/invite/revoke', useClass: ep___admin_invite_revoke.default };
@@ -512,6 +505,7 @@ const $admin_systemWebhook_delete: Provider = { provide: 'ep:admin/system-webhoo
 const $admin_systemWebhook_list: Provider = { provide: 'ep:admin/system-webhook/list', useClass: ep___admin_systemWebhook_list.default };
 const $admin_systemWebhook_show: Provider = { provide: 'ep:admin/system-webhook/show', useClass: ep___admin_systemWebhook_show.default };
 const $admin_systemWebhook_update: Provider = { provide: 'ep:admin/system-webhook/update', useClass: ep___admin_systemWebhook_update.default };
+const $admin_systemWebhook_test: Provider = { provide: 'ep:admin/system-webhook/test', useClass: ep___admin_systemWebhook_test.default };
 const $announcements: Provider = { provide: 'ep:announcements', useClass: ep___announcements.default };
 const $announcements_show: Provider = { provide: 'ep:announcements/show', useClass: ep___announcements_show.default };
 const $antennas_create: Provider = { provide: 'ep:antennas/create', useClass: ep___antennas_create.default };
@@ -531,19 +525,6 @@ const $auth_session_userkey: Provider = { provide: 'ep:auth/session/userkey', us
 const $blocking_create: Provider = { provide: 'ep:blocking/create', useClass: ep___blocking_create.default };
 const $blocking_delete: Provider = { provide: 'ep:blocking/delete', useClass: ep___blocking_delete.default };
 const $blocking_list: Provider = { provide: 'ep:blocking/list', useClass: ep___blocking_list.default };
-const $channels_create: Provider = { provide: 'ep:channels/create', useClass: ep___channels_create.default };
-const $channels_featured: Provider = { provide: 'ep:channels/featured', useClass: ep___channels_featured.default };
-const $channels_follow: Provider = { provide: 'ep:channels/follow', useClass: ep___channels_follow.default };
-const $channels_followed: Provider = { provide: 'ep:channels/followed', useClass: ep___channels_followed.default };
-const $channels_owned: Provider = { provide: 'ep:channels/owned', useClass: ep___channels_owned.default };
-const $channels_show: Provider = { provide: 'ep:channels/show', useClass: ep___channels_show.default };
-const $channels_timeline: Provider = { provide: 'ep:channels/timeline', useClass: ep___channels_timeline.default };
-const $channels_unfollow: Provider = { provide: 'ep:channels/unfollow', useClass: ep___channels_unfollow.default };
-const $channels_update: Provider = { provide: 'ep:channels/update', useClass: ep___channels_update.default };
-const $channels_favorite: Provider = { provide: 'ep:channels/favorite', useClass: ep___channels_favorite.default };
-const $channels_unfavorite: Provider = { provide: 'ep:channels/unfavorite', useClass: ep___channels_unfavorite.default };
-const $channels_myFavorites: Provider = { provide: 'ep:channels/my-favorites', useClass: ep___channels_myFavorites.default };
-const $channels_search: Provider = { provide: 'ep:channels/search', useClass: ep___channels_search.default };
 const $charts_activeUsers: Provider = { provide: 'ep:charts/active-users', useClass: ep___charts_activeUsers.default };
 const $charts_apRequest: Provider = { provide: 'ep:charts/ap-request', useClass: ep___charts_apRequest.default };
 const $charts_drive: Provider = { provide: 'ep:charts/drive', useClass: ep___charts_drive.default };
@@ -680,6 +661,7 @@ const $i_webhooks_list: Provider = { provide: 'ep:i/webhooks/list', useClass: ep
 const $i_webhooks_show: Provider = { provide: 'ep:i/webhooks/show', useClass: ep___i_webhooks_show.default };
 const $i_webhooks_update: Provider = { provide: 'ep:i/webhooks/update', useClass: ep___i_webhooks_update.default };
 const $i_webhooks_delete: Provider = { provide: 'ep:i/webhooks/delete', useClass: ep___i_webhooks_delete.default };
+const $i_webhooks_test: Provider = { provide: 'ep:i/webhooks/test', useClass: ep___i_webhooks_test.default };
 const $invite_create: Provider = { provide: 'ep:invite/create', useClass: ep___invite_create.default };
 const $invite_delete: Provider = { provide: 'ep:invite/delete', useClass: ep___invite_delete.default };
 const $invite_list: Provider = { provide: 'ep:invite/list', useClass: ep___invite_list.default };
@@ -887,6 +869,8 @@ const $bubbleGame_ranking: Provider = { provide: 'ep:bubble-game/ranking', useCl
 		$admin_getIndexStats,
 		$admin_getTableStats,
 		$admin_getUserIps,
+		$admin_index_full,
+		$admin_index_reindex,
 		$admin_invite_create,
 		$admin_invite_list,
 		$admin_invite_revoke,
@@ -927,6 +911,7 @@ const $bubbleGame_ranking: Provider = { provide: 'ep:bubble-game/ranking', useCl
 		$admin_systemWebhook_list,
 		$admin_systemWebhook_show,
 		$admin_systemWebhook_update,
+		$admin_systemWebhook_test,
 		$announcements,
 		$announcements_show,
 		$antennas_create,
@@ -946,19 +931,6 @@ const $bubbleGame_ranking: Provider = { provide: 'ep:bubble-game/ranking', useCl
 		$blocking_create,
 		$blocking_delete,
 		$blocking_list,
-		$channels_create,
-		$channels_featured,
-		$channels_follow,
-		$channels_followed,
-		$channels_owned,
-		$channels_show,
-		$channels_timeline,
-		$channels_unfollow,
-		$channels_update,
-		$channels_favorite,
-		$channels_unfavorite,
-		$channels_myFavorites,
-		$channels_search,
 		$charts_activeUsers,
 		$charts_apRequest,
 		$charts_drive,
@@ -1095,6 +1067,7 @@ const $bubbleGame_ranking: Provider = { provide: 'ep:bubble-game/ranking', useCl
 		$i_webhooks_show,
 		$i_webhooks_update,
 		$i_webhooks_delete,
+		$i_webhooks_test,
 		$invite_create,
 		$invite_delete,
 		$invite_list,
@@ -1295,6 +1268,8 @@ const $bubbleGame_ranking: Provider = { provide: 'ep:bubble-game/ranking', useCl
 		$admin_getIndexStats,
 		$admin_getTableStats,
 		$admin_getUserIps,
+		$admin_index_full,
+		$admin_index_reindex,
 		$admin_invite_create,
 		$admin_invite_list,
 		$admin_invite_revoke,
@@ -1335,6 +1310,7 @@ const $bubbleGame_ranking: Provider = { provide: 'ep:bubble-game/ranking', useCl
 		$admin_systemWebhook_list,
 		$admin_systemWebhook_show,
 		$admin_systemWebhook_update,
+		$admin_systemWebhook_test,
 		$announcements,
 		$announcements_show,
 		$antennas_create,
@@ -1354,19 +1330,6 @@ const $bubbleGame_ranking: Provider = { provide: 'ep:bubble-game/ranking', useCl
 		$blocking_create,
 		$blocking_delete,
 		$blocking_list,
-		$channels_create,
-		$channels_featured,
-		$channels_follow,
-		$channels_followed,
-		$channels_owned,
-		$channels_show,
-		$channels_timeline,
-		$channels_unfollow,
-		$channels_update,
-		$channels_favorite,
-		$channels_unfavorite,
-		$channels_myFavorites,
-		$channels_search,
 		$charts_activeUsers,
 		$charts_apRequest,
 		$charts_drive,
@@ -1502,6 +1465,7 @@ const $bubbleGame_ranking: Provider = { provide: 'ep:bubble-game/ranking', useCl
 		$i_webhooks_show,
 		$i_webhooks_update,
 		$i_webhooks_delete,
+		$i_webhooks_test,
 		$invite_create,
 		$invite_delete,
 		$invite_list,

@@ -15,7 +15,127 @@
 ### Misc
 
 -->
-## x.x.x (unreleased)
+## 0.6.2(unreleased)
+
+### Release Date
+
+### General
+-
+
+### Client
+- fix: モバイル環境でUIのナビゲーションバーによって一部の表示が隠れるのを修正
+- fix: 自動削除機能で日時指定にしていた場合正しい時刻に削除されない問題を修正
+- feat: Misskey UIでモバイル環境時にヘッダーのアイコンを隠せるように
+
+### Server
+-
+
+### Misc
+
+
+## 0.6.1
+
+### Release Date
+
+### General
+- fix: 3000文字を超える長文の編集ができなかった問題
+
+### Client
+- feat: プロフィールを縦書き表示にするボタン
+- fix: 設定画面でリロードすべきところでリロードしない問題
+
+### Server
+- Breaking: OpenSearchを利用不可に
+- feat: ハッシュタグをストリーミングで流すように
+- indexableで正しいプロパティを連合するように
+
+### Misc
+
+
+## 0.6.0
+
+### Release Date
+
+### General
+- feat: `fedibird:searchableBy`に対応
+  - 対応しているソフトウェア(fedibird, kmyblue)に対して、自身の投稿を検索できる範囲を制限することができます。
+
+### Client
+- 
+
+### Server
+- fix: 検索のオプションが効かなくなっていた問題を修正
+
+### Misc
+
+
+## 0.5.4
+
+### Release Date
+
+### General
+-
+
+### Client
+- 
+
+### Server
+- fix: `ApPersonService`で`isIndexable`を考慮してなかった箇所がある問題
+- fix: `toot:indexable`がfalseなユーザーを検索できてしまっていた問題
+- fix: `toot:indexable`がfalseなユーザーがアンテナに載っていた問題
+
+### Misc
+
+## 0.5.3
+
+### Release Date
+
+### General
+-
+
+### Client
+- 検索ウィジェットでフィルタを設定できるように
+
+### Server
+- 検索対象にCWのテキストも含むように
+
+### Misc
+
+
+## 0.5.2
+
+### Release Date
+
+### General
+-
+
+### Client
+- 設定ページ下部の不要なスペースを削除
+- - なんのためにあったのこれ
+
+### Server
+-
+
+### Misc
+
+
+## 0.5.1
+
+### Release Date
+
+### General
+- スプラッシュスクリーン(画面ロード時にぐるぐるが表示される画面)にカスタムテキストを適用できるように
+
+### Client
+- fix?: リアクションビューワーからリアクションをインポートできないことがある問題
+
+### Server
+-
+
+### Misc
+
+
+## 0.5.0
 
 ### Release Date
 

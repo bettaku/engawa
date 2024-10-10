@@ -21,6 +21,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 <script lang="ts" setup>
 import { computed, ComputedRef, inject, onMounted, shallowRef, watch } from 'vue';
 import * as Misskey from 'cherrypick-js';
+import { getUnicodeEmoji } from '@@/js/emojilist.js';
 import MkCustomEmojiDetailedDialog from './MkCustomEmojiDetailedDialog.vue';
 import XDetails from '@/components/MkReactionsViewer.details.vue';
 import MkReactionIcon from '@/components/MkReactionIcon.vue';
@@ -35,7 +36,6 @@ import { i18n } from '@/i18n.js';
 import * as sound from '@/scripts/sound.js';
 import { checkReactionPermissions } from '@/scripts/check-reaction-permissions.js';
 import { customEmojis, customEmojisMap } from '@/custom-emojis.js';
-import { getUnicodeEmoji } from '@/scripts/emojilist.js';
 import { copyToClipboard } from '@/scripts/copy-to-clipboard.js';
 
 const props = defineProps<{
@@ -64,6 +64,12 @@ const canGetInfo = computed(() => !props.reaction.match(/@\w/) && props.reaction
 const reactionName = computed(() => {
 	const r = props.reaction.replace(':', '');
 	return r.slice(0, r.indexOf('@'));
+});
+
+const reactionHost = computed(() => {
+	const r = props.reaction.replace(':', '');
+	const host = r.slice(r.indexOf('@') + 1);
+	return host.endsWith(':') ? host.slice(0, -1): host;
 });
 
 const alternative: ComputedRef<string | null> = computed(() => defaultStore.state.reactableRemoteReactionEnabled ? (customEmojis.value.find(it => it.name === reactionName.value)?.name ?? null) : null);
@@ -131,7 +137,7 @@ function stealReaction(ev: MouseEvent) {
 		action: async () => {
 			await os.apiWithDialog('admin/emoji/steal', {
 				name: reactionName.value,
-				host: props.note.user.host,
+				host: reactionHost.value,
 			});
 		},
 	}, {
@@ -140,7 +146,7 @@ function stealReaction(ev: MouseEvent) {
 		action: async () => {
 			await os.apiWithDialog('admin/emoji/steal', {
 				name: reactionName.value,
-				host: props.note.user.host,
+				host: reactionHost.value,
 			});
 
 			await misskeyApi('notes/reactions/create', {

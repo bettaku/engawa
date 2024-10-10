@@ -6,7 +6,7 @@
 import { createPublicKey, randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import { In } from 'typeorm';
-import * as mfm from 'cherrypick-mfm-js';
+import * as mfm from 'cfm-js';
 import { DI } from '@/di-symbols.js';
 import type { Config } from '@/config.js';
 import type { MiPartialLocalUser, MiLocalUser, MiPartialRemoteUser, MiRemoteUser, MiUser } from '@/models/User.js';
@@ -105,6 +105,19 @@ export class ApRendererService {
 			cc = [];
 		} else {
 			throw new Error('renderAnnounce: cannot render non-public note');
+		}
+
+		let searchable: string[] = [];
+		if (note.searchableBy === 'public') {
+			searchable = ['https://www.w3.org/ns/activitystreams#Public'];
+		} else if (note.searchableBy === 'followers') {
+			searchable = [`${attributedTo}/followers`];
+		} else if (note.searchableBy === 'limited') {
+			searchable = ['as:Limited', 'kmyblue:Limited'];
+		} else if (note.searchableBy === 'reacted') {
+			searchable = [];
+		} else {
+			searchable = [];
 		}
 
 		return {
@@ -379,6 +392,19 @@ export class ApRendererService {
 			to = mentions;
 		}
 
+		let searchable: string[] = [];
+		if (note.searchableBy === 'public') {
+			searchable = ['https://www.w3.org/ns/activitystreams#Public'];
+		} else if (note.searchableBy === 'followers') {
+			searchable = [`${attributedTo}/followers`];
+		} else if (note.searchableBy === 'limited') {
+			searchable = ['as:Limited', 'kmyblue:Limited'];
+		} else if (note.searchableBy === 'reacted') {
+			searchable = [];
+		} else {
+			searchable = [];
+		}
+
 		const mentionedUsers = note.mentions.length > 0 ? await this.usersRepository.findBy({
 			id: In(note.mentions),
 		}) : [];
@@ -463,6 +489,7 @@ export class ApRendererService {
 			to,
 			cc,
 			inReplyTo,
+			searchableBy: [...searchable],
 			attachment: files.map(x => this.renderDocument(x)),
 			sensitive: note.cw != null || files.some(file => file.isSensitive),
 			tag,
@@ -518,6 +545,7 @@ export class ApRendererService {
 			name: user.name,
 			summary: profile.description ? this.mfmService.toHtml(mfm.parse(profile.description)) : null,
 			_misskey_summary: profile.description,
+			_misskey_followedMessage: profile.followedMessage,
 			icon: avatar ? this.renderImage(avatar) : null,
 			image: banner ? this.renderImage(banner) : null,
 			tag,
@@ -525,7 +553,7 @@ export class ApRendererService {
 			discoverable: user.isExplorable,
 			publicKey: this.renderKey(user, keypair, '#main-key'),
 			isCat: user.isCat,
-			isIndexable: user.isIndexable,
+			indexable: user.isIndexable,
 			attachment: attachment.length ? attachment : undefined,
 		};
 

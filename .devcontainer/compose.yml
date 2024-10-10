@@ -42,6 +42,28 @@ services:
       interval: 5s
       retries: 20
 
+  elasticsearch:
+    restart: always
+    build: ../es
+    environment:
+      - discovery.type=single-node
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xms512m"
+    networks:
+      - internal_network
+
+  kibana:
+    image: elastic/kibana:8.13.4
+    ports:
+      - 5601:5601
+    networks:
+      - internal_network
+      - external_network
+
 volumes:
   postgres-data:
   redis-data:

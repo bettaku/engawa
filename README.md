@@ -8,6 +8,9 @@
 [Learn more](https://misskey-hub.net/)
 
 ---
+EN [JP](./README.ja.md)
+
+---
 
 <a href="https://misskey-hub.net/servers/">
 		<img src="https://custom-icon-badges.herokuapp.com/badge/find_an-instance-acea31?logoColor=acea31&style=for-the-badge&logo=misskey&labelColor=363B40" alt="find an instance"/></a>
@@ -25,6 +28,15 @@
 		<img src="https://custom-icon-badges.herokuapp.com/badge/become_a-patron-F96854?logoColor=F96854&style=for-the-badge&logo=patreon&labelColor=363B40" alt="become a patron"/></a>
 
 </div>
+
+---
+## About
+This repository is a fork of [CherryPick](htttps://github.com/kokonect-link/cherrypick.git).  
+Added some modding inspired by Firefish, Sharkey, Foundkey and more.  
+For the difference from original, see [What's Difference](./docs/WhatsDifference.md).  
+For more information, please read [docs](./docs/docs.md).
+
+---
 
 ## Thanks
 

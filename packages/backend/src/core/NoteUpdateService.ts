@@ -7,7 +7,7 @@ import { setImmediate } from 'node:timers/promises';
 import util from 'util';
 import { In, DataSource } from 'typeorm';
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
-import * as mfm from 'cherrypick-mfm-js';
+import * as mfm from 'cfm-js';
 import type { IMentionedRemoteUsers } from '@/models/Note.js';
 import { MiNote } from '@/models/Note.js';
 import type { NotesRepository, UsersRepository } from '@/models/_.js';
@@ -139,6 +139,7 @@ export class NoteUpdateService implements OnApplicationShutdown {
 			attachedFileTypes: data.files ? data.files.map(file => file.type) : [],
 			updatedAtHistory: [...updatedAtHistory, new Date()],
 			noteEditHistory: [...note.noteEditHistory, (note.cw ? note.cw + '\n' : '') + note.text!],
+			searchableBy: note.searchableBy,
 		});
 
 		// 投稿を更新
@@ -233,6 +234,8 @@ export class NoteUpdateService implements OnApplicationShutdown {
 			}
 			//#endregion
 		}
+
+		this.reIndex(note);
 	}
 
 	@bindThis
@@ -287,5 +290,13 @@ export class NoteUpdateService implements OnApplicationShutdown {
 	@bindThis
 	public onApplicationShutdown(signal?: string | undefined): void {
 		this.dispose();
+	}
+
+	@bindThis
+	private reIndex(note: MiNote) {
+		if (note.text == null && note.cw == null) return;
+
+		this.searchService.unindexNote(note);
+		this.searchService.indexNote(note);
 	}
 }

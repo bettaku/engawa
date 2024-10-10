@@ -51,6 +51,7 @@ export const paramDef = {
 		fileOption: { type: 'string', enum: ['combined', 'fileOnly', 'noFile'], default: 'combined' },
 		excludeNsfw: { type: 'boolean', default: false },
 		excludeBot: { type: 'boolean', default: false },
+		orderBy: { type: 'string' }
 	},
 	required: ['query'],
 } as const;
@@ -77,6 +78,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				fileOption: ps.fileOption,
 				excludeNsfw: ps.excludeNsfw,
 				excludeBot: ps.excludeBot,
+				orderBy: ps.orderBy,
 			}, {
 				untilId: ps.untilId,
 				sinceId: ps.sinceId,

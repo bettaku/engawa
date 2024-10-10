@@ -129,9 +129,6 @@ dbReplications: false
 #    user:
 #    pass:
 
-# You can use PGroonga when enabled.
-#pgroonga: false
-
 #   ┌─────────────────────┐
 #───┘ Redis configuration └─────────────────────────────────────
 
@@ -175,6 +172,16 @@ redis:
 #  # You can specify more ioredis options...
 #  #username: example-username
 
+#redisForReactions:
+#  host: localhost
+#  port: 6379
+#  #family: 0  # 0=Both, 4=IPv4, 6=IPv6
+#  #pass: example-pass
+#  #prefix: example-prefix
+#  #db: 1
+#  # You can specify more ioredis options...
+#  #username: example-username
+
 #   ┌───────────────────────────┐
 #───┘ MeiliSearch configuration └─────────────────────────────
 
@@ -189,19 +196,21 @@ redis:
 #  index: ''
 #  scope: local
 
-
 #   ┌───────────────────────────┐
-#───┘ OpenSearch configuration  └─────────────────────────────
+#───┘ ElasticSearch configuration └─────────────────────────────
 
-# You can use OpenSearch when you enabled AdvancedSearch.
-
-#opensearch:
-#  host: localhost
+#elasticsearch:
+#  host: elasticsearch
 #  port: 9200
-#  user: 'admin'
-#  pass: 'opensearch-adminpassword' #強めのパスワードじゃないと怒られる
+#  user: elastic
+#  pass: hogeFuga
 #  ssl: false
-#  index: 'instancename' #なんでもいい
+#  index: 'cherrypick'
+#  rejectUnauthorized: false
+#  scope: local
+#  pingTimeout: 3000
+#  requestTimeout: 30000
+
 
 #   ┌───────────────┐
 #───┘ ID generation └───────────────────────────────────────────

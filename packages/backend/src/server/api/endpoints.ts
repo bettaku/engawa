@@ -67,6 +67,8 @@ import * as ep___admin_federation_updateInstance from './endpoints/admin/federat
 import * as ep___admin_getIndexStats from './endpoints/admin/get-index-stats.js';
 import * as ep___admin_getTableStats from './endpoints/admin/get-table-stats.js';
 import * as ep___admin_getUserIps from './endpoints/admin/get-user-ips.js';
+import * as ep___admin_index_full from './endpoints/admin/index/full.js';
+import * as ep___admin_index_reindex from './endpoints/admin/index/reindex.js';
 import * as ep___admin_invite_create from './endpoints/admin/invite/create.js';
 import * as ep___admin_invite_list from './endpoints/admin/invite/list.js';
 import * as ep___admin_invite_revoke from './endpoints/admin/invite/revoke.js';
@@ -107,6 +109,7 @@ import * as ep___admin_systemWebhook_delete from './endpoints/admin/system-webho
 import * as ep___admin_systemWebhook_list from './endpoints/admin/system-webhook/list.js';
 import * as ep___admin_systemWebhook_show from './endpoints/admin/system-webhook/show.js';
 import * as ep___admin_systemWebhook_update from './endpoints/admin/system-webhook/update.js';
+import * as ep___admin_systemWebhook_test from './endpoints/admin/system-webhook/test.js';
 import * as ep___announcements from './endpoints/announcements.js';
 import * as ep___announcements_show from './endpoints/announcements/show.js';
 import * as ep___antennas_create from './endpoints/antennas/create.js';
@@ -126,19 +129,6 @@ import * as ep___auth_session_userkey from './endpoints/auth/session/userkey.js'
 import * as ep___blocking_create from './endpoints/blocking/create.js';
 import * as ep___blocking_delete from './endpoints/blocking/delete.js';
 import * as ep___blocking_list from './endpoints/blocking/list.js';
-import * as ep___channels_create from './endpoints/channels/create.js';
-import * as ep___channels_featured from './endpoints/channels/featured.js';
-import * as ep___channels_follow from './endpoints/channels/follow.js';
-import * as ep___channels_followed from './endpoints/channels/followed.js';
-import * as ep___channels_owned from './endpoints/channels/owned.js';
-import * as ep___channels_show from './endpoints/channels/show.js';
-import * as ep___channels_timeline from './endpoints/channels/timeline.js';
-import * as ep___channels_unfollow from './endpoints/channels/unfollow.js';
-import * as ep___channels_update from './endpoints/channels/update.js';
-import * as ep___channels_favorite from './endpoints/channels/favorite.js';
-import * as ep___channels_unfavorite from './endpoints/channels/unfavorite.js';
-import * as ep___channels_myFavorites from './endpoints/channels/my-favorites.js';
-import * as ep___channels_search from './endpoints/channels/search.js';
 import * as ep___charts_activeUsers from './endpoints/charts/active-users.js';
 import * as ep___charts_apRequest from './endpoints/charts/ap-request.js';
 import * as ep___charts_drive from './endpoints/charts/drive.js';
@@ -275,6 +265,7 @@ import * as ep___i_webhooks_show from './endpoints/i/webhooks/show.js';
 import * as ep___i_webhooks_list from './endpoints/i/webhooks/list.js';
 import * as ep___i_webhooks_update from './endpoints/i/webhooks/update.js';
 import * as ep___i_webhooks_delete from './endpoints/i/webhooks/delete.js';
+import * as ep___i_webhooks_test from './endpoints/i/webhooks/test.js';
 import * as ep___invite_create from './endpoints/invite/create.js';
 import * as ep___invite_delete from './endpoints/invite/delete.js';
 import * as ep___invite_list from './endpoints/invite/list.js';
@@ -475,6 +466,8 @@ const eps = [
 	['admin/get-index-stats', ep___admin_getIndexStats],
 	['admin/get-table-stats', ep___admin_getTableStats],
 	['admin/get-user-ips', ep___admin_getUserIps],
+	['admin/index/full', ep___admin_index_full],
+	['admin/index/reindex', ep___admin_index_reindex],
 	['admin/invite/create', ep___admin_invite_create],
 	['admin/invite/list', ep___admin_invite_list],
 	['admin/invite/revoke', ep___admin_invite_revoke],
@@ -515,6 +508,7 @@ const eps = [
 	['admin/system-webhook/list', ep___admin_systemWebhook_list],
 	['admin/system-webhook/show', ep___admin_systemWebhook_show],
 	['admin/system-webhook/update', ep___admin_systemWebhook_update],
+	['admin/system-webhook/test', ep___admin_systemWebhook_test],
 	['announcements', ep___announcements],
 	['announcements/show', ep___announcements_show],
 	['antennas/create', ep___antennas_create],
@@ -534,19 +528,6 @@ const eps = [
 	['blocking/create', ep___blocking_create],
 	['blocking/delete', ep___blocking_delete],
 	['blocking/list', ep___blocking_list],
-	['channels/create', ep___channels_create],
-	['channels/featured', ep___channels_featured],
-	['channels/follow', ep___channels_follow],
-	['channels/followed', ep___channels_followed],
-	['channels/owned', ep___channels_owned],
-	['channels/show', ep___channels_show],
-	['channels/timeline', ep___channels_timeline],
-	['channels/unfollow', ep___channels_unfollow],
-	['channels/update', ep___channels_update],
-	['channels/favorite', ep___channels_favorite],
-	['channels/unfavorite', ep___channels_unfavorite],
-	['channels/my-favorites', ep___channels_myFavorites],
-	['channels/search', ep___channels_search],
 	['charts/active-users', ep___charts_activeUsers],
 	['charts/ap-request', ep___charts_apRequest],
 	['charts/drive', ep___charts_drive],
@@ -683,6 +664,7 @@ const eps = [
 	['i/webhooks/show', ep___i_webhooks_show],
 	['i/webhooks/update', ep___i_webhooks_update],
 	['i/webhooks/delete', ep___i_webhooks_delete],
+	['i/webhooks/test', ep___i_webhooks_test],
 	['invite/create', ep___invite_create],
 	['invite/delete', ep___invite_delete],
 	['invite/list', ep___invite_list],

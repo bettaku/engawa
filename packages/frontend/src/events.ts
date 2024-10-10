@@ -10,4 +10,7 @@ export const globalEvents = new EventEmitter<{
 	themeChanged: () => void;
 	clientNotification: (notification: Misskey.entities.Notification) => void;
 	requestClearPageCache: () => void;
+	hasRequireRefresh: () => void;
+	reloadTimeline: () => void;
+	reloadNotification: () => void;
 }>();

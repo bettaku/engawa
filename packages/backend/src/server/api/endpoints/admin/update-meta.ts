@@ -164,6 +164,7 @@ export const paramDef = {
 		perRemoteUserUserTimelineCacheMax: { type: 'integer' },
 		perUserHomeTimelineCacheMax: { type: 'integer' },
 		perUserListTimelineCacheMax: { type: 'integer' },
+		enableReactionsBuffering: { type: 'boolean' },
 		notesPerOneAd: { type: 'integer' },
 		silencedHosts: {
 			type: 'array',
@@ -189,12 +190,32 @@ export const paramDef = {
 		urlPreviewRequireContentLength: { type: 'boolean' },
 		urlPreviewUserAgent: { type: 'string', nullable: true },
 		urlPreviewSummaryProxyUrl: { type: 'string', nullable: true },
+		federation: {
+			type: 'string',
+			enum: ['all', 'none', 'specified'],
+		},
+		federationHosts: {
+			type: 'array',
+			items: {
+				type: 'string',
+			},
+		},
 		urlPreviewDirectSummalyProxy: { type: 'boolean' },
 		doNotSendNotificationEmailsForAbuseReport: { type: 'boolean' },
 		emailToReceiveAbuseReport: { type: 'string', nullable: true },
 		enableReceivePrerelease: { type: 'boolean' },
 		skipVersion: { type: 'boolean' },
 		skipCherryPickVersion: { type: 'string', nullable: true },
+		trustedLinkUrlPatterns: {
+			type: 'array', nullable: true, items: {
+				type: 'string',
+			},
+		},
+		customSplashText: {
+			type: 'array', nullable: true, items: {
+				type: 'string',
+			},
+		},
 	},
 	required: [],
 } as const;
@@ -202,7 +223,7 @@ export const paramDef = {
 @Injectable()
 export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-disable-line import/no-default-export
 	constructor(
-        private moduleRef: ModuleRef,
+    private moduleRef: ModuleRef,
 		private metaService: MetaService,
 		private moderationLogService: ModerationLogService,
 	) {
@@ -711,6 +732,10 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				set.perUserListTimelineCacheMax = ps.perUserListTimelineCacheMax;
 			}
 
+			if (ps.enableReactionsBuffering !== undefined) {
+				set.enableReactionsBuffering = ps.enableReactionsBuffering;
+			}
+
 			if (ps.notesPerOneAd !== undefined) {
 				set.notesPerOneAd = ps.notesPerOneAd;
 			}
@@ -745,6 +770,14 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				set.urlPreviewSummaryProxyUrl = value === '' ? null : value;
 			}
 
+			if (ps.federation !== undefined) {
+				set.federation = ps.federation;
+			}
+
+			if (Array.isArray(ps.federationHosts)) {
+				set.blockedHosts = ps.federationHosts.filter(Boolean).map(x => x.toLowerCase());
+			}
+
 			if (ps.urlPreviewDirectSummalyProxy !== undefined) {
 				set.directSummalyProxy = ps.urlPreviewDirectSummalyProxy;
 			}
@@ -767,6 +800,14 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			if (ps.skipCherryPickVersion !== undefined) {
 				set.skipCherryPickVersion = ps.skipCherryPickVersion;
+			}
+
+			if (Array.isArray(ps.trustedLinkUrlPatterns)) {
+				set.trustedLinkUrlPatterns = ps.trustedLinkUrlPatterns.filter(Boolean);
+			}
+
+			if (Array.isArray(ps.customSplashText)) {
+				set.customSplashText = ps.customSplashText.filter(Boolean);
 			}
 
 			const before = await this.metaService.fetch(true);

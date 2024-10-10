@@ -621,6 +621,28 @@ declare module '../api.js' {
     /**
      * No description provided.
      * 
+     * **Credential required**: *Yes* / **Permission**: *write:index:full*
+     */
+    request<E extends 'admin/index/full', P extends Endpoints[E]['req']>(
+      endpoint: E,
+      params: P,
+      credential?: string | null,
+    ): Promise<SwitchCaseResponseType<E, P>>;
+
+    /**
+     * No description provided.
+     * 
+     * **Credential required**: *Yes* / **Permission**: *write:index:full*
+     */
+    request<E extends 'admin/index/reindex', P extends Endpoints[E]['req']>(
+      endpoint: E,
+      params: P,
+      credential?: string | null,
+    ): Promise<SwitchCaseResponseType<E, P>>;
+
+    /**
+     * No description provided.
+     * 
      * **Credential required**: *Yes* / **Permission**: *write:admin:invite-codes*
      */
     request<E extends 'admin/invite/create', P extends Endpoints[E]['req']>(
@@ -1066,6 +1088,18 @@ declare module '../api.js' {
     /**
      * No description provided.
      * 
+     * **Internal Endpoint**: This endpoint is an API for the cherrypick mainframe and is not intended for use by third parties.
+     * **Credential required**: *Yes* / **Permission**: *read:admin:system-webhook*
+     */
+    request<E extends 'admin/system-webhook/test', P extends Endpoints[E]['req']>(
+      endpoint: E,
+      params: P,
+      credential?: string | null,
+    ): Promise<SwitchCaseResponseType<E, P>>;
+
+    /**
+     * No description provided.
+     * 
      * **Credential required**: *No*
      */
     request<E extends 'announcements', P extends Endpoints[E]['req']>(
@@ -1268,149 +1302,6 @@ declare module '../api.js' {
      * **Credential required**: *Yes* / **Permission**: *read:blocks*
      */
     request<E extends 'blocking/list', P extends Endpoints[E]['req']>(
-      endpoint: E,
-      params: P,
-      credential?: string | null,
-    ): Promise<SwitchCaseResponseType<E, P>>;
-
-    /**
-     * No description provided.
-     * 
-     * **Credential required**: *Yes* / **Permission**: *write:channels*
-     */
-    request<E extends 'channels/create', P extends Endpoints[E]['req']>(
-      endpoint: E,
-      params: P,
-      credential?: string | null,
-    ): Promise<SwitchCaseResponseType<E, P>>;
-
-    /**
-     * No description provided.
-     * 
-     * **Credential required**: *No*
-     */
-    request<E extends 'channels/featured', P extends Endpoints[E]['req']>(
-      endpoint: E,
-      params: P,
-      credential?: string | null,
-    ): Promise<SwitchCaseResponseType<E, P>>;
-
-    /**
-     * No description provided.
-     * 
-     * **Credential required**: *Yes* / **Permission**: *write:channels*
-     */
-    request<E extends 'channels/follow', P extends Endpoints[E]['req']>(
-      endpoint: E,
-      params: P,
-      credential?: string | null,
-    ): Promise<SwitchCaseResponseType<E, P>>;
-
-    /**
-     * No description provided.
-     * 
-     * **Credential required**: *Yes* / **Permission**: *read:channels*
-     */
-    request<E extends 'channels/followed', P extends Endpoints[E]['req']>(
-      endpoint: E,
-      params: P,
-      credential?: string | null,
-    ): Promise<SwitchCaseResponseType<E, P>>;
-
-    /**
-     * No description provided.
-     * 
-     * **Credential required**: *Yes* / **Permission**: *read:channels*
-     */
-    request<E extends 'channels/owned', P extends Endpoints[E]['req']>(
-      endpoint: E,
-      params: P,
-      credential?: string | null,
-    ): Promise<SwitchCaseResponseType<E, P>>;
-
-    /**
-     * No description provided.
-     * 
-     * **Credential required**: *No*
-     */
-    request<E extends 'channels/show', P extends Endpoints[E]['req']>(
-      endpoint: E,
-      params: P,
-      credential?: string | null,
-    ): Promise<SwitchCaseResponseType<E, P>>;
-
-    /**
-     * No description provided.
-     * 
-     * **Credential required**: *No*
-     */
-    request<E extends 'channels/timeline', P extends Endpoints[E]['req']>(
-      endpoint: E,
-      params: P,
-      credential?: string | null,
-    ): Promise<SwitchCaseResponseType<E, P>>;
-
-    /**
-     * No description provided.
-     * 
-     * **Credential required**: *Yes* / **Permission**: *write:channels*
-     */
-    request<E extends 'channels/unfollow', P extends Endpoints[E]['req']>(
-      endpoint: E,
-      params: P,
-      credential?: string | null,
-    ): Promise<SwitchCaseResponseType<E, P>>;
-
-    /**
-     * No description provided.
-     * 
-     * **Credential required**: *Yes* / **Permission**: *write:channels*
-     */
-    request<E extends 'channels/update', P extends Endpoints[E]['req']>(
-      endpoint: E,
-      params: P,
-      credential?: string | null,
-    ): Promise<SwitchCaseResponseType<E, P>>;
-
-    /**
-     * No description provided.
-     * 
-     * **Credential required**: *Yes* / **Permission**: *write:channels*
-     */
-    request<E extends 'channels/favorite', P extends Endpoints[E]['req']>(
-      endpoint: E,
-      params: P,
-      credential?: string | null,
-    ): Promise<SwitchCaseResponseType<E, P>>;
-
-    /**
-     * No description provided.
-     * 
-     * **Credential required**: *Yes* / **Permission**: *write:channels*
-     */
-    request<E extends 'channels/unfavorite', P extends Endpoints[E]['req']>(
-      endpoint: E,
-      params: P,
-      credential?: string | null,
-    ): Promise<SwitchCaseResponseType<E, P>>;
-
-    /**
-     * No description provided.
-     * 
-     * **Credential required**: *Yes* / **Permission**: *read:channels*
-     */
-    request<E extends 'channels/my-favorites', P extends Endpoints[E]['req']>(
-      endpoint: E,
-      params: P,
-      credential?: string | null,
-    ): Promise<SwitchCaseResponseType<E, P>>;
-
-    /**
-     * No description provided.
-     * 
-     * **Credential required**: *No*
-     */
-    request<E extends 'channels/search', P extends Endpoints[E]['req']>(
       endpoint: E,
       params: P,
       credential?: string | null,
@@ -2939,6 +2830,18 @@ declare module '../api.js' {
      * **Credential required**: *Yes* / **Permission**: *write:account*
      */
     request<E extends 'i/webhooks/delete', P extends Endpoints[E]['req']>(
+      endpoint: E,
+      params: P,
+      credential?: string | null,
+    ): Promise<SwitchCaseResponseType<E, P>>;
+
+    /**
+     * No description provided.
+     * 
+     * **Internal Endpoint**: This endpoint is an API for the cherrypick mainframe and is not intended for use by third parties.
+     * **Credential required**: *Yes* / **Permission**: *read:account*
+     */
+    request<E extends 'i/webhooks/test', P extends Endpoints[E]['req']>(
       endpoint: E,
       params: P,
       credential?: string | null,

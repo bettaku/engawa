@@ -79,20 +79,18 @@
 			}
 		},
 		"ignore": [
-			"**/.eslintrc.cjs",
 			"**/node_modules",
-			"./built",
-			"./coverage",
-			"./.eslintrc.js",
-			"./jest.config.ts",
-			"./test",
-			"./test-d",
-			"**/build.js"
+			"built",
+			"coverage",
+			"jest.config.ts",
+			"test",
+			"test-d",
+			"generator"
 		]
 	},
 	"overrides": [
 		{
-			"include": ["*.ts", "*.tsx", "*.mts", "*.cts"],
+			"include": ["*.ts", "*.tsx"],
 			"linter": {
 				"rules": {
 					"correctness": {

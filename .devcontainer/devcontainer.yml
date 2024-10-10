@@ -103,6 +103,14 @@ redis:
 #  #prefix: example-prefix
 #  #db: 1
 
+#redisForReactions:
+#  host: redis
+#  port: 6379
+#  #family: 0  # 0=Both, 4=IPv4, 6=IPv6
+#  #pass: example-pass
+#  #prefix: example-prefix
+#  #db: 1
+
 #   ┌───────────────────────────┐
 #───┘ MeiliSearch configuration └─────────────────────────────
 
@@ -112,6 +120,21 @@ redis:
 #  apiKey: ''
 #  ssl: true
 #  index: ''
+
+#   ┌───────────────────────────┐
+#───┘ ElasticSearch configuration └─────────────────────────────
+
+elasticsearch:
+  host: elasticsearch
+  port: 9200
+  user: elastic
+  pass: hogeFuga
+  ssl: false
+  index: 'devcontainer'
+  rejectUnauthorized: false
+  scope: local
+  pingTimeout: 3000
+  requestTimeout: 30000
 
 #   ┌───────────────┐
 #───┘ ID generation └───────────────────────────────────────────

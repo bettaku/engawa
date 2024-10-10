@@ -555,10 +555,20 @@ const extension_context_definition = {
 	'_misskey_reaction': 'misskey:_misskey_reaction',
 	'_misskey_votes': 'misskey:_misskey_votes',
 	'_misskey_summary': 'misskey:_misskey_summary',
+	'_misskey_followedMessage': 'misskey:_misskey_followedMessage',
 	'_misskey_talk': 'misskey:_misskey_talk',
 	'isCat': 'misskey:isCat',
 	// vcard
 	vcard: 'http://www.w3.org/2006/vcard/ns#',
+	// Fedibird
+	fedibird: 'http://fedibird.com/ns#',
+	searchableBy: {
+		'@id': 'fedibird:searchableBy',
+		'@type': '@id',
+	},
+	// kmyblue
+	kmyblue: 'http://kmy.blue/ns#',
+	limitedScope: 'kmyblue:limitedScope',
 } satisfies Context;
 
 export const CONTEXT: (string | Context)[] = [...context_iris, extension_context_definition];

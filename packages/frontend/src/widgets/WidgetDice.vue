@@ -11,12 +11,10 @@
 </template>
 
 <script lang="ts" setup>
-import { Ref, ref } from 'vue';
-import { GetFormResultType } from '@/scripts/form.js';
 import { useWidgetPropsManager, WidgetComponentEmits, WidgetComponentExpose, WidgetComponentProps } from './widget.js';
+import { GetFormResultType } from '@/scripts/form.js';
 import MkDice from '@/components/MkDice.vue';
 import MkContainer from '@/components/MkContainer.vue';
-import { i18n }	from '@/i18n.js';
 
 const name = 'dice';
 
@@ -37,7 +35,7 @@ const widgetPropsDef = {
 		type: 'boolean' as const,
 		default: false,
 	},
-}
+};
 
 type WidgetProps = GetFormResultType<typeof widgetPropsDef>;
 
@@ -55,16 +53,11 @@ defineExpose<WidgetComponentExpose>({
 	configure,
 	id: props.widget ? props.widget.id : null,
 });
-
 </script>
 
 <style lang="scss" module>
 .root {
 	position: relative;
 	padding: 16px 0;
-
-	> .input {
-		flex: 1 1 auto;
-	}
 }
 </style>

@@ -287,10 +287,14 @@ export const packedNoteSchema = {
 			type: 'number',
 			optional: true, nullable: false,
 		},
-
 		myReaction: {
 			type: 'string',
 			optional: true, nullable: true,
+		},
+		searchableBy: {
+			type: 'string',
+			optional: true, nullable: false,
+			enum: ['public', 'followers', 'reacted', 'limited'],
 		},
 	},
 } as const;

@@ -17,8 +17,6 @@ import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
 import { NoteCreateService } from '@/core/NoteCreateService.js';
 import { DI } from '@/di-symbols.js';
 import { isQuote, isRenote } from '@/misc/is-renote.js';
-import { MetaService } from '@/core/MetaService.js';
-import { UtilityService } from '@/core/UtilityService.js';
 import { IdentifiableError } from '@/misc/identifiable-error.js';
 import { ApiError } from '../../error.js';
 
@@ -216,6 +214,7 @@ export const paramDef = {
 				deleteAfter: { type: 'integer', nullable: true, minimum: 1 },
 			},
 		},
+		searchableBy: { type: 'string', enum: ['public', 'followers', 'reacted', 'limited'], default: 'public' },
 	},
 	// (re)note with text, files and poll are optional
 	if: {
@@ -397,6 +396,16 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				}
 			}
 
+			if (ps.scheduledDelete) {
+				if (typeof ps.scheduledDelete.deleteAt === 'number') {
+					if (ps.scheduledDelete.deleteAt < Date.now()) {
+						throw new ApiError(meta.errors.cannotScheduleDeleteEarlierThanNow);
+					} else if (typeof ps.scheduledDelete.deleteAfter === 'number') {
+						ps.scheduledDelete.deleteAt = Date.now() + ps.scheduledDelete.deleteAfter;
+					}
+				}
+			}
+
 			// 投稿を作成
 			try {
 				const note = await this.noteCreateService.create(me, {
@@ -427,6 +436,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					apHashtags: ps.noExtractHashtags ? [] : undefined,
 					apEmojis: ps.noExtractEmojis ? [] : undefined,
 					deleteAt: ps.scheduledDelete?.deleteAt ? new Date(ps.scheduledDelete.deleteAt) : ps.scheduledDelete?.deleteAfter ? new Date(Date.now() + ps.scheduledDelete.deleteAfter) : null,
+					searchableBy: ps.searchableBy,
 				});
 
 				return {

@@ -107,12 +107,11 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			const query = this.notesRepository.createQueryBuilder('note')
 				.where('note.id IN (:...noteIds)', { noteIds: noteIds })
-				.innerJoinAndSelect('note.user', 'user')
+				.innerJoinAndSelect('note.user', 'user', 'user.isIndexable = true')
 				.leftJoinAndSelect('note.reply', 'reply')
 				.leftJoinAndSelect('note.renote', 'renote')
 				.leftJoinAndSelect('reply.user', 'replyUser')
-				.leftJoinAndSelect('renote.user', 'renoteUser')
-				.andWhere('user.isIndexable = true');
+				.leftJoinAndSelect('renote.user', 'renoteUser');
 
 			this.queryService.generateVisibilityQuery(query, me);
 			this.queryService.generateMutedUserQuery(query, me);

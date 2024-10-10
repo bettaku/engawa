@@ -35,13 +35,20 @@ coverage
 !/.config/example.yml
 !/.config/docker_example.yml
 !/.config/docker_example.env
+!/.config/cypress-devcontainer.yml
+docker-compose.yml
+compose.yml
+/.devcontainer/compose.yml
 .devcontainer/compose.yml
 !/.devcontainer/compose.yml
+/.devcontainer/certs
+.devcontainer/certs
 
 # cherrypick
 /build
 built
 built-test
+js-built
 /data
 /.cache-loader
 /db
@@ -61,6 +68,11 @@ temp
 tsdoc-metadata.json
 misskey-assets
 
+# Vite temporary files
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+/.devcontainer/meilidata/
+.devcontainer/meili_data
 # blender backups
 *.blend1
 *.blend2
@@ -70,3 +82,6 @@ misskey-assets
 
 # VSCode addon
 .favorites.json
+
+# Rust
+/cli/target

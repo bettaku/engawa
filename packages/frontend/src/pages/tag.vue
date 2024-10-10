@@ -20,7 +20,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import MkNotes from '@/components/MkNotes.vue';
 import MkButton from '@/components/MkButton.vue';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
@@ -28,6 +28,10 @@ import { i18n } from '@/i18n.js';
 import { $i } from '@/account.js';
 import { defaultStore } from '@/store.js';
 import * as os from '@/os.js';
+import { useStream } from '@/stream';
+import * as Misskey from 'cherrypick-js';
+import { globalEvents } from '@/events';
+import { genEmbedCode } from '@/scripts/get-embed-code.js';
 
 const props = defineProps<{
 	tag: string;
@@ -42,16 +46,73 @@ const pagination = {
 };
 const notes = ref<InstanceType<typeof MkNotes>>();
 
+//#region ChannelConnection
+let connection: Misskey.ChannelConnection | null = null;
+
+const stream = useStream();
+
+function connectChannel() {
+	connection = stream.useChannel('hashtag', {
+		q: [[props.tag]],
+	});
+	connection?.on('note', note => {
+		notes.value?.pagingComponent?.prepend(note);
+	});
+}
+
+function disconnectChannel() {
+	if (connection) connection.dispose();
+}
+
+function refreshChannel() {
+	if (!defaultStore.state.disableStreamingTimeline) {
+		disconnectChannel();
+		connectChannel();
+	}
+}
+
+onMounted(() => {
+	globalEvents.on('reloadTimeline',() => reloadTimeline());
+});
+
+onUnmounted(() => {
+	disconnectChannel();
+});
+
+refreshChannel();
+
+function reloadTimeline() {
+	return new Promise<void>((res) => {
+		if (notes.value == null) return;
+
+		notes.value.pagingComponent?.reload().then(() => {
+			res();
+		});
+	});
+}
+//#endregion
+
 async function post() {
 	defaultStore.set('postFormHashtags', props.tag);
 	defaultStore.set('postFormWithHashtags', true);
 	await os.post();
 	defaultStore.set('postFormHashtags', '');
 	defaultStore.set('postFormWithHashtags', false);
-	notes.value?.pagingComponent?.reload();
 }
 
-const headerActions = computed(() => []);
+const headerActions = computed(() => [{
+	icon: 'ti ti-dots',
+	label: i18n.ts.more,
+	handler: (ev: MouseEvent) => {
+		os.popupMenu([{
+			text: i18n.ts.genEmbedCode,
+			icon: 'ti ti-code',
+			action: () => {
+				genEmbedCode('tags', props.tag);
+			},
+		}], ev.currentTarget ?? ev.target);
+	},
+}]);
 
 const headerTabs = computed(() => []);
 
@@ -59,6 +120,10 @@ definePageMetadata(() => ({
 	title: props.tag,
 	icon: 'ti ti-hash',
 }));
+
+defineExpose({
+	reloadTimeline,
+});
 </script>
 
 <style lang="scss" module>

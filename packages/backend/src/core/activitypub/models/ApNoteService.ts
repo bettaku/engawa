@@ -6,13 +6,12 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { In } from 'typeorm';
 import { DI } from '@/di-symbols.js';
-import type { EmojisRepository, MessagingMessagesRepository, NotesRepository, PollsRepository } from '@/models/_.js';
+import type { PollsRepository, EmojisRepository, MiMeta, MessagingMessagesRepository, NotesRepository } from '@/models/_.js';
 import type { Config } from '@/config.js';
 import type { MiRemoteUser } from '@/models/User.js';
 import type { MiNote } from '@/models/Note.js';
 import { toArray, toSingle, unique } from '@/misc/prelude/array.js';
 import type { MiEmoji } from '@/models/Emoji.js';
-import { MetaService } from '@/core/MetaService.js';
 import { AppLockService } from '@/core/AppLockService.js';
 import type { MiDriveFile } from '@/models/DriveFile.js';
 import { NoteCreateService } from '@/core/NoteCreateService.js';
@@ -40,6 +39,7 @@ import { ApEventService } from './ApEventService.js';
 import { ApImageService } from './ApImageService.js';
 import type { Resolver } from '../ApResolverService.js';
 import type { IObject, IPost } from '../type.js';
+import search from '@/server/api/endpoints/hashtags/search.js';
 
 @Injectable()
 export class ApNoteService {
@@ -48,6 +48,9 @@ export class ApNoteService {
 	constructor(
 		@Inject(DI.config)
 		private config: Config,
+
+		@Inject(DI.meta)
+		private meta: MiMeta,
 
 		@Inject(DI.pollsRepository)
 		private pollsRepository: PollsRepository,
@@ -75,7 +78,6 @@ export class ApNoteService {
 		private apImageService: ApImageService,
 		private apQuestionService: ApQuestionService,
 		private apEventService: ApEventService,
-		private metaService: MetaService,
 		private messagingService: MessagingService,
 		private appLockService: AppLockService,
 		private pollService: PollService,
@@ -90,9 +92,10 @@ export class ApNoteService {
 	@bindThis
 	public validateNote(object: IObject, uri: string): Error | null {
 		const expectHost = this.utilityService.extractDbHost(uri);
+		const apType = getApType(object);
 
-		if (!validPost.includes(getApType(object))) {
-			return new IdentifiableError('d450b8a9-48e4-4dab-ae36-f4db763fda7c', `invalid Note: invalid object type ${getApType(object)}`);
+		if (apType == null || !validPost.includes(apType)) {
+			return new IdentifiableError('d450b8a9-48e4-4dab-ae36-f4db763fda7c', `invalid Note: invalid object type ${apType ?? 'undefined'}`);
 		}
 
 		if (object.id && this.utilityService.extractDbHost(object.id) !== expectHost) {
@@ -193,7 +196,7 @@ export class ApNoteService {
 		/**
 		 * 禁止ワードチェック
 		 */
-		const hasProhibitedWords = await this.noteCreateService.checkProhibitedWordsContain({ cw, text, pollChoices: poll?.choices });
+		const hasProhibitedWords = this.noteCreateService.checkProhibitedWordsContain({ cw, text, pollChoices: poll?.choices });
 		if (hasProhibitedWords) {
 			throw new IdentifiableError('689ee33f-f97c-479a-ac49-1b9f8140af99', 'Note contains prohibited words');
 		}
@@ -219,6 +222,18 @@ export class ApNoteService {
 		}
 
 		let isMessaging = note._misskey_talk && visibility === 'specified';
+
+		let searchableActivity = toArray(note.searchableBy);
+		let searchable: string[] = [];
+		if (searchableActivity.includes('https://www.w3.org/ns/activitystreams#Public')) {
+			searchable = ['public'];
+		} else if (searchableActivity.includes('kmyblue:Limited') || searchableActivity.includes('as:Limited')) {
+			searchable = ['limited'];
+		} else if (searchableActivity.includes('/followers')) {
+			searchable = ['followers'];
+		} else {
+			searchable = ['reacted'];
+		}
 
 		// 添付ファイル
 		const files: MiDriveFile[] = [];
@@ -347,6 +362,7 @@ export class ApNoteService {
 				event,
 				uri: note.id,
 				url: url,
+				searchableBy: note.searchableBy ? searchable : ['public'],
 			}, silent);
 		} catch (err: any) {
 			if (err.name !== 'duplicated') {
@@ -450,9 +466,7 @@ export class ApNoteService {
 	public async resolveNote(value: string | IObject, options: { sentFrom?: URL, resolver?: Resolver } = {}): Promise<MiNote | null> {
 		const uri = getApId(value);
 
-		// ブロックしていたら中断
-		const meta = await this.metaService.fetch();
-		if (this.utilityService.isBlockedHost(meta.blockedHosts, this.utilityService.extractDbHost(uri))) {
+		if (!this.utilityService.isFederationAllowedUri(uri)) {
 			throw new StatusError('blocked host', 451);
 		}
 

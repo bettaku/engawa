@@ -26,9 +26,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 							</div>
 							<div class="bottom">
 								<span class="username"><MkAcct :user="user" :detail="true"/></span>
-								<span v-if="user.isAdmin" :title="i18n.ts.isAdmin" style="color: var(--badge);"><i class="ti ti-shield"></i></span>
-								<span v-if="user.isLocked" :title="i18n.ts.isLocked"><i class="ti ti-lock"></i></span>
-								<span v-if="user.isBot" :title="i18n.ts.isBot"><i class="ti ti-robot"></i></span>
+								<span v-if="user.isAdmin" v-tooltip="i18n.ts._role._condition.isAdmin" style="color: var(--badge);"><i class="ti ti-shield"></i></span>
+								<span v-if="user.isLocked" v-tooltip="i18n.ts._role._condition.isLocked"><i class="ti ti-lock"></i></span>
+								<span v-if="user.isBot" v-tooltip="i18n.ts._role._condition.isBot"><i class="ti ti-robot"></i></span>
 								<button v-if="$i && !isEditingMemo && !memoDraft" class="_button add-note-button" @click="showMemoTextarea">
 									<i class="ti ti-edit"/> {{ i18n.ts.addMemo }}
 								</button>
@@ -45,10 +45,16 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<MkUserName :user="user" :nowrap="false" class="name" @click="editNickname(props.user)"/>
 						<div class="bottom">
 							<span class="username"><MkAcct :user="user" :detail="true"/></span>
-							<span v-if="user.isAdmin" :title="i18n.ts.isAdmin" style="color: var(--badge);"><i class="ti ti-shield"></i></span>
-							<span v-if="user.isLocked" :title="i18n.ts.isLocked"><i class="ti ti-lock"></i></span>
-							<span v-if="user.isBot" :title="i18n.ts.isBot"><i class="ti ti-robot"></i></span>
+							<span v-if="user.isAdmin" v-tooltip="i18n.ts._role._condition.isAdmin" style="color: var(--badge);"><i class="ti ti-shield"></i></span>
+							<span v-if="user.isLocked" v-tooltip="i18n.ts._role._condition.isLocked"><i class="ti ti-lock"></i></span>
+							<span v-if="user.isBot" v-tooltip="i18n.ts._role._condition.isBot"><i class="ti ti-robot"></i></span>
 						</div>
+					</div>
+					<div v-if="user.followedMessage != null" class="followedMessage">
+						<MkFukidashi class="fukidashi" :tail="narrow ? 'none' : 'left'" negativeMargin shadow>
+							<div class="messageHeader">{{ i18n.ts.messageToFollower }}</div>
+							<div><Mfm :text="user.followedMessage" :author="user"/></div>
+						</MkFukidashi>
 					</div>
 					<div v-if="user.roles.length > 0" class="roles">
 						<span v-for="role in user.roles" :key="role.id" v-tooltip="role.description" class="role" :style="{ '--color': role.color }">
@@ -79,11 +85,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 					</div>
 					<div class="description">
 						<MkOmit>
-							<Mfm v-if="user.description" :text="user.description" :isNote="false" :author="user"/>
+							<Mfm v-if="user.description" :text="user.description" :isNote="false" :author="user" :class="descClass" />
 							<p v-else class="empty">{{ i18n.ts.noAccountDescription }}</p>
 							<div v-if="user.description && isForeignLanguage">
 								<MkButton v-if="!(translating || translation)" class="translateButton" small @click="translate"><i class="ti ti-language-hiragana"></i> {{ i18n.ts.translateProfile }}</MkButton>
 								<MkButton v-else class="translateButton" small @click="translation = null"><i class="ti ti-x"></i> {{ i18n.ts.close }}</MkButton>
+							</div>
+							<div v-if="user.description">
+								<MkButton v-if="!isVertical" class="translateButton" small @click="toggleDescriptionClass"><i class="ti ti-dots-vertical"></i>{{ i18n.ts._profile.makeVertical}}</MkButton>
+								<MkButton v-else class="translateButton" small @click="toggleDescriptionClass"><i class="ti ti-dots"></i>{{ i18n.ts._profile.makeHorizontal }}</MkButton>
 							</div>
 							<div v-if="translating || translation" class="translation">
 								<MkLoading v-if="translating" mini/>
@@ -171,16 +181,17 @@ SPDX-License-Identifier: AGPL-3.0-only
 <script lang="ts" setup>
 import { defineAsyncComponent, computed, onMounted, onUnmounted, nextTick, watch, ref } from 'vue';
 import * as Misskey from 'cherrypick-js';
+import { getScrollPosition } from '@@/js/scroll.js';
 import MkNote from '@/components/MkNote.vue';
 import MkFollowButton from '@/components/MkFollowButton.vue';
 import MkAccountMoved from '@/components/MkAccountMoved.vue';
+import MkFukidashi from '@/components/MkFukidashi.vue';
 import MkRemoteCaution from '@/components/MkRemoteCaution.vue';
 import MkUserSensitiveCaution from '@/components/MkUserSensitiveCaution.vue';
 import MkTextarea from '@/components/MkTextarea.vue';
 import MkOmit from '@/components/MkOmit.vue';
 import MkInfo from '@/components/MkInfo.vue';
 import MkButton from '@/components/MkButton.vue';
-import { getScrollPosition } from '@/scripts/scroll.js';
 import { getUserMenu } from '@/scripts/get-user-menu.js';
 import number from '@/filters/number.js';
 import { userPage } from '@/filters/user.js';
@@ -198,6 +209,7 @@ import { miLocalStorage } from '@/local-storage.js';
 import { editNickname } from '@/scripts/edit-nickname.js';
 import { vibrate } from '@/scripts/vibrate.js';
 import detectLanguage from '@/scripts/detect-language.js';
+import { globalEvents } from '@/events.js';
 
 function calcAge(birthdate: string): number {
 	const date = new Date(birthdate);
@@ -241,6 +253,9 @@ const editModerationNote = ref(false);
 
 const translation = ref<Misskey.entities.UsersTranslateResponse | null>(null);
 const translating = ref(false);
+
+const descClass = ref('horizontal');
+const isVertical = ref(false);
 
 watch(moderationNote, async () => {
 	await misskeyApi('admin/update-user-note', { userId: props.user.id, text: moderationNote.value });
@@ -319,6 +334,7 @@ const isForeignLanguage: boolean = props.user.description != null && (() => {
 
 async function translate(): Promise<void> {
 	if (translation.value != null) return;
+	globalEvents.emit('showNoteContent', true);
 	translating.value = true;
 
 	vibrate(defaultStore.state.vibrateSystem ? 5 : []);
@@ -331,6 +347,11 @@ async function translate(): Promise<void> {
 	translation.value = res;
 
 	vibrate(defaultStore.state.vibrateSystem ? [5, 5, 10] : []);
+}
+
+function toggleDescriptionClass() {
+	descClass.value = descClass.value === 'vertical' ? 'horizontal' : 'vertical';
+	isVertical.value = !isVertical.value;
 }
 
 function resetTimer() {
@@ -526,6 +547,22 @@ onUnmounted(() => {
 					width: 120px;
 					height: 120px;
 					box-shadow: 1px 1px 3px rgba(#000, 0.2);
+				}
+
+				> .followedMessage {
+					padding: 24px 24px 0 154px;
+
+					> .fukidashi {
+						display: block;
+						--fukidashi-bg: color-mix(in srgb, var(--love), var(--panel) 85%);
+						--fukidashi-radius: 16px;
+						font-size: 0.9em;
+
+						.messageHeader {
+							opacity: 0.7;
+							font-size: 0.85em;
+						}
+					}
 				}
 
 				> .roles {
@@ -738,6 +775,10 @@ onUnmounted(() => {
 					margin: auto;
 				}
 
+				> .followedMessage {
+					padding: 16px 16px 0 16px;
+				}
+
 				> .roles {
 					padding: 16px 16px 0 16px;
 					justify-content: center;
@@ -784,6 +825,17 @@ onUnmounted(() => {
 			}
 		}
 	}
+}
+
+.vertical {
+						-ms-writing-mode: tb-rl;
+						writing-mode: vertical-rl;
+}
+
+.horizontal {
+						-webkit-text-combine: none;
+						-ms-text-combine-horizontal: none;
+						text-combine-upright: none;
 }
 </style>
 

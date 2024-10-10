@@ -254,6 +254,12 @@ type AdminGetUserIpsRequest = operations['admin___get-user-ips']['requestBody'][
 type AdminGetUserIpsResponse = operations['admin___get-user-ips']['responses']['200']['content']['application/json'];
 
 // @public (undocumented)
+type AdminIndexFullRequest = operations['admin___index___full']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type AdminIndexReindexRequest = operations['admin___index___reindex']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
 type AdminInviteCreateRequest = operations['admin___invite___create']['requestBody']['content']['application/json'];
 
 // @public (undocumented)
@@ -390,6 +396,9 @@ type AdminSystemWebhookShowRequest = operations['admin___system-webhook___show']
 
 // @public (undocumented)
 type AdminSystemWebhookShowResponse = operations['admin___system-webhook___show']['responses']['200']['content']['application/json'];
+
+// @public (undocumented)
+type AdminSystemWebhookTestRequest = operations['admin___system-webhook___test']['requestBody']['content']['application/json'];
 
 // @public (undocumented)
 type AdminSystemWebhookUpdateRequest = operations['admin___system-webhook___update']['requestBody']['content']['application/json'];
@@ -587,7 +596,7 @@ type Channel = components['schemas']['Channel'];
 // Warning: (ae-forgotten-export) The symbol "AnyOf" needs to be exported by the entry point index.d.ts
 //
 // @public (undocumented)
-export abstract class ChannelConnection<Channel extends AnyOf<Channels> = AnyOf<Channels>> extends EventEmitter<Channel['events']> {
+export abstract class ChannelConnection<Channel extends AnyOf<Channels> = AnyOf<Channels>> extends EventEmitter<Channel['events']> implements IChannelConnection<Channel> {
     constructor(stream: Stream, channel: string, name?: string);
     // (undocumented)
     channel: string;
@@ -734,7 +743,7 @@ export type Channels = {
     };
     hashtag: {
         params: {
-            q?: string;
+            q?: string[][];
         };
         events: {
             note: (payload: Note) => void;
@@ -819,66 +828,6 @@ export type Channels = {
         receives: null;
     };
 };
-
-// @public (undocumented)
-type ChannelsCreateRequest = operations['channels___create']['requestBody']['content']['application/json'];
-
-// @public (undocumented)
-type ChannelsCreateResponse = operations['channels___create']['responses']['200']['content']['application/json'];
-
-// @public (undocumented)
-type ChannelsFavoriteRequest = operations['channels___favorite']['requestBody']['content']['application/json'];
-
-// @public (undocumented)
-type ChannelsFeaturedResponse = operations['channels___featured']['responses']['200']['content']['application/json'];
-
-// @public (undocumented)
-type ChannelsFollowedRequest = operations['channels___followed']['requestBody']['content']['application/json'];
-
-// @public (undocumented)
-type ChannelsFollowedResponse = operations['channels___followed']['responses']['200']['content']['application/json'];
-
-// @public (undocumented)
-type ChannelsFollowRequest = operations['channels___follow']['requestBody']['content']['application/json'];
-
-// @public (undocumented)
-type ChannelsMyFavoritesResponse = operations['channels___my-favorites']['responses']['200']['content']['application/json'];
-
-// @public (undocumented)
-type ChannelsOwnedRequest = operations['channels___owned']['requestBody']['content']['application/json'];
-
-// @public (undocumented)
-type ChannelsOwnedResponse = operations['channels___owned']['responses']['200']['content']['application/json'];
-
-// @public (undocumented)
-type ChannelsSearchRequest = operations['channels___search']['requestBody']['content']['application/json'];
-
-// @public (undocumented)
-type ChannelsSearchResponse = operations['channels___search']['responses']['200']['content']['application/json'];
-
-// @public (undocumented)
-type ChannelsShowRequest = operations['channels___show']['requestBody']['content']['application/json'];
-
-// @public (undocumented)
-type ChannelsShowResponse = operations['channels___show']['responses']['200']['content']['application/json'];
-
-// @public (undocumented)
-type ChannelsTimelineRequest = operations['channels___timeline']['requestBody']['content']['application/json'];
-
-// @public (undocumented)
-type ChannelsTimelineResponse = operations['channels___timeline']['responses']['200']['content']['application/json'];
-
-// @public (undocumented)
-type ChannelsUnfavoriteRequest = operations['channels___unfavorite']['requestBody']['content']['application/json'];
-
-// @public (undocumented)
-type ChannelsUnfollowRequest = operations['channels___unfollow']['requestBody']['content']['application/json'];
-
-// @public (undocumented)
-type ChannelsUpdateRequest = operations['channels___update']['requestBody']['content']['application/json'];
-
-// @public (undocumented)
-type ChannelsUpdateResponse = operations['channels___update']['responses']['200']['content']['application/json'];
 
 // @public (undocumented)
 type ChartsActiveUsersRequest = operations['charts___active-users']['requestBody']['content']['application/json'];
@@ -1186,6 +1135,10 @@ export type Endpoints = Overwrite<Endpoints_2, {
         req: SigninRequest;
         res: SigninResponse;
     };
+    'signin-with-passkey': {
+        req: SigninWithPasskeyRequest;
+        res: SigninWithPasskeyResponse;
+    };
     'admin/roles/create': {
         req: Overwrite<AdminRolesCreateRequest, {
             policies: PartialRolePolicyOverride;
@@ -1201,6 +1154,7 @@ declare namespace entities {
     export {
         ID,
         DateString,
+        PureRenote,
         PageEvent,
         ModerationLog,
         ServerStats,
@@ -1216,6 +1170,8 @@ declare namespace entities {
         SignupPendingRequest,
         SignupPendingResponse,
         SigninRequest,
+        SigninWithPasskeyRequest,
+        SigninWithPasskeyResponse,
         SigninResponse,
         PartialRolePolicyOverride,
         EmptyRequest,
@@ -1296,6 +1252,8 @@ declare namespace entities {
         AdminGetTableStatsResponse,
         AdminGetUserIpsRequest,
         AdminGetUserIpsResponse,
+        AdminIndexFullRequest,
+        AdminIndexReindexRequest,
         AdminInviteCreateRequest,
         AdminInviteCreateResponse,
         AdminInviteListRequest,
@@ -1348,6 +1306,7 @@ declare namespace entities {
         AdminSystemWebhookShowResponse,
         AdminSystemWebhookUpdateRequest,
         AdminSystemWebhookUpdateResponse,
+        AdminSystemWebhookTestRequest,
         AnnouncementsRequest,
         AnnouncementsResponse,
         AnnouncementsShowRequest,
@@ -1383,26 +1342,6 @@ declare namespace entities {
         BlockingDeleteResponse,
         BlockingListRequest,
         BlockingListResponse,
-        ChannelsCreateRequest,
-        ChannelsCreateResponse,
-        ChannelsFeaturedResponse,
-        ChannelsFollowRequest,
-        ChannelsFollowedRequest,
-        ChannelsFollowedResponse,
-        ChannelsOwnedRequest,
-        ChannelsOwnedResponse,
-        ChannelsShowRequest,
-        ChannelsShowResponse,
-        ChannelsTimelineRequest,
-        ChannelsTimelineResponse,
-        ChannelsUnfollowRequest,
-        ChannelsUpdateRequest,
-        ChannelsUpdateResponse,
-        ChannelsFavoriteRequest,
-        ChannelsUnfavoriteRequest,
-        ChannelsMyFavoritesResponse,
-        ChannelsSearchRequest,
-        ChannelsSearchResponse,
         ChartsActiveUsersRequest,
         ChartsActiveUsersResponse,
         ChartsApRequestRequest,
@@ -1609,6 +1548,7 @@ declare namespace entities {
         IWebhooksShowResponse,
         IWebhooksUpdateRequest,
         IWebhooksDeleteRequest,
+        IWebhooksTestRequest,
         InviteCreateResponse,
         InviteDeleteRequest,
         InviteListRequest,
@@ -2191,6 +2131,24 @@ type IAuthorizedAppsResponse = operations['i___authorized-apps']['responses']['2
 type IChangePasswordRequest = operations['i___change-password']['requestBody']['content']['application/json'];
 
 // @public (undocumented)
+export interface IChannelConnection<Channel extends AnyOf<Channels> = AnyOf<Channels>> extends EventEmitter<Channel['events']> {
+    // (undocumented)
+    channel: string;
+    // (undocumented)
+    dispose(): void;
+    // (undocumented)
+    id: string;
+    // (undocumented)
+    inCount: number;
+    // (undocumented)
+    name?: string;
+    // (undocumented)
+    outCount: number;
+    // (undocumented)
+    send<T extends keyof Channel['receives']>(type: T, body: Channel['receives'][T]): void;
+}
+
+// @public (undocumented)
 type IClaimAchievementRequest = operations['i___claim-achievement']['requestBody']['content']['application/json'];
 
 // @public (undocumented)
@@ -2350,6 +2308,43 @@ type ISigninHistoryRequest = operations['i___signin-history']['requestBody']['co
 type ISigninHistoryResponse = operations['i___signin-history']['responses']['200']['content']['application/json'];
 
 // @public (undocumented)
+function isPureRenote(note: Note): note is PureRenote;
+
+// @public (undocumented)
+export interface IStream extends EventEmitter<StreamEvents> {
+    // (undocumented)
+    close(): void;
+    // Warning: (ae-forgotten-export) The symbol "NonSharedConnection" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    disconnectToChannel(connection: NonSharedConnection): void;
+    // (undocumented)
+    heartbeat(): void;
+    // (undocumented)
+    ping(): void;
+    // Warning: (ae-forgotten-export) The symbol "SharedConnection" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    removeSharedConnection(connection: SharedConnection): void;
+    // Warning: (ae-forgotten-export) The symbol "Pool" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    removeSharedConnectionPool(pool: Pool): void;
+    // (undocumented)
+    send(typeOrPayload: string): void;
+    // (undocumented)
+    send(typeOrPayload: string, payload: unknown): void;
+    // (undocumented)
+    send(typeOrPayload: Record<string, unknown> | unknown[]): void;
+    // (undocumented)
+    send(typeOrPayload: string | Record<string, unknown> | unknown[], payload?: unknown): void;
+    // (undocumented)
+    state: 'initializing' | 'reconnecting' | 'connected';
+    // (undocumented)
+    useChannel<C extends keyof Channels>(channel: C, params?: Channels[C]['params'], name?: string): IChannelConnection<Channels[C]>;
+}
+
+// @public (undocumented)
 type IUnpinRequest = operations['i___unpin']['requestBody']['content']['application/json'];
 
 // @public (undocumented)
@@ -2390,6 +2385,9 @@ type IWebhooksShowRequest = operations['i___webhooks___show']['requestBody']['co
 
 // @public (undocumented)
 type IWebhooksShowResponse = operations['i___webhooks___show']['responses']['200']['content']['application/json'];
+
+// @public (undocumented)
+type IWebhooksTestRequest = operations['i___webhooks___test']['requestBody']['content']['application/json'];
 
 // @public (undocumented)
 type IWebhooksUpdateRequest = operations['i___webhooks___update']['requestBody']['content']['application/json'];
@@ -2566,6 +2564,9 @@ type ModerationLog = {
     type: 'unsetUserAvatar';
     info: ModerationLogPayloads['unsetUserAvatar'];
 } | {
+    type: 'unsetUserBanner';
+    info: ModerationLogPayloads['unsetUserBanner'];
+} | {
     type: 'createSystemWebhook';
     info: ModerationLogPayloads['createSystemWebhook'];
 } | {
@@ -2583,10 +2584,22 @@ type ModerationLog = {
 } | {
     type: 'deleteAbuseReportNotificationRecipient';
     info: ModerationLogPayloads['deleteAbuseReportNotificationRecipient'];
+} | {
+    type: 'deleteAccount';
+    info: ModerationLogPayloads['deleteAccount'];
+} | {
+    type: 'deletePage';
+    info: ModerationLogPayloads['deletePage'];
+} | {
+    type: 'deleteFlash';
+    info: ModerationLogPayloads['deleteFlash'];
+} | {
+    type: 'deleteGalleryPost';
+    info: ModerationLogPayloads['deleteGalleryPost'];
 });
 
 // @public (undocumented)
-export const moderationLogTypes: readonly ["updateServerSettings", "suspend", "unsuspend", "updateUserNote", "addCustomEmoji", "updateCustomEmoji", "deleteCustomEmoji", "assignRole", "unassignRole", "createRole", "updateRole", "deleteRole", "clearQueue", "promoteQueue", "deleteDriveFile", "deleteNote", "createGlobalAnnouncement", "createUserAnnouncement", "updateGlobalAnnouncement", "updateUserAnnouncement", "deleteGlobalAnnouncement", "deleteUserAnnouncement", "resetPassword", "suspendRemoteInstance", "unsuspendRemoteInstance", "updateRemoteInstanceNote", "markSensitiveDriveFile", "unmarkSensitiveDriveFile", "resolveAbuseReport", "createInvitation", "createAd", "updateAd", "deleteAd", "createAvatarDecoration", "updateAvatarDecoration", "deleteAvatarDecoration", "unsetUserAvatar", "unsetUserBanner", "createSystemWebhook", "updateSystemWebhook", "deleteSystemWebhook", "createAbuseReportNotificationRecipient", "updateAbuseReportNotificationRecipient", "deleteAbuseReportNotificationRecipient"];
+export const moderationLogTypes: readonly ["updateServerSettings", "suspend", "unsuspend", "updateUserNote", "addCustomEmoji", "updateCustomEmoji", "deleteCustomEmoji", "assignRole", "unassignRole", "createRole", "updateRole", "deleteRole", "clearQueue", "promoteQueue", "deleteDriveFile", "deleteNote", "createGlobalAnnouncement", "createUserAnnouncement", "updateGlobalAnnouncement", "updateUserAnnouncement", "deleteGlobalAnnouncement", "deleteUserAnnouncement", "resetPassword", "suspendRemoteInstance", "unsuspendRemoteInstance", "updateRemoteInstanceNote", "markSensitiveDriveFile", "unmarkSensitiveDriveFile", "resolveAbuseReport", "createInvitation", "createAd", "updateAd", "deleteAd", "createAvatarDecoration", "updateAvatarDecoration", "deleteAvatarDecoration", "unsetUserAvatar", "unsetUserBanner", "createSystemWebhook", "updateSystemWebhook", "deleteSystemWebhook", "createAbuseReportNotificationRecipient", "updateAbuseReportNotificationRecipient", "deleteAbuseReportNotificationRecipient", "deleteAccount", "deletePage", "deleteFlash", "deleteGalleryPost"];
 
 // @public (undocumented)
 type MuteCreateRequest = operations['mute___create']['requestBody']['content']['application/json'];
@@ -2614,6 +2627,13 @@ type MyAppsResponse = operations['my___apps']['responses']['200']['content']['ap
 
 // @public (undocumented)
 type Note = components['schemas']['Note'];
+
+declare namespace note {
+    export {
+        isPureRenote
+    }
+}
+export { note }
 
 // @public (undocumented)
 type NoteFavorite = components['schemas']['NoteFavorite'];
@@ -2799,6 +2819,9 @@ type NotificationsDeleteRequest = operations['notifications___delete']['requestB
 export const notificationTypes: readonly ["note", "follow", "mention", "reply", "renote", "quote", "reaction", "pollVote", "pollEnded", "receiveFollowRequest", "followRequestAccepted", "groupInvited", "app", "roleAssigned", "achievementEarned"];
 
 // @public (undocumented)
+export function nyaize(text: string): string;
+
+// @public (undocumented)
 type Page = components['schemas']['Page'];
 
 // @public (undocumented)
@@ -2856,7 +2879,7 @@ type PartialRolePolicyOverride = Partial<{
 }>;
 
 // @public (undocumented)
-export const permissions: readonly ["read:account", "write:account", "read:blocks", "write:blocks", "read:drive", "write:drive", "read:favorites", "write:favorites", "read:following", "write:following", "read:messaging", "write:messaging", "read:mutes", "write:mutes", "write:notes", "read:notifications", "write:notifications", "read:reactions", "write:reactions", "write:votes", "read:pages", "write:pages", "write:page-likes", "read:page-likes", "read:user-groups", "write:user-groups", "read:channels", "write:channels", "read:gallery", "write:gallery", "read:gallery-likes", "write:gallery-likes", "read:flash", "write:flash", "read:flash-likes", "write:flash-likes", "read:admin:abuse-user-reports", "write:admin:delete-account", "write:admin:delete-all-files-of-a-user", "read:admin:index-stats", "read:admin:table-stats", "read:admin:user-ips", "read:admin:meta", "write:admin:reset-password", "write:admin:resolve-abuse-user-report", "write:admin:send-email", "read:admin:server-info", "read:admin:show-moderation-log", "read:admin:show-user", "write:admin:suspend-user", "write:admin:unset-user-avatar", "write:admin:unset-user-banner", "write:admin:unsuspend-user", "write:admin:meta", "write:admin:user-note", "write:admin:roles", "read:admin:roles", "write:admin:relays", "read:admin:relays", "write:admin:invite-codes", "read:admin:invite-codes", "write:admin:announcements", "read:admin:announcements", "write:admin:avatar-decorations", "read:admin:avatar-decorations", "write:admin:federation", "write:admin:account", "read:admin:account", "write:admin:emoji", "read:admin:emoji", "write:admin:queue", "read:admin:queue", "write:admin:promo", "write:admin:drive", "read:admin:drive", "write:admin:ad", "read:admin:ad", "write:invite-codes", "read:invite-codes", "write:clip-favorite", "read:clip-favorite", "read:federation", "write:report-abuse"];
+export const permissions: readonly ["read:account", "write:account", "read:blocks", "write:blocks", "read:drive", "write:drive", "read:favorites", "write:favorites", "read:following", "write:following", "read:messaging", "write:messaging", "read:mutes", "write:mutes", "write:notes", "read:notifications", "write:notifications", "read:reactions", "write:reactions", "write:votes", "read:pages", "write:pages", "write:page-likes", "read:page-likes", "read:user-groups", "write:user-groups", "read:channels", "write:channels", "read:gallery", "write:gallery", "read:gallery-likes", "write:gallery-likes", "read:flash", "write:flash", "read:flash-likes", "write:flash-likes", "read:admin:abuse-user-reports", "write:admin:delete-account", "write:admin:delete-all-files-of-a-user", "read:admin:index-stats", "read:admin:table-stats", "read:admin:user-ips", "read:admin:meta", "write:admin:reset-password", "write:admin:resolve-abuse-user-report", "write:admin:send-email", "read:admin:server-info", "read:admin:show-moderation-log", "read:admin:show-user", "write:admin:suspend-user", "write:admin:unset-user-avatar", "write:admin:unset-user-banner", "write:admin:unsuspend-user", "write:admin:meta", "write:admin:user-note", "write:admin:roles", "read:admin:roles", "write:admin:relays", "read:admin:relays", "write:admin:invite-codes", "read:admin:invite-codes", "write:admin:announcements", "read:admin:announcements", "write:admin:avatar-decorations", "read:admin:avatar-decorations", "write:admin:federation", "write:admin:account", "read:admin:account", "write:admin:emoji", "read:admin:emoji", "write:admin:queue", "read:admin:queue", "write:admin:promo", "write:admin:drive", "read:admin:drive", "write:admin:ad", "read:admin:ad", "write:invite-codes", "read:invite-codes", "write:clip-favorite", "read:clip-favorite", "read:federation", "write:report-abuse", "write:index:full", "write:index:reindex"];
 
 // @public (undocumented)
 type PingResponse = operations['ping']['responses']['200']['content']['application/json'];
@@ -2866,6 +2889,15 @@ type PinnedUsersResponse = operations['pinned-users']['responses']['200']['conte
 
 // @public (undocumented)
 type PromoReadRequest = operations['promo___read']['requestBody']['content']['application/json'];
+
+// Warning: (ae-forgotten-export) The symbol "AllNullRecord" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "NonNullableRecord" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+type PureRenote = Omit<Note, 'renote' | 'renoteId' | 'reply' | 'replyId' | 'text' | 'cw' | 'files' | 'fileIds' | 'poll' | 'event'> & AllNullRecord<Pick<Note, 'reply' | 'replyId' | 'text' | 'cw' | 'poll' | 'event'>> & {
+    files: [];
+    fileIds: [];
+} & NonNullableRecord<Pick<Note, 'renote' | 'renoteId'>>;
 
 // @public (undocumented)
 type QueueCount = components['schemas']['QueueCount'];
@@ -3007,6 +3039,19 @@ type SigninResponse = {
 };
 
 // @public (undocumented)
+type SigninWithPasskeyRequest = {
+    credential?: object;
+    context?: string;
+};
+
+// @public (undocumented)
+type SigninWithPasskeyResponse = {
+    option?: object;
+    context?: string;
+    signinResponse?: SigninResponse;
+};
+
+// @public (undocumented)
 type SignupPendingRequest = {
     code: string;
 };
@@ -3037,10 +3082,8 @@ type SignupResponse = MeDetailed & {
 // @public (undocumented)
 type StatsResponse = operations['stats']['responses']['200']['content']['application/json'];
 
-// Warning: (ae-forgotten-export) The symbol "StreamEvents" needs to be exported by the entry point index.d.ts
-//
 // @public (undocumented)
-export class Stream extends EventEmitter<StreamEvents> {
+export class Stream extends EventEmitter<StreamEvents> implements IStream {
     constructor(origin: string, user: {
         token: string;
     } | null, options?: {
@@ -3048,20 +3091,14 @@ export class Stream extends EventEmitter<StreamEvents> {
     });
     // (undocumented)
     close(): void;
-    // Warning: (ae-forgotten-export) The symbol "NonSharedConnection" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     disconnectToChannel(connection: NonSharedConnection): void;
     // (undocumented)
     heartbeat(): void;
     // (undocumented)
     ping(): void;
-    // Warning: (ae-forgotten-export) The symbol "SharedConnection" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     removeSharedConnection(connection: SharedConnection): void;
-    // Warning: (ae-forgotten-export) The symbol "Pool" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     removeSharedConnectionPool(pool: Pool): void;
     // (undocumented)
@@ -3075,6 +3112,14 @@ export class Stream extends EventEmitter<StreamEvents> {
     // (undocumented)
     useChannel<C extends keyof Channels>(channel: C, params?: Channels[C]['params'], name?: string): ChannelConnection<Channels[C]>;
 }
+
+// Warning: (ae-forgotten-export) The symbol "BroadcastEvents" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export type StreamEvents = {
+    _connected_: void;
+    _disconnected_: void;
+} & BroadcastEvents;
 
 // Warning: (ae-forgotten-export) The symbol "SwitchCase" needs to be exported by the entry point index.d.ts
 // Warning: (ae-forgotten-export) The symbol "IsCaseMatched" needs to be exported by the entry point index.d.ts
@@ -3367,7 +3412,7 @@ type UsersUpdateMemoRequest = operations['users___update-memo']['requestBody']['
 
 // Warnings were encountered during analysis:
 //
-// src/entities.ts:35:2 - (ae-forgotten-export) The symbol "ModerationLogPayloads" needs to be exported by the entry point index.d.ts
+// src/entities.ts:49:2 - (ae-forgotten-export) The symbol "ModerationLogPayloads" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 

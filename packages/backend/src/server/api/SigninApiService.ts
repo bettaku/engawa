@@ -145,6 +145,12 @@ export class SigninApiService {
 
 		if (!profile.twoFactorEnabled) {
 			if (same) {
+				if (isOldAlgorithm(profile.password!)) {
+					const newHash = await hashPassword(password);
+					this.userProfilesRepository.update(user.id, {
+						password: newHash,
+					});
+				}
 				return this.signinService.signin(request, reply, user);
 			} else {
 				return await fail(403, {
@@ -161,6 +167,12 @@ export class SigninApiService {
 			}
 
 			try {
+				if (isOldAlgorithm(profile.password!)) {
+					const newHash = await hashPassword(password);
+					this.userProfilesRepository.update(user.id, {
+						password: newHash,
+					});
+				}
 				await this.userAuthService.twoFactorAuthenticate(profile, token);
 			} catch (e) {
 				return await fail(403, {

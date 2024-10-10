@@ -55,6 +55,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <script lang="ts" setup>
 import { computed, defineAsyncComponent, ref, toRef } from 'vue';
+import { version } from '@@/js/config.js';
 import { openInstanceMenu } from './common.js';
 import * as os from '@/os.js';
 import { navbarItemDef } from '@/navbar.js';
@@ -62,7 +63,6 @@ import { $i, openAccountMenu as openAccountMenu_ } from '@/account.js';
 import { defaultStore } from '@/store.js';
 import { i18n } from '@/i18n.js';
 import { instance } from '@/instance.js';
-import { version } from '@/config.js';
 import { misskeyApi } from '@/scripts/misskey-api.js';
 
 const menu = toRef(defaultStore.state, 'menu');
@@ -74,7 +74,7 @@ const otherMenuItemIndicated = computed(() => {
 	return false;
 });
 const controlPanelIndicated = ref(false);
-const releasesCherryPick = ref();
+const releasesCherryPick = ref(null);
 
 if ($i.isAdmin ?? $i.isModerator) {
 	misskeyApi('admin/abuse-user-reports', {
@@ -84,15 +84,34 @@ if ($i.isAdmin ?? $i.isModerator) {
 		if (reports.length > 0) controlPanelIndicated.value = true;
 	});
 
-	fetch('https://api.github.com/repos/kokonect-link/cherrypick/releases', {
-		method: 'GET',
-	}).then(res => res.json())
-		.then(async res => {
-			const meta = await misskeyApi('admin/meta');
-			if (meta.enableReceivePrerelease) releasesCherryPick.value = res;
-			else releasesCherryPick.value = res.filter(x => x.prerelease === false);
-			if ((version < releasesCherryPick.value[0].tag_name) && (meta.skipCherryPickVersion < releasesCherryPick.value[0].tag_name)) controlPanelIndicated.value = true;
+	misskeyApi('admin/meta')
+		.then(meta => {
+			return fetch('https://api.github.com/repos/kokonect-link/cherrypick/releases')
+				.then(res => res.json())
+				.then(cherryPickData => {
+					releasesCherryPick.value = meta.enableReceivePrerelease ? cherryPickData : cherryPickData.filter(x => !x.prerelease);
+					if ((compareVersions(version, releasesCherryPick.value[0].tag_name) < 0) && (compareVersions(meta.skipCherryPickVersion, releasesCherryPick.value[0].tag_name) < 0)) {
+						controlPanelIndicated.value = true;
+					}
+				});
+		})
+		.catch(error => {
+			console.error('Failed to fetch CherryPick releases:', error);
 		});
+}
+
+function compareVersions(v1: string, v2: string): number {
+	const v1Parts = v1.split('.').map(Number);
+	const v2Parts = v2.split('.').map(Number);
+
+	for (let i = 0; i < Math.max(v1Parts.length, v2Parts.length); i++) {
+		const part1 = v1Parts[i] || 0;
+		const part2 = v2Parts[i] || 0;
+
+		if (part1 < part2) return -1;
+		if (part1 > part2) return 1;
+	}
+	return 0;
 }
 
 function openAccountMenu(ev: MouseEvent) {
@@ -110,6 +129,8 @@ function more() {
 
 <style lang="scss" module>
 .root {
+	--nav-bg-transparent: color(from var(--navBg) srgb r g b / 0.5);
+
 	display: flex;
 	flex-direction: column;
 	height: 100%;
@@ -120,7 +141,7 @@ function more() {
 	top: 0;
 	z-index: 1;
 	padding: 20px 0;
-	background: var(--X14);
+	background: var(--nav-bg-transparent);
 	-webkit-backdrop-filter: var(--blur, blur(8px));
 	backdrop-filter: var(--blur, blur(8px));
 }
@@ -167,7 +188,7 @@ function more() {
 	position: sticky;
 	bottom: 0;
 	padding: 20px 0 calc(env(safe-area-inset-bottom) + 25px);
-	background: var(--X14);
+	background: var(--nav-bg-transparent);
 	-webkit-backdrop-filter: var(--blur, blur(8px));
 	backdrop-filter: var(--blur, blur(8px));
 }

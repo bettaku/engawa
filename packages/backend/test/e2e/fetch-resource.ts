@@ -105,7 +105,6 @@ describe('Webリソース', () => {
 		{ path: '/flush', type: HTML },
 		{ path: '/robots.txt', type: 'text/plain; charset=UTF-8' },
 		{ path: '/favicon.ico', type: 'image/vnd.microsoft.icon' },
-		{ path: '/opensearch.xml', type: 'application/opensearchdescription+xml' },
 		{ path: '/apple-touch-icon.png', type: 'image/png' },
 		{ path: '/twemoji/2764.svg', type: 'image/svg+xml' },
 		{ path: '/twemoji/2764-fe0f-200d-1f525.svg', type: 'image/svg+xml' },
@@ -156,20 +155,20 @@ describe('Webリソース', () => {
 
 		describe(' has entry such ', () => {
 			beforeEach(() => {
-				post(alice, { text: "**a**" })
+				post(alice, { text: '**a**' });
 			});
 
 			test('MFMを含まない。', async () => {
-				const content = await simpleGet(path(alice.username), "*/*", undefined, res => res.text());
+				const content = await simpleGet(path(alice.username), '*/*', undefined, res => res.text());
 				const _body: unknown = content.body;
 				// JSONフィードのときは改めて文字列化する
-				const body: string = typeof (_body) === "object" ? JSON.stringify(_body) : _body as string;
+				const body: string = typeof (_body) === 'object' ? JSON.stringify(_body) : _body as string;
 
-				if (body.includes("**a**")) {
-					throw new Error("MFM shouldn't be included");
+				if (body.includes('**a**')) {
+					throw new Error('MFM shouldn\'t be included');
 				}
 			});
-		})
+		});
 	});
 
 	describe.each([{ path: '/api/foo' }])('$path', ({ path }) => {

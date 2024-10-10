@@ -19,7 +19,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<div class="_gaps_m">
 			<MkSwitch v-model="enableListTimeline"><i class="ti ti-list"></i> {{ i18n.ts.lists }}</MkSwitch>
 			<MkSwitch v-model="enableAntennaTimeline"><i class="ti ti-antenna"></i> {{ i18n.ts.antennas }}</MkSwitch>
-			<MkSwitch v-model="enableChannelTimeline"><i class="ti ti-device-tv"></i> {{ i18n.ts.channel }}</MkSwitch>
 		</div>
 	</FormSection>
 
@@ -33,23 +32,12 @@ import MkSwitch from '@/components/MkSwitch.vue';
 import MkButton from '@/components/MkButton.vue';
 import FormSection from '@/components/form/section.vue';
 import { defaultStore } from '@/store.js';
-import * as os from '@/os.js';
-import { unisonReload } from '@/scripts/unison-reload.js';
 import { i18n } from '@/i18n.js';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
-
-async function reloadAsk() {
-	const { canceled } = await os.confirm({
-		type: 'info',
-		text: i18n.ts.reloadToApplySetting,
-	});
-	if (canceled) return;
-
-	unisonReload();
-}
+import { reloadAsk } from '@/scripts/reload-ask.js';
 
 function save() {
-	reloadAsk();
+	reloadAsk({ reason: i18n.ts.reloadToApplySetting, unison: true });
 }
 
 const enableHomeTimeline = computed(defaultStore.makeGetterSetter('enableHomeTimeline'));
@@ -58,7 +46,6 @@ const enableSocialTimeline = computed(defaultStore.makeGetterSetter('enableSocia
 const enableGlobalTimeline = computed(defaultStore.makeGetterSetter('enableGlobalTimeline'));
 const enableListTimeline = computed(defaultStore.makeGetterSetter('enableListTimeline'));
 const enableAntennaTimeline = computed(defaultStore.makeGetterSetter('enableAntennaTimeline'));
-const enableChannelTimeline = computed(defaultStore.makeGetterSetter('enableChannelTimeline'));
 
 const headerActions = computed(() => []);
 

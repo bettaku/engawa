@@ -106,6 +106,14 @@ redis:
 #  #prefix: example-prefix
 #  #db: 1
 
+#redisForReactions:
+#  host: redis
+#  port: 6379
+#  #family: 0  # 0=Both, 4=IPv4, 6=IPv6
+#  #pass: example-pass
+#  #prefix: example-prefix
+#  #db: 1
+
 #   ┌───────────────────────────┐
 #───┘ MeiliSearch configuration └─────────────────────────────
 
@@ -119,19 +127,6 @@ redis:
 #  ssl: true
 #  index: ''
 #  scope: local
-
-#   ┌───────────────────────────┐
-#───┘ OpenSearch configuration  └─────────────────────────────
-
-# You can use OpenSearch when you enabled AdvancedSearch.
-
-#opensearch:
-#  host: opensearch
-#  port: 9200
-#  user: 'admin'
-#  pass: 'opensearch-adminpassword' #強めのパスワードじゃないと怒られる
-#  ssl: false
-#  index: 'instancename' #なんでもいい
 
 #   ┌───────────────┐
 #───┘ ID generation └───────────────────────────────────────────

@@ -44,8 +44,8 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 		private globalEventService: GlobalEventService,
 		private httpRequestService: HttpRequestService,
 	) {
-		this.cache = new MemorySingleCache<MiAvatarDecoration[]>(1000 * 60 * 30);
-		this.cacheWithRemote = new MemorySingleCache<MiAvatarDecoration[]>(1000 * 60 * 30);
+		this.cache = new MemorySingleCache<MiAvatarDecoration[]>(1000 * 60 * 30); // 30s
+		this.cacheWithRemote = new MemorySingleCache<MiAvatarDecoration[]>(1000 * 60 * 30); // 30s
 
 		this.redisForSub.on('message', this.onMessage);
 	}
@@ -128,9 +128,7 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 		const userHostUrl = `https://${user.host}`;
 		const showUserApiUrl = `${userHostUrl}/api/users/show`;
 
-		if (instance?.softwareName !== 'misskey' && instance?.softwareName !== 'cherrypick') {
-			return;
-		}
+		if (!['misskey', 'cherrypick', 'sharkey'].includes(<string>instance?.softwareName)) return;
 
 		const res = await this.httpRequestService.send(showUserApiUrl, {
 			method: 'POST',
@@ -148,7 +146,7 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 			return;
 		}
 
-		const instanceHost = instance.host;
+		const instanceHost = instance?.host;
 		const decorationApiUrl = `https://${instanceHost}/api/get-avatar-decorations`;
 		const allRes = await this.httpRequestService.send(decorationApiUrl, {
 			method: 'POST',

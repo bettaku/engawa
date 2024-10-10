@@ -25,7 +25,6 @@ export const columnTypes = [
 	'tl',
 	'antenna',
 	'list',
-	'channel',
 	'mentions',
 	'direct',
 	'roleTimeline',

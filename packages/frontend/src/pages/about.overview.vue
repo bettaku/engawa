@@ -94,7 +94,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</FormLink>
 				<FormLink v-if="instance.statusUrl" :to="instance.statusUrl" external>
 					<template #icon><i class="ti ti-activity"></i></template>
-					{{ i18n.ts.statusUrl }}
+					<template #default>{{ i18n.ts.statusUrl }}</template>
 				</FormLink>
 			</div>
 		</div>
@@ -130,7 +130,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { host, version } from '@/config.js';
+import { host, version } from '@@/js/config.js';
 import { i18n } from '@/i18n.js';
 import { instance } from '@/instance.js';
 import number from '@/filters/number.js';
