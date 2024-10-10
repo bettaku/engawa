@@ -1,0 +1,73 @@
+name: Format
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+    paths:
+      - packages/backend/**
+      - packages/frontend/**
+      - packages/frontend-shared/**
+      - packages/frontend-embed/**
+      - packages/sw/**
+      - packages/cherrypick-js/**
+      - packages/misskey-bubble-game/**
+      - packages/shared/eslint.config.js
+      - .github/workflows/format.yml
+  pull_request:
+    paths:
+      - packages/backend/**
+      - packages/frontend/**
+      - packages/frontend-shared/**
+      - packages/frontend-embed/**
+      - packages/sw/**
+      - packages/cherrypick-js/**
+      - packages/misskey-bubble-game/**
+      - packages/shared/eslint.config.js
+      - .github/workflows/format.yml
+
+jobs:
+  pnpm_install:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4.1.1
+      with:
+        fetch-depth: 0
+        submodules: true
+    - uses: pnpm/action-setup@v4
+    - uses: actions/setup-node@v4.0.4
+      with:
+        node-version-file: '.node-version'
+        cache: 'pnpm'
+    - run: corepack enable
+    - run: pnpm i --frozen-lockfile
+    - run: pnpm run build-cherrypick-js-with-types
+
+  format:
+    needs: [pnpm_install]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      matrix:
+        workspace:
+          - backend
+          - frontend
+          - frontend-shared
+          - frontend-embed
+          - sw
+          - cherrypick-js
+          - misskey-bubble-game
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4.0.4
+        with:
+          node-version-file: '.node-version'
+          cache: 'pnpm'
+      - run: corepack enable
+      - run: pnpm i --frozen-lockfile
+      - run: pnpm --filter ${{ matrix.workspace }} run format
