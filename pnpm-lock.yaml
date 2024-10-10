@@ -957,8 +957,8 @@ importers:
         specifier: 2.0.0
         version: 2.0.0
       temml:
-        specifier: 0.10.20
-        version: 0.10.20
+        specifier: 0.10.29
+        version: 0.10.29
       textarea-caret:
         specifier: 3.1.0
         version: 3.1.0
@@ -1257,6 +1257,9 @@ importers:
       shiki:
         specifier: 1.12.0
         version: 1.12.0
+      temml:
+        specifier: 0.10.29
+        version: 0.10.29
       tinycolor2:
         specifier: 1.6.0
         version: 1.6.0
@@ -10855,8 +10858,8 @@ packages:
   telejson@7.2.0:
     resolution: {integrity: sha512-1QTEcJkJEhc8OnStBx/ILRu5J2p0GjvWsBx56bmZRqnrkdBMUe+nX92jxV+p3dB4CP6PZCdJMQJwCggkNBMzkQ==}
 
-  temml@0.10.20:
-    resolution: {integrity: sha512-UqT8IbGQnb/IWEqEP6Yh2TCUeS9oKwgP3VO7E/qfKN1jQ2rVr5KCmpFor+hkeRIxIyynvPlkJwGRGRYfO8qhoA==}
+  temml@0.10.29:
+    resolution: {integrity: sha512-JOEYGXYrkXofjzqIU7TcyJXz3Jt1xyIZCCc3OIzkcYdMabdFos7XfedWshdaaSCAQKrNXzf0qejIRZ6Q+x4Hmg==}
     engines: {node: '>=18.13.0'}
 
   terser@5.33.0:
@@ -23401,7 +23404,7 @@ snapshots:
     dependencies:
       memoizerific: 1.11.3
 
-  temml@0.10.20: {}
+  temml@0.10.29: {}
 
   terser@5.33.0:
     dependencies:

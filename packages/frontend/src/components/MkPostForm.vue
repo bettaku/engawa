@@ -1622,7 +1622,7 @@ html[data-color-scheme=light] .preview {
 	}
 
 	.preview {
-		padding: 16px 14px 0 14px;
+		padding: 16px 14px;
 	}
 
 	.withQuote {
