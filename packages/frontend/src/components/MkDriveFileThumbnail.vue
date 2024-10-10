@@ -4,19 +4,25 @@ SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<div ref="thumbnail" :class="$style.root">
-	<ImgWithBlurhash v-if="isThumbnailAvailable" :hash="file.blurhash" :src="file.thumbnailUrl" :alt="file.comment" :title="file.name" :cover="fit !== 'contain'" :show-alt-indicator="showAltIndicator" />
-	<i v-else-if="is === 'image'" class="ti ti-photo" :class="$style.icon"></i>
-	<i v-else-if="is === 'video'" class="ti ti-video" :class="$style.icon"></i>
-	<i v-else-if="is === 'audio' || is === 'midi'" class="ti ti-file-music" :class="$style.icon"></i>
-	<i v-else-if="is === 'csv'" class="ti ti-file-text" :class="$style.icon"></i>
-	<i v-else-if="is === 'pdf'" class="ti ti-file-text" :class="$style.icon"></i>
-	<i v-else-if="is === 'textfile'" class="ti ti-file-text" :class="$style.icon"></i>
-	<i v-else-if="is === 'archive'" class="ti ti-file-zip" :class="$style.icon"></i>
-	<i v-else class="ti ti-file" :class="$style.icon"></i>
+	<div
+		ref="thumbnail"
+		:class="[
+			$style.root,
+			{ [$style.sensitiveHighlight]: highlightWhenSensitive && file.isSensitive },
+		]"
+	>
+		<ImgWithBlurhash v-if="isThumbnailAvailable" :hash="file.blurhash" :src="file.thumbnailUrl" :alt="file.comment" :title="file.name" :cover="fit !== 'contain'" :showAltIndicator="showAltIndicator"/>
+		<i v-else-if="is === 'image'" class="ti ti-photo" :class="$style.icon"></i>
+		<i v-else-if="is === 'video'" class="ti ti-video" :class="$style.icon"></i>
+		<i v-else-if="is === 'audio' || is === 'midi'" class="ti ti-file-music" :class="$style.icon"></i>
+		<i v-else-if="is === 'csv'" class="ti ti-file-text" :class="$style.icon"></i>
+		<i v-else-if="is === 'pdf'" class="ti ti-file-text" :class="$style.icon"></i>
+		<i v-else-if="is === 'textfile'" class="ti ti-file-text" :class="$style.icon"></i>
+		<i v-else-if="is === 'archive'" class="ti ti-file-zip" :class="$style.icon"></i>
+		<i v-else class="ti ti-file" :class="$style.icon"></i>
 
-	<i v-if="isThumbnailAvailable && is === 'video'" class="ti ti-video" :class="$style.iconSub"></i>
-</div>
+		<i v-if="isThumbnailAvailable && is === 'video'" class="ti ti-video" :class="$style.iconSub"></i>
+	</div>
 </template>
 
 <script lang="ts" setup>
@@ -24,13 +30,12 @@ import { computed } from 'vue';
 import * as Misskey from 'cherrypick-js';
 import ImgWithBlurhash from '@/components/MkImgWithBlurhash.vue';
 
-const props = withDefaults(defineProps<{
+const props = defineProps<{
 	file: Misskey.entities.DriveFile;
-	fit: string;
-	showAltIndicator: boolean;
-}>(), {
-	showAltIndicator: false,
-})
+	fit: 'cover' | 'contain';
+	highlightWhenSensitive?: boolean;
+	showAltIndicator?: boolean;
+}>();
 
 const is = computed(() => {
 	if (props.file.type.startsWith('image/')) return 'image';
@@ -68,6 +73,18 @@ const isThumbnailAvailable = computed(() => {
 	background: var(--panel);
 	border-radius: 8px;
 	overflow: clip;
+}
+
+.sensitiveHighlight::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	border-radius: inherit;
+	box-shadow: inset 0 0 0 4px var(--warn);
 }
 
 .iconSub {

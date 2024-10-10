@@ -50,6 +50,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<span v-if="user.isBot" v-tooltip="i18n.ts._role._condition.isBot"><i class="ti ti-robot"></i></span>
 						</div>
 					</div>
+					<div v-if="user.followedMessage != null" class="followedMessage">
+						<MkFukidashi class="fukidashi" :tail="narrow ? 'none' : 'left'" negativeMargin shadow>
+							<div class="messageHeader">{{ i18n.ts.messageToFollower }}</div>
+							<div><Mfm :text="user.followedMessage" :author="user"/></div>
+						</MkFukidashi>
+					</div>
 					<div v-if="user.roles.length > 0" class="roles">
 						<span v-for="role in user.roles" :key="role.id" v-tooltip="role.description" class="role" :style="{ '--color': role.color }">
 							<MkA v-adaptive-bg :to="`/roles/${role.id}`">
@@ -175,16 +181,17 @@ SPDX-License-Identifier: AGPL-3.0-only
 <script lang="ts" setup>
 import { defineAsyncComponent, computed, onMounted, onUnmounted, nextTick, watch, ref } from 'vue';
 import * as Misskey from 'cherrypick-js';
+import { getScrollPosition } from '@@/js/scroll.js';
 import MkNote from '@/components/MkNote.vue';
 import MkFollowButton from '@/components/MkFollowButton.vue';
 import MkAccountMoved from '@/components/MkAccountMoved.vue';
+import MkFukidashi from '@/components/MkFukidashi.vue';
 import MkRemoteCaution from '@/components/MkRemoteCaution.vue';
 import MkUserSensitiveCaution from '@/components/MkUserSensitiveCaution.vue';
 import MkTextarea from '@/components/MkTextarea.vue';
 import MkOmit from '@/components/MkOmit.vue';
 import MkInfo from '@/components/MkInfo.vue';
 import MkButton from '@/components/MkButton.vue';
-import { getScrollPosition } from '@/scripts/scroll.js';
 import { getUserMenu } from '@/scripts/get-user-menu.js';
 import number from '@/filters/number.js';
 import { userPage } from '@/filters/user.js';
@@ -202,6 +209,7 @@ import { miLocalStorage } from '@/local-storage.js';
 import { editNickname } from '@/scripts/edit-nickname.js';
 import { vibrate } from '@/scripts/vibrate.js';
 import detectLanguage from '@/scripts/detect-language.js';
+import { globalEvents } from '@/events.js';
 
 function calcAge(birthdate: string): number {
 	const date = new Date(birthdate);
@@ -326,6 +334,7 @@ const isForeignLanguage: boolean = props.user.description != null && (() => {
 
 async function translate(): Promise<void> {
 	if (translation.value != null) return;
+	globalEvents.emit('showNoteContent', true);
 	translating.value = true;
 
 	vibrate(defaultStore.state.vibrateSystem ? 5 : []);
@@ -540,6 +549,22 @@ onUnmounted(() => {
 					box-shadow: 1px 1px 3px rgba(#000, 0.2);
 				}
 
+				> .followedMessage {
+					padding: 24px 24px 0 154px;
+
+					> .fukidashi {
+						display: block;
+						--fukidashi-bg: color-mix(in srgb, var(--love), var(--panel) 85%);
+						--fukidashi-radius: 16px;
+						font-size: 0.9em;
+
+						.messageHeader {
+							opacity: 0.7;
+							font-size: 0.85em;
+						}
+					}
+				}
+
 				> .roles {
 					padding: 24px 24px 0 154px;
 					font-size: 0.95em;
@@ -748,6 +773,10 @@ onUnmounted(() => {
 					width: 92px;
 					height: 92px;
 					margin: auto;
+				}
+
+				> .followedMessage {
+					padding: 16px 16px 0 16px;
 				}
 
 				> .roles {

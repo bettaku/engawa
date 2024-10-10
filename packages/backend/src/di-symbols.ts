@@ -6,6 +6,7 @@
 export const DI = {
 	config: Symbol('config'),
 	db: Symbol('db'),
+	meta: Symbol('meta'),
 	meilisearch: Symbol('meilisearch'),
 	elasticsearch: Symbol('elasticsearch'),
 	cloudLogging: Symbol('cloudLogging'),
@@ -13,6 +14,7 @@ export const DI = {
 	redisForPub: Symbol('redisForPub'),
 	redisForSub: Symbol('redisForSub'),
 	redisForTimelines: Symbol('redisForTimelines'),
+	redisForReactions: Symbol('redisForReactions'),
 	redisForJobQueue: Symbol('redisForJobQueue'),
 
 	//#region Repositories

@@ -30,7 +30,6 @@ import type { Endpoints } from 'cherrypick-js';
 import type { Paging } from '@/components/MkPagination.vue';
 import MkUserList from '@/components/MkUserList.vue';
 import MkInput from '@/components/MkInput.vue';
-import MkSearchInput from '@/components/MkSearchInput.vue';
 import MkRadios from '@/components/MkRadios.vue';
 import MkButton from '@/components/MkButton.vue';
 import { i18n } from '@/i18n.js';
