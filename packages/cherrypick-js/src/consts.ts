@@ -164,7 +164,6 @@ export const moderationLogTypes = [
 	'deleteGalleryPost',
 ] as const;
 
-
 type AvatarDecoration = UserLite['avatarDecorations'][number];
 
 type ReceivedAbuseReport = {

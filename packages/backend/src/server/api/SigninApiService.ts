@@ -145,8 +145,8 @@ export class SigninApiService {
 
 		if (!profile.twoFactorEnabled) {
 			if (same) {
-				if (profile.password!.startsWith('$2')) {
-					const newHash = await argon2.hash(password);
+				if (isOldAlgorithm(profile.password!)) {
+					const newHash = await hashPassword(password);
 					this.userProfilesRepository.update(user.id, {
 						password: newHash,
 					});
@@ -167,8 +167,8 @@ export class SigninApiService {
 			}
 
 			try {
-				if (profile.password!.startsWith('$2')) {
-					const newHash = await argon2.hash(password);
+				if (isOldAlgorithm(profile.password!)) {
+					const newHash = await hashPassword(password);
 					this.userProfilesRepository.update(user.id, {
 						password: newHash,
 					});

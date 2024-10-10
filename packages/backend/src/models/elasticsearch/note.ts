@@ -45,7 +45,7 @@ export const noteSettings: IndicesIndexSettings = {
 				},
 				tokenizer: {
 					sudachi_tokenizer: {
-						type: 'sudachi_tokenizer',
+						type: 'sudachi_tokenizer', // eslint-disable-line @typescript-eslint/naming-convention
 						discard_punctuation: true,
 						additional_settings: '{"systemDict": "system_full.dic"}',
 					},

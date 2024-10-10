@@ -453,7 +453,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 			renoteUserId: data.renote ? data.renote.userId : null,
 			renoteUserHost: data.renote ? data.renote.userHost : null,
 			userHost: user.host,
-			deleteAt: data.deleteAt,
 		});
 
 		if (data.uri != null) insert.uri = data.uri;
