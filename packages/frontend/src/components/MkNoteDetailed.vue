@@ -31,7 +31,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<i v-if="note.visibility === 'home'" v-tooltip="i18n.ts._visibility[note.visibility]" class="ti ti-home"></i>
 				<i v-else-if="note.visibility === 'followers'" v-tooltip="i18n.ts._visibility[note.visibility]" class="ti ti-lock"></i>
 				<i v-else-if="note.visibility === 'specified'" ref="specified" v-tooltip="i18n.ts._visibility[note.visibility]" class="ti ti-mail"></i>
-				<i v-else-if="note.visibility === 'private'" v-tooltip="i18n.ts._visibility[note.visibility]" class="ti ti-notebook"></i>
 			</span>
 			<span v-if="note.reactionAcceptance != null" style="margin-right: 0.5em;" :class="{ [$style.danger]: ['nonSensitiveOnly', 'nonSensitiveOnlyForLocalLikeOnlyForRemote', 'likeOnly'].includes(<string>note.reactionAcceptance) }" :title="i18n.ts.reactionAcceptance">
 				<i v-if="note.reactionAcceptance === 'likeOnlyForRemote'" v-tooltip="i18n.ts.likeOnlyForRemote" class="ti ti-heart-plus"></i>
@@ -321,6 +320,7 @@ import { pleaseLogin, type OpenOnRemoteOptions } from '@/scripts/please-login.js
 import { checkWordMute } from '@/scripts/check-word-mute.js';
 import { userPage } from '@/filters/user.js';
 import { notePage } from '@/filters/note.js';
+import number from '@/filters/number.js';
 import * as os from '@/os.js';
 import { misskeyApi, misskeyApiGet } from '@/scripts/misskey-api.js';
 import * as sound from '@/scripts/sound.js';
@@ -654,6 +654,14 @@ function undoReact(targetNote: Misskey.entities.Note): void {
 	});
 }
 
+function toggleReact() {
+	if (appearNote.value.myReaction != null && appearNote.value.reactionAcceptance === 'likeOnly') {
+		undoReact(appearNote.value);
+	} else {
+		react();
+	}
+}
+
 function onContextmenu(ev: MouseEvent): void {
 	if (ev.target && isLink(ev.target as HTMLElement)) return;
 	if (window.getSelection()?.toString() !== '') return;
@@ -861,7 +869,7 @@ function showOnRemote() {
 }
 
 .renoteMenu {
-  margin-right: 4px;
+	margin-right: 4px;
 }
 
 .renote + .note {
@@ -899,21 +907,21 @@ function showOnRemote() {
 	justify-content: center;
 	padding-left: 16px;
 	font-size: 0.95em;
-  max-width: 300px;
+	max-width: 300px;
 }
 
 .noteHeaderName {
 	font-weight: bold;
 	line-height: 1.3;
 	margin: 0 .5em 0 0;
-  overflow: hidden;
-  overflow-wrap: anywhere;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+	overflow: hidden;
+	overflow-wrap: anywhere;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 
-  &::-webkit-scrollbar {
-    display: none;
-  }
+	&::-webkit-scrollbar {
+		display: none;
+	}
 
 	&:hover {
 		color: var(--nameHover);
@@ -940,14 +948,14 @@ function showOnRemote() {
 	margin-bottom: 2px;
 	line-height: 1.3;
 	word-wrap: anywhere;
-  overflow: hidden;
-  overflow-wrap: anywhere;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+	overflow: hidden;
+	overflow-wrap: anywhere;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 
-  &::-webkit-scrollbar {
-    display: none;
-  }
+	&::-webkit-scrollbar {
+		display: none;
+	}
 }
 
 .noteContent {
@@ -1100,9 +1108,9 @@ function showOnRemote() {
 		font-size: 0.9em;
 	}
 
-  .noteHeaderBody {
-    max-width: 180px;
-  }
+	.noteHeaderBody {
+		max-width: 180px;
+	}
 }
 
 @container (max-width: 480px) {
