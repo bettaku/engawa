@@ -42,7 +42,6 @@ jobs:
         cache: 'pnpm'
     - run: corepack enable
     - run: pnpm i --frozen-lockfile
-    - run: pnpm run build-cherrypick-js-with-types
 
   format:
     needs: [pnpm_install]
