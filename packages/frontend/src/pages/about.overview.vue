@@ -94,7 +94,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</FormLink>
 				<FormLink v-if="instance.statusUrl" :to="instance.statusUrl" external>
 					<template #icon><i class="ti ti-activity"></i></template>
-					{{ i18n.ts.statusUrl }}
+					<template #default>{{ i18n.ts.statusUrl }}</template>
 				</FormLink>
 			</div>
 		</div>

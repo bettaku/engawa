@@ -5139,6 +5139,7 @@ export type components = {
       logoImageUrl: string | null;
       privacyPolicyUrl: string | null;
       inquiryUrl: string | null;
+      statusUrl: string | null;
       serverRules: string[];
       themeColor: string | null;
       policies: components['schemas']['RolePolicies'];
@@ -5327,6 +5328,7 @@ export type operations = {
             description: string | null;
             disableRegistration: boolean;
             impressumUrl: string | null;
+            statusUrl: string | null;
             maintainerEmail: string | null;
             maintainerName: string | null;
             name: string | null;

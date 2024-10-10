@@ -469,6 +469,10 @@ export const meta = {
 				type: 'string',
 				optional: false, nullable: true,
 			},
+			statusUrl: {
+				type: 'string',
+				optional: false, nullable: true,
+			},
 			maintainerEmail: {
 				type: 'string',
 				optional: false, nullable: true,
