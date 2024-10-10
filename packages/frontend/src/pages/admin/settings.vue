@@ -266,162 +266,162 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</MkSpacer>
 		</MkStickyContainer>
 	</div>
-	</template>
+</template>
 
-	<script lang="ts" setup>
-	import { ref, computed } from 'vue';
-	import XHeader from './_header_.vue';
-	import MkSwitch from '@/components/MkSwitch.vue';
-	import MkInput from '@/components/MkInput.vue';
-	import MkTextarea from '@/components/MkTextarea.vue';
-	import MkInfo from '@/components/MkInfo.vue';
-	import FormSplit from '@/components/form/split.vue';
-	import * as os from '@/os.js';
-	import { misskeyApi } from '@/scripts/misskey-api.js';
-	import { fetchInstance, instance } from '@/instance.js';
-	import { i18n } from '@/i18n.js';
-	import { definePageMetadata } from '@/scripts/page-metadata.js';
-	import MkButton from '@/components/MkButton.vue';
-	import MkFolder from '@/components/MkFolder.vue';
-	import MkKeyValue from '@/components/MkKeyValue.vue';
-	import { useForm } from '@/scripts/use-form.js';
-	import MkFormFooter from '@/components/MkFormFooter.vue';
-	import MkRadios from '@/components/MkRadios.vue';
+<script lang="ts" setup>
+import { ref, computed } from 'vue';
+import XHeader from './_header_.vue';
+import MkSwitch from '@/components/MkSwitch.vue';
+import MkInput from '@/components/MkInput.vue';
+import MkTextarea from '@/components/MkTextarea.vue';
+import MkInfo from '@/components/MkInfo.vue';
+import FormSplit from '@/components/form/split.vue';
+import * as os from '@/os.js';
+import { misskeyApi } from '@/scripts/misskey-api.js';
+import { fetchInstance, instance } from '@/instance.js';
+import { i18n } from '@/i18n.js';
+import { definePageMetadata } from '@/scripts/page-metadata.js';
+import MkButton from '@/components/MkButton.vue';
+import MkFolder from '@/components/MkFolder.vue';
+import MkKeyValue from '@/components/MkKeyValue.vue';
+import { useForm } from '@/scripts/use-form.js';
+import MkFormFooter from '@/components/MkFormFooter.vue';
+import MkRadios from '@/components/MkRadios.vue';
 
-	const meta = await misskeyApi('admin/meta');
+const meta = await misskeyApi('admin/meta');
 
-	const proxyAccount = ref(meta.proxyAccountId ? await misskeyApi('users/show', { userId: meta.proxyAccountId }) : null);
+const proxyAccount = ref(meta.proxyAccountId ? await misskeyApi('users/show', { userId: meta.proxyAccountId }) : null);
 
-	const infoForm = useForm({
-		name: meta.name ?? '',
-		shortName: meta.shortName ?? '',
-		description: meta.description ?? '',
-		maintainerName: meta.maintainerName ?? '',
-		maintainerEmail: meta.maintainerEmail ?? '',
-		tosUrl: meta.tosUrl ?? '',
-		privacyPolicyUrl: meta.privacyPolicyUrl ?? '',
-		inquiryUrl: meta.inquiryUrl ?? '',
-		repositoryUrl: meta.repositoryUrl ?? '',
-		impressumUrl: meta.impressumUrl ?? '',
-	}, async (state) => {
-		await os.apiWithDialog('admin/update-meta', {
-			name: state.name,
-			shortName: state.shortName === '' ? null : state.shortName,
-			description: state.description,
+const infoForm = useForm({
+	name: meta.name ?? '',
+	shortName: meta.shortName ?? '',
+	description: meta.description ?? '',
+	maintainerName: meta.maintainerName ?? '',
+	maintainerEmail: meta.maintainerEmail ?? '',
+	tosUrl: meta.tosUrl ?? '',
+	privacyPolicyUrl: meta.privacyPolicyUrl ?? '',
+	inquiryUrl: meta.inquiryUrl ?? '',
+	repositoryUrl: meta.repositoryUrl ?? '',
+	impressumUrl: meta.impressumUrl ?? '',
+}, async (state) => {
+	await os.apiWithDialog('admin/update-meta', {
+		name: state.name,
+		shortName: state.shortName === '' ? null : state.shortName,
+		description: state.description,
 			maintainerName: state.maintainerName,
-			maintainerEmail: state.maintainerEmail,
-			tosUrl: state.tosUrl,
-			privacyPolicyUrl: state.privacyPolicyUrl,
-			inquiryUrl: state.inquiryUrl,
-			repositoryUrl: state.repositoryUrl,
-			impressumUrl: state.impressumUrl,
-		});
-		fetchInstance(true);
+		maintainerEmail: state.maintainerEmail,
+		tosUrl: state.tosUrl,
+		privacyPolicyUrl: state.privacyPolicyUrl,
+		inquiryUrl: state.inquiryUrl,
+		repositoryUrl: state.repositoryUrl,
+		impressumUrl: state.impressumUrl,
 	});
+	fetchInstance(true);
+});
 
-	const pinnedUsersForm = useForm({
-		pinnedUsers: meta.pinnedUsers.join('\n'),
-	}, async (state) => {
-		await os.apiWithDialog('admin/update-meta', {
-			pinnedUsers: state.pinnedUsers.split('\n'),
-		});
-		fetchInstance(true);
+const pinnedUsersForm = useForm({
+	pinnedUsers: meta.pinnedUsers.join('\n'),
+}, async (state) => {
+	await os.apiWithDialog('admin/update-meta', {
+		pinnedUsers: state.pinnedUsers.split('\n'),
 	});
+	fetchInstance(true);
+});
 
-	const filesForm = useForm({
-		cacheRemoteFiles: meta.cacheRemoteFiles,
-		cacheRemoteSensitiveFiles: meta.cacheRemoteSensitiveFiles,
-	}, async (state) => {
-		await os.apiWithDialog('admin/update-meta', {
-			cacheRemoteFiles: state.cacheRemoteFiles,
-			cacheRemoteSensitiveFiles: state.cacheRemoteSensitiveFiles,
-		});
-		fetchInstance(true);
+const filesForm = useForm({
+	cacheRemoteFiles: meta.cacheRemoteFiles,
+	cacheRemoteSensitiveFiles: meta.cacheRemoteSensitiveFiles,
+}, async (state) => {
+	await os.apiWithDialog('admin/update-meta', {
+		cacheRemoteFiles: state.cacheRemoteFiles,
+		cacheRemoteSensitiveFiles: state.cacheRemoteSensitiveFiles,
 	});
+	fetchInstance(true);
+});
 
-	const serviceWorkerForm = useForm({
-		enableServiceWorker: meta.enableServiceWorker,
-		swPublicKey: meta.swPublickey ?? '',
-		swPrivateKey: meta.swPrivateKey ?? '',
-	}, async (state) => {
-		await os.apiWithDialog('admin/update-meta', {
-			enableServiceWorker: state.enableServiceWorker,
-			swPublicKey: state.swPublicKey,
-			swPrivateKey: state.swPrivateKey,
-		});
-		fetchInstance(true);
+const serviceWorkerForm = useForm({
+	enableServiceWorker: meta.enableServiceWorker,
+	swPublicKey: meta.swPublickey ?? '',
+	swPrivateKey: meta.swPrivateKey ?? '',
+}, async (state) => {
+	await os.apiWithDialog('admin/update-meta', {
+		enableServiceWorker: state.enableServiceWorker,
+		swPublicKey: state.swPublicKey,
+		swPrivateKey: state.swPrivateKey,
 	});
+	fetchInstance(true);
+});
 
-	const adForm = useForm({
-		notesPerOneAd: meta.notesPerOneAd,
-	}, async (state) => {
-		await os.apiWithDialog('admin/update-meta', {
-			notesPerOneAd: state.notesPerOneAd,
-		});
-		fetchInstance(true);
+const adForm = useForm({
+	notesPerOneAd: meta.notesPerOneAd,
+}, async (state) => {
+	await os.apiWithDialog('admin/update-meta', {
+		notesPerOneAd: state.notesPerOneAd,
 	});
+	fetchInstance(true);
+});
 
-	const urlPreviewForm = useForm({
-		urlPreviewEnabled: meta.urlPreviewEnabled,
-		urlPreviewTimeout: meta.urlPreviewTimeout,
-		urlPreviewMaximumContentLength: meta.urlPreviewMaximumContentLength,
-		urlPreviewRequireContentLength: meta.urlPreviewRequireContentLength,
-		urlPreviewUserAgent: meta.urlPreviewUserAgent ?? '',
-		urlPreviewSummaryProxyUrl: meta.urlPreviewSummaryProxyUrl ?? '',
-	}, async (state) => {
-		await os.apiWithDialog('admin/update-meta', {
-			urlPreviewEnabled: state.urlPreviewEnabled,
-			urlPreviewTimeout: state.urlPreviewTimeout,
-			urlPreviewMaximumContentLength: state.urlPreviewMaximumContentLength,
-			urlPreviewRequireContentLength: state.urlPreviewRequireContentLength,
-			urlPreviewUserAgent: state.urlPreviewUserAgent,
-			urlPreviewSummaryProxyUrl: state.urlPreviewSummaryProxyUrl,
-		});
-		fetchInstance(true);
+const urlPreviewForm = useForm({
+	urlPreviewEnabled: meta.urlPreviewEnabled,
+	urlPreviewTimeout: meta.urlPreviewTimeout,
+	urlPreviewMaximumContentLength: meta.urlPreviewMaximumContentLength,
+	urlPreviewRequireContentLength: meta.urlPreviewRequireContentLength,
+	urlPreviewUserAgent: meta.urlPreviewUserAgent ?? '',
+	urlPreviewSummaryProxyUrl: meta.urlPreviewSummaryProxyUrl ?? '',
+}, async (state) => {
+	await os.apiWithDialog('admin/update-meta', {
+		urlPreviewEnabled: state.urlPreviewEnabled,
+		urlPreviewTimeout: state.urlPreviewTimeout,
+		urlPreviewMaximumContentLength: state.urlPreviewMaximumContentLength,
+		urlPreviewRequireContentLength: state.urlPreviewRequireContentLength,
+		urlPreviewUserAgent: state.urlPreviewUserAgent,
+		urlPreviewSummaryProxyUrl: state.urlPreviewSummaryProxyUrl,
 	});
+	fetchInstance(true);
+});
 
-	const federationForm = useForm({
-		federation: meta.federation,
-		federationHosts: meta.federationHosts.join('\n'),
-	}, async (state) => {
-		await os.apiWithDialog('admin/update-meta', {
-			federation: state.federation,
-			federationHosts: state.federationHosts.split('\n'),
-		});
-		fetchInstance(true);
+const federationForm = useForm({
+	federation: meta.federation,
+	federationHosts: meta.federationHosts.join('\n'),
+}, async (state) => {
+	await os.apiWithDialog('admin/update-meta', {
+		federation: state.federation,
+		federationHosts: state.federationHosts.split('\n'),
 	});
+	fetchInstance(true);
+});
 
-	const emailToReceiveAbuseReportForm = useForm({
-		emailToReceiveAbuseReport: meta.emailToReceiveAbuseReport,
-	}, async (state) => {
-		await os.apiWithDialog('admin/update-meta', {
-			emailToReceiveAbuseReport: state.emailToReceiveAbuseReport,
-		});
-		fetchInstance(true);
+const emailToReceiveAbuseReportForm = useForm({
+	emailToReceiveAbuseReport: meta.emailToReceiveAbuseReport,
+}, async (state) => {
+	await os.apiWithDialog('admin/update-meta', {
+		emailToReceiveAbuseReport: state.emailToReceiveAbuseReport,
 	});
+	fetchInstance(true);
+});
 
-	function chooseProxyAccount() {
-		os.selectUser({ localOnly: true }).then(user => {
-			proxyAccount.value = user;
-			os.apiWithDialog('admin/update-meta', {
-				proxyAccountId: user.id,
-			}).then(() => {
-				fetchInstance(true);
-			});
+function chooseProxyAccount() {
+	os.selectUser({ localOnly: true }).then(user => {
+		proxyAccount.value = user;
+		os.apiWithDialog('admin/update-meta', {
+			proxyAccountId: user.id,
+		}).then(() => {
+			fetchInstance(true);
 		});
-	}
+	});
+}
 
-	const headerTabs = computed(() => []);
+const headerTabs = computed(() => []);
 
-	definePageMetadata(() => ({
-		title: i18n.ts.general,
-		icon: 'ti ti-settings',
-	}));
-	</script>
+definePageMetadata(() => ({
+	title: i18n.ts.general,
+	icon: 'ti ti-settings',
+}));
+</script>
 
-	<style lang="scss" module>
-	.subCaption {
-		font-size: 0.85em;
-		color: var(--fgTransparentWeak);
-	}
-	</style>
+<style lang="scss" module>
+.subCaption {
+	font-size: 0.85em;
+	color: var(--fgTransparentWeak);
+}
+</style>

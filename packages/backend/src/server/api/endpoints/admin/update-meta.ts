@@ -216,9 +216,6 @@ export const paramDef = {
 				type: 'string',
 			},
 		},
-		customSplashText: { type: 'array', nullable: true, items: {
-			type: 'string',
-		}},
 	},
 	required: [],
 } as const;
@@ -226,7 +223,7 @@ export const paramDef = {
 @Injectable()
 export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-disable-line import/no-default-export
 	constructor(
-        private moduleRef: ModuleRef,
+    private moduleRef: ModuleRef,
 		private metaService: MetaService,
 		private moderationLogService: ModerationLogService,
 	) {
