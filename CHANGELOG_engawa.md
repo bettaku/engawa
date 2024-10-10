@@ -15,12 +15,29 @@
 ### Misc
 
 -->
-## 0.6.2(unreleased)
+## 20241011
 
 ### Release Date
 
 ### General
+- CherryPick developブランチをマージ
+
+### Client
+- コントロールパネルから検索エンジンのインデックスを貼れるように
+
+### Server
 -
+
+### Misc
+
+
+## 20241010
+
+### Release Date
+
+### General
+- ローリングリリースに
+- CherryPick 4.12.0をマージ
 
 ### Client
 - fix: モバイル環境でUIのナビゲーションバーによって一部の表示が隠れるのを修正

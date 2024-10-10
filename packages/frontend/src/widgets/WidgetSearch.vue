@@ -140,7 +140,7 @@ async function search() {
 	}, {
 		closed: () => dispose(),
 	});
-	}
+}
 
 defineExpose<WidgetComponentExpose>({
 	name,
