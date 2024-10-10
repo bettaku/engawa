@@ -93,7 +93,7 @@ jobs:
         fetch-depth: 0
         submodules: true
     - uses: pnpm/action-setup@v4
-    - uses: actions/setup-node@v4.0.2
+    - uses: actions/setup-node@v4.0.4
       with:
         path: ${{ env.eslint-cache-path }}
         key: eslint-${{ env.eslint-cache-version }}-${{ matrix.workspace }}-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ github.ref_name }}-${{ github.sha }}
