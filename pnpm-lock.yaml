@@ -178,10 +178,10 @@ importers:
         version: 2.5.0
       '@swc/cli':
         specifier: 0.3.12
-        version: 0.3.12(@swc/core@1.6.6)(chokidar@3.5.3)
+        version: 0.3.12(@swc/core@1.7.36)(chokidar@3.5.3)
       '@swc/core':
-        specifier: 1.6.6
-        version: 1.6.6
+        specifier: 1.7.36
+        version: 1.7.36
       '@twemoji/parser':
         specifier: 15.1.1
         version: 15.1.1
@@ -484,11 +484,11 @@ importers:
         specifier: 1.3.56
         version: 1.3.56
       '@swc/core-linux-x64-gnu':
-        specifier: 1.3.56
-        version: 1.3.56
+        specifier: 1.7.36
+        version: 1.7.36
       '@swc/core-linux-x64-musl':
-        specifier: 1.3.56
-        version: 1.3.56
+        specifier: 1.7.36
+        version: 1.7.36
       '@swc/core-win32-arm64-msvc':
         specifier: 1.3.56
         version: 1.3.56
@@ -564,7 +564,7 @@ importers:
         version: 10.0.0
       '@swc/jest':
         specifier: 0.2.36
-        version: 0.2.36(@swc/core@1.6.6)
+        version: 0.2.36(@swc/core@1.7.36)
       '@types/accepts':
         specifier: 1.3.7
         version: 1.3.7
@@ -730,7 +730,7 @@ importers:
         version: 7.47.9(@types/node@20.14.12)
       '@swc/jest':
         specifier: 0.2.36
-        version: 0.2.36(@swc/core@1.6.6)
+        version: 0.2.36(@swc/core@1.7.36)
       '@types/jest':
         specifier: 29.5.13
         version: 29.5.13
@@ -850,7 +850,7 @@ importers:
         version: 3.5.10
       aiscript-vscode:
         specifier: github:aiscript-dev/aiscript-vscode#v0.1.11
-        version: https://codeload.github.com/aiscript-dev/aiscript-vscode/tar.gz/e1e1b27f2f72cd28a473e004b6da0d8fc0bd40d9
+        version: git+https://git@github.com:aiscript-dev/aiscript-vscode.git#e1e1b27f2f72cd28a473e004b6da0d8fc0bd40d9
       astring:
         specifier: 1.9.0
         version: 1.9.0
@@ -1178,7 +1178,7 @@ importers:
         version: 8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)
       storybook-addon-misskey-theme:
         specifier: github:misskey-dev/storybook-addon-misskey-theme
-        version: https://codeload.github.com/misskey-dev/storybook-addon-misskey-theme/tar.gz/cf583db098365b2ccc81a82f63ca9c93bc32b640(@storybook/blocks@8.3.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/components@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/core-events@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/manager-api@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/preview-api@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/theming@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/types@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: git+https://git@github.com:misskey-dev/storybook-addon-misskey-theme.git#cf583db098365b2ccc81a82f63ca9c93bc32b640(@storybook/blocks@8.3.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/components@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/core-events@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/manager-api@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/preview-api@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/theming@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/types@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       vite-plugin-turbosnap:
         specifier: 1.0.3
         version: 1.0.3
@@ -4291,8 +4291,8 @@ packages:
     cpu: [arm64]
     os: [darwin]
 
-  '@swc/core-darwin-arm64@1.6.6':
-    resolution: {integrity: sha512-5DA8NUGECcbcK1YLKJwNDKqdtTYDVnkfDU1WvQSXq/rU+bjYCLtn5gCe8/yzL7ISXA6rwqPU1RDejhbNt4ARLQ==}
+  '@swc/core-darwin-arm64@1.7.36':
+    resolution: {integrity: sha512-8vDczXzCgv3ceTPhEivlpGprN44YlrCK1nbfU9g2TrhV/Aiqi09W/eM5zLesdoM1Z3mJl492gc/8nlTkpDdusw==}
     engines: {node: '>=10'}
     cpu: [arm64]
     os: [darwin]
@@ -4303,8 +4303,8 @@ packages:
     cpu: [x64]
     os: [darwin]
 
-  '@swc/core-darwin-x64@1.6.6':
-    resolution: {integrity: sha512-2nbh/RHpweNRsJiYDFk1KcX7UtaKgzzTNUjwtvK5cp0wWrpbXmPvdlWOx3yzwoiSASDFx78242JHHXCIOlEdsw==}
+  '@swc/core-darwin-x64@1.7.36':
+    resolution: {integrity: sha512-Pa2Gao7+Wf5m3SsK4abKRtd48AtoUnJInvaC3d077swBfgZjbjUbQvcpdc2dOeQtWwo49rFqUZJonMsL0jnPgQ==}
     engines: {node: '>=10'}
     cpu: [x64]
     os: [darwin]
@@ -4321,8 +4321,8 @@ packages:
     cpu: [arm]
     os: [linux]
 
-  '@swc/core-linux-arm-gnueabihf@1.6.6':
-    resolution: {integrity: sha512-YgytuyUfR7b0z0SRHKV+ylr83HmgnROgeT7xryEkth6JGpAEHooCspQ4RrWTU8+WKJ7aXiZlGXPgybQ4TiS+TA==}
+  '@swc/core-linux-arm-gnueabihf@1.7.36':
+    resolution: {integrity: sha512-3YsMWd7V+WZEjbfBnLkkz/olcRBa8nyoK0iIOnNARJBMcYaJxjkJSMZpmSojCnIVwvjA1N83CPAbUL+W+fCnHg==}
     engines: {node: '>=10'}
     cpu: [arm]
     os: [linux]
@@ -4333,8 +4333,8 @@ packages:
     cpu: [arm64]
     os: [linux]
 
-  '@swc/core-linux-arm64-gnu@1.6.6':
-    resolution: {integrity: sha512-yGwx9fddzEE0iURqRVwKBQ4IwRHE6hNhl15WliHpi/PcYhzmYkUIpcbRXjr0dssubXAVPVnx6+jZVDSbutvnfg==}
+  '@swc/core-linux-arm64-gnu@1.7.36':
+    resolution: {integrity: sha512-lqM3aBB7kJazJYOwHeA5OGNLqXoQPZ/76b3dV+XcjN1GhD0CcXz6mW5PRYVin6OSN1eKrKBKJjtDA1mqADDEvw==}
     engines: {node: '>=10'}
     cpu: [arm64]
     os: [linux]
@@ -4345,32 +4345,20 @@ packages:
     cpu: [arm64]
     os: [linux]
 
-  '@swc/core-linux-arm64-musl@1.6.6':
-    resolution: {integrity: sha512-a6fMbqzSAsS5KCxFJyg1mD5kwN3ZFO8qQLyJ75R/htZP/eCt05jrhmOI7h2n+1HjiG332jLnZ9S8lkVE5O8Nqw==}
+  '@swc/core-linux-arm64-musl@1.7.36':
+    resolution: {integrity: sha512-bqei2YDzvUfG0pth5W2xJaj0eG4XWYk0d/NJ75vBX6bkIzK6dC8iuKQ41jOfUWonnrAs7rTDDJW0sTn/evvRdw==}
     engines: {node: '>=10'}
     cpu: [arm64]
     os: [linux]
 
-  '@swc/core-linux-x64-gnu@1.3.56':
-    resolution: {integrity: sha512-n0ORNknl50vMRkll3BDO1E4WOqY6iISlPV1ZQCRLWQ6YQ2q8/WAryBxc2OAybcGHBUFkxyACpJukeU1QZ/9tNw==}
+  '@swc/core-linux-x64-gnu@1.7.36':
+    resolution: {integrity: sha512-03maXTUyaBjeCxlDltmdzHje1ryQt1C4OWmmNgSSRXjLb+GNnAenwOJMSrcvHP/aNClD2pwsFCnYKDGy+sYE6w==}
     engines: {node: '>=10'}
     cpu: [x64]
     os: [linux]
 
-  '@swc/core-linux-x64-gnu@1.6.6':
-    resolution: {integrity: sha512-hRGsUKNzzZle28YF0dYIpN0bt9PceR9LaVBq7x8+l9TAaDLFbgksSxcnU/ubTtsy+WsYSYGn+A83w3xWC0O8CQ==}
-    engines: {node: '>=10'}
-    cpu: [x64]
-    os: [linux]
-
-  '@swc/core-linux-x64-musl@1.3.56':
-    resolution: {integrity: sha512-r+D34WLAOAlJtfw1gaVWpHRwCncU9nzW9i7w9kSw4HpWYnHJOz54jLGSEmNsrhdTCz1VK2ar+V2ktFUsrlGlDA==}
-    engines: {node: '>=10'}
-    cpu: [x64]
-    os: [linux]
-
-  '@swc/core-linux-x64-musl@1.6.6':
-    resolution: {integrity: sha512-NokIUtFxJDVv3LzGeEtYMTV3j2dnGKLac59luTeq36DQLZdJQawQIdTbzzWl2jE7lxxTZme+dhsVOH9LxE3ceg==}
+  '@swc/core-linux-x64-musl@1.7.36':
+    resolution: {integrity: sha512-XXysqLkvjtQnXm1zHqLhy00UYPv/gk5OtwR732X+piNisnEbcJBqI8Qp9O7YvLWllRcoP8IMBGDWLGdGLSpViA==}
     engines: {node: '>=10'}
     cpu: [x64]
     os: [linux]
@@ -4381,8 +4369,8 @@ packages:
     cpu: [arm64]
     os: [win32]
 
-  '@swc/core-win32-arm64-msvc@1.6.6':
-    resolution: {integrity: sha512-lzYdI4qb4k1dFG26yv+9Jaq/bUMAhgs/2JsrLncGjLof86+uj74wKYCQnbzKAsq2hDtS5DqnHnl+//J+miZfGA==}
+  '@swc/core-win32-arm64-msvc@1.7.36':
+    resolution: {integrity: sha512-k7+dmb13a/zPw+E4XYfPmLZFWJgcOcBRKIjYl9nQErtYsgsg3Ji6TBbsvJVETy23lNHyewZ17V5Vq6NzaG0hzg==}
     engines: {node: '>=10'}
     cpu: [arm64]
     os: [win32]
@@ -4393,8 +4381,8 @@ packages:
     cpu: [ia32]
     os: [win32]
 
-  '@swc/core-win32-ia32-msvc@1.6.6':
-    resolution: {integrity: sha512-bvl7FMaXIJQ76WZU0ER4+RyfKIMGb6S2MgRkBhJOOp0i7VFx4WLOnrmMzaeoPJaJSkityVKAftfNh7NBzTIydQ==}
+  '@swc/core-win32-ia32-msvc@1.7.36':
+    resolution: {integrity: sha512-ridD3ay6YM2PEYHZXXFN+edYEv0FOynaqOBP+NSnGNHA35azItIjoIe+KNi4WltGtAjpKCHSpjGCNfna12wdYQ==}
     engines: {node: '>=10'}
     cpu: [ia32]
     os: [win32]
@@ -4405,14 +4393,14 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@swc/core-win32-x64-msvc@1.6.6':
-    resolution: {integrity: sha512-WAP0JoCTfgeYKgOeYJoJV4ZS0sQUmU3OwvXa2dYYtMLF7zsNqOiW4niU7QlThBHgUv/qNZm2p6ITEgh3w1cltw==}
+  '@swc/core-win32-x64-msvc@1.7.36':
+    resolution: {integrity: sha512-j1z2Z1Ln9d0E3dHsPkC1K9XDh0ojhRPwV+GfRTu4D61PE+aYhYLvbJC6xPvL4/204QrStRS7eDu3m+BcDp3rgQ==}
     engines: {node: '>=10'}
     cpu: [x64]
     os: [win32]
 
-  '@swc/core@1.6.6':
-    resolution: {integrity: sha512-sHfmIUPUXNrQTwFMVCY5V5Ena2GTOeaWjS2GFUpjLhAgVfP90OP67DWow7+cYrfFtqBdILHuWnjkTcd0+uPKlg==}
+  '@swc/core@1.7.36':
+    resolution: {integrity: sha512-bu7ymMX+LCJOSSrKank25Jaq66ymLVA9fOUuy4ck3/6rbXdLw+pIJPnIDKQ9uNcxww8KDxOuJk9Ui9pqR+aGFw==}
     engines: {node: '>=10'}
     peerDependencies:
       '@swc/helpers': '*'
@@ -4429,8 +4417,8 @@ packages:
     peerDependencies:
       '@swc/core': '*'
 
-  '@swc/types@0.1.9':
-    resolution: {integrity: sha512-qKnCno++jzcJ4lM4NTfYifm1EFSCeIfKiAHAfkENZAV5Kl9PjJIyd2yeeVv6c/2CckuLyv2NmRC5pv6pm2WQBg==}
+  '@swc/types@0.1.13':
+    resolution: {integrity: sha512-JL7eeCk6zWCbiYQg2xQSdLXQJl8Qoc9rXmG2cEKvHe3CKwMHwHGpfOb8frzNLmbycOo6I51qxnLnn9ESf4I20Q==}
 
   '@swc/wasm@1.2.130':
     resolution: {integrity: sha512-rNcJsBxS70+pv8YUWwf5fRlWX6JoY/HJc25HD/F8m6Kv7XhJdqPPMhyX6TKkUBPAG7TWlZYoxa+rHAjPy4Cj3Q==}
@@ -5296,8 +5284,8 @@ packages:
     resolution: {integrity: sha512-gOsf2YwSlleG6IjRYG2A7k0HmBMEo6qVNk9Bp/EaLgAJT5ngH6PXbqa4ItvnEwCm/velL5jAnQgsHsWnjhGmvw==}
     engines: {node: '>=18'}
 
-  aiscript-vscode@https://codeload.github.com/aiscript-dev/aiscript-vscode/tar.gz/e1e1b27f2f72cd28a473e004b6da0d8fc0bd40d9:
-    resolution: {tarball: https://codeload.github.com/aiscript-dev/aiscript-vscode/tar.gz/e1e1b27f2f72cd28a473e004b6da0d8fc0bd40d9}
+  aiscript-vscode@git+https://git@github.com:aiscript-dev/aiscript-vscode.git#e1e1b27f2f72cd28a473e004b6da0d8fc0bd40d9:
+    resolution: {commit: e1e1b27f2f72cd28a473e004b6da0d8fc0bd40d9, repo: git@github.com:aiscript-dev/aiscript-vscode.git, type: git}
     version: 0.1.11
     engines: {vscode: ^1.83.0}
 
@@ -10637,8 +10625,8 @@ packages:
     resolution: {integrity: sha512-iCGQj+0l0HOdZ2AEeBADlsRC+vsnDsZsbdSiH1yNSjcfKM7fdpCMfqAL/dwF5BLiw/XhRft/Wax6zQbhq2BcjQ==}
     engines: {node: '>= 0.4'}
 
-  storybook-addon-misskey-theme@https://codeload.github.com/misskey-dev/storybook-addon-misskey-theme/tar.gz/cf583db098365b2ccc81a82f63ca9c93bc32b640:
-    resolution: {tarball: https://codeload.github.com/misskey-dev/storybook-addon-misskey-theme/tar.gz/cf583db098365b2ccc81a82f63ca9c93bc32b640}
+  storybook-addon-misskey-theme@git+https://git@github.com:misskey-dev/storybook-addon-misskey-theme.git#cf583db098365b2ccc81a82f63ca9c93bc32b640:
+    resolution: {commit: cf583db098365b2ccc81a82f63ca9c93bc32b640, repo: git@github.com:misskey-dev/storybook-addon-misskey-theme.git, type: git}
     version: 0.0.0
     peerDependencies:
       '@storybook/blocks': ^7.0.0-rc.4
@@ -15240,10 +15228,10 @@ snapshots:
       vue: 3.5.10(typescript@5.6.2)
       vue-component-type-helpers: 2.1.6
 
-  '@swc/cli@0.3.12(@swc/core@1.6.6)(chokidar@3.5.3)':
+  '@swc/cli@0.3.12(@swc/core@1.7.36)(chokidar@3.5.3)':
     dependencies:
       '@mole-inc/bin-wrapper': 8.0.1
-      '@swc/core': 1.6.6
+      '@swc/core': 1.7.36
       '@swc/counter': 0.1.3
       commander: 8.3.0
       fast-glob: 3.3.2
@@ -15263,13 +15251,13 @@ snapshots:
   '@swc/core-darwin-arm64@1.3.56':
     optional: true
 
-  '@swc/core-darwin-arm64@1.6.6':
+  '@swc/core-darwin-arm64@1.7.36':
     optional: true
 
   '@swc/core-darwin-x64@1.3.56':
     optional: true
 
-  '@swc/core-darwin-x64@1.6.6':
+  '@swc/core-darwin-x64@1.7.36':
     optional: true
 
   '@swc/core-freebsd-x64@1.3.11':
@@ -15280,77 +15268,71 @@ snapshots:
   '@swc/core-linux-arm-gnueabihf@1.3.56':
     optional: true
 
-  '@swc/core-linux-arm-gnueabihf@1.6.6':
+  '@swc/core-linux-arm-gnueabihf@1.7.36':
     optional: true
 
   '@swc/core-linux-arm64-gnu@1.3.56':
     optional: true
 
-  '@swc/core-linux-arm64-gnu@1.6.6':
+  '@swc/core-linux-arm64-gnu@1.7.36':
     optional: true
 
   '@swc/core-linux-arm64-musl@1.3.56':
     optional: true
 
-  '@swc/core-linux-arm64-musl@1.6.6':
+  '@swc/core-linux-arm64-musl@1.7.36':
     optional: true
 
-  '@swc/core-linux-x64-gnu@1.3.56':
+  '@swc/core-linux-x64-gnu@1.7.36':
     optional: true
 
-  '@swc/core-linux-x64-gnu@1.6.6':
-    optional: true
-
-  '@swc/core-linux-x64-musl@1.3.56':
-    optional: true
-
-  '@swc/core-linux-x64-musl@1.6.6':
+  '@swc/core-linux-x64-musl@1.7.36':
     optional: true
 
   '@swc/core-win32-arm64-msvc@1.3.56':
     optional: true
 
-  '@swc/core-win32-arm64-msvc@1.6.6':
+  '@swc/core-win32-arm64-msvc@1.7.36':
     optional: true
 
   '@swc/core-win32-ia32-msvc@1.3.56':
     optional: true
 
-  '@swc/core-win32-ia32-msvc@1.6.6':
+  '@swc/core-win32-ia32-msvc@1.7.36':
     optional: true
 
   '@swc/core-win32-x64-msvc@1.3.56':
     optional: true
 
-  '@swc/core-win32-x64-msvc@1.6.6':
+  '@swc/core-win32-x64-msvc@1.7.36':
     optional: true
 
-  '@swc/core@1.6.6':
+  '@swc/core@1.7.36':
     dependencies:
       '@swc/counter': 0.1.3
-      '@swc/types': 0.1.9
+      '@swc/types': 0.1.13
     optionalDependencies:
-      '@swc/core-darwin-arm64': 1.6.6
-      '@swc/core-darwin-x64': 1.6.6
-      '@swc/core-linux-arm-gnueabihf': 1.6.6
-      '@swc/core-linux-arm64-gnu': 1.6.6
-      '@swc/core-linux-arm64-musl': 1.6.6
-      '@swc/core-linux-x64-gnu': 1.6.6
-      '@swc/core-linux-x64-musl': 1.6.6
-      '@swc/core-win32-arm64-msvc': 1.6.6
-      '@swc/core-win32-ia32-msvc': 1.6.6
-      '@swc/core-win32-x64-msvc': 1.6.6
+      '@swc/core-darwin-arm64': 1.7.36
+      '@swc/core-darwin-x64': 1.7.36
+      '@swc/core-linux-arm-gnueabihf': 1.7.36
+      '@swc/core-linux-arm64-gnu': 1.7.36
+      '@swc/core-linux-arm64-musl': 1.7.36
+      '@swc/core-linux-x64-gnu': 1.7.36
+      '@swc/core-linux-x64-musl': 1.7.36
+      '@swc/core-win32-arm64-msvc': 1.7.36
+      '@swc/core-win32-ia32-msvc': 1.7.36
+      '@swc/core-win32-x64-msvc': 1.7.36
 
   '@swc/counter@0.1.3': {}
 
-  '@swc/jest@0.2.36(@swc/core@1.6.6)':
+  '@swc/jest@0.2.36(@swc/core@1.7.36)':
     dependencies:
       '@jest/create-cache-key-function': 29.7.0
-      '@swc/core': 1.6.6
+      '@swc/core': 1.7.36
       '@swc/counter': 0.1.3
       jsonc-parser: 3.2.1
 
-  '@swc/types@0.1.9':
+  '@swc/types@0.1.13':
     dependencies:
       '@swc/counter': 0.1.3
 
@@ -16551,7 +16533,7 @@ snapshots:
       clean-stack: 5.2.0
       indent-string: 5.0.0
 
-  aiscript-vscode@https://codeload.github.com/aiscript-dev/aiscript-vscode/tar.gz/e1e1b27f2f72cd28a473e004b6da0d8fc0bd40d9:
+  aiscript-vscode@git+https://git@github.com:aiscript-dev/aiscript-vscode.git#e1e1b27f2f72cd28a473e004b6da0d8fc0bd40d9:
     dependencies:
       '@aiscript-dev/aiscript-languageserver': https://github.com/aiscript-dev/aiscript-languageserver/releases/download/0.1.6/aiscript-dev-aiscript-languageserver-0.1.6.tgz
       vscode-languageclient: 9.0.1
@@ -23160,7 +23142,7 @@ snapshots:
     dependencies:
       internal-slot: 1.0.7
 
-  storybook-addon-misskey-theme@https://codeload.github.com/misskey-dev/storybook-addon-misskey-theme/tar.gz/cf583db098365b2ccc81a82f63ca9c93bc32b640(@storybook/blocks@8.3.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/components@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/core-events@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/manager-api@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/preview-api@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/theming@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/types@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  storybook-addon-misskey-theme@git+https://git@github.com:misskey-dev/storybook-addon-misskey-theme.git#cf583db098365b2ccc81a82f63ca9c93bc32b640(@storybook/blocks@8.3.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/components@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/core-events@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/manager-api@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/preview-api@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/theming@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(@storybook/types@8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       '@storybook/blocks': 8.3.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3))
       '@storybook/components': 8.3.3(storybook@8.3.3(bufferutil@4.0.7)(utf-8-validate@6.0.3))
