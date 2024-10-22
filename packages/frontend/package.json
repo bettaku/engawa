@@ -46,7 +46,7 @@
 		"chartjs-plugin-gradient": "0.6.1",
 		"chartjs-plugin-zoom": "2.0.1",
 		"cherrypick-js": "workspace:*",
-		"chromatic": "11.10.4",
+		"chromatic": "11.14.0",
 		"compare-versions": "6.1.1",
 		"cropperjs": "2.0.0-rc.2",
 		"date-fns": "2.30.0",
