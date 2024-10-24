@@ -314,7 +314,7 @@ export function getUserMenu(user: Misskey.entities.UserDetailed, router: IRouter
 		icon: 'ti ti-qrcode',
 		text: i18n.ts.getQRCode,
 		action: () => {
-			os.displayQRCode(`https://${user.host ?? host}/@${user.username}`);
+			os.displayQRCode(`https://${user.host ?? host}/follow-me?acct=${Misskey.acct.toString(user)}`);
 		},
 	});
 
