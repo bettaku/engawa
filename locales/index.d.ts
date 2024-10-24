@@ -1208,6 +1208,10 @@ export interface Locale extends ILocale {
      */
     "inputHostName": string;
     /**
+     * ハンドルを入力してください(ex. @example@example.com)
+     */
+    "inputHandle": string;
+    /**
      * 全般
      */
     "general": string;
@@ -4433,6 +4437,10 @@ export interface Locale extends ILocale {
      * この操作を行うには {x} と入力してください
      */
     "typeToConfirm": ParameterizedString<"x">;
+    /**
+     * このアカウントを使用しますか?
+     */
+    "useThisAccountConfirm": string;
     /**
      * アカウント削除
      */

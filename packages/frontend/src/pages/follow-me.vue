@@ -18,7 +18,7 @@ if (acctUri == null) {
 if ($i != null) {
 	const { canceled } = await os.confirm({
 		type: 'question',
-		text: i18n.ts.followRequest,
+		text: i18n.ts.useThisAccountConfirm,
 	});
 
 	if (!canceled) {
@@ -28,7 +28,7 @@ if ($i != null) {
 }
 
 const remoteAccountId = await os.inputText({
-	text: i18n.ts.inputHostName,
+	text: i18n.ts.inputHandle,
 });
 
 if (!remoteAccountId.result) {
