@@ -222,6 +222,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
 
 [[package]]
+name = "basen"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1dbe4bb73fd931c4d1aaf53b35d1286c8a948ad00ec92c8e3c856f15fd027f43"
+
+[[package]]
 name = "bigdecimal"
 version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -409,6 +415,7 @@ checksum = "1462739cb27611015575c0c11df5df7601141071f07518d56fcc1be504cbec97"
 name = "cli"
 version = "0.1.0"
 dependencies = [
+ "basen",
  "chrono",
  "clap",
  "clap_derive",
@@ -417,6 +424,7 @@ dependencies = [
  "num-bigint",
  "once_cell",
  "relax",
+ "rusty_ulid",
  "sea-orm",
  "serde",
  "serde_yml",
@@ -1936,6 +1944,17 @@ dependencies = [
  "ring",
  "rustls-pki-types",
  "untrusted",
+]
+
+[[package]]
+name = "rusty_ulid"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e0719c0520bdfc6f5a02c8bd8b20f9fc8785de57d4e117e144ade9c5f152626"
+dependencies = [
+ "rand",
+ "serde",
+ "time",
 ]
 
 [[package]]
