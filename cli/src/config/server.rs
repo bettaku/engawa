@@ -114,7 +114,7 @@ pub(crate) struct Config {
 
 fn read_config_file() -> ServerConfig {
 	let cwd = env::current_dir().unwrap();
-    let yml = fs::File::open(cwd.join("../.config")).expect("Failed to open config file");
+    let yml = fs::File::open(cwd.join("../.config/default.yml")).expect("Failed to open config file");
     let mut data : ServerConfig = serde_yml::from_reader(yml).expect("Failed to parse config file");
 
     data.url = url::Url::parse(&data.url).expect("Invalid URL Schema").origin().ascii_serialization();
