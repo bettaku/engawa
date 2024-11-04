@@ -85,3 +85,8 @@ vite.config.ts.timestamp-*
 
 # Rust
 /cli/target
+
+
+# Added by cargo
+
+/target
