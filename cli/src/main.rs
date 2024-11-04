@@ -2,9 +2,59 @@ mod config;
 mod db;
 mod util;
 
-fn main() {
-    println!("{}", config::CONFIG.url);
-		println!("{:?}", util::id::get_timestamp_from_aidx("9e112pilk1"));
-		println!("{:?}", util::id::get_timestamp_from_aidx("a0598efdx45b002k"));
-		println!("{:?}", util::id::get_timestamp_from_ulid("01JBS70109K8AWXZX5C9WH248H"));
+use clap::{Args, Subcommand, Parser};
+
+#[derive(Parser)]
+#[command(name = "notectl", version, next_line_help = true, propagate_version = true )]
+#[command(about = "A CLI for managing CherryPick", long_about = None )]
+struct Cli {
+	#[command(subcommand)]
+	command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+	Parse(ParseArgs),
+	Vapid,
+}
+
+#[derive(Args)]
+struct ParseArgs {
+	#[arg(required = true, short = 'i', long = "id-type")]
+	id_type: String,
+
+	#[arg(required = true)]
+	id: String,
+}
+
+#[tokio::main]
+async fn main() {
+    let cli = Cli::parse();
+
+		match &cli.command {
+			Commands::Parse(args) => {
+				match args.id_type.as_str() {
+					"aidx" | "aid" => {
+						println!("Timestamp: {:?}", util::id::get_timestamp_from_aidx(&args.id));
+					}
+					"ulid" => {
+						println!("Timestamp: {:?}", util::id::get_timestamp_from_ulid(&args.id));
+					}
+					_ => {
+						eprintln!("Invalid ID Type: {}", args.id_type);
+					}
+				}
+			}
+			Commands::Vapid => {
+				match util::vapid::gen_vapid_key() {
+					Ok(key) => {
+						println!("Private Key: {}", key.private_key);
+						println!("Public Key: {}", key.public_key);
+					}
+					Err(e) => {
+						eprintln!("Error: {}", e);
+					}
+				}
+			}
+		}
 }
