@@ -30,6 +30,8 @@ pub(crate) struct ServerConfig {
 
     // Meilisearch Configuration
     pub meilisearch: Option<MeilisearchConfig>,
+		// Elasticsearch Configuration for engawa
+		pub elasticsearch: Option<ElasticsearchConfig>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -76,6 +78,21 @@ pub(crate) struct MeilisearchConfig {
     pub ssl: bool,
     pub index: String,
     pub scope: SearchEngineScopeEnum,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ElasticsearchConfig {
+	pub host: String,
+	pub port: u16,
+	pub user: String,
+	pub pass: String,
+	pub ssl: bool,
+	pub index: String,
+	pub reject_unauthorized: bool,
+	pub scope: SearchEngineScopeEnum,
+	pub ping_timeout: u64,
+	pub request_timeout: u64,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
