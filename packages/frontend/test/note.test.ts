@@ -29,7 +29,7 @@ describe('MkMediaImage', () => {
 					comment: null,
 					properties: {},
 					...image,
-				} as DriveFile,
+				} as Misskey.entities.DriveFile,
 			},
 			global: { directives, components },
 		});
@@ -63,15 +63,15 @@ describe('MkMediaImage', () => {
 		assert.ok(!alt);
 	});
 
-	test('Attaching APNG should show a GIF indicator', async () => {
+	test('Attaching APNG should show a APNG indicator', async () => {
 		const mkMediaImage = renderMediaImage({
 			type: 'image/apng',
 		});
-		const [gif, alt] = await Promise.all([
-			mkMediaImage.queryByText('GIF'),
+		const [apng, alt] = await Promise.all([
+			mkMediaImage.queryByText('APNG'),
 			mkMediaImage.queryByText('ALT'),
 		]);
-		assert.ok(gif);
+		assert.ok(apng);
 		assert.ok(!alt);
 	});
 
