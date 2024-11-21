@@ -147,7 +147,7 @@ describe('CheckModeratorsActivityProcessorService', () => {
 
 		systemWebhook1 = crateSystemWebhook({ on: ['inactiveModeratorsWarning'] });
 		systemWebhook2 = crateSystemWebhook({ on: ['inactiveModeratorsWarning', 'inactiveModeratorsInvitationOnlyChanged'] });
-		systemWebhook3 = crateSystemWebhook({ on: ['inactiveModeratorsWarning', 'inactiveModeratorsDisablePublicNoteChanged'] });
+		systemWebhook3 = crateSystemWebhook({ on: ['inactiveModeratorsWarning', 'inactiveModeratorsInvitationOnlyChanged'] });
 		systemWebhook4 = crateSystemWebhook({ on: ['abuseReport'] });
 
 		emailService.sendEmail.mockReturnValue(Promise.resolve());
