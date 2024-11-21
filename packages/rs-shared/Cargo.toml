@@ -1,0 +1,22 @@
+[package]
+name = "rs-shared"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+async-trait = { workspace = true }
+basen = { workspace = true }
+bb8 ={ workspace = true }
+once_cell = { workspace = true }
+sea-orm = { workspace = true, features = ["sqlx-postgres", "runtime-tokio-rustls", "macros"] }
+serde = { workspace = true, features = ["derive"] }
+serde_derive = { workspace = true }
+serde_yml = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+tracing = { workspace = true }
+redis = { workspace = true, features = ["tokio-rustls-comp", "cluster-async"] }
+rusty_ulid = { workspace = true }
+url = { workspace = true }
+urlencoding = { workspace = true }
+vapid ={ workspace = true }
