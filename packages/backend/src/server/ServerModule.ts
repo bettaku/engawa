@@ -47,6 +47,7 @@ import { ServerStatsChannelService } from './api/stream/channels/server-stats.js
 import { UserListChannelService } from './api/stream/channels/user-list.js';
 import { RoleTimelineChannelService } from './api/stream/channels/role-timeline.js';
 import { SigninWithPasskeyApiService } from './api/SigninWithPasskeyApiService.js';
+import { BubbleTimelineChannelService } from './api/stream/channels/bubble-timeline.js';
 
 @Module({
 	imports: [
@@ -94,6 +95,7 @@ import { SigninWithPasskeyApiService } from './api/SigninWithPasskeyApiService.j
 		UserListChannelService,
 		OpenApiServerService,
 		OAuth2ProviderService,
+		BubbleTimelineChannelService,
 	],
 	exports: [
 		ServerService,

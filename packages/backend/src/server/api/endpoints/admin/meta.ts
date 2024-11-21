@@ -629,6 +629,13 @@ export const meta = {
 				type: 'boolean',
 				optional: false, nullable: false,
 			},
+			bubbleInstances: {
+				type: 'array',
+				optional: false, nullable: false,
+				items: {
+					type: 'string',
+				},
+			},
 		},
 	},
 } as const;
@@ -804,6 +811,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				customSplashText: instance.customSplashText,
 				disableRegistrationWhenInactive: instance.disableRegistrationWhenInactive,
 				disablePublicNoteWhenInactive: instance.disablePublicNoteWhenInactive,
+				bubbleInstances: instance.bubbleInstances,
 			};
 		});
 	}

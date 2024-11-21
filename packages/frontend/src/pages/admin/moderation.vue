@@ -10,9 +10,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<MkSpacer :contentMax="700" :marginMin="16" :marginMax="32">
 			<FormSuspense :p="init">
 				<div class="_gaps_m">
-					<MkSwitch v-model="enableRegistration" @change="onChange_enableRegistration">
-						<template #label>{{ i18n.ts.enableRegistration }}</template>
-						<template v-if="(enableRegistration && disableRegistrationWhenInactive) || disableRegistrationWhenInactive" #caption>{{ i18n.ts._serverSettings.thisSettingWillAutomaticallyOffWhenModeratorsInactive }}</template>
+					<MkSwitch :modelValue="enableRegistration" @update:modelValue="onChange_enableRegistration">
+						<template #label>{{ i18n.ts._serverSettings.openRegistration }}</template>
+						<template #caption>
+							<div><i class="ti ti-alert-triangle" style="color: var(--MI_THEME-warn);"></i> {{ i18n.ts._serverSettings.openRegistrationWarning }}</div>
+							<div v-if="(enableRegistration && disableRegistrationWhenInactive) || disableRegistrationWhenInactive" style="margin-top: 8px;">{{ i18n.ts._serverSettings.thisSettingWillAutomaticallyOffWhenModeratorsInactive }}</div>
+						</template>
 					</MkSwitch>
 
 					<MkSwitch v-model="disableRegistrationWhenInactive" :disabled="!enableRegistration" @change="onChange_disableRegistrationWhenInactive">
@@ -136,6 +139,18 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<MkButton primary @click="save_blockedHosts">{{ i18n.ts.save }}</MkButton>
 						</div>
 					</MkFolder>
+
+					<MkFolder>
+						<template #icon><i class="ti ti-droplet"></i></template>
+						<template #label>{{ i18n.ts.bubbleTimeline }}</template>
+
+						<div class="_gaps">
+							<MkTextarea v-if="bubbleTimelineEnabled" v-model="bubbleTimeline">
+								<template #caption>{{ i18n.ts.bubbleInstancesDescription }}</template>
+							</MkTextarea>
+							<MkButton primary @click="save_bubbleTimeline">{{ i18n.ts.save }}</MkButton>
+						</div>
+					</MkFolder>
 				</div>
 			</FormSuspense>
 		</MkSpacer>
@@ -172,6 +187,8 @@ const blockedHosts = ref<string>('');
 const silencedHosts = ref<string>('');
 const mediaSilencedHosts = ref<string>('');
 const trustedLinkUrlPatterns = ref<string>('');
+const bubbleTimelineEnabled = ref<boolean>(false);
+const bubbleTimeline = ref<string>('');
 
 async function init() {
 	const meta = await misskeyApi('admin/meta');
@@ -188,9 +205,21 @@ async function init() {
 	silencedHosts.value = meta.silencedHosts?.join('\n') ?? '';
 	mediaSilencedHosts.value = meta.mediaSilencedHosts.join('\n');
 	trustedLinkUrlPatterns.value = meta.trustedLinkUrlPatterns.join('\n');
+	bubbleTimelineEnabled.value = meta.policies.btlAvailable;
+	bubbleTimeline.value = meta.bubbleInstances.join('\n');
 }
 
-function onChange_enableRegistration(value: boolean) {
+async function onChange_enableRegistration(value: boolean) {
+	if (value) {
+		const { canceled } = await os.confirm({
+			type: 'warning',
+			text: i18n.ts.acknowledgeNotesAndEnable,
+		});
+		if (canceled) return;
+	}
+
+	enableRegistration.value = value;
+
 	os.apiWithDialog('admin/update-meta', {
 		disableRegistration: !value,
 	}).then(() => {
@@ -289,6 +318,14 @@ function save_silencedHosts() {
 function save_mediaSilencedHosts() {
 	os.apiWithDialog('admin/update-meta', {
 		mediaSilencedHosts: mediaSilencedHosts.value.split('\n') || [],
+	}).then(() => {
+		fetchInstance(true);
+	});
+}
+
+function save_bubbleTimeline() {
+	os.apiWithDialog('admin/update-meta', {
+		bubbleInstances: bubbleTimeline.value.split('\n') || [],
 	}).then(() => {
 		fetchInstance(true);
 	});
