@@ -126,7 +126,7 @@ export class SearchService {
 					maxTotalHits: 10000,
 				},
 			});
-		}  else if (elasticsearch) {
+		} else if (elasticsearch) {
 			const NoteIndex = `${config.elasticsearch!.index}---notes`;
 			const UserIndex = `${config.elasticsearch!.index}---users`;
 			this.elasticsearchNoteIndex = NoteIndex;
@@ -145,10 +145,10 @@ export class SearchService {
 					})?.catch((e) => {
 						console.error(e);
 					})
-				]
+				];
 			}).catch((e) => {
 				console.error(e);
-			})
+			});
 
 			this.elasticsearch?.indices.exists({
 				index: UserIndex,
@@ -161,8 +161,8 @@ export class SearchService {
 						},
 						settings: userSettings.settings,
 					})
-				]
-			})
+				];
+			});
 		}
 
 		if (config.meilisearch?.scope) {
@@ -271,7 +271,7 @@ export class SearchService {
 				index: this.elasticsearchUserIndex as string,
 				id: user.id,
 				document: document,
-			})
+			});
 		}
 	}
 
@@ -292,7 +292,7 @@ export class SearchService {
 			notes.forEach(note => {
 				this.indexNote(note);
 				latestId = note.id;
-			})
+			});
 		}
 	}
 
@@ -462,7 +462,7 @@ export class SearchService {
 			if (opts.userId) esFilter.bool.must.push({ term: { userId: opts.userId } });
 			if (opts.host) {
 				if (opts.host === '.') {
-					esFilter.bool.must_not.push({ exists: { field:  'userHost'  } });
+					esFilter.bool.must_not.push({ exists: { field: 'userHost' } });
 				} else if (opts.host) {
 					esFilter.bool.must.push({ term: { userHost: opts.host } });
 				}
@@ -498,25 +498,25 @@ export class SearchService {
 					esFilter.bool.must.push({
 						bool: {
 							should: shouldQueries.flatMap(q => [
-								{ wildcard: { 'text': `*${q}*` }},
-								{ simple_query_string: { fields: ['text'], 'query': q, default_operator: 'and' }},
+								{ wildcard: { 'text': `*${q}*` } },
+								{ simple_query_string: { fields: ['text'], 'query': q, default_operator: 'and' } },
 							]),
 							minimum_should_match: 1,
 						},
 					});
-					esFilter.bool.must_not.push({ terms: { fileIds: sensitiveFileIds.map(f => f.id)} });
+					esFilter.bool.must_not.push({ terms: { fileIds: sensitiveFileIds.map(f => f.id) } });
 				} else {
 					esFilter.bool.must.push({
 						bool: {
 							should: shouldQueries.flatMap(q => [
-								{ wildcard: { 'text': `*${q}*` }},
-								{ simple_query_string: { fields: ['text'], 'query': q, default_operator: 'and' }},
-								{ wildcard: { 'cw': `*${q}*` }},
-								{ simple_query_string: { fields: ['cw'], 'query': q, default_operator: 'and' }},
+								{ wildcard: { 'text': `*${q}*` } },
+								{ simple_query_string: { fields: ['text'], 'query': q, default_operator: 'and' } },
+								{ wildcard: { 'cw': `*${q}*` } },
+								{ simple_query_string: { fields: ['cw'], 'query': q, default_operator: 'and' } },
 							]),
 							minimum_should_match: 1,
 						}
-					})
+					});
 				}
 			};
 
@@ -529,24 +529,24 @@ export class SearchService {
 			esFilter.bool.must.push({
 				bool: {
 					should: [
-						{ term: { searchableBy: 'public' }},
+						{ term: { searchableBy: 'public' } },
 						{
 							bool: {
 								must: [
-									{ term: { searchableBy: 'limited' }},
-									{ term: { userId: me?.id }},
+									{ term: { searchableBy: 'limited' } },
+									{ term: { userId: me?.id } },
 								],
 							}
 						},
 						{
 							bool: {
 								must: [
-									{ term: { searchableBy: 'followers' }},
+									{ term: { searchableBy: 'followers' } },
 									{
 										bool: {
 											should: [
-												{ term: { userId: me?.id }},
-												{ terms: { userId: followerIds.map(f => f.follower?.id ) }},
+												{ term: { userId: me?.id } },
+												{ terms: { userId: followerIds.map(f => f.follower?.id ) } },
 											],
 											minimum_should_match: 1,
 										}
@@ -567,7 +567,7 @@ export class SearchService {
 				size: pagination.limit,
 			});
 
-			const noteIds = res.hits.hits.map((hit: any) => hit._id)
+			const noteIds = res.hits.hits.map((hit: any) => hit._id);
 
 			const [
 				userIdsWhoBlockingMe,
@@ -601,8 +601,8 @@ export class SearchService {
 						.orWhere(new Brackets(qb2 => {
 							qb2.where('note.searchableBy = :followers AND (note."userId" IN (SELECT "followeeId" FROM following WHERE following."followerId" = :meId) OR note."userId" = :meId)', { followers: 'followers', meId: me?.id })
 								.orWhere('note.searchableBy = :limited AND note."userId" = :meId', { limited: 'limited', meId: me?.id })
-								.orWhere('note.searchableBy = :reacted AND (note."userId" IN (SELECT "userId" FROM note_reaction) OR note."userId" = :meId)', { reacted: 'reacted', meId: me?.id })
-						}))
+								.orWhere('note.searchableBy = :reacted AND (note."userId" IN (SELECT "userId" FROM note_reaction) OR note."userId" = :meId)', { reacted: 'reacted', meId: me?.id });
+						}));
 				}))
 				.leftJoinAndSelect('note.reply', 'reply')
 				.leftJoinAndSelect('note.renote', 'renote')
@@ -619,9 +619,9 @@ export class SearchService {
 
 			if (opts.fileOption) {
 				if (opts.fileOption === 'fileOnly') {
-					query.andWhere('note."fileIds" != \'{}\' ')
+					query.andWhere('note."fileIds" != \'{}\' ');
 				} else if (opts.fileOption === 'noFile') {
-					query.andWhere('note."fileIds" = \'{}\'')
+					query.andWhere('note."fileIds" = \'{}\'');
 				}
 			}
 
@@ -629,7 +629,7 @@ export class SearchService {
 				query.andWhere('note."cw" IS NULL');
 				query.andWhere('0 = (SELECT COUNT(*) FROM drive_file df WHERE df.id = ANY(note."fileIds") AND df."isSensitive" = true)');
 			} else {
-				query.orWhere('note."cw" ILIKE :q', { q: `%${ sqlLikeEscape(q) }%`})
+				query.orWhere('note."cw" ILIKE :q', { q: `%${ sqlLikeEscape(q) }%` });
 			}
 
 			if (opts.excludeBot) {

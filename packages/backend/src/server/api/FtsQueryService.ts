@@ -42,7 +42,7 @@ export class FtsQueryService {
 			if (term.startsWith('-')) {
 				query.andWhere("note.text NOT ILIKE :q", { q: `%${ sqlLikeEscape(term.substring(1)) }%` });
 			} else {
-				query.andWhere("note.text ILIKE :q", { q: `%${ sqlLikeEscape(term) }%`})
+				query.andWhere("note.text ILIKE :q", { q: `%${ sqlLikeEscape(term) }%` });
 			}
 		}
 	}

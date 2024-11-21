@@ -243,7 +243,7 @@ export class ApNoteService {
 
 		let isMessaging = note._misskey_talk && visibility === 'specified';
 
-		let searchableActivity = toArray(note.searchableBy);
+		const searchableActivity = toArray(note.searchableBy);
 		let searchable: string[] = [];
 		if (searchableActivity.includes('https://www.w3.org/ns/activitystreams#Public')) {
 			searchable = ['public'];

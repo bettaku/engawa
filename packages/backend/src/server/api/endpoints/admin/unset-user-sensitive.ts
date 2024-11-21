@@ -66,6 +66,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 				userUsername: user.username,
 				userHost: user.host,
 			});
-		})
+		});
 	}
 }
