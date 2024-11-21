@@ -126,6 +126,8 @@ export interface NoteEventTypes {
 	updated: {
 		cw: string | null;
 		text: string | null;
+		disableRightClick: boolean | null;
+		deleteAt: Date | null;
 	};
 	reacted: {
 		reaction: string;

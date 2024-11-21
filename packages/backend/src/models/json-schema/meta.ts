@@ -119,6 +119,10 @@ export const packedMetaLiteSchema = {
 			type: 'string',
 			optional: false, nullable: true,
 		},
+		enableTestcaptcha: {
+			type: 'boolean',
+			optional: false, nullable: false,
+		},
 		swPublickey: {
 			type: 'string',
 			optional: false, nullable: true,
@@ -141,6 +145,10 @@ export const packedMetaLiteSchema = {
 			optional: false, nullable: true,
 		},
 		notFoundImageUrl: {
+			type: 'string',
+			optional: false, nullable: true,
+		},
+		youBlockedImageUrl: {
 			type: 'string',
 			optional: false, nullable: true,
 		},
@@ -275,6 +283,14 @@ export const packedMetaLiteSchema = {
 		},
 		maxFileSize: {
 			type: 'number',
+			optional: false, nullable: false,
+		},
+		disableRegistrationWhenInactive: {
+			type: 'boolean',
+			optional: false, nullable: false,
+		},
+		disablePublicNoteWhenInactive: {
+			type: 'boolean',
 			optional: false, nullable: false,
 		},
 	},

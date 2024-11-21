@@ -33,6 +33,8 @@ export interface IObject {
 	tag?: IObject | IObject[];
 	sensitive?: boolean;
 	searchableBy?: string[] | string;
+	disableRightClick?: boolean;
+	deleteAt?: Date;
 }
 
 /**

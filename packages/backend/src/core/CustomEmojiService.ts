@@ -19,6 +19,7 @@ import { UtilityService } from '@/core/UtilityService.js';
 import { query } from '@/misc/prelude/url.js';
 import type { Serialized } from '@/types.js';
 import { ModerationLogService } from '@/core/ModerationLogService.js';
+import { DriveService } from '@/core/DriveService.js';
 
 const parseEmojiStrRegexp = /^([-\w]+)(?:@([\w.-]+))?$/;
 
@@ -39,6 +40,7 @@ export class CustomEmojiService implements OnApplicationShutdown {
 		private emojiEntityService: EmojiEntityService,
 		private moderationLogService: ModerationLogService,
 		private globalEventService: GlobalEventService,
+		private driveService: DriveService,
 	) {
 		this.emojisCache = new MemoryKVCache<MiEmoji | null>(1000 * 60 * 60 * 12); // 12h
 
@@ -68,6 +70,15 @@ export class CustomEmojiService implements OnApplicationShutdown {
 		localOnly: boolean;
 		roleIdsThatCanBeUsedThisEmojiAsReaction: MiRole['id'][];
 	}, moderator?: MiUser): Promise<MiEmoji> {
+		// システムユーザーとして再アップロード
+		if (!data.driveFile.user?.isRoot) {
+			data.driveFile = await this.driveService.uploadFromUrl({
+				url: data.driveFile.url,
+				user: null,
+				force: true,
+			});
+		}
+
 		const emoji = await this.emojisRepository.insertOne({
 			id: this.idService.gen(),
 			updatedAt: new Date(),
@@ -106,19 +117,33 @@ export class CustomEmojiService implements OnApplicationShutdown {
 	}
 
 	@bindThis
-	public async update(id: MiEmoji['id'], data: {
+	public async update(data: (
+		{ id: MiEmoji['id'], name?: string; } | { name: string; id?: MiEmoji['id'], }
+	) & {
 		driveFile?: MiDriveFile;
-		name?: string;
 		category?: string | null;
 		aliases?: string[];
 		license?: string | null;
 		isSensitive?: boolean;
 		localOnly?: boolean;
 		roleIdsThatCanBeUsedThisEmojiAsReaction?: MiRole['id'][];
-	}, moderator?: MiUser): Promise<void> {
-		const emoji = await this.emojisRepository.findOneByOrFail({ id: id });
-		const sameNameEmoji = await this.emojisRepository.findOneBy({ name: data.name, host: IsNull() });
-		if (sameNameEmoji != null && sameNameEmoji.id !== id) throw new Error('name already exists');
+	}, moderator?: MiUser): Promise<
+		null
+		| 'NO_SUCH_EMOJI'
+		| 'SAME_NAME_EMOJI_EXISTS'
+	> {
+		const emoji = data.id
+			? await this.getEmojiById(data.id)
+			: await this.getEmojiByName(data.name!);
+		if (emoji === null) return 'NO_SUCH_EMOJI';
+		const id = emoji.id;
+
+		// IDと絵文字名が両方指定されている場合は絵文字名の変更を行うため重複チェックが必要
+		const doNameUpdate = data.id && data.name && (data.name !== emoji.name);
+		if (doNameUpdate) {
+			const isDuplicate = await this.checkDuplicate(data.name!);
+			if (isDuplicate) return 'SAME_NAME_EMOJI_EXISTS';
+		}
 
 		await this.emojisRepository.update(emoji.id, {
 			updatedAt: new Date(),
@@ -138,7 +163,7 @@ export class CustomEmojiService implements OnApplicationShutdown {
 
 		const packed = await this.emojiEntityService.packDetailed(emoji.id);
 
-		if (emoji.name === data.name) {
+		if (!doNameUpdate) {
 			this.globalEventService.publishBroadcastStream('emojiUpdated', {
 				emojis: [packed],
 			});
@@ -160,6 +185,7 @@ export class CustomEmojiService implements OnApplicationShutdown {
 				after: updated,
 			});
 		}
+		return null;
 	}
 
 	@bindThis

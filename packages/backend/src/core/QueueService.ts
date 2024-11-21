@@ -34,6 +34,7 @@ import type {
 	UserWebhookDeliverQueue,
 	SystemWebhookDeliverQueue,
 	ScheduledNoteDeleteQueue,
+	ScheduleNotePostQueue,
 } from './QueueModule.js';
 import type httpSignature from '@peertube/http-signature';
 import type * as Bull from 'bullmq';
@@ -46,7 +47,6 @@ export class QueueService {
 
 		@Inject('queue:system') public systemQueue: SystemQueue,
 		@Inject('queue:endedPollNotification') public endedPollNotificationQueue: EndedPollNotificationQueue,
-		@Inject('queue:scheduledNoteDelete') public scheduledNoteDeleteQueue: ScheduledNoteDeleteQueue,
 		@Inject('queue:deliver') public deliverQueue: DeliverQueue,
 		@Inject('queue:inbox') public inboxQueue: InboxQueue,
 		@Inject('queue:db') public dbQueue: DbQueue,
@@ -54,6 +54,8 @@ export class QueueService {
 		@Inject('queue:objectStorage') public objectStorageQueue: ObjectStorageQueue,
 		@Inject('queue:userWebhookDeliver') public userWebhookDeliverQueue: UserWebhookDeliverQueue,
 		@Inject('queue:systemWebhookDeliver') public systemWebhookDeliverQueue: SystemWebhookDeliverQueue,
+		@Inject('queue:scheduledNoteDelete') public scheduledNoteDeleteQueue: ScheduledNoteDeleteQueue,
+		@Inject('queue:scheduleNotePost') public ScheduleNotePostQueue: ScheduleNotePostQueue,
 	) {
 		this.systemQueue.add('tickCharts', {
 		}, {
@@ -94,6 +96,13 @@ export class QueueService {
 		this.systemQueue.add('bakeBufferedReactions', {
 		}, {
 			repeat: { pattern: '0 0 * * *' },
+			removeOnComplete: true,
+		});
+
+		this.systemQueue.add('checkModeratorsActivity', {
+		}, {
+			// 毎時30分に起動
+			repeat: { pattern: '30 * * * *' },
 			removeOnComplete: true,
 		});
 	}

@@ -71,7 +71,13 @@ jobs:
         cache: 'pnpm'
     - run: corepack enable
     - run: pnpm i --frozen-lockfile
-    - run: pnpm --filter ${{ matrix.workspace }} run lint
+    - name: Restore eslint cache
+      uses: actions/cache@v4.1.0
+      with:
+        path: ${{ env.eslint-cache-path }}
+        key: eslint-${{ env.eslint-cache-version }}-${{ matrix.workspace }}-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ github.ref_name }}-${{ github.sha }}
+        restore-keys: eslint-${{ env.eslint-cache-version }}-${{ matrix.workspace }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
+    - run: pnpm --filter ${{ matrix.workspace }} run eslint --cache --cache-location ${{ env.eslint-cache-path }} --cache-strategy content
 
   typecheck:
     needs: [pnpm_install]

@@ -14,6 +14,7 @@ import { AbuseReportNotificationService } from '@/core/AbuseReportNotificationSe
 import { SystemWebhookService } from '@/core/SystemWebhookService.js';
 import { UserSearchService } from '@/core/UserSearchService.js';
 import { WebhookTestService } from '@/core/WebhookTestService.js';
+import { FlashService } from '@/core/FlashService.js';
 import { AccountMoveService } from './AccountMoveService.js';
 import { AccountUpdateService } from './AccountUpdateService.js';
 import { AiService } from './AiService.js';
@@ -223,6 +224,7 @@ const $SystemWebhookService: Provider = { provide: 'SystemWebhookService', useEx
 const $WebhookTestService: Provider = { provide: 'WebhookTestService', useExisting: WebhookTestService };
 const $UtilityService: Provider = { provide: 'UtilityService', useExisting: UtilityService };
 const $FileInfoService: Provider = { provide: 'FileInfoService', useExisting: FileInfoService };
+const $FlashService: Provider = { provide: 'FlashService', useExisting: FlashService };
 const $SearchService: Provider = { provide: 'SearchService', useExisting: SearchService };
 const $ClipService: Provider = { provide: 'ClipService', useExisting: ClipService };
 const $FeaturedService: Provider = { provide: 'FeaturedService', useExisting: FeaturedService };
@@ -377,6 +379,7 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		WebhookTestService,
 		UtilityService,
 		FileInfoService,
+		FlashService,
 		SearchService,
 		ClipService,
 		FeaturedService,
@@ -527,6 +530,7 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		$WebhookTestService,
 		$UtilityService,
 		$FileInfoService,
+		$FlashService,
 		$SearchService,
 		$ClipService,
 		$FeaturedService,
@@ -678,6 +682,7 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		WebhookTestService,
 		UtilityService,
 		FileInfoService,
+		FlashService,
 		SearchService,
 		ClipService,
 		FeaturedService,

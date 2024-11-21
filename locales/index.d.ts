@@ -14,6 +14,46 @@ export interface Locale extends ILocale {
      */
     "_lang_": string;
     /**
+     * いいねボタンで使うリアクションを選択
+     */
+    "selectReaction": string;
+    /**
+     * モデレーターが一定期間非アクティブになったとき、新規登録を無効化
+     */
+    "disableRegistrationWhenInactive": string;
+    /**
+     * モデレーターが一定期間非アクティブになったとき、「パブリック投稿の許可」を無効化
+     */
+    "disablePublicNoteWhenInactive": string;
+    /**
+     * ブロックされています
+     */
+    "youBlocked": string;
+    /**
+     * {user}さんのフォローやポストの表示はできません。
+     */
+    "youBlockedDescription": ParameterizedString<"user">;
+    /**
+     * 予約投稿
+     */
+    "schedulePost": string;
+    /**
+     * 予約投稿一覧
+     */
+    "schedulePostList": string;
+    /**
+     * 一定時間が経過した後に接続したときに歓迎メッセージを表示
+     */
+    "welcomeBackToast": string;
+    /**
+     * 入力された文字数が多すぎます
+     */
+    "invalidTextLengthError": string;
+    /**
+     * 文字数が{limitValue}文字に制限されています。現在入力された文字数は{value}文字です。
+     */
+    "invalidTextLengthDescription": ParameterizedString<"limitValue" | "value">;
+    /**
      * 返信を自動でもっと見る
      */
     "autoLoadMoreReplies": string;
@@ -436,6 +476,20 @@ export interface Locale extends ILocale {
      */
     "password": string;
     /**
+     * 初期設定開始用パスワード
+     */
+    "initialPasswordForSetup": string;
+    /**
+     * 初期設定開始用のパスワードが違います。
+     */
+    "initialPasswordIsIncorrect": string;
+    /**
+     * CherryPickを自分でインストールした場合は、設定ファイルに入力したパスワードを使用してください。
+     * CherryPickのホスティングサービスなどを使用している場合は、提供されたパスワードを使用してください。
+     * パスワードを設定していない場合は、空欄にしたまま続行してください。
+     */
+    "initialPasswordForSetupDescription": string;
+    /**
      * パスワードを忘れた
      */
     "forgotPassword": string;
@@ -699,6 +753,10 @@ export interface Locale extends ILocale {
      * あなた宛て
      */
     "mentions": string;
+    /**
+     * 新規投稿
+     */
+    "newNotes": string;
     /**
      * ダイレクト投稿
      */
@@ -2285,6 +2343,10 @@ export interface Locale extends ILocale {
      */
     "moderationNote": string;
     /**
+     * モデレーター間でだけ共有されるメモを記入することができます。
+     */
+    "moderationNoteDescription": string;
+    /**
      * モデレーションノートを追加する
      */
     "addModerationNote": string;
@@ -2609,19 +2671,19 @@ export interface Locale extends ILocale {
      */
     "signinHistory": string;
     /**
-     * 高度なCFMを有効にする
+     * 高度なMFCを有効にする
      */
     "enableAdvancedMfm": string;
     /**
-     * 有効にすると、動きのあるCFMのようなさまざまなCFM機能が使用できます。
+     * 有効にすると、動きのあるMFCのようなさまざまなMFC機能が使用できます。
      */
     "enableAdvancedMfmDescription": string;
     /**
-     * 動きのあるCFMを有効にする
+     * 動きのあるMFCを有効にする
      */
     "enableAnimatedMfm": string;
     /**
-     * 有効にすると、CFM文法または絵文字を使用するテキストが動きます。
+     * 有効にすると、MFC文法または絵文字を使用するテキストが動きます。
      */
     "enableAnimatedMfmDescription": string;
     /**
@@ -3425,21 +3487,9 @@ export interface Locale extends ILocale {
      */
     "reporterOrigin": string;
     /**
-     * リモートサーバーに通報を転送する
-     */
-    "forwardReport": string;
-    /**
-     * リモートサーバーからはあなたの情報は見れず、匿名のシステムアカウントとして表示されます。
-     */
-    "forwardReportIsAnonymous": string;
-    /**
      * 送信
      */
     "send": string;
-    /**
-     * 対応済みにする
-     */
-    "abuseMarkAsResolved": string;
     /**
      * 新しいタブで開く
      */
@@ -4258,6 +4308,10 @@ export interface Locale extends ILocale {
      */
     "incorrectPassword": string;
     /**
+     * ワンタイムパスワードが間違っているか、期限切れになっています。
+     */
+    "incorrectTotp": string;
+    /**
      * 「{choice}」に投票しますか？
      */
     "voteConfirm": ParameterizedString<"choice">;
@@ -4774,7 +4828,7 @@ export interface Locale extends ILocale {
      */
     "collapseRenotesDescription": string;
     /**
-     * 特定のCFM構文を含むノートを省略して表示
+     * 特定のMFC構文を含むノートを省略して表示
      */
     "collapseDefault": string;
     /**
@@ -4929,6 +4983,10 @@ export interface Locale extends ILocale {
      * リモートサーバーのチャートを生成
      */
     "enableChartsForFederatedInstances": string;
+    /**
+     * リモートサーバーの情報を取得
+     */
+    "enableStatsForFederatedInstances": string;
     /**
      * ノートのアクションにクリップを追加
      */
@@ -5566,7 +5624,7 @@ export interface Locale extends ILocale {
      */
     "addMfmFunction": string;
     /**
-     * 高度なCFMのピッカーを表示する
+     * 高度なMFCのピッカーを表示する
      */
     "enableQuickAddMfmFunction": string;
     /**
@@ -5754,6 +5812,30 @@ export interface Locale extends ILocale {
      */
     "messageToFollower": string;
     /**
+     * 対象
+     */
+    "target": string;
+    /**
+     * CAPTCHAのテストを目的とした機能です。<strong>本番環境で使用しないでください。</strong>
+     */
+    "testCaptchaWarning": string;
+    /**
+     * 禁止ワード（ユーザーの名前）
+     */
+    "prohibitedWordsForNameOfUser": string;
+    /**
+     * このリストに含まれる文字列がユーザーの名前に含まれる場合、ユーザーの名前の変更を拒否します。モデレーター権限を持つユーザーはこの制限の影響を受けません。
+     */
+    "prohibitedWordsForNameOfUserDescription": string;
+    /**
+     * 変更しようとした名前に禁止された文字列が含まれています
+     */
+    "yourNameContainsProhibitedWords": string;
+    /**
+     * 名前に禁止されている文字列が含まれています。この名前を使用したい場合は、サーバー管理者にお問い合わせください。
+     */
+    "yourNameContainsProhibitedWordsDescription": string;
+    /**
      * 未読の通知の数を表示する
      */
     "showUnreadNotificationsCount": string;
@@ -5848,6 +5930,33 @@ export interface Locale extends ILocale {
          * ダイレクトメッセージ
          */
         "direct": string;
+    };
+    "_abuseUserReport": {
+        /**
+         * 転送
+         */
+        "forward": string;
+        /**
+         * 匿名のシステムアカウントとして、リモートサーバーに通報を転送します。
+         */
+        "forwardDescription": string;
+        /**
+         * 解決
+         */
+        "resolve": string;
+        /**
+         * 是認
+         */
+        "accept": string;
+        /**
+         * 否認
+         */
+        "reject": string;
+        /**
+         * 内容が正当である通報に対応した場合は「是認」を選択し、肯定的にケースが解決されたことをマークします。
+         * 内容が正当でない通報の場合は「否認」を選択し、否定的にケースが解決されたことをマークします。
+         */
+        "resolveTutorial": string;
     };
     "_delivery": {
         /**
@@ -6220,7 +6329,7 @@ export interface Locale extends ILocale {
          */
         "blurEffectsSetting": string;
         /**
-         * CFMとアニメーション画像設定
+         * MFCとアニメーション画像設定
          */
         "mfmAndAnimatedImagesSetting": string;
         /**
@@ -6683,6 +6792,10 @@ export interface Locale extends ILocale {
          * サーバー運営者へのお問い合わせフォームのURLや、運営者の連絡先等が記載されたWebページのURLを指定します。
          */
         "inquiryUrlDescription": string;
+        /**
+         * 一定期間モデレーターのアクティビティが検出されなかった場合、スパム防止のためこの設定は自動でオフになります。
+         */
+        "thisSettingWillAutomaticallyOffWhenModeratorsInactive": string;
         /**
          * 検索エンジンのインデックス
          */
@@ -7859,6 +7972,10 @@ export interface Locale extends ILocale {
              */
             "canEditNote": string;
             /**
+             * 予約投稿の最大数
+             */
+            "scheduleNoteMax": string;
+            /**
              * ノート内の最大メンション数
              */
             "mentionMax": string;
@@ -8486,13 +8603,13 @@ export interface Locale extends ILocale {
          */
         "force": string;
     };
-    "_cfm": {
+    "_mfc": {
         /**
-         * CFMチートシート
+         * MFCチートシート
          */
         "cheatSheet": string;
         /**
-         * CFMは、CherryPick内の様々な場所で使用できる専用のマークアップ言語です。ここでは、CFMで使用可能な構文一覧が確認できます。
+         * MFCは、CherryPick内の様々な場所で使用できる専用のマークアップ言語です。ここでは、MFCで使用可能な構文一覧が確認できます。
          */
         "intro": string;
         /**
@@ -9183,10 +9300,6 @@ export interface Locale extends ILocale {
              */
             "inputBorder": string;
             /**
-             * リスト項目の背景 (ホバー)
-             */
-            "listItemHoverBg": string;
-            /**
              * ドライブフォルダーの背景
              */
             "driveFolderBg": string;
@@ -9541,6 +9654,14 @@ export interface Locale extends ILocale {
          * ノートを作成・削除する
          */
         "write:notes": string;
+        /**
+         * 予約投稿を見る
+         */
+        "read:notes-schedule": string;
+        /**
+         * 予約投稿を作成・削除する
+         */
+        "write:notes-schedule": string;
         /**
          * 通知を見る
          */
@@ -10848,6 +10969,10 @@ export interface Locale extends ILocale {
          */
         "renotedBySomeUsers": ParameterizedString<"n">;
         /**
+         * {n}件の新しい投稿があります
+         */
+        "notedBySomeUsers": ParameterizedString<"n">;
+        /**
          * {n}人にフォローされました
          */
         "followedBySomeUsers": ParameterizedString<"n">;
@@ -10859,6 +10984,15 @@ export interface Locale extends ILocale {
          * {x}のエクスポートが完了しました
          */
         "exportOfXCompleted": ParameterizedString<"x">;
+        /**
+         * ログインがありました
+         */
+        "login": string;
+        /**
+         * {ip}でログインされました。
+         * 承認されていない機器であれば、セキュリティのために「{text}」を通じてすべての機器でログアウトを行ってください。
+         */
+        "loginDescription": ParameterizedString<"ip" | "text">;
         "_types": {
             /**
              * すべて
@@ -10920,6 +11054,10 @@ export interface Locale extends ILocale {
              * エクスポートが完了した
              */
             "exportCompleted": string;
+            /**
+             * ログイン
+             */
+            "login": string;
             /**
              * 通知のテスト
              */
@@ -11166,6 +11304,18 @@ export interface Locale extends ILocale {
              * ユーザーが作成されたとき
              */
             "userCreated": string;
+            /**
+             * モデレーターが一定期間非アクティブになったとき
+             */
+            "inactiveModeratorsWarning": string;
+            /**
+             * モデレーターが一定期間非アクティブだったため、システムにより招待制へと変更されたとき
+             */
+            "inactiveModeratorsInvitationOnlyChanged": string;
+            /**
+             * モデレーターが一定期間非アクティブだったため、システムによりパブリック投稿へと変更されたとき
+             */
+            "inactiveModeratorsDisablePublicNoteChanged": string;
         };
         /**
          * Webhookを削除しますか？
@@ -11337,6 +11487,14 @@ export interface Locale extends ILocale {
          * 通報を解決
          */
         "resolveAbuseReport": string;
+        /**
+         * 通報を転送
+         */
+        "forwardAbuseReport": string;
+        /**
+         * 通報のモデレーションノート更新
+         */
+        "updateAbuseReportNote": string;
         /**
          * 招待コードを作成
          */
@@ -11621,7 +11779,7 @@ export interface Locale extends ILocale {
              */
             "title": string;
             /**
-             * CFMなどでコードハイライト記法が使われている場合、タップするまで読み込まれなくなります。コードハイライトではハイライトする言語ごとにその定義ファイルを読み込む必要がありますが、それらが自動で読み込まれなくなるため、通信量の削減が見込めます。
+             * MFCなどでコードハイライト記法が使われている場合、タップするまで読み込まれなくなります。コードハイライトではハイライトする言語ごとにその定義ファイルを読み込む必要がありますが、それらが自動で読み込まれなくなるため、通信量の削減が見込めます。
              */
             "description": string;
         };

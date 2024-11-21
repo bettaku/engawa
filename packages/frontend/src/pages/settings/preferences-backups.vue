@@ -128,6 +128,11 @@ const defaultStoreSaveKeys: (keyof typeof defaultStore['state'])[] = [
 	'newNoteReceivedNotificationBehavior',
 	'requireRefreshBehavior',
 	'bannerDisplay',
+	'autoLoadMoreReplies',
+	'autoLoadMoreConversation',
+	'useAutoTranslate',
+	'welcomeBackToast',
+	'disableNyaize',
 	'hideAvatarsInNote',
 	'showTranslateButtonInNote',
 	'enableAbsoluteTime',
@@ -181,6 +186,7 @@ const defaultStoreSaveKeys: (keyof typeof defaultStore['state'])[] = [
 	'showDoReactionButtonInNoteFooter',
 	'showQuoteButtonInNoteFooter',
 	'showMoreButtonInNoteFooter',
+	'selectReaction',
 	// #endregion CherryPick
 ];
 const coldDeviceStorageSaveKeys: (keyof typeof ColdDeviceStorage.default)[] = [
@@ -520,7 +526,7 @@ definePageMetadata(() => ({
 <style lang="scss" module>
 .buttons {
 	display: flex;
-	gap: var(--margin);
+	gap: var(--MI-margin);
 	flex-wrap: wrap;
 }
 

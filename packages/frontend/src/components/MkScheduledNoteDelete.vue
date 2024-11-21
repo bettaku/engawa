@@ -33,7 +33,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import MkInput from './MkInput.vue';
 import MkSelect from './MkSelect.vue';
 import { formatDateTimeString } from '@/scripts/format-time-string.js';
@@ -48,6 +48,7 @@ export type DeleteScheduleEditorModelValue = {
 const props = defineProps<{
 	modelValue: DeleteScheduleEditorModelValue;
 }>();
+
 const emit = defineEmits<{
 	(ev: 'update:modelValue', v: DeleteScheduleEditorModelValue): void;
 }>();
@@ -70,22 +71,21 @@ if (props.modelValue.deleteAt) {
 
 function get(): DeleteScheduleEditorModelValue {
 	const calcAt = () => {
-		return new Date(`${atDate.value} ${atTime.value}`).getTime();
+		return new Date(`${ atDate.value } ${ atTime.value }`).getTime();
 	};
 
 	const calcAfter = () => {
 		let base = parseInt(after.value.toString());
 		switch (unit.value) {
-			case 'day':
-				return base *= 24;
-			case 'hour':
-				return base *= 60;
-			case 'minute':
-				return base *= 60;
-			case 'second':
-				return base *= 1000;
-			default:
-				return null;
+			// @ts-expect-error fallthrough
+			case 'day': base *= 24;
+			// @ts-expect-error fallthrough
+			case 'hour': base *= 60;
+			// @ts-expect-error fallthrough
+			case 'minute': base *= 60;
+			// eslint-disable-next-line no-fallthrough
+			case 'second': return base *= 1000;
+			default: return null;
 		}
 	};
 
@@ -95,8 +95,18 @@ function get(): DeleteScheduleEditorModelValue {
 	};
 }
 
-watch([expiration, atDate, atTime, after, unit], () => emit('update:modelValue', get()), {
+watch([
+	expiration,
+	atDate,
+	atTime,
+	after,
+	unit,
+], () => emit('update:modelValue', get()), {
 	deep: true,
+});
+
+onMounted(() => {
+	emit('update:modelValue', get());
 });
 </script>
 
@@ -133,6 +143,7 @@ watch([expiration, atDate, atTime, after, unit], () => emit('update:modelValue',
 
 	> section {
 		margin: 16px 0 0 0;
+
 		> div {
 			margin: 0 8px;
 			display: flex;

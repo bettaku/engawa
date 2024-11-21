@@ -5,6 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <template>
 <div class="zmdxowus">
+	<span>{{ i18n.ts.poll }}</span>
 	<p v-if="choices.length < 2" class="caution">
 		<i class="ti ti-alert-triangle"></i>{{ i18n.ts._poll.noOnlyOneChoice }}
 	</p>
@@ -120,16 +121,15 @@ function get(): PollEditorModelValue {
 	const calcAfter = () => {
 		let base = parseInt(after.value.toString());
 		switch (unit.value) {
-			case 'day':
-				return base *= 24;
-			case 'hour':
-				return base *= 60;
-			case 'minute':
-				return base *= 60;
-			case 'second':
-				return base *= 1000;
-			default:
-				return null;
+			// @ts-expect-error fallthrough
+			case 'day': base *= 24;
+			// @ts-expect-error fallthrough
+			case 'hour': base *= 60;
+			// @ts-expect-error fallthrough
+			case 'minute': base *= 60;
+			// eslint-disable-next-line no-fallthrough
+			case 'second': return base *= 1000;
+			default: return null;
 		}
 	};
 
@@ -149,6 +149,10 @@ watch([choices, multiple, expiration, atDate, atTime, after, unit], () => emit('
 <style lang="scss" scoped>
 .zmdxowus {
 	padding: 8px 16px;
+
+	> span {
+		opacity: 0.7;
+	}
 
 	> .caution {
 		margin: 0 0 8px 0;
