@@ -432,13 +432,17 @@ async function fullIndex() {
 	await os.apiWithDialog('admin/index/full', {
 		index: 'all',
 	});
-};
+}
+
+;
 
 async function reIndex() {
 	await os.apiWithDialog('admin/index/reindex', {
 		index: "all",
 	});
-};
+}
+
+;
 
 const headerTabs = computed(() => []);
 

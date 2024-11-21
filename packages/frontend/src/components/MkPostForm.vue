@@ -344,7 +344,7 @@ if ($i.isSilenced && visibility.value === 'public') {
 
 if ($i.isSensitive && !useCw.value) {
 	useCw.value = true;
-	cw.value = i18n.ts.sensitiveUserCaution
+	cw.value = i18n.ts.sensitiveUserCaution;
 }
 
 if (props.channel) {

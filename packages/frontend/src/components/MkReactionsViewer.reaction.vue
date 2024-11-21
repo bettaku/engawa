@@ -69,7 +69,7 @@ const reactionName = computed(() => {
 const reactionHost = computed(() => {
 	const r = props.reaction.replace(':', '');
 	const host = r.slice(r.indexOf('@') + 1);
-	return host.endsWith(':') ? host.slice(0, -1): host;
+	return host.endsWith(':') ? host.slice(0, -1) : host;
 });
 
 const alternative: ComputedRef<string | null> = computed(() => defaultStore.state.reactableRemoteReactionEnabled ? (customEmojis.value.find(it => it.name === reactionName.value)?.name ?? null) : null);

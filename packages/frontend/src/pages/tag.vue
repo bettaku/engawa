@@ -72,7 +72,7 @@ function refreshChannel() {
 }
 
 onMounted(() => {
-	globalEvents.on('reloadTimeline',() => reloadTimeline());
+	globalEvents.on('reloadTimeline', () => reloadTimeline());
 });
 
 onUnmounted(() => {

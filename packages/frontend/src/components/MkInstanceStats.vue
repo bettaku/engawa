@@ -197,7 +197,7 @@ onMounted(async () => {
 	federationPubActiveDiff.value = chart.pubActive[0] - chart.pubActive[1];
 	federationSubActive.value = chart.subActive[0];
 	federationSubActiveDiff.value = chart.subActive[0] - chart.subActive[1];
-})
+});
 
 onMounted(() => {
 	misskeyApiGet('federation/stats', { limit: 30 }).then(fedStats => {

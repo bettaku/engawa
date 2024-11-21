@@ -1,4 +1,6 @@
-<template></template>
+<template>
+	<div></div>
+</template>
 
 <script lang="ts" setup>
 import * as os from '@/os';
@@ -13,7 +15,6 @@ const acctUri = new URL(location.href).searchParams.get("acct");
 if (acctUri == null) {
 	throw new Error("acct required");
 }
-
 
 if ($i != null) {
 	const { canceled } = await os.confirm({

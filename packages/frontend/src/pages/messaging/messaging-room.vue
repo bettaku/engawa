@@ -107,7 +107,6 @@ onUpdated(() => {
 	}
 });
 
-
 async function fetch() {
 	fetching.value = true;
 
