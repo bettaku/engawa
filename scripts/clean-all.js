@@ -25,9 +25,6 @@ const fs = require('fs');
 	fs.rmSync(__dirname + '/../packages/cherrypick-js/built', { recursive: true, force: true });
 	fs.rmSync(__dirname + '/../packages/cherrypick-js/node_modules', { recursive: true, force: true });
 
-	fs.rmSync(__dirname + '/../packages/misskey-reversi/built', { recursive: true, force: true });
-	fs.rmSync(__dirname + '/../packages/misskey-reversi/node_modules', { recursive: true, force: true });
-
 	fs.rmSync(__dirname + '/../packages/misskey-bubble-game/built', { recursive: true, force: true });
 	fs.rmSync(__dirname + '/../packages/misskey-bubble-game/node_modules', { recursive: true, force: true });
 

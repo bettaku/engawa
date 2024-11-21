@@ -12,7 +12,6 @@ services:
         corepack enable && corepack prepare
         pnpm -F backend i
         pnpm -F cherrypick-js i
-        pnpm -F misskey-reversi i
       "
 
   tester:

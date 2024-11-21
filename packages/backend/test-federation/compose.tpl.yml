@@ -51,14 +51,6 @@ services:
         target: /cherrypick/packages/cherrypick-js/package.json
         read_only: true
       - type: bind
-        source: ../../misskey-reversi/built
-        target: /cherrypick/packages/misskey-reversi/built
-        read_only: true
-      - type: bind
-        source: ../../misskey-reversi/package.json
-        target: /cherrypick/packages/misskey-reversi/package.json
-        read_only: true
-      - type: bind
         source: ../../../healthcheck.sh
         target: /cherrypick/healthcheck.sh
         read_only: true
