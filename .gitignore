@@ -85,3 +85,4 @@ vite.config.ts.timestamp-*
 
 # Rust
 /cli/target
+target/
