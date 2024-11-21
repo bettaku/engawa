@@ -64,6 +64,8 @@ temp
 /packages/frontend/src/**/*.stories.ts
 tsdoc-metadata.json
 misskey-assets
+.devcontainer/certs
+.devcontainer/meili_data
 
 # Vite temporary files
 vite.config.js.timestamp-*
@@ -78,3 +80,7 @@ vite.config.ts.timestamp-*
 
 # VSCode addon
 .favorites.json
+
+# Rust
+/target
+/packages/cli/
