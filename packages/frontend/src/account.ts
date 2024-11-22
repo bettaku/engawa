@@ -265,7 +265,7 @@ export async function openAccountMenu(opts: {
 
 	function showSigninDialog() {
 		const { dispose } = popup(defineAsyncComponent(() => import('@/components/MkSigninDialog.vue')), {}, {
-			done: res => {
+			done: (res: Misskey.entities.SigninFlowResponse & { finished: true }) => {
 				addAccount(res.id, res.i);
 				success();
 			},
@@ -275,9 +275,9 @@ export async function openAccountMenu(opts: {
 
 	function createAccount() {
 		const { dispose } = popup(defineAsyncComponent(() => import('@/components/MkSignupDialog.vue')), {}, {
-			done: res => {
-				addAccount(res.id, res.i);
-				switchAccountWithToken(res.i);
+			done: (res: Misskey.entities.SignupResponse) => {
+				addAccount(res.id, res.token);
+				switchAccountWithToken(res.token);
 			},
 			closed: () => dispose(),
 		});
@@ -382,6 +382,18 @@ export async function openAccountMenu(opts: {
 	} else {
 		if (opts.includeCurrentAccount) {
 			menuItems.push(createItem($i));
+			if (accountItemPromises.length > 0) menuItems.push({ type: 'divider' });
+		}
+
+		if (opts.withExtraOperationFriendly) {
+			menuItems.push({
+				type: 'link',
+				text: $i.name,
+				to: `/@${$i.username}`,
+				avatar: $i,
+			});
+
+			if (accountItemPromises.length > 0) menuItems.push({ type: 'divider' });
 		}
 
 		menuItems.push(...accountItemPromises);

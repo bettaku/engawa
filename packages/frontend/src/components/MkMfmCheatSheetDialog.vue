@@ -11,15 +11,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 	@close="cancel()"
 	@closed="$emit('closed')"
 >
-	<template #header>{{ i18n.ts._cfm.cheatSheet }}</template>
-	<XMfmCheatSheet :popup="true" style="background: var(--bg)"/>
+	<template #header>{{ i18n.ts._mfc.cheatSheet }}</template>
+	<XMfmCheatSheet :popup="true" style="background: var(--MI_THEME-bg)"/>
 </MkModalWindow>
 </template>
 
 <script lang="ts" setup>
 import { shallowRef } from 'vue';
 import MkModalWindow from '@/components/MkModalWindow.vue';
-import XMfmCheatSheet from '@/pages/cfm-cheat-sheet.vue';
+import XMfmCheatSheet from '@/pages/mfc-cheat-sheet.vue';
 import { i18n } from '@/i18n.js';
 
 const emit = defineEmits<{

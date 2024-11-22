@@ -94,6 +94,11 @@ export type MiNotification = {
 	exportedEntity: typeof userExportableEntities[number];
 	fileId: MiDriveFile['id'];
 } | {
+	type: 'login';
+	id: string;
+	createdAt: string;
+	userIp: string;
+} | {
 	type: 'app';
 	id: string;
 	createdAt: string;
@@ -140,4 +145,10 @@ export type MiGroupedNotification = MiNotification | {
 	createdAt: string;
 	noteId: MiNote['id'];
 	userIds: string[];
+} | {
+	type: 'note:grouped';
+	id: string;
+	createdAt: string;
+	notifierIds: MiUser['id'][];
+	noteIds: string[];
 };

@@ -149,8 +149,17 @@ defineExpose<WidgetComponentExpose>({
 });
 	</script>
 
-	<style lang="scss" scoped>
-	.skw-search {
-		border-radius: var(--radius-sm) !important;
-	}
-	</style>
+<style lang="scss" module>
+.skwSearch {
+	border-radius: var(--MI-radius-sm) !important;
+}
+
+.searchBtn {
+	position: relative;
+	z-index: 2;
+	margin: 0 auto;
+	border: none;
+	background: none;
+	pointer-events: auto;
+}
+</style>

@@ -142,7 +142,7 @@ function choose(visibility: typeof Misskey.noteVisibilities[number]): void {
 	}
 
 	&.active {
-		color: var(--accent);
+		color: var(--MI_THEME-accent);
 	}
 }
 

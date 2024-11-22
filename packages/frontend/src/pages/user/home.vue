@@ -26,9 +26,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 							</div>
 							<div class="bottom">
 								<span class="username"><MkAcct :user="user" :detail="true"/></span>
-								<span v-if="user.isAdmin" v-tooltip="i18n.ts._role._condition.isAdmin" style="color: var(--badge);"><i class="ti ti-shield"></i></span>
-								<span v-if="user.isLocked" v-tooltip="i18n.ts._role._condition.isLocked"><i class="ti ti-lock"></i></span>
-								<span v-if="user.isBot" v-tooltip="i18n.ts._role._condition.isBot"><i class="ti ti-robot"></i></span>
+								<span v-if="user.isAdmin" :title="i18n.ts.isAdmin" style="color: var(--MI_THEME-badge);"><i class="ti ti-shield"></i></span>
+								<span v-if="user.isLocked" :title="i18n.ts.isLocked"><i class="ti ti-lock"></i></span>
+								<span v-if="user.isBot" :title="i18n.ts.isBot"><i class="ti ti-robot"></i></span>
 								<button v-if="$i && !isEditingMemo && !memoDraft" class="_button add-note-button" @click="showMemoTextarea">
 									<i class="ti ti-edit"/> {{ i18n.ts.addMemo }}
 								</button>
@@ -37,6 +37,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<span v-if="$i && $i.id != user.id && user.isFollowed" class="followed">{{ i18n.ts.followsYou }}</span>
 						<div class="actions">
 							<button class="menu _button" @click="menu"><i class="ti ti-dots"></i></button>
+							<button v-if="notesSearchAvailable && (user.host == null || canSearchNonLocalNotes)" v-tooltip="i18n.ts.searchThisUsersNotes" class="menu _button" @click="router.push(`/search?username=${encodeURIComponent(user.username)}${user.host != null ? '&host=' + encodeURIComponent(user.host) : ''}`);"><i class="ti ti-search"></i></button>
+							<button v-tooltip="user.notify === 'none' ? i18n.ts.notifyNotes : i18n.ts.unnotifyNotes" class="menu _button" @click="toggleNotify"><i :class="user.notify === 'none' ? 'ti ti-bell-plus' : 'ti ti-bell-minus'"></i></button>
 							<MkFollowButton v-if="$i?.id != user.id" v-model:user="user" :inline="true" :transparent="false" :full="true" class="koudoku"/>
 						</div>
 					</div>
@@ -45,15 +47,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<MkUserName :user="user" :nowrap="false" class="name" @click="editNickname(props.user)"/>
 						<div class="bottom">
 							<span class="username"><MkAcct :user="user" :detail="true"/></span>
-							<span v-if="user.isAdmin" v-tooltip="i18n.ts._role._condition.isAdmin" style="color: var(--badge);"><i class="ti ti-shield"></i></span>
-							<span v-if="user.isLocked" v-tooltip="i18n.ts._role._condition.isLocked"><i class="ti ti-lock"></i></span>
-							<span v-if="user.isBot" v-tooltip="i18n.ts._role._condition.isBot"><i class="ti ti-robot"></i></span>
+							<span v-if="user.isAdmin" :title="i18n.ts.isAdmin" style="color: var(--MI_THEME-badge);"><i class="ti ti-shield"></i></span>
+							<span v-if="user.isLocked" :title="i18n.ts.isLocked"><i class="ti ti-lock"></i></span>
+							<span v-if="user.isBot" :title="i18n.ts.isBot"><i class="ti ti-robot"></i></span>
 						</div>
 					</div>
 					<div v-if="user.followedMessage != null" class="followedMessage">
 						<MkFukidashi class="fukidashi" :tail="narrow ? 'none' : 'left'" negativeMargin shadow>
 							<div class="messageHeader">{{ i18n.ts.messageToFollower }}</div>
-							<div><Mfm :text="user.followedMessage" :author="user"/></div>
+							<div><MkSparkle><Mfm :plain="true" :text="user.followedMessage" :author="user"/></MkSparkle></div>
 						</MkFukidashi>
 					</div>
 					<div v-if="user.roles.length > 0" class="roles">
@@ -67,6 +69,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<div v-if="iAmModerator" class="moderationNote">
 						<MkTextarea v-if="editModerationNote || (moderationNote != null && moderationNote !== '')" v-model="moderationNote" manualSave>
 							<template #label>{{ i18n.ts.moderationNote }}</template>
+							<template #caption>{{ i18n.ts.moderationNoteDescription }}</template>
 						</MkTextarea>
 						<div v-else>
 							<MkButton class="moderationNoteButton" small @click="editModerationNote = true">{{ i18n.ts.addModerationNote }}</MkButton>
@@ -151,11 +154,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</div>
 
 			<div class="contents _gaps">
-				<div v-if="user.pinnedNotes.length > 0" class="_gaps">
+				<div v-if="user.pinnedNotes.length > 0 && !user.isBlocked" class="_gaps">
 					<MkNote v-for="note in user.pinnedNotes" :key="note.id" class="note _panel" :note="note" :pinned="true"/>
 				</div>
 				<MkInfo v-else-if="$i && $i.id === user.id">{{ i18n.ts.userPagePinTip }}</MkInfo>
-				<template v-if="narrow">
+				<template v-if="narrow && !user.isBlocked">
 					<MkLazy>
 						<XFiles :key="user.id" :user="user"/>
 					</MkLazy>
@@ -163,14 +166,19 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<XActivity :key="user.id" :user="user"/>
 					</MkLazy>
 				</template>
-				<div v-if="!disableNotes">
+				<div v-if="!disableNotes && !user.isBlocked">
 					<MkLazy>
 						<XTimeline :user="user"/>
 					</MkLazy>
 				</div>
+				<div v-if="user.isBlocked" class="_fullinfo">
+					<img :src="youBlockedImageUrl" class="_ghost"/>
+					<div style="font-size: 1.4rem; font-weight: bold; padding-bottom: 4px;">{{ i18n.ts.youBlocked }}</div>
+					<div style="opacity: 0.7">{{ i18n.tsx.youBlockedDescription({ user: `@${ user.username }` }) }}</div>
+				</div>
 			</div>
 		</div>
-		<div v-if="!narrow" class="sub _gaps" style="container-type: inline-size;">
+		<div v-if="!narrow && !user.isBlocked" class="sub _gaps" style="container-type: inline-size;">
 			<XFiles :key="user.id" :user="user"/>
 			<XActivity :key="user.id" :user="user"/>
 		</div>
@@ -205,11 +213,14 @@ import { misskeyApi } from '@/scripts/misskey-api.js';
 import { isFollowingVisibleForMe, isFollowersVisibleForMe } from '@/scripts/isFfVisibleForMe.js';
 import { useRouter } from '@/router/supplier.js';
 import { getStaticImageUrl } from '@/scripts/media-proxy.js';
+import MkSparkle from '@/components/MkSparkle.vue';
 import { miLocalStorage } from '@/local-storage.js';
 import { editNickname } from '@/scripts/edit-nickname.js';
 import { vibrate } from '@/scripts/vibrate.js';
 import detectLanguage from '@/scripts/detect-language.js';
 import { globalEvents } from '@/events.js';
+import { notesSearchAvailable, canSearchNonLocalNotes } from '@/scripts/check-permissions.js';
+import { youBlockedImageUrl } from '@/instance.js';
 
 function calcAge(birthdate: string): number {
 	const date = new Date(birthdate);
@@ -360,6 +371,15 @@ function resetTimer() {
 	playAnimationTimer = setTimeout(() => playAnimation.value = false, 5000);
 }
 
+async function toggleNotify() {
+	os.apiWithDialog('following/update', {
+		userId: props.user.id,
+		notify: props.user.notify === 'normal' ? 'none' : 'normal',
+	}).then(() => {
+		user.value.notify = user.value.notify === 'normal' ? 'none' : 'normal';
+	});
+}
+
 watch([props.user], () => {
 	memoDraft.value = props.user.memo;
 });
@@ -456,8 +476,8 @@ onUnmounted(() => {
 						position: absolute;
 						top: 12px;
 						right: 12px;
-						-webkit-backdrop-filter: var(--blur, blur(8px));
-						backdrop-filter: var(--blur, blur(8px));
+						-webkit-backdrop-filter: var(--MI-blur, blur(8px));
+						backdrop-filter: var(--MI-blur, blur(8px));
 						background: rgba(0, 0, 0, 0.2);
 						padding: 8px;
 						border-radius: 24px;
@@ -512,8 +532,8 @@ onUnmounted(() => {
 							> .add-note-button {
 								background: rgba(0, 0, 0, 0.2);
 								color: #fff;
-								-webkit-backdrop-filter: var(--blur, blur(8px));
-								backdrop-filter: var(--blur, blur(8px));
+								-webkit-backdrop-filter: var(--MI-blur, blur(8px));
+								backdrop-filter: var(--MI-blur, blur(8px));
 								border-radius: 24px;
 								padding: 4px 8px;
 								font-size: 80%;
@@ -527,7 +547,7 @@ onUnmounted(() => {
 					text-align: center;
 					padding: 50px 8px 16px 8px;
 					font-weight: bold;
-					border-bottom: solid 0.5px var(--divider);
+					border-bottom: solid 0.5px var(--MI_THEME-divider);
 
 					> .bottom {
 						> * {
@@ -554,7 +574,7 @@ onUnmounted(() => {
 
 					> .fukidashi {
 						display: block;
-						--fukidashi-bg: color-mix(in srgb, var(--love), var(--panel) 85%);
+						--fukidashi-bg: color-mix(in srgb, var(--MI_THEME-accent), var(--MI_THEME-panel) 85%);
 						--fukidashi-radius: 16px;
 						font-size: 0.9em;
 
@@ -573,7 +593,7 @@ onUnmounted(() => {
 					gap: 8px;
 
 					> .role {
-						border: solid 1px var(--color, var(--divider));
+						border: solid 1px var(--color, var(--MI_THEME-divider));
 						border-radius: 999px;
 						margin-right: 4px;
 						padding: 3px 8px;
@@ -587,15 +607,15 @@ onUnmounted(() => {
 				> .memo {
 					margin: 12px 24px 0 154px;
 					background: transparent;
-					color: var(--fg);
-					border: 1px solid var(--divider);
+					color: var(--MI_THEME-fg);
+					border: 1px solid var(--MI_THEME-divider);
 					border-radius: 8px;
 					padding: 8px;
 					line-height: 0;
 
 					> .heading {
 						text-align: left;
-						color: var(--fgTransparent);
+						color: var(--MI_THEME-fgTransparent);
 						line-height: 1.5;
 						font-size: 85%;
 					}
@@ -610,7 +630,7 @@ onUnmounted(() => {
 						height: auto;
 						min-height: 0;
 						line-height: 1.5;
-						color: var(--fg);
+						color: var(--MI_THEME-fg);
 						overflow: hidden;
 						background: transparent;
 						font-family: inherit;
@@ -632,8 +652,8 @@ onUnmounted(() => {
 						}
 
 						> .translation {
-							border: solid 0.5px var(--divider);
-							border-radius: var(--radius);
+							border: solid 0.5px var(--MI_THEME-divider);
+							border-radius: var(--MI-radius);
 							padding: 12px;
 							margin-top: 8px;
 						}
@@ -643,7 +663,7 @@ onUnmounted(() => {
 				> .fields {
 					padding: 24px;
 					font-size: 0.9em;
-					border-top: solid 0.5px var(--divider);
+					border-top: solid 0.5px var(--MI_THEME-divider);
 
 					> .field {
 						display: flex;
@@ -680,14 +700,14 @@ onUnmounted(() => {
 				> .status {
 					display: flex;
 					padding: 24px;
-					border-top: solid 0.5px var(--divider);
+					border-top: solid 0.5px var(--MI_THEME-divider);
 
 					> a {
 						flex: 1;
 						text-align: center;
 
 						&.active {
-							color: var(--accent);
+							color: var(--MI_THEME-accent);
 						}
 
 						&:hover {
@@ -724,7 +744,7 @@ onUnmounted(() => {
 
 		> .contents {
 			> .content {
-				margin-bottom: var(--margin);
+				margin-bottom: var(--MI-margin);
 			}
 		}
 	}
@@ -741,7 +761,7 @@ onUnmounted(() => {
 		> .sub {
 			max-width: 350px;
 			min-width: 350px;
-			margin-left: var(--margin);
+			margin-left: var(--MI-margin);
 		}
 	}
 }
@@ -840,8 +860,14 @@ onUnmounted(() => {
 </style>
 
 <style lang="scss" module>
+.tl {
+	background: var(--MI_THEME-bg);
+	border-radius: var(--MI-radius);
+	overflow: clip;
+}
+
 .verifiedLink {
 	margin-left: 4px;
-	color: var(--success);
+	color: var(--MI_THEME-success);
 }
 </style>

@@ -4,8 +4,8 @@
  */
 
 import tinycolor from 'tinycolor2';
-import lightTheme from '@@/themes/_light.json5';
-import darkTheme from '@@/themes/_dark.json5';
+import lightTheme from '@@/themes/_light-cherrypick.json5';
+import darkTheme from '@@/themes/_dark-cherrypick.json5';
 import type { BundledTheme } from 'shiki/themes';
 
 export type Theme = {
@@ -61,7 +61,7 @@ export function applyTheme(theme: Theme, persist = true) {
 	}
 
 	for (const [k, v] of Object.entries(props)) {
-		document.documentElement.style.setProperty(`--${k}`, v.toString());
+		document.documentElement.style.setProperty(`--MI_THEME-${k}`, v.toString());
 	}
 
 	// iframeを正常に透過させるために、cssのcolor-schemeは `light dark;` 固定にしてある。style.scss参照

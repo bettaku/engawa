@@ -4,8 +4,9 @@
  */
 
 import { VNode, h, SetupContext, provide } from 'vue';
-import * as mfm from 'cfm-js';
+import * as mfm from 'mfc-js';
 import * as Misskey from 'cherrypick-js';
+import temml from 'temml/dist/temml.mjs';
 import { host } from '@@/js/config.js';
 import EmUrl from '@/components/EmUrl.vue';
 import EmTime from '@/components/EmTime.vue';
@@ -26,8 +27,8 @@ const QUOTE_STYLE = `
 display: block;
 margin: 8px;
 padding: 6px 0 6px 12px;
-color: var(--fg);
-border-left: solid 3px var(--fg);
+color: var(--MI_THEME-fg);
+border-left: solid 3px var(--MI_THEME-fg);
 opacity: 0.7;
 `.split('\n').join(' ');
 
@@ -41,9 +42,6 @@ type MfmProps = {
 	rootScale?: number;
 	nyaize?: boolean | 'respect';
 	parsedNodes?: mfm.MfmNode[] | null;
-	enableEmojiMenu?: boolean;
-	enableEmojiMenuReaction?: boolean;
-	linkNavigationBehavior?: string;
 };
 
 type MfmEvents = {
@@ -52,8 +50,6 @@ type MfmEvents = {
 
 // eslint-disable-next-line import/no-default-export
 export default function (props: MfmProps, { emit }: { emit: SetupContext<MfmEvents>['emit'] }) {
-	provide('linkNavigationBehavior', props.linkNavigationBehavior);
-
 	const isNote = props.isNote ?? true;
 	const shouldNyaize = props.nyaize ? props.nyaize === 'respect' ? props.author?.isCat : false : false;
 
@@ -224,6 +220,9 @@ export default function (props: MfmProps, { emit }: { emit: SetupContext<MfmEven
 					case 'sparkle': {
 						return genEl(token.children, scale);
 					}
+					case 'fade': {
+						return genEl(token.children, scale);
+					}
 					case 'rotate': {
 						const degrees = safeParseFloat(token.props.args.deg) ?? 90;
 						style = `transform: rotate(${degrees}deg); transform-origin: center center;`;
@@ -256,7 +255,7 @@ export default function (props: MfmProps, { emit }: { emit: SetupContext<MfmEven
 					}
 					case 'border': {
 						let color = validColor(token.props.args.color);
-						color = color ? `#${color}` : 'var(--accent)';
+						color = color ? `#${color}` : 'var(--MI_THEME-accent)';
 						let b_style = token.props.args.style;
 						if (
 							typeof b_style !== 'string' ||
@@ -289,7 +288,7 @@ export default function (props: MfmProps, { emit }: { emit: SetupContext<MfmEven
 						const child = token.children[0];
 						const unixtime = parseInt(child.type === 'text' ? child.props.text : '');
 						return h('span', {
-							style: 'display: inline-block; font-size: 90%; border: solid 1px var(--divider); border-radius: 999px; padding: 4px 10px 4px 6px;',
+							style: 'display: inline-block; font-size: 90%; border: solid 1px var(--MI_THEME-divider); border-radius: 999px; padding: 4px 10px 4px 6px;',
 						}, [
 							h('i', {
 								class: 'ti ti-clock',
@@ -360,7 +359,7 @@ export default function (props: MfmProps, { emit }: { emit: SetupContext<MfmEven
 				return [h(EmA, {
 					key: Math.random(),
 					to: isNote ? `/tags/${encodeURIComponent(token.props.hashtag)}` : `/user-tags/${encodeURIComponent(token.props.hashtag)}`,
-					style: 'color:var(--hashtag);',
+					style: 'color:var(--MI_THEME-hashtag);',
 				}, `#${token.props.hashtag}`)];
 			}
 
@@ -397,8 +396,6 @@ export default function (props: MfmProps, { emit }: { emit: SetupContext<MfmEven
 						normal: props.plain,
 						host: null,
 						useOriginalSize: scale >= 2.5,
-						menu: props.enableEmojiMenu,
-						menuReaction: props.enableEmojiMenuReaction,
 						fallbackToImage: false,
 					})];
 				} else {
@@ -413,6 +410,8 @@ export default function (props: MfmProps, { emit }: { emit: SetupContext<MfmEven
 							normal: props.plain,
 							host: props.author.host,
 							useOriginalSize: scale >= 2.5,
+							menu: props.enableEmojiMenu,
+							menuReaction: props.enableEmojiMenuReaction,
 						})];
 					}
 				}
@@ -428,11 +427,15 @@ export default function (props: MfmProps, { emit }: { emit: SetupContext<MfmEven
 			}
 
 			case 'mathInline': {
-				return [h('code', token.props.formula)];
+				const ret = document.createElement('span');
+				temml.render(token.props.formula, ret, {});
+				return [h('span', { innerHTML: ret.innerHTML })];
 			}
 
 			case 'mathBlock': {
-				return [h('code', token.props.formula)];
+				const ret = document.createElement('div');
+				temml.render(token.props.formula, ret, { displayMode: true });
+				return [h('div', { innerHTML: ret.innerHTML })];
 			}
 
 			case 'search': {
