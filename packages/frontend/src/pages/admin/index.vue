@@ -7,7 +7,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 <div ref="el" class="hiyeyicy" :class="{ wide: !narrow }">
 	<div v-if="!narrow || currentPage?.route.name == null" class="nav">
 		<MkSpacer :contentMax="700" :marginMin="16">
-			<div class="lxpfedzu">
+			<div class="lxpfedzu _gaps">
 				<div class="banner">
 					<img :src="instance.iconUrl || '/favicon.ico'" alt="" class="icon"/>
 				</div>
@@ -33,6 +33,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <script lang="ts" setup>
 import { onActivated, onMounted, onUnmounted, provide, watch, ref, computed } from 'vue';
+import { version } from '@@/js/config.js';
 import { i18n } from '@/i18n.js';
 import MkSuperMenu from '@/components/MkSuperMenu.vue';
 import MkInfo from '@/components/MkInfo.vue';
@@ -43,7 +44,6 @@ import { misskeyApi } from '@/scripts/misskey-api.js';
 import { lookupUser, lookupUserByEmail, lookupFile } from '@/scripts/admin-lookup.js';
 import { PageMetadata, definePageMetadata, provideMetadataReceiver, provideReactiveMetadata } from '@/scripts/page-metadata.js';
 import { useRouter } from '@/router/supplier.js';
-import { version } from '@/config.js';
 
 const isEmpty = (x: string | null) => x == null || x === '';
 
@@ -63,10 +63,10 @@ const narrow = ref(false);
 const view = ref(null);
 const el = ref<HTMLDivElement | null>(null);
 const pageProps = ref({});
-let noMaintainerInformation = isEmpty(instance.maintainerName) || isEmpty(instance.maintainerEmail);
-let noBotProtection = !instance.disableRegistration && !instance.enableHcaptcha && !instance.enableRecaptcha && !instance.enableTurnstile;
-let noEmailServer = !instance.enableEmail;
-let noInquiryUrl = isEmpty(instance.inquiryUrl);
+const noMaintainerInformation = computed(() => isEmpty(instance.maintainerName) || isEmpty(instance.maintainerEmail));
+const noBotProtection = computed(() => !instance.disableRegistration && !instance.enableHcaptcha && !instance.enableRecaptcha && !instance.enableTurnstile && !instance.enableMcaptcha);
+const noEmailServer = computed(() => !instance.enableEmail);
+const noInquiryUrl = computed(() => isEmpty(instance.inquiryUrl));
 const thereIsUnresolvedAbuseReport = ref(false);
 const currentPage = computed(() => router.currentRef.value.child);
 const updateAvailable = ref(false);
@@ -220,16 +220,6 @@ const menuDef = computed(() => [{
 		to: '/admin/relays',
 		active: currentPage.value?.route.name === 'relays',
 	}, {
-		icon: 'ti ti-ban',
-		text: i18n.ts.instanceBlocking,
-		to: '/admin/instance-block',
-		active: currentPage.value?.route.name === 'instance-block',
-	}, {
-		icon: 'ti ti-ghost',
-		text: i18n.ts.proxyAccount,
-		to: '/admin/proxy-account',
-		active: currentPage.value?.route.name === 'proxy-account',
-	}, {
 		icon: 'ti ti-link',
 		text: i18n.ts.externalServices,
 		to: '/admin/external-services',
@@ -240,10 +230,15 @@ const menuDef = computed(() => [{
 		to: '/admin/system-webhook',
 		active: currentPage.value?.route.name === 'system-webhook',
 	}, {
-		icon: 'ti ti-adjustments',
-		text: i18n.ts.other,
-		to: '/admin/other-settings',
-		active: currentPage.value?.route.name === 'other-settings',
+		icon: 'ti ti-bolt',
+		text: i18n.ts.performance,
+		to: '/admin/performance',
+		active: currentPage.value?.route.name === 'performance',
+	}, {
+		icon: 'ti ti-refresh-alert',
+		text: i18n.ts.cherrypickUpdate,
+		to: '/admin/update',
+		active: currentPage.value?.route.name === 'update',
 	}],
 }, {
 	title: i18n.ts.info,
@@ -255,25 +250,22 @@ const menuDef = computed(() => [{
 	}],
 }]);
 
-watch(narrow.value, () => {
-	if (currentPage.value?.route.name == null && !narrow.value) {
-		router.push('/admin/overview');
-	}
-});
-
 onMounted(() => {
-	ro.observe(el.value);
-
-	narrow.value = el.value.offsetWidth < NARROW_THRESHOLD;
+	if (el.value != null) {
+		ro.observe(el.value);
+		narrow.value = el.value.offsetWidth < NARROW_THRESHOLD;
+	}
 	if (currentPage.value?.route.name == null && !narrow.value) {
-		router.push('/admin/overview');
+		router.replace('/admin/overview');
 	}
 });
 
 onActivated(() => {
-	narrow.value = el.value.offsetWidth < NARROW_THRESHOLD;
+	if (el.value != null) {
+		narrow.value = el.value.offsetWidth < NARROW_THRESHOLD;
+	}
 	if (currentPage.value?.route.name == null && !narrow.value) {
-		router.push('/admin/overview');
+		router.replace('/admin/overview');
 	}
 });
 

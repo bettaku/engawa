@@ -27,7 +27,7 @@ export class ScheduledNoteDeleteProcessorService {
 
 	@bindThis
 	public async process(job: Bull.Job<ScheduledNoteDeleteJobData>): Promise<void> {
-		const note = await this.notesRepository.findOneBy({ id: job.data.noteId});
+		const note = await this.notesRepository.findOneBy({ id: job.data.noteId });
 
 		if (note == null) {
 			return;

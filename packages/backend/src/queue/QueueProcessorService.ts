@@ -41,6 +41,7 @@ import { TickChartsProcessorService } from './processors/TickChartsProcessorServ
 import { ResyncChartsProcessorService } from './processors/ResyncChartsProcessorService.js';
 import { CleanChartsProcessorService } from './processors/CleanChartsProcessorService.js';
 import { CheckExpiredMutingsProcessorService } from './processors/CheckExpiredMutingsProcessorService.js';
+import { BakeBufferedReactionsProcessorService } from './processors/BakeBufferedReactionsProcessorService.js';
 import { CleanProcessorService } from './processors/CleanProcessorService.js';
 import { AggregateRetentionProcessorService } from './processors/AggregateRetentionProcessorService.js';
 import { QueueLoggerService } from './QueueLoggerService.js';
@@ -127,7 +128,9 @@ export class QueueProcessorService implements OnApplicationShutdown {
 		private cleanChartsProcessorService: CleanChartsProcessorService,
 		private aggregateRetentionProcessorService: AggregateRetentionProcessorService,
 		private checkExpiredMutingsProcessorService: CheckExpiredMutingsProcessorService,
+		private bakeBufferedReactionsProcessorService: BakeBufferedReactionsProcessorService,
 		private cleanProcessorService: CleanProcessorService,
+		private scheduledNoteDeleteProcessorService: ScheduledNoteDeleteProcessorService,
 	) {
 		this.logger = this.queueLoggerService.logger;
 
@@ -156,6 +159,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 					case 'cleanCharts': return this.cleanChartsProcessorService.process();
 					case 'aggregateRetention': return this.aggregateRetentionProcessorService.process();
 					case 'checkExpiredMutings': return this.checkExpiredMutingsProcessorService.process();
+					case 'bakeBufferedReactions': return this.bakeBufferedReactionsProcessorService.process();
 					case 'clean': return this.cleanProcessorService.process();
 					default: throw new Error(`unrecognized job type ${job.name} for system`);
 				}
@@ -516,9 +520,9 @@ export class QueueProcessorService implements OnApplicationShutdown {
 		{
 			this.scheduledNoteDeleteQueueWorker = new Bull.Worker(QUEUE.SCHEDULED_NOTE_DELETE, (job) => {
 				if (this.config.sentryForBackend) {
-					return Sentry.startSpan({ name: 'Queue: ScheduledNoteDelete' }, () => this.scheduledNoteDeleteProcessorservice.process(job));
+					return Sentry.startSpan({ name: 'Queue: ScheduledNoteDelete' }, () => this.scheduledNoteDeleteProcessorService.process(job));
 				} else {
-					return this.scheduledNoteDeleteProcessorservice.process(job);
+					return this.scheduledNoteDeleteProcessorService.process(job);
 				}
 			}, {
 				...baseQueueOptions(this.config, QUEUE.SCHEDULED_NOTE_DELETE, this.redisForJobQueue),

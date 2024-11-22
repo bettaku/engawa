@@ -22,7 +22,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 								<MkButton v-if="flash.isLiked" v-tooltip="i18n.ts.unlike" asLike :class="$style.button" class="button" rounded primary @click="unlike()"><i class="ti ti-heart"></i><span v-if="flash?.likedCount && flash.likedCount > 0" style="margin-left: 6px;">{{ flash.likedCount }}</span></MkButton>
 								<MkButton v-else v-tooltip="i18n.ts.like" asLike :class="$style.button" class="button" rounded @click="like()"><i class="ti ti-heart"></i><span v-if="flash?.likedCount && flash.likedCount > 0" style="margin-left: 6px;">{{ flash.likedCount }}</span></MkButton>
 								<MkButton v-tooltip="i18n.ts.copyLink" :class="$style.button" class="button" rounded @click="copyLink"><i class="ti ti-link ti-fw"></i></MkButton>
+								<MkButton v-tooltip="i18n.ts.getQRCode" :class="$style.button" class="_button" rounded @click="shareQRCode"><i class="ti ti-qrcode ti-fw"></i></MkButton>
 								<MkButton v-tooltip="i18n.ts.share" :class="$style.button" class="button" rounded @click="share"><i class="ti ti-share ti-fw"></i></MkButton>
+								<MkButton v-if="$i && $i.id !== flash.user.id" :class="$style.button" class="button" rounded @mousedown="showMenu"><i class="ti ti-dots ti-fw"></i></MkButton>
 							</div>
 						</div>
 					</div>
@@ -61,13 +63,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { computed, onDeactivated, onUnmounted, Ref, ref, watch, shallowRef } from 'vue';
+import { computed, onDeactivated, onUnmounted, Ref, ref, watch, shallowRef, defineAsyncComponent } from 'vue';
 import * as Misskey from 'cherrypick-js';
 import { Interpreter, Parser, values } from '@syuilo/aiscript';
+import { url } from '@@/js/config.js';
+import type { MenuItem } from '@/types/menu.js';
 import MkButton from '@/components/MkButton.vue';
 import * as os from '@/os.js';
 import { misskeyApi } from '@/scripts/misskey-api.js';
-import { url } from '@/config.js';
 import { i18n } from '@/i18n.js';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
 import MkAsUi from '@/components/MkAsUi.vue';
@@ -102,18 +105,23 @@ function fetchFlash() {
 function share(ev: MouseEvent) {
 	if (!flash.value) return;
 
-	os.popupMenu([
-		{
-			text: i18n.ts.shareWithNote,
-			icon: 'ti ti-pencil',
-			action: shareWithNote,
-		},
-		...(isSupportShare() ? [{
+	const menuItems: MenuItem[] = [];
+
+	menuItems.push({
+		text: i18n.ts.shareWithNote,
+		icon: 'ti ti-pencil',
+		action: shareWithNote,
+	});
+
+	if (isSupportShare()) {
+		menuItems.push({
 			text: i18n.ts.share,
 			icon: 'ti ti-share',
 			action: shareWithNavigator,
-		}] : []),
-	], ev.currentTarget ?? ev.target);
+		});
+	}
+
+	os.popupMenu(menuItems, ev.currentTarget ?? ev.target);
 }
 
 function copyLink() {
@@ -121,6 +129,11 @@ function copyLink() {
 
 	copyToClipboard(`${url}/play/${flash.value.id}`);
 	os.success();
+}
+
+function shareQRCode() {
+	if (!flash.value) return;
+	os.displayQRCode(`${url}/play/${flash.value.id}`);
 }
 
 function shareWithNavigator() {
@@ -227,6 +240,53 @@ async function run() {
 			text: err.message,
 		});
 	}
+}
+
+function reportAbuse() {
+	if (!flash.value) return;
+
+	const pageUrl = `${url}/play/${flash.value.id}`;
+
+	const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkAbuseReportWindow.vue')), {
+		user: flash.value.user,
+		initialComment: `Play: ${pageUrl}\n-----\n`,
+	}, {
+		closed: () => dispose(),
+	});
+}
+
+function showMenu(ev: MouseEvent) {
+	if (!flash.value) return;
+
+	const menu: MenuItem[] = [
+		...($i && $i.id !== flash.value.userId ? [
+			{
+				icon: 'ti ti-exclamation-circle',
+				text: i18n.ts.reportAbuse,
+				action: reportAbuse,
+			},
+			...($i.isModerator || $i.isAdmin ? [
+				{
+					type: 'divider' as const,
+				},
+				{
+					icon: 'ti ti-trash',
+					text: i18n.ts.delete,
+					danger: true,
+					action: () => os.confirm({
+						type: 'warning',
+						text: i18n.ts.deleteConfirm,
+					}).then(({ canceled }) => {
+						if (canceled || !flash.value) return;
+
+						os.apiWithDialog('flash/delete', { flashId: flash.value.id });
+					}),
+				},
+			] : []),
+		] : []),
+	];
+
+	os.popupMenu(menu, ev.currentTarget ?? ev.target);
 }
 
 function reset() {

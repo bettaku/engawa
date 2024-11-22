@@ -46,6 +46,7 @@ import { QueueStatsChannelService } from './api/stream/channels/queue-stats.js';
 import { ServerStatsChannelService } from './api/stream/channels/server-stats.js';
 import { UserListChannelService } from './api/stream/channels/user-list.js';
 import { RoleTimelineChannelService } from './api/stream/channels/role-timeline.js';
+import { SigninWithPasskeyApiService } from './api/SigninWithPasskeyApiService.js';
 
 @Module({
 	imports: [
@@ -71,6 +72,7 @@ import { RoleTimelineChannelService } from './api/stream/channels/role-timeline.
 		AuthenticateService,
 		RateLimiterService,
 		SigninApiService,
+		SigninWithPasskeyApiService,
 		SigninService,
 		SignupApiService,
 		StreamingApiServerService,

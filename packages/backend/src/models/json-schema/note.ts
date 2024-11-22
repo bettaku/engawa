@@ -287,7 +287,6 @@ export const packedNoteSchema = {
 			type: 'number',
 			optional: true, nullable: false,
 		},
-
 		myReaction: {
 			type: 'string',
 			optional: true, nullable: true,

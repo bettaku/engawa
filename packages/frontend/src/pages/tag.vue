@@ -31,6 +31,7 @@ import * as os from '@/os.js';
 import { useStream } from '@/stream';
 import * as Misskey from 'cherrypick-js';
 import { globalEvents } from '@/events';
+import { genEmbedCode } from '@/scripts/get-embed-code.js';
 
 const props = defineProps<{
 	tag: string;
@@ -99,7 +100,19 @@ async function post() {
 	defaultStore.set('postFormWithHashtags', false);
 }
 
-const headerActions = computed(() => []);
+const headerActions = computed(() => [{
+	icon: 'ti ti-dots',
+	label: i18n.ts.more,
+	handler: (ev: MouseEvent) => {
+		os.popupMenu([{
+			text: i18n.ts.genEmbedCode,
+			icon: 'ti ti-code',
+			action: () => {
+				genEmbedCode('tags', props.tag);
+			},
+		}], ev.currentTarget ?? ev.target);
+	},
+}]);
 
 const headerTabs = computed(() => []);
 

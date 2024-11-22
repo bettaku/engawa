@@ -10,17 +10,20 @@ const fs = require('fs');
 	fs.rmSync(__dirname + '/../packages/backend/built', { recursive: true, force: true });
 	fs.rmSync(__dirname + '/../packages/backend/node_modules', { recursive: true, force: true });
 
+	fs.rmSync(__dirname + '/../packages/frontend-shared/built', { recursive: true, force: true });
+	fs.rmSync(__dirname + '/../packages/frontend-shared/node_modules', { recursive: true, force: true });
+
 	fs.rmSync(__dirname + '/../packages/frontend/built', { recursive: true, force: true });
 	fs.rmSync(__dirname + '/../packages/frontend/node_modules', { recursive: true, force: true });
+
+	fs.rmSync(__dirname + '/../packages/frontend-embed/built', { recursive: true, force: true });
+	fs.rmSync(__dirname + '/../packages/frontend-embed/node_modules', { recursive: true, force: true });
 
 	fs.rmSync(__dirname + '/../packages/sw/built', { recursive: true, force: true });
 	fs.rmSync(__dirname + '/../packages/sw/node_modules', { recursive: true, force: true });
 
 	fs.rmSync(__dirname + '/../packages/cherrypick-js/built', { recursive: true, force: true });
 	fs.rmSync(__dirname + '/../packages/cherrypick-js/node_modules', { recursive: true, force: true });
-
-	fs.rmSync(__dirname + '/../packages/misskey-reversi/built', { recursive: true, force: true });
-	fs.rmSync(__dirname + '/../packages/misskey-reversi/node_modules', { recursive: true, force: true });
 
 	fs.rmSync(__dirname + '/../packages/misskey-bubble-game/built', { recursive: true, force: true });
 	fs.rmSync(__dirname + '/../packages/misskey-bubble-game/node_modules', { recursive: true, force: true });

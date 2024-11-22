@@ -1,26 +1,26 @@
 <template>
-	<div class="zmdxowus">
-		<div>
-			<MkInput v-model="diceCount" small type="text" class="input">
-				<template #label>{{ i18n.ts._dice.diceCount }}</template>
-			</MkInput>
-		</div>
-		<div>
-			<MkInput v-model="diceFaces" small type="text" class="input">
-				<template #label>{{ i18n.ts._dice.diceFaces }}</template>
-			</MkInput>
-		</div>
-		<div>
-			<MkButton large primary style="margin: 0 auto;" @click="rollDice">
-				<i class="ti ti-dice-2"></i>
-				{{ i18n.ts._dice.rollDice }}
-			</MkButton>
-		</div>
-		<div v-if="diceResult" class="result">{{ diceResult }}</div>
-		<div v-if="showMinTotal" class="option">{{ diceMinTotal }}</div>
-		<div v-if="showMaxTotal" class="option">{{ diceMaxTotal }}</div>
-		<dic v-if="showAverageTotal" class="option">{{ diceAverageTotal }}</dic>
+<div :class="$style.root">
+	<div>
+		<MkInput v-model="diceCount" small type="text" :class="$style.input">
+			<template #label>{{ i18n.ts._dice.diceCount }}</template>
+		</MkInput>
 	</div>
+	<div>
+		<MkInput v-model="diceFaces" small type="text" :class="$style.input">
+			<template #label>{{ i18n.ts._dice.diceFaces }}</template>
+		</MkInput>
+	</div>
+	<div>
+		<MkButton large primary style="margin: 0 auto;" @click="rollDice">
+			<i class="ti ti-dice-2"></i>
+			{{ i18n.ts._dice.rollDice }}
+		</MkButton>
+	</div>
+	<div v-if="diceResult" :class="$style.result">{{ diceResult }}</div>
+	<div v-if="showMinTotal" :class="$style.option">{{ diceMinTotal }}</div>
+	<div v-if="showMaxTotal" :class="$style.option">{{ diceMaxTotal }}</div>
+	<div v-if="showAverageTotal" :class="$style.option">{{ diceAverageTotal }}</div>
+</div>
 </template>
 
 <script lang="ts" setup>
@@ -57,31 +57,31 @@ const rollDice = () => {
 	diceMinTotal.value = roll.minTotal;
 	diceMaxTotal.value = roll.maxTotal;
 	diceAverageTotal.value = roll.averageTotal;
-}
+};
 
 </script>
 
-<style lang="scss" scoped>
-.zmdxowus {
+<style lang="scss" module>
+.root {
 	padding: 8px 16px;
 
 	> div {
 		margin: 8px 0;
 	}
+}
 
-	> .input {
-		flex: 1 1 auto;
-		padding: 8px;
-	}
+.input {
+	flex: 1 1 auto;
+	padding: 8px;
+}
 
-	> .result {
-		text-align: center;
-		margin: auto;
-	}
+.result {
+	text-align: center;
+	margin: auto;
+}
 
-	> .option {
-		padding: 8px 0;
-		text-align: left;
-	}
+.option {
+	padding: 8px 0;
+	text-align: left;
 }
 </style>

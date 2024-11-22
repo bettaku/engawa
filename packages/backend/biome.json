@@ -83,11 +83,10 @@
 			}
 		},
 		"ignore": [
-			"**/.eslintrc.cjs",
 			"**/node_modules",
-			"./built",
-			"./.eslintrc.js",
-			"./@types/**/*"
+			"built",
+			"@types/**/*",
+			"migration"
 		]
 	},
 	"overrides": [

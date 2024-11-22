@@ -29,13 +29,17 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<MkTextarea v-model="avatarDecoration.description">
 								<template #label>{{ i18n.ts.description }}</template>
 							</MkTextarea>
-							<MkButton @click="ev => changeImage(ev, avatarDecoration)">
-								<template #label>{{ i18n.ts.image }}</template>
-								{{ i18n.ts.selectFile }}
-							</MkButton>
+							<div :class="$style.imageSelectdiv">
+								<p>{{ i18n.ts.image }}</p>
+								<MkButton @click="ev => changeImage(ev, avatarDecoration)">{{ i18n.ts.selectFile }}</MkButton>
+							</div>
 							<MkInput v-model="avatarDecoration.url">
 								<template #label>{{ i18n.ts.imageUrl }}</template>
 							</MkInput>
+							<div v-if="avatarDecoration.url !== ''" :class="$style.imgContainer">
+								<img src="https://misskey-hub.net/avatar-decoration-template.png" :class="$style.img" style="opacity: .5;"/>
+								<img :src="avatarDecoration.url" :class="$style.img"/>
+							</div>
 							<div class="_buttons">
 								<MkButton inline primary @click="save(avatarDecoration)"><i class="ti ti-device-floppy"></i> {{ i18n.ts.save }}</MkButton>
 								<MkButton v-if="avatarDecoration.id != null" inline danger @click="del(avatarDecoration)"><i class="ti ti-trash"></i> {{ i18n.ts.delete }}</MkButton>
@@ -163,6 +167,42 @@ definePageMetadata(() => ({
 	&.dark {
 		background: #222;
 	}
+}
+
+.imageSelectdiv {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: var(--radius);
+
+	&.light {
+		background: #eee;
+	}
+
+	&.dark {
+		background: #222;
+	}
+}
+
+.imgContainer {
+	position: relative;
+	margin: 8px;
+	width: 128px;
+	height: 128px;
+}
+
+.img {
+	display: block;
+
+	position: absolute;
+	left: 0;
+	top: 0;
+
+	width: 100%;
+	height: 100%;
+
+	object-fit: contain;
+	pointer-events: none;
 }
 
 @container editor (min-width: 600px) {

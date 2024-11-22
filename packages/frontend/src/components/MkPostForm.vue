@@ -33,7 +33,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<span v-if="!localOnly"><i class="ti ti-rocket"></i></span>
 				<span v-else><i class="ti ti-rocket-off"></i></span>
 			</button>
-			<button v-tooltip="i18n.ts.otherSettings" class="_button" :class="[$style.headerRightItem]" @click="showOtherMenu"><i class="ti ti-dots"></i></button>
+			<button v-click-anime v-tooltip="i18n.ts.reactionAcceptance" class="_button" :class="[$style.headerRightItem, { [$style.danger]: reactionAcceptance === 'likeOnly' }]" @click="toggleReactionAcceptance">
+				<span v-if="reactionAcceptance === 'likeOnly'"><i class="ti ti-heart"></i></span>
+				<span v-else-if="reactionAcceptance === 'likeOnlyForRemote'"><i class="ti ti-heart-plus"></i></span>
+				<span v-else><i class="ti ti-icons"></i></span>
+			</button>
+			<button v-tooltip="i18n.ts._cfm.cheatSheet" class="_button" :class="$style.headerRightItem" @click="openMfmCheatSheet"><i class="ti ti-help-circle"></i></button>
 			<button v-click-anime class="_button" :class="$style.submit" :disabled="!canPost" data-cy-open-post-form-submit @click="post">
 				<div :class="$style.submitInner">
 					<template v-if="posted"></template>
@@ -68,26 +73,21 @@ SPDX-License-Identifier: AGPL-3.0-only
 	<input v-show="withHashtags" ref="hashtagsInputEl" v-model="hashtags" :class="$style.hashtags" :placeholder="i18n.ts.hashtags" list="hashtags">
 	<XPostFormAttaches v-model="files" @detach="detachFile" @changeSensitive="updateFileSensitive" @changeName="updateFileName" @replaceFile="replaceFile"/>
 	<MkPollEditor v-if="poll" v-model="poll" @destroyed="poll = null"/>
-	<MkScheduledNoteDelete v-if="scheduledNoteDelete" v-model="scheduledNoteDelete" @destroyed="scheduledNoteDelete = null" />
-	<MkNotePreview v-if="showPreview" :class="$style.preview" :text="text" :files="files" :poll="poll ?? undefined" :useCw="useCw" :cw="cw" :user="postAccount ?? $i" :showProfile="showProfilePreview"/>
+	<MkScheduledNoteDelete v-if="scheduledNoteDelete" v-model="scheduledNoteDelete" @destroyed="scheduledNoteDelete = null"/>
+	<MkNotePreview v-if="showPreview && textLength > 0" :class="$style.preview" :text="text" :files="files" :poll="poll ?? undefined" :useCw="useCw" :cw="cw" :user="postAccount ?? $i" :showProfile="showProfilePreview"/>
 	<div v-if="showingOptions" style="padding: 8px 16px;">
 	</div>
 	<footer :class="$style.footer">
 		<div :class="$style.footerLeft">
 			<button v-tooltip="i18n.ts.attachFile" class="_button" :class="$style.footerButton" @click="chooseFileFrom"><i class="ti ti-photo-plus"></i></button>
 			<button v-tooltip="i18n.ts.poll" class="_button" :class="[$style.footerButton, { [$style.footerButtonActive]: poll }]" @click="togglePoll"><i class="ti ti-chart-arrows"></i></button>
-			<button v-tooltip="i18n.ts.event" class="_button" :class="[$style.footerButton, { [$style.footerButtonActive]: event }]" @click="toggleEvent"><i class="ti ti-calendar"></i></button>
-			<button v-tooltip="i18n.ts.scheduledNoteDelete" class="_button" :class="[$style.footerButton, { [$style.footerButtonActive]: scheduledNoteDelete }]" @click="toggleScheduledNoteDelete"><i class="ti ti-bomb"></i></button>
-			<button v-tooltip="i18n.ts.useCw" class="_button" :class="[$style.footerButton, { [$style.footerButtonActive]: useCw }]" @click="useCw = !useCw" :disabled="$i.isSensitive"><i class="ti ti-eye-off"></i></button>
+			<button v-tooltip="i18n.ts.useCw" class="_button" :class="[$style.footerButton, { [$style.footerButtonActive]: useCw }]" @click="useCw = !useCw"><i class="ti ti-eye-off"></i></button>
+			<button v-tooltip="i18n.ts.mention" class="_button" :class="$style.footerButton" @click="insertMention"><i class="ti ti-at"></i></button>
+			<button v-tooltip="i18n.ts.hashtags" class="_button" :class="[$style.footerButton, { [$style.footerButtonActive]: withHashtags }]" @click="withHashtags = !withHashtags"><i class="ti ti-hash"></i></button>
 			<button v-if="postFormActions.length > 0" v-tooltip="i18n.ts.plugins" class="_button" :class="$style.footerButton" @click="showActions"><i class="ti ti-plug"></i></button>
 			<button v-tooltip="i18n.ts.emoji" :class="['_button', $style.footerButton]" @click="insertEmoji"><i class="ti ti-mood-happy"></i></button>
 			<button v-if="showAddMfmFunction" v-tooltip="i18n.ts.addMfmFunction" :class="['_button', $style.footerButton]" @click="insertMfmFunction"><i class="ti ti-palette"></i></button>
-			<button v-click-anime v-tooltip="i18n.ts._searchableBy.searchableBy" class="_button" :class="[$style.footerButton, { [$style.footerButtonActive]: searchableBy }]" @click="toggleSearchableBy">
-				<span v-if="searchableBy === 'public'"><i class="ti ti-world"></i></span>
-				<span v-else-if="searchableBy === 'followers'"><i class="ti ti-lock"></i></span>
-				<span v-else-if="searchableBy === 'reacted'"><i class="ti ti-mood-smile"></i></span>
-				<span v-else><i class="ti ti-at"></i></span>
-			</button>
+			<button v-tooltip="i18n.ts.otherSettings" :class="['_button', $style.footerButton]" @click="showOtherMenu"><i class="ti ti-dots"></i></button>
 		</div>
 		<div :class="$style.footerRight">
 			<button v-tooltip="i18n.ts.previewNoteText" class="_button" :class="$style.footerButton" @click="showPreviewMenu"><i class="ti ti-eye"></i></button>
@@ -102,18 +102,17 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <script lang="ts" setup>
 import { inject, watch, nextTick, onMounted, defineAsyncComponent, provide, shallowRef, ref, computed } from 'vue';
-import * as mfm from 'cherrypick-mfm-js';
+import * as mfm from 'cfm-js';
 import * as Misskey from 'cherrypick-js';
 import insertTextAtCursor from 'insert-text-at-cursor';
 import { toASCII } from 'punycode/';
+import { host, url } from '@@/js/config.js';
+import { erase, unique } from '@@/js/array.js';
 import MkNoteSimple from '@/components/MkNoteSimple.vue';
 import MkNotePreview from '@/components/MkNotePreview.vue';
 import XPostFormAttaches from '@/components/MkPostFormAttaches.vue';
 import MkPollEditor, { type PollEditorModelValue } from '@/components/MkPollEditor.vue';
 import MkEventEditor from '@/components/MkEventEditor.vue';
-import MkScheduledNoteDelete, { type DeleteScheduleEditorModelValue } from '@/components/MkScheduledNoteDelete.vue';
-import { host, url } from '@/config.js';
-import { erase, unique } from '@/scripts/array.js';
 import { extractMentions } from '@/scripts/extract-mentions.js';
 import { formatTimeString } from '@/scripts/format-time-string.js';
 import { Autocomplete } from '@/scripts/autocomplete.js';
@@ -134,8 +133,7 @@ import { emojiPicker } from '@/scripts/emoji-picker.js';
 import { vibrate } from '@/scripts/vibrate.js';
 import * as sound from '@/scripts/sound.js';
 import { mfmFunctionPicker } from '@/scripts/mfm-function-picker.js';
-import { file } from '.storybook/fakes';
-
+import MkScheduledNoteDelete, { type DeleteScheduleEditorModelValue } from '@/components/MkScheduledNoteDelete.vue';
 
 const $i = signinRequired();
 
@@ -271,7 +269,7 @@ const submitText = computed((): string => {
 });
 
 const textLength = computed((): number => {
-	return (text.value + imeText.value).trim().length;
+	return (text.value + imeText.value).length;
 });
 
 const maxTextLength = computed((): number => {
@@ -410,6 +408,7 @@ function watchForDraft() {
 	watch(scheduledNoteDelete, () => saveDraft());
 	watch(quoteId, () => saveDraft());
 	watch(reactionAcceptance, () => saveDraft());
+	watch(scheduledNoteDelete, () => saveDraft());
 }
 
 function checkMissingMention() {
@@ -548,9 +547,8 @@ async function toggleLocalOnly() {
 			text: i18n.ts.disableFederationConfirmWarn,
 			actions: [
 				{
-					value: 'yes' as const,
+					value: 'ok' as const,
 					text: i18n.ts.disableFederationOk,
-					primary: true,
 				},
 				{
 					value: 'neverShow' as const,
@@ -558,13 +556,15 @@ async function toggleLocalOnly() {
 					danger: true,
 				},
 				{
-					value: 'no' as const,
+					value: 'cancel' as const,
 					text: i18n.ts.cancel,
+					primary: true,
 				},
 			],
 		});
+
 		if (confirm.canceled) return;
-		if (confirm.result === 'no') return;
+		if (confirm.result === 'cancel') return;
 
 		if (confirm.result === 'neverShow') {
 			miLocalStorage.setItem('neverShowLocalOnlyInfo', 'true');
@@ -788,6 +788,7 @@ function saveDraft() {
 			scheduledNoteDelete: scheduledNoteDelete.value,
 			quoteId: quoteId.value,
 			reactionAcceptance: reactionAcceptance.value,
+			scheduledNoteDelete: scheduledNoteDelete.value,
 		},
 	};
 
@@ -810,15 +811,37 @@ async function post(ev?: MouseEvent) {
 		});
 		return;
 	}
+
 	if (defaultStore.state.showNoAltTextWarning && files.value.some((f) => f.comment == null || f.comment.length === 0)) {
-		const { canceled } = await os.confirm({
+		const confirm = await os.actions({
 			type: 'warning',
+			title: i18n.ts.showNoAltWarning,
 			text: i18n.ts._altWarning.noAltWarning,
-			okText: i18n.ts.goBack,
-			cancelText: i18n.ts._altWarning.postAnyWay,
+			caption: i18n.ts._altWarning.noAltWarningDescription,
+			actions: [
+				{
+					value: 'ok' as const,
+					text: i18n.ts.thisPostMayBeAnnoyingIgnore,
+				},
+				{
+					value: 'neverShow' as const,
+					text: `${i18n.ts.thisPostMayBeAnnoyingIgnore} (${i18n.ts.neverShow})`,
+					danger: true,
+				},
+				{
+					value: 'cancel' as const,
+					text: i18n.ts.goBack,
+					primary: true,
+				},
+			],
 		});
 
-		if (!canceled) return;
+		if (confirm.canceled) return;
+		if (confirm.result === 'cancel') return;
+
+		if (confirm.result === 'neverShow') {
+			defaultStore.set('showNoAltTextWarning', false);
+		}
 	}
 
 	if (ev) {
@@ -1069,18 +1092,7 @@ function showActions(ev: MouseEvent) {
 }
 
 async function openMfmCheatSheet() {
-	os.popup(defineAsyncComponent(() => import('@/components/MkMfmCheatSheetDialog.vue')), {}, {}, 'closed');
-}
-
-function toggleScheduledNoteDelete() {
-	if (scheduledNoteDelete.value) {
-		scheduledNoteDelete.value = null;
-	} else {
-		scheduledNoteDelete.value = {
-			deleteAt: null,
-			deleteAfter: null,
-		};
-	}
+	os.popup(defineAsyncComponent(() => import('@/components/MkMfmCheatSheetDialog.vue')), {}, 'closed');
 }
 
 const postAccount = ref<Misskey.entities.UserDetailed | null>(null);
@@ -1116,61 +1128,34 @@ function showPreviewMenu(ev: MouseEvent) {
 	}], ev.currentTarget ?? ev.target);
 }
 
-function showOtherMenu(ev: MouseEvent) {
-	let reactionAcceptanceIcon: string;
-	switch (reactionAcceptance.value) {
-		case 'likeOnly':
-			reactionAcceptanceIcon = 'ti ti-heart';
-			break;
-		case 'likeOnlyForRemote':
-			reactionAcceptanceIcon = 'ti ti-heart-plus';
-			break;
-		case 'nonSensitiveOnly':
-			reactionAcceptanceIcon = 'ti ti-eye-exclamation';
-			break;
-		case 'nonSensitiveOnlyForLocalLikeOnlyForRemote':
-			reactionAcceptanceIcon = 'ti ti-eye-heart';
-			break;
-		default:
-			reactionAcceptanceIcon = 'ti ti-icons';
-			break;
-	}
-
-	let toggleDisableRightClickIcon: string;
-	if (disableRightClick.value) {
-		toggleDisableRightClickIcon = 'ti ti-mouse-off';
+function toggleScheduledNoteDelete() {
+	if (scheduledNoteDelete.value) {
+		scheduledNoteDelete.value = null;
 	} else {
-		toggleDisableRightClickIcon = 'ti ti-mouse';
+		scheduledNoteDelete.value = {
+			deleteAt: null,
+			deleteAfter: null,
+		};
 	}
+}
 
+function showOtherMenu(ev: MouseEvent) {
 	os.popupMenu([{
 		type: 'button',
-		text: i18n.ts.reactionAcceptance,
-		icon: reactionAcceptanceIcon,
-		action: toggleReactionAcceptance,
+		text: i18n.ts.event,
+		icon: 'ti ti-calendar',
+		action: toggleEvent,
 	}, {
 		type: 'button',
-		text: i18n.ts._mfm.cheatSheet,
-		icon: 'ti ti-help',
-		action: openMfmCheatSheet,
-	}, {
-		type: 'button',
-		text: i18n.ts.mention,
-		icon: 'ti ti-at',
-		action: insertMention,
-	}, {
-		type: 'button',
-		text: i18n.ts.hashtags,
-		icon: 'ti ti-hash',
-		action: toggleTag,
-	}, {
-		type: 'button',
+		text: i18n.ts.scheduledNoteDelete,
+		icon: 'ti ti-clock-hour-9',
+		action: toggleScheduledNoteDelete,
+	}, { type: 'divider' }, {
+		type: 'switch',
 		text: i18n.ts.disableRightClick,
-		icon: toggleDisableRightClickIcon,
-		action: toggleDisableRightClick,
-	}], ev.currentTarget ?? ev.target, {
-		align: 'right',
-	});
+		icon: 'ti ti-mouse-off',
+		ref: disableRightClick,
+	}], ev.currentTarget ?? ev.target);
 }
 
 onMounted(() => {
@@ -1254,6 +1239,12 @@ onMounted(() => {
 			quoteId.value = init.renote ? init.renote.id : null;
 			reactionAcceptance.value = init.reactionAcceptance;
 			disableRightClick.value = init.disableRightClick != null;
+			if (init.deletedAt) {
+				scheduledNoteDelete.value = {
+					deleteAt: init.deletedAt ? (new Date(init.deletedAt)).getTime() : null,
+					deleteAfter: null,
+				};
+			}
 		}
 
 		nextTick(() => watchForDraft());
@@ -1351,13 +1342,13 @@ defineExpose({
 
 	&:not(:disabled):hover {
 		> .inner {
-			background: linear-gradient(90deg, var(--X8), var(--X8));
+			background: linear-gradient(90deg, hsl(from var(--accent) h s calc(l + 5)), hsl(from var(--accent) h s calc(l + 5)));
 		}
 	}
 
 	&:not(:disabled):active {
 		> .inner {
-			background: linear-gradient(90deg, var(--X8), var(--X8));
+			background: linear-gradient(90deg, hsl(from var(--accent) h s calc(l + 5)), hsl(from var(--accent) h s calc(l + 5)));
 		}
 	}
 }
@@ -1420,10 +1411,19 @@ defineExpose({
 //#endregion
 
 .preview {
-	padding: 16px 20px 0 20px;
+	padding: 16px 20px;
 	// min-height: 75px;
 	max-height: 150px;
 	overflow: auto;
+	background-size: auto auto;
+}
+
+html[data-color-scheme=dark] .preview {
+	background-image: repeating-linear-gradient(135deg, transparent, transparent 5px, #0004 5px, #0004 10px);
+}
+
+html[data-color-scheme=light] .preview {
+	background-image: repeating-linear-gradient(135deg, transparent, transparent 5px, #00000005 5px, #00000005 10px);
 }
 
 .targetNote {

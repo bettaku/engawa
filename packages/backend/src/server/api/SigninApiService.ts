@@ -145,6 +145,12 @@ export class SigninApiService {
 
 		if (!profile.twoFactorEnabled) {
 			if (same) {
+				if (profile.password!.startsWith('$2')) {
+					const newHash = await argon2.hash(password);
+					this.userProfilesRepository.update(user.id, {
+						password: newHash,
+					});
+				}
 				return this.signinService.signin(request, reply, user);
 			} else {
 				return await fail(403, {
@@ -161,6 +167,12 @@ export class SigninApiService {
 			}
 
 			try {
+				if (profile.password!.startsWith('$2')) {
+					const newHash = await argon2.hash(password);
+					this.userProfilesRepository.update(user.id, {
+						password: newHash,
+					});
+				}
 				await this.userAuthService.twoFactorAuthenticate(profile, token);
 			} catch (e) {
 				return await fail(403, {

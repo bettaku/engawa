@@ -33,11 +33,11 @@ import * as Misskey from 'cherrypick-js';
 import PhotoSwipeLightbox from 'photoswipe/lightbox';
 import PhotoSwipe from 'photoswipe';
 import 'photoswipe/style.css';
+import { FILE_TYPE_BROWSERSAFE } from '@@/js/const.js';
 import XBanner from '@/components/MkMediaBanner.vue';
 import XImage from '@/components/MkMediaImage.vue';
 import XVideo from '@/components/MkMediaVideo.vue';
 import * as os from '@/os.js';
-import { FILE_TYPE_BROWSERSAFE } from '@/const.js';
 import { defaultStore } from '@/store.js';
 import { focusParent } from '@/scripts/focus.js';
 
@@ -153,7 +153,7 @@ onMounted(() => {
 			[itemData.w, itemData.h] = [itemData.h, itemData.w];
 		}
 		itemData.msrc = file.thumbnailUrl ?? undefined;
-		itemData.alt = file.comment || undefined;
+		itemData.alt = file.comment ?? undefined;
 		itemData.comment = file.comment ?? file.name;
 		itemData.title = file.name;
 		itemData.thumbCropped = true;
@@ -180,6 +180,8 @@ onMounted(() => {
 				el.appendChild(textBox);
 
 				pswp.on('change', () => {
+					textBox.textContent = pswp.currSlide?.data.comment;
+
 					const altText = pswp.currSlide?.data.alt || null;
 					textBox.textContent = altText;
 					if (!altText) {
@@ -196,7 +198,6 @@ onMounted(() => {
 				const textBox = document.createElement('p');
 				textBox.className = 'pswp__file-name _acrylic';
 				el.appendChild(textBox);
-
 				pswp.on('change', () => {
 					textBox.textContent = pswp.currSlide?.data.title;
 				});
@@ -372,15 +373,20 @@ defineExpose({
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-
 	position: absolute;
-	bottom: 20px;
+	bottom: 100px;
 	left: 50%;
 	transform: translateX(-50%);
 
 	width: 75%;
 	max-width: 800px;
 
+	z-index: 2;
+}
+
+.pswp__file-name-container {
+	@extend .pswp__alt-text-container;
+	bottom: 20px;
 	z-index: 1;
 }
 
@@ -397,14 +403,7 @@ defineExpose({
 }
 
 .pswp__file-name {
-	color: var(--fg);
-	margin: 0 auto;
-	text-align: center;
-	padding: var(--margin);
-	border-radius: var(--radius);
+	@extend .pswp__alt-text;
 	max-height: 16em;
-	overflow-y: auto;
-	text-shadow: var(--bg) 0 0 10px, var(--bg) 0 0 3px, var(--bg) 0 0 3px;
-	white-space: pre-line;
 }
 </style>

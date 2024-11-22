@@ -220,6 +220,10 @@ export const packedRolePoliciesSchema = {
 			type: 'boolean',
 			optional: false, nullable: false,
 		},
+		canUseAutoTranslate: {
+			type: 'boolean',
+			optional: false, nullable: false,
+		},
 		canHideAds: {
 			type: 'boolean',
 			optional: false, nullable: false,
@@ -278,6 +282,26 @@ export const packedRolePoliciesSchema = {
 		},
 		fileSizeLimit: {
 			type: 'integer',
+			optional: false, nullable: false,
+		},
+		canImportAntennas: {
+			type: 'boolean',
+			optional: false, nullable: false,
+		},
+		canImportBlocking: {
+			type: 'boolean',
+			optional: false, nullable: false,
+		},
+		canImportFollowing: {
+			type: 'boolean',
+			optional: false, nullable: false,
+		},
+		canImportMuting: {
+			type: 'boolean',
+			optional: false, nullable: false,
+		},
+		canImportUserLists: {
+			type: 'boolean',
 			optional: false, nullable: false,
 		},
 		canEditNote: {

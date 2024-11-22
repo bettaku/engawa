@@ -78,12 +78,12 @@
 				"useValidTypeof": "error"
 			}
 		},
-		"ignore": ["**/.eslintrc.cjs"]
+		"ignore": ["build.js"]
 	},
 	"javascript": { "globals": [] },
 	"overrides": [
 		{
-			"include": ["*.ts", "*.tsx", "*.mts", "*.cts"],
+			"include": ["**/*.ts", "**/*.tsx"],
 			"linter": {
 				"rules": {
 					"correctness": {

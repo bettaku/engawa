@@ -17,7 +17,7 @@ import { } from 'vue';
 import type { Paging } from '@/components/MkPagination.vue';
 import MkNotes from '@/components/MkNotes.vue';
 import MkWindow from '@/components/MkWindow.vue';
-import { i18n } from '@/i18n';
+import { i18n } from '@/i18n.js';
 
 const props = defineProps<{
 	noteKey: string | number | symbol | undefined;
@@ -27,9 +27,4 @@ const props = defineProps<{
 const emit = defineEmits<{
 	(ev: 'closed'): void;
 }>();
-
 </script>
-
-<style lang="scss" module>
-
-</style>
