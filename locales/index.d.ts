@@ -6482,6 +6482,22 @@ export interface Locale extends ILocale {
          * サーバー運営者へのお問い合わせフォームのURLや、運営者の連絡先等が記載されたWebページのURLを指定します。
          */
         "inquiryUrlDescription": string;
+        /**
+         * 検索エンジンのインデックス
+         */
+        "index": string;
+        /**
+         * Elasticsearchに対してインデックスを貼る処理を実行します。
+         */
+        "indexDesc": string;
+        /**
+         * 全てにインデックスを貼る
+         */
+        "fullIndex": string;
+        /**
+         * インデックスを貼り直す
+         */
+        "reIndex": string;
     };
     "_accountMigration": {
         /**

@@ -77,6 +77,8 @@ import type {
 	AdminGetTableStatsResponse,
 	AdminGetUserIpsRequest,
 	AdminGetUserIpsResponse,
+	AdminIndexFullRequest,
+	AdminIndexReindexRequest,
 	AdminInviteCreateRequest,
 	AdminInviteCreateResponse,
 	AdminInviteListRequest,
@@ -646,6 +648,8 @@ export type Endpoints = {
 	'admin/get-index-stats': { req: EmptyRequest; res: AdminGetIndexStatsResponse };
 	'admin/get-table-stats': { req: EmptyRequest; res: AdminGetTableStatsResponse };
 	'admin/get-user-ips': { req: AdminGetUserIpsRequest; res: AdminGetUserIpsResponse };
+	'admin/index/full': { req: AdminIndexFullRequest; res: EmptyResponse };
+	'admin/index/reindex': { req: AdminIndexReindexRequest; res: EmptyResponse };
 	'admin/invite/create': { req: AdminInviteCreateRequest; res: AdminInviteCreateResponse };
 	'admin/invite/list': { req: AdminInviteListRequest; res: AdminInviteListResponse };
 	'admin/invite/revoke': { req: EmptyRequest; res: EmptyResponse };
@@ -1042,6 +1046,8 @@ export const endpointReqTypes: Record<keyof Endpoints, 'application/json' | 'mul
 	'admin/get-index-stats': 'application/json',
 	'admin/get-table-stats': 'application/json',
 	'admin/get-user-ips': 'application/json',
+	'admin/index/full': 'application/json',
+	'admin/index/reindex': 'application/json',
 	'admin/invite/create': 'application/json',
 	'admin/invite/list': 'application/json',
 	'admin/invite/revoke': 'application/json',

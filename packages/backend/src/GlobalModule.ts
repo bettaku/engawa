@@ -8,6 +8,7 @@ import { Global, Inject, Module } from '@nestjs/common';
 import * as Redis from 'ioredis';
 import { DataSource } from 'typeorm';
 import { MeiliSearch } from 'meilisearch';
+import { Client as ElasticSearch } from '@elastic/elasticsearch';
 import { Logging } from '@google-cloud/logging';
 import { DI } from './di-symbols.js';
 import { Config, loadConfig } from './config.js';
@@ -37,6 +38,31 @@ const $meilisearch: Provider = {
 			return new MeiliSearch({
 				host: `${config.meilisearch.ssl ? 'https' : 'http'}://${config.meilisearch.host}:${config.meilisearch.port}`,
 				apiKey: config.meilisearch.apiKey,
+			});
+		} else {
+			return null;
+		}
+	},
+	inject: [DI.config],
+};
+
+const $elasticsearch: Provider = {
+	provide: DI.elasticsearch,
+	useFactory: (config: Config) => {
+		if (config.elasticsearch) {
+			return new ElasticSearch({
+				nodes: {
+					url: new URL(`${config.elasticsearch?.ssl ? 'https' : 'http'}://${config.elasticsearch?.host}:${config.elasticsearch?.port}`),
+				},
+				auth: (config.elasticsearch?.user && config.elasticsearch?.pass) ? {
+					username: config.elasticsearch.user,
+					password: config.elasticsearch.pass,
+				} : undefined,
+				tls: {
+					rejectUnauthorized: config.elasticsearch?.rejectUnauthorized ?? false,
+				},
+				pingTimeout: config.elasticsearch.pingTimeout ?? 3000,
+				requestTimeout: config.elasticsearch.requestTimeout ?? 30000,
 			});
 		} else {
 			return null;
@@ -109,8 +135,8 @@ const $redisForJobQueue: Provider = {
 @Global()
 @Module({
 	imports: [RepositoryModule],
-	providers: [$config, $db, $meilisearch, $cloudLogging, $redis, $redisForPub, $redisForSub, $redisForTimelines, $redisForJobQueue],
-	exports: [$config, $db, $meilisearch, $cloudLogging, $redis, $redisForPub, $redisForSub, $redisForTimelines, $redisForJobQueue, RepositoryModule],
+	providers: [$config, $db, $meilisearch,  $elasticsearch ,$cloudLogging, $redis, $redisForPub, $redisForSub, $redisForTimelines, $redisForJobQueue],
+	exports: [$config, $db, $meilisearch,  $elasticsearch ,$cloudLogging, $redis, $redisForPub, $redisForSub, $redisForTimelines, $redisForJobQueue, RepositoryModule],
 })
 export class GlobalModule implements OnApplicationShutdown {
 	constructor(

@@ -35,8 +35,11 @@ coverage
 !/.config/example.yml
 !/.config/docker_example.yml
 !/.config/docker_example.env
+/.devcontainer/compose.yml
 .devcontainer/compose.yml
 !/.devcontainer/compose.yml
+/.devcontainer/certs
+.devcontainer/certs
 
 # cherrypick
 /build
@@ -71,3 +74,6 @@ misskey-assets
 
 # VSCode addon
 .favorites.json
+
+# Rust
+/cli/target
