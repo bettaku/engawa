@@ -53,7 +53,7 @@
 		}>();
 
 	const expiration = ref('at');
-	const atDate = ref(formatDateTimeString(addTime(new Date(), 1, 'day'), 'yyyy-MM-dd'));
+	const atDate = ref(formatDateTimeString(addTime(new Date(), 0, 'day'), 'yyyy-MM-dd'));
 	const atTime = ref('00:00');
 	const after = ref(0);
 	const unit = ref('second');
@@ -70,7 +70,9 @@
 
 	function get(): DeleteScheduleEditorModelValue {
 		const calcAt = () => {
-			return new Date(`${atDate.value} ${atTime.value}`).getTime();
+			const dateTimeString = `${atDate.value}T${atTime.value}:00`;
+			const parsedDate = new Date(dateTimeString);
+			return parsedDate.getTime();
 		};
 
 		const calcAfter = () => {
@@ -87,8 +89,6 @@
 				case 'second': return base *= 1000;
 				default: return null;
 			};
-			now.setTime(now.getTime() + base);
-			return now.getTime();
 		};
 
 		return {
