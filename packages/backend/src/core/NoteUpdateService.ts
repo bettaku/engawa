@@ -234,6 +234,8 @@ export class NoteUpdateService implements OnApplicationShutdown {
 			}
 			//#endregion
 		}
+
+		this.reIndex(note);
 	}
 
 	@bindThis
@@ -288,5 +290,13 @@ export class NoteUpdateService implements OnApplicationShutdown {
 	@bindThis
 	public onApplicationShutdown(signal?: string | undefined): void {
 		this.dispose();
+	}
+
+	@bindThis
+	private reIndex(note: MiNote) {
+		if (note.text == null && note.cw == null) return;
+
+		this.searchService.unindexNote(note);
+		this.searchService.indexNote(note);
 	}
 }

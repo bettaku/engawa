@@ -43,9 +43,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<MkSwitch v-model="excludeNsfw">{{ i18n.ts._advancedSearch._searchOption.toggleCW }}</MkSwitch>
 						<MkSwitch v-model="excludeBot">{{ i18n.ts.antennaExcludeBots }}</MkSwitch>
 						<MkRadios v-model="fileOption">
+							<template #label>{{ i18n.ts._advancedSearch._fileOption.title }}</template>
 							<option value="combined">{{ i18n.ts._advancedSearch._fileOption.combined }}</option>
 							<option value="fileOnly">{{ i18n.ts._advancedSearch._fileOption.fileAttachedOnly }}</option>
 							<option value="noFile">{{ i18n.ts._advancedSearch._fileOption.noFile }}</option>
+						</MkRadios>
+						<MkRadios v-model="orderBy">
+							<option value="desc">{{ i18n.ts._advancedSearch._orderBy.desc }}</option>
+							<option value="asc">{{ i18n.ts._advancedSearch._orderBy.asc }}</option>
 						</MkRadios>
 					</div>
 				</MkFolder>
@@ -102,6 +107,7 @@ const hostInput = ref(toRef(props, 'host').value);
 const excludeNsfw = ref(false);
 const excludeBot = ref(false);
 const fileOption = ref('combined');
+const orderBy = ref('desc');
 
 const noteSearchableScope = instance.noteSearchableScope ?? 'local';
 
@@ -218,6 +224,7 @@ async function search() {
 			excludeNsfw: excludeNsfw.value,
 			excludeBot: excludeBot.value,
 			fileOption: fileOption.value,
+			orderBy: orderBy.value,
 		},
 	};
 
