@@ -737,6 +737,10 @@ export const defaultStore = markRaw(new Storage('base', {
 		where: 'device',
 		default: true,
 	},
+	mobileHideAvatars: {
+		where: 'device',
+		default: true,
+	}
 	// #endregion
 }));
 

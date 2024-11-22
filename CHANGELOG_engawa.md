@@ -15,6 +15,24 @@
 ### Misc
 
 -->
+## 0.6.2(unreleased)
+
+### Release Date
+
+### General
+-
+
+### Client
+- fix: モバイル環境でUIのナビゲーションバーによって一部の表示が隠れるのを修正
+- fix: 自動削除機能で日時指定にしていた場合正しい時刻に削除されない問題を修正
+- feat: Misskey UIでモバイル環境時にヘッダーのアイコンを隠せるように
+
+### Server
+-
+
+### Misc
+
+
 ## 0.6.1
 
 ### Release Date

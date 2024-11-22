@@ -15,6 +15,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</div>
 		</template>
 		<RouterView/>
+		<div :class="$style.spacer"></div>
 	</MkStickyContainer>
 
 	<div v-if="isDesktop && defaultStore.state.friendlyEnableNotifications && mainRouter.currentRoute.value.name !== 'my-notifications'" :class="$style.notificationWidgets">
@@ -599,10 +600,10 @@ $float-button-size: 65px;
 	display: flex;
 	width: 100%;
 	box-sizing: border-box;
-	-webkit-backdrop-filter: var(--blur, blur(15px));
-	backdrop-filter: var(--blur, blur(15px));
+	-webkit-backdrop-filter: var(--blur, blur(24px));
+	backdrop-filter: var(--blur, blur(24px));
 	border-top: solid 0.5px var(--divider);
-	padding: 0 10px;
+	padding: 2px 10px;
   transition: opacity 0.5s, transform 0.5s;
 
 	&.reduceBlurEffect {

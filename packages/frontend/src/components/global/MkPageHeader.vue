@@ -9,7 +9,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<div v-if="!thin_ && !canBack" :class="$style.buttonsLeft">
 			<button v-vibrate="defaultStore.state.vibrateSystem ? 5 : []" class="_button" :class="[$style.button, $style.goBack]" @click.stop="goBack" @touchstart="preventDrag"><i class="ti ti-arrow-left"></i></button>
 		</div>
-		<div v-if="!thin_ && narrow && props.displayMyAvatar && $i && !isFriendly" class="_button" :class="$style.buttonsLeft" @click="openAccountMenu">
+		<div v-if="!thin_ && narrow && props.displayMyAvatar && $i && !isFriendly && !defaultStore.state.mobileHideAvatars" class="_button" :class="$style.buttonsLeft" @click="openAccountMenu">
 			<MkAvatar v-vibrate="defaultStore.state.vibrateSystem ? 5 : []" :class="$style.avatar" :user="$i"/>
 		</div>
 		<div v-else-if="!thin_ && narrow && !hideTitle && canBack" :class="$style.buttonsLeft"/>

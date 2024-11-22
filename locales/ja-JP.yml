@@ -1498,6 +1498,7 @@ _cherrypick:
   enableLongPressOpenAccountMenu: "長押しでアカウントメニューを開く"
   enableLongPressOpenAccountMenuDescription: "画面下部のタイムラインタブを長押しして開くことができます。"
   friendlyShowAvatarDecorationsInNavBtn: "フローティングボタンにアイコンのデコレーションを表示"
+  mobileHideAvatars: "モバイル環境でヘッダーのアイコンを非表示"
 
 _bannerDisplay:
   all: "全て"
