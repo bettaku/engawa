@@ -750,7 +750,8 @@ const isForeignLanguage: boolean = appearNote.value.text != null && (() => {
 	const postLang = detectLanguage(appearNote.value.text);
 	const choicesLang = appearNote.value.poll?.choices.map((choice) => choice.text).join(' ') ?? '';
 	const pollLang = detectLanguage(choicesLang);
-	return postLang !== '' && (postLang !== targetLang || pollLang !== targetLang);
+	console.log(postLang, pollLang, targetLang);
+	return postLang !== '' && (postLang !== targetLang);
 })();
 
 if (defaultStore.state.useAutoTranslate && instance.translatorAvailable && $i.policies.canUseTranslator && $i.policies.canUseAutoTranslate && !isLong && (appearNote.value.cw == null || showContent.value) && appearNote.value.text && isForeignLanguage) translate();
