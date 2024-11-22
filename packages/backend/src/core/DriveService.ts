@@ -155,9 +155,8 @@ export class DriveService {
 			webpublic: null,
 			thumbnail: null,
 		} : await this.generateAlts(path, type, !file.uri, file.userId);
-		const meta = await this.metaService.fetch();
 
-		if (meta.useObjectStorage) {
+		if (this.meta.useObjectStorage) {
 		//#region ObjectStorage params
 			let [ext] = (name.match(/\.([a-zA-Z0-9_-]+)$/) ?? ['']);
 
