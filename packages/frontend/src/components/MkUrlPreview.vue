@@ -151,7 +151,7 @@ if (requestUrl.hostname === 'music.youtube.com' && requestUrl.pathname.match('^/
 
 requestUrl.hash = '';
 
-window.fetch(`${instance.urlPreviewEndpoint}?url=${encodeURIComponent(requestUrl.href)}&lang=${versatileLang}`)
+window.fetch(`/url?url=${encodeURIComponent(requestUrl.href)}&lang=${versatileLang}`)
 	.then(res => {
 		if (!res.ok) {
 			if (_DEV_) {
@@ -174,8 +174,8 @@ window.fetch(`${instance.urlPreviewEndpoint}?url=${encodeURIComponent(requestUrl
 
 		title.value = info.title;
 		description.value = info.description;
-		thumbnail.value = getProxiedImageUrlNullable(info.thumbnail, 'avatar', true);
-		icon.value = getProxiedImageUrlNullable(info.icon, 'emoji', true);
+		thumbnail.value = info.thumbnail;
+		icon.value = info.icon;
 		sitename.value = info.sitename;
 		player.value = info.player;
 		sensitive.value = info.sensitive ?? false;
