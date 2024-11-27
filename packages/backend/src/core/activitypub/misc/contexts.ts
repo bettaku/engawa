@@ -569,6 +569,10 @@ const extension_context_definition = {
 		'@id': 'fedibird:searchableBy',
 		'@type': '@id',
 	},
+	references: {
+		'@id': 'fedibird:references',
+		'@type': '@id',
+	},
 	// kmyblue
 	kmyblue: 'http://kmy.blue/ns#',
 	limitedScope: 'kmyblue:limitedScope',
