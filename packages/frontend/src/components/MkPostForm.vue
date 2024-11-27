@@ -1164,6 +1164,11 @@ function showOtherMenu(ev: MouseEvent) {
 		text: i18n.ts.event,
 		icon: 'ti ti-calendar',
 		action: toggleEvent,
+	}, {
+		type: 'button',
+		text: i18n.ts._searchableBy.searchableBy,
+		icon: 'ti ti-search',
+		action: toggleSearchableBy,
 	});
 
 	if ($i.policies.scheduleNoteMax > 0) {
@@ -1458,14 +1463,6 @@ defineExpose({
 	max-height: 150px;
 	overflow: auto;
 	background-size: auto auto;
-}
-
-html[data-color-scheme=dark] .preview {
-	background-image: repeating-linear-gradient(135deg, transparent, transparent 5px, #0004 5px, #0004 10px);
-}
-
-html[data-color-scheme=light] .preview {
-	background-image: repeating-linear-gradient(135deg, transparent, transparent 5px, #00000005 5px, #00000005 10px);
 }
 
 .targetNote {
