@@ -152,6 +152,7 @@ type Option = {
 	app?: MiApp | null;
 	deleteAt?: Date | null;
 	searchableBy?: string[] | string;
+	references?: MiNote[] | null;
 };
 
 @Injectable()
@@ -406,6 +407,8 @@ export class NoteCreateService implements OnApplicationShutdown {
 		if (mentionedUsers.length > 0 && mentionedUsers.length > (await this.roleService.getUserPolicies(user.id)).mentionLimit) {
 			throw new IdentifiableError('9f466dab-c856-48cd-9e65-ff90ff750580', 'Note contains too many mentions');
 		}
+
+		if (data.references) {}
 
 		const note = await this.insertNote(user, data, tags, emojis, mentionedUsers);
 
