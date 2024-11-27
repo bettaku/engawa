@@ -40,12 +40,14 @@ const props = withDefaults(defineProps<{
 	sound?: boolean;
 	withRenotes?: boolean;
 	withReplies?: boolean;
+	withSensitive?: boolean;
 	onlyFiles?: boolean;
   onlyCats?: boolean;
 	withoutBots?: boolean;
 }>(), {
 	withRenotes: true,
 	withReplies: false,
+	withSensitive: true,
 	onlyFiles: false,
 	onlyCats: false,
 	withoutBots: false,
@@ -57,6 +59,7 @@ const emit = defineEmits<{
 }>();
 
 provide('inTimeline', true);
+provide('tl_withSensitive', computed(() => props.withSensitive));
 provide('inChannel', computed(() => props.src === 'channel'));
 
 type TimelineQueryType = {
@@ -146,6 +149,12 @@ function connectChannel() {
 			withFiles: props.onlyFiles ? true : undefined,
 			withCats: props.onlyCats,
 			withoutBots: props.withoutBots,
+		});
+	} else if (props.src === 'bubble') {
+		connection = stream.useChannel('bubbleTimeline', {
+			withRenotes: props.withRenotes,
+			withFiles: props.onlyFiles ? true : undefined,
+			withCats: props.onlyCats,
 		});
 	} else if (props.src === 'mentions') {
 		connection = stream.useChannel('main');
@@ -237,6 +246,13 @@ function updatePaginationQuery() {
 			withCats: props.onlyCats,
 			withoutBots: props.withoutBots,
 		};
+	} else if (props.src === 'bubble') {
+		endpoint = 'notes/bubble-timeline';
+		query = {
+			withRenotes: props.withRenotes,
+			withFiles: props.onlyFiles ? true : undefined,
+			withCats: props.onlyCats,
+		};
 	} else if (props.src === 'mentions') {
 		endpoint = 'notes/mentions';
 		query = null;
@@ -291,6 +307,9 @@ function refreshEndpointAndChannel() {
 // デッキのリストカラムでwithRenotesを変更した場合に自動的に更新されるようにさせる
 // IDが切り替わったら切り替え先のTLを表示させたい
 watch(() => [props.list, props.antenna, props.channel, props.role, props.withRenotes], refreshEndpointAndChannel);
+
+// withSensitiveはクライアントで完結する処理のため、単にリロードするだけでOK
+watch(() => props.withSensitive, reloadTimeline);
 
 // 初回表示用
 refreshEndpointAndChannel();

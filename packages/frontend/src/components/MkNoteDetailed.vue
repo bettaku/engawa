@@ -88,6 +88,16 @@ SPDX-License-Identifier: AGPL-3.0-only
 					</div>
 					<MkInstanceTicker v-if="showTicker" :instance="appearNote.user.instance" @click="showOnRemote"/>
 				</div>
+				<div :class="$style.noteHeaderUsernameAndBadgeRoles">
+					<!--
+					<div :class="$style.noteHeaderUsername">
+						<MkAcct :user="appearNote.user"/>
+					</div>
+					-->
+					<div v-if="appearNote.user.badgeRoles" :class="$style.noteHeaderBadgeRoles">
+						<img v-for="(role, i) in appearNote.user.badgeRoles" :key="i" v-tooltip="role.name" :class="$style.noteHeaderBadgeRole" :src="role.iconUrl!"/>
+					</div>
+				</div>
 			</div>
 		</header>
 		<div :class="$style.noteContent">
@@ -197,7 +207,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<button v-if="appearNote.reactionAcceptance !== 'likeOnly' && appearNote.myReaction == null && defaultStore.state.showLikeButtonInNoteFooter" ref="heartReactButton" v-vibrate="defaultStore.state.vibrateSystem ? [30, 50, 50] : []" v-tooltip="i18n.ts.like" :class="$style.noteFooterButton" class="_button" @click="heartReact()">
 				<i class="ti ti-heart"></i>
 			</button>
-			<button v-if="defaultStore.state.showDoReactionButtonInNoteFooter" ref="reactButton" v-vibrate="defaultStore.state.vibrateSystem ? [30, 50, 50] : []" v-tooltip="appearNote.reactionAcceptance === 'likeOnly' && appearNote.myReaction != null ? i18n.ts.unlike : appearNote.myReaction != null ? i18n.ts.editReaction : appearNote.reactionAcceptance === 'likeOnly' ? i18n.ts.like : i18n.ts.doReaction" :class="$style.noteFooterButton" class="_button" @click.stop="toggleReaction()">
+			<button v-if="defaultStore.state.showDoReactionButtonInNoteFooter" ref="reactButton" v-vibrate="defaultStore.state.vibrateSystem ? [30, 50, 50] : []" v-tooltip="appearNote.reactionAcceptance === 'likeOnly' && appearNote.myReaction != null ? i18n.ts.unlike : appearNote.myReaction != null ? i18n.ts.editReaction : appearNote.reactionAcceptance === 'likeOnly' ? i18n.ts.like : i18n.ts.doReaction" :class="$style.noteFooterButton" class="_button" @click.stop="toggleReact()">
 				<i v-if="appearNote.reactionAcceptance === 'likeOnly' && appearNote.myReaction != null" class="ti ti-heart-filled" style="color: var(--MI_THEME-love);"></i>
 				<i v-else-if="appearNote.myReaction != null" class="ti ti-mood-edit" style="color: var(--MI_THEME-accent);"></i>
 				<i v-else-if="appearNote.reactionAcceptance === 'likeOnly'" class="ti ti-heart"></i>
@@ -519,7 +529,7 @@ if (appearNote.value.reactionAcceptance === 'likeOnly') {
 if (defaultStore.state.alwaysShowCw) showContent.value = true;
 
 function renote() {
-	pleaseLogin(undefined, pleaseLoginContext.value);
+	pleaseLogin({ openOnRemote: pleaseLoginContext.value });
 	showMovedDialog();
 
 	const { menu } = getRenoteMenu({ note: note.value, renoteButton });
@@ -527,14 +537,14 @@ function renote() {
 }
 
 async function renoteOnly() {
-	pleaseLogin(undefined, pleaseLoginContext.value);
+	pleaseLogin({ openOnRemote: pleaseLoginContext.value });
 	showMovedDialog();
 
 	await getRenoteOnly({ note: note.value, renoteButton });
 }
 
 function quote(): void {
-	pleaseLogin(undefined, pleaseLoginContext.value);
+	pleaseLogin({ openOnRemote: pleaseLoginContext.value });
 	if (appearNote.value.channel) {
 		os.post({
 			renote: appearNote.value,
@@ -551,7 +561,7 @@ function quote(): void {
 }
 
 function reply(): void {
-	pleaseLogin(undefined, pleaseLoginContext.value);
+	pleaseLogin({ openOnRemote: pleaseLoginContext.value });
 	showMovedDialog();
 	os.post({
 		reply: appearNote.value,
@@ -562,7 +572,7 @@ function reply(): void {
 }
 
 function react(): void {
-	pleaseLogin(undefined, pleaseLoginContext.value);
+	pleaseLogin({ openOnRemote: pleaseLoginContext.value });
 	showMovedDialog();
 	if (appearNote.value.reactionAcceptance === 'likeOnly') {
 		sound.playMisskeySfx('reaction');
@@ -626,7 +636,7 @@ async function toggleReaction(reaction) {
 }
 
 function heartReact(): void {
-	pleaseLogin(undefined, pleaseLoginContext.value);
+	pleaseLogin({ openOnRemote: pleaseLoginContext.value });
 	showMovedDialog();
 
 	sound.playMisskeySfx('reaction');
@@ -655,6 +665,14 @@ function undoReact(targetNote: Misskey.entities.Note): void {
 	misskeyApi('notes/reactions/delete', {
 		noteId: targetNote.id,
 	});
+}
+
+function toggleReact() {
+	if (appearNote.value.myReaction != null && appearNote.value.reactionAcceptance === 'likeOnly') {
+		undoReact(appearNote.value);
+	} else {
+		react();
+	}
 }
 
 function onContextmenu(ev: MouseEvent): void {
@@ -707,7 +725,7 @@ async function clip(): Promise<void> {
 
 function showRenoteMenu(): void {
 	if (isMyRenote) {
-		pleaseLogin(undefined, pleaseLoginContext.value);
+		pleaseLogin({ openOnRemote: pleaseLoginContext.value });
 		os.popupMenu([{
 			text: i18n.ts.unrenote,
 			icon: 'ti ti-trash',
@@ -868,7 +886,7 @@ function showOnRemote() {
 }
 
 .renoteMenu {
-  margin-right: 4px;
+	margin-right: 4px;
 }
 
 .renote + .note {
@@ -906,21 +924,21 @@ function showOnRemote() {
 	justify-content: center;
 	padding-left: 16px;
 	font-size: 0.95em;
-  max-width: 300px;
+	max-width: 300px;
 }
 
 .noteHeaderName {
 	font-weight: bold;
 	line-height: 1.3;
 	margin: 0 .5em 0 0;
-  overflow: hidden;
-  overflow-wrap: anywhere;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+	overflow: hidden;
+	overflow-wrap: anywhere;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 
-  &::-webkit-scrollbar {
-    display: none;
-  }
+	&::-webkit-scrollbar {
+		display: none;
+	}
 
 	&:hover {
 		color: var(--MI_THEME-nameHover);
@@ -943,18 +961,36 @@ function showOnRemote() {
 	text-align: right;
 }
 
+.noteHeaderUsernameAndBadgeRoles {
+	display: flex;
+}
+
 .noteHeaderUsername {
 	margin-bottom: 2px;
+	margin-right: 0.5em;
 	line-height: 1.3;
 	word-wrap: anywhere;
-  overflow: hidden;
-  overflow-wrap: anywhere;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+	overflow: hidden;
+	overflow-wrap: anywhere;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 
-  &::-webkit-scrollbar {
-    display: none;
-  }
+	&::-webkit-scrollbar {
+		display: none;
+	}
+}
+
+.noteHeaderBadgeRoles {
+	margin: 0 .5em 0 0;
+}
+
+.noteHeaderBadgeRole {
+	height: 1.3em;
+	vertical-align: -20%;
+
+	& + .noteHeaderBadgeRole {
+		margin-left: 0.2em;
+	}
 }
 
 .noteContent {
@@ -1107,9 +1143,9 @@ function showOnRemote() {
 		font-size: 0.9em;
 	}
 
-  .noteHeaderBody {
-    max-width: 180px;
-  }
+	.noteHeaderBody {
+		max-width: 180px;
+	}
 }
 
 @container (max-width: 480px) {
