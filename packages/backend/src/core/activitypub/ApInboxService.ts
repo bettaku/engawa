@@ -318,6 +318,8 @@ export class ApInboxService {
 		// eslint-disable-next-line no-param-reassign
 		resolver ??= this.apResolverService.createResolver();
 
+		if (!this.utilityService.isFederationAllowedHost(uri)) return 'skip: federation not allowed';
+
 		if (!activity.object) return 'skip: activity has no object property';
 		const targetUri = getApId(activity.object);
 		if (targetUri.startsWith('bear:')) return 'skip: bearcaps url not supported.';
