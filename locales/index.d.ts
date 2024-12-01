@@ -6898,6 +6898,10 @@ export interface Locale extends ILocale {
          * インデックスを貼り直す
          */
         "reIndex": string;
+        /**
+         * バブルタイムラインは無効化されています。ベースロールからバブルタイムラインを有効にしてください。
+         */
+        "bubbleTimelineDisabled": string;
     };
     "_accountMigration": {
         /**

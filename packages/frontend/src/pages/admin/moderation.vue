@@ -154,6 +154,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<MkTextarea v-if="bubbleTimelineEnabled" v-model="bubbleTimeline">
 								<template #caption>{{ i18n.ts.bubbleInstancesDescription }}</template>
 							</MkTextarea>
+							<MkBubbleTimelineCaution v-else/>
 							<MkButton primary @click="save_bubbleTimeline">{{ i18n.ts.save }}</MkButton>
 						</div>
 					</MkFolder>
@@ -179,6 +180,7 @@ import { definePageMetadata } from '@/scripts/page-metadata.js';
 import MkButton from '@/components/MkButton.vue';
 import FormLink from '@/components/form/link.vue';
 import MkFolder from '@/components/MkFolder.vue';
+import MkBubbleTimelineCaution from '@/components/MkBubbleTimelineCaution.vue';
 
 const meta = await misskeyApi('admin/meta');
 
