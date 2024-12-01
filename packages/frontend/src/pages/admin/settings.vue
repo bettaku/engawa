@@ -262,6 +262,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 						</MkInput>
 					</div>
 				</MkFolder>
+
+				<MkFolder>
+					<template #icon><i class="ti ti-file-search"></i></template>
+					<template #label>{{ i18n.ts.search }}</template>
+
+					<div class="_gaps_m">
+						<MkButton primary @click="reIndex">{{ i18n.ts._serverSettings.reIndex }}</MkButton>
+					</div>
+				</MkFolder>
 			</div>
 		</MkSpacer>
 	</MkStickyContainer>
@@ -410,6 +419,12 @@ function chooseProxyAccount() {
 		});
 	});
 
+}
+
+async function reIndex() {
+	await os.apiWithDialog('admin/index/reindex', {
+		index: 'all',
+	})
 }
 
 const headerTabs = computed(() => []);
