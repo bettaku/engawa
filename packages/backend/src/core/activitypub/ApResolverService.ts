@@ -99,7 +99,8 @@ export class Resolver {
 		}
 
 		if (!this.utilityService.isFederationAllowedHost(host)) {
-			throw new Error(`Instance is Blocked: ${host}`);
+			// throw new Error(`Instance is Blocked: ${host}`);
+			this.logger.warn(`Instance is Blocked: ${host}`);
 		}
 
 		if (this.config.signToActivityPubGet && !this.user) {
