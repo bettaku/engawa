@@ -754,7 +754,6 @@ const isForeignLanguage: boolean = appearNote.value.text != null && (() => {
 	const postLang = detectLanguage(appearNote.value.text);
 	const choicesLang = appearNote.value.poll?.choices.map((choice) => choice.text).join(' ') ?? '';
 	const pollLang = detectLanguage(choicesLang);
-	console.log(postLang, pollLang, targetLang);
 	return postLang !== '' && (postLang !== targetLang);
 })();
 
