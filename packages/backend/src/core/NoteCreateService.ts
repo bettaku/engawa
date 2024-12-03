@@ -15,7 +15,7 @@ import { extractCustomEmojisFromMfm } from '@/misc/extract-custom-emojis-from-mf
 import { extractHashtags } from '@/misc/extract-hashtags.js';
 import type { IMentionedRemoteUsers } from '@/models/Note.js';
 import { MiNote } from '@/models/Note.js';
-import { LatestNote } from '@/models/LatestNote.js';
+import { MiLatestNote } from '@/models/LatestNote.js';
 import { MiEvent } from '@/models/Event.js';
 import type { IEvent } from '@/models/Event.js';
 import type { ChannelFollowingsRepository, ChannelsRepository, FollowingsRepository, InstancesRepository, LatestNotesRepository, MiFollowing, MiMeta, MutingsRepository, NotesRepository, NoteThreadMutingsRepository, UserListMembershipsRepository, UserProfilesRepository, UsersRepository } from '@/models/_.js';
@@ -1149,7 +1149,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		if (currentLatest != null && currentLatest.noteId >= note.id) return;
 
 		// Record this as the latest note for the given user
-		const latestNote = new LatestNote({
+		const latestNote = new MiLatestNote({
 			userId: note.userId,
 			noteId: note.id,
 		});

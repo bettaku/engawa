@@ -6,7 +6,7 @@
 import { Module } from '@nestjs/common';
 import { DI } from '@/di-symbols.js';
 import {
-	LatestNote,
+	MiLatestNote,
 	MiAbuseReportNotificationRecipient,
 	MiAbuseReportResolver,
 	MiAbuseUserReport,
@@ -126,7 +126,7 @@ const $avatarDecorationsRepository: Provider = {
 
 const $latestNotesRepository: Provider = {
 	provide: DI.latestNotesRepository,
-	useFactory: (db: DataSource) => db.getRepository(LatestNote).extend(miRepository as MiRepository<LatestNote>),
+	useFactory: (db: DataSource) => db.getRepository(MiLatestNote).extend(miRepository as MiRepository<MiLatestNote>),
 	inject: [DI.db],
 };
 

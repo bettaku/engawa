@@ -10,7 +10,7 @@ import { RelationIdLoader } from 'typeorm/query-builder/relation-id/RelationIdLo
 import { RawSqlResultsToEntityTransformer } from 'typeorm/query-builder/transformer/RawSqlResultsToEntityTransformer.js';
 import { ObjectUtils } from 'typeorm/util/ObjectUtils.js';
 import { OrmUtils } from 'typeorm/util/OrmUtils.js';
-import { LatestNote } from '@/models/LatestNote.js';
+import { MiLatestNote } from '@/models/LatestNote.js';
 import { MiAbuseReportResolver } from '@/models/AbuseReportResolver.js';
 import { MiAbuseUserReport } from '@/models/AbuseUserReport.js';
 import { MiAbuseReportNotificationRecipient } from '@/models/AbuseReportNotificationRecipient.js';
@@ -132,7 +132,7 @@ export const miRepository = {
 } satisfies MiRepository<ObjectLiteral>;
 
 export {
-	LatestNote,
+	MiLatestNote,
 	MiAbuseReportResolver,
 	MiAbuseUserReport,
 	MiAbuseReportNotificationRecipient,
@@ -239,7 +239,7 @@ export type HashtagsRepository = Repository<MiHashtag> & MiRepository<MiHashtag>
 export type InstancesRepository = Repository<MiInstance> & MiRepository<MiInstance>;
 export type MessagingMessagesRepository = Repository<MiMessagingMessage> & MiRepository<MiMessagingMessage>;
 export type MetasRepository = Repository<MiMeta> & MiRepository<MiMeta>;
-export type LatestNotesRepository = Repository<LatestNote> & MiRepository<LatestNote>;
+export type LatestNotesRepository = Repository<MiLatestNote> & MiRepository<MiLatestNote>;
 export type ModerationLogsRepository = Repository<MiModerationLog> & MiRepository<MiModerationLog>;
 export type MutingsRepository = Repository<MiMuting> & MiRepository<MiMuting>;
 export type RenoteMutingsRepository = Repository<MiRenoteMuting> & MiRepository<MiRenoteMuting>;
