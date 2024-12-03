@@ -54,13 +54,13 @@ import { infoImageUrl } from '@/instance.js';
 import MkDateSeparatedList from '@/components/MkDateSeparatedList.vue';
 import { Tab } from '@/components/global/MkPageHeader.tabs.vue';
 import { PageHeaderItem } from '@/types/page-header.js';
-import SkFollowingFeedEntry from '@/components/SkFollowingFeedEntry.vue';
+import SkFollowingFeedEntry from '@/components/MkFollowingFeedEntry.vue';
 import { useRouter } from '@/router/supplier.js';
 import * as os from '@/os.js';
 import MkPageHeader from '@/components/global/MkPageHeader.vue';
 import { $i } from '@/account.js';
 import { checkWordMute } from '@/scripts/check-word-mute.js';
-import SkUserRecentNotes from '@/components/SkUserRecentNotes.vue';
+import SkUserRecentNotes from '@/components/MkUserRecentNotes.vue';
 import { useScrollPositionManager } from '@/nirax.js';
 import { getScrollContainer } from '@@/js/scroll.js';
 

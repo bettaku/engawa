@@ -20,7 +20,7 @@ import { i18n } from '@/i18n.js';
 import { PageHeaderItem } from '@/types/page-header.js';
 import * as os from '@/os.js';
 import MkPageHeader from '@/components/global/MkPageHeader.vue';
-import SkUserRecentNotes from '@/components/SkUserRecentNotes.vue';
+import SkUserRecentNotes from '@/components/MkUserRecentNotes.vue';
 import { acct } from '@/filters/user.js';
 
 defineProps<{
