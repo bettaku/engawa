@@ -11169,6 +11169,10 @@ export interface Locale extends ILocale {
              */
             "login": string;
             /**
+             * 予約投稿に失敗
+             */
+            "scheduleNote": string;
+            /**
              * 通知のテスト
              */
             "test": string;
@@ -11190,6 +11194,28 @@ export interface Locale extends ILocale {
              * リノート
              */
             "renote": string;
+        };
+        "_scheduleNote": {
+            /**
+             * 原因は不明です
+             */
+            "unknown": string;
+            /**
+             * 引用元がありません
+             */
+            "renoteTargetNotFound": string;
+            /**
+             * 対象のチャンネルがありません
+             */
+            "channelTargetNotFound": string;
+            /**
+             * 返信先がありません
+             */
+            "replyTargetNotFound": string;
+            /**
+             * 添付ファイルがありません
+             */
+            "invalidFilesCount": string;
         };
     };
     "_deck": {
