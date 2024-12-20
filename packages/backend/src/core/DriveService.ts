@@ -527,28 +527,9 @@ export class DriveService {
 		requestHeaders = null,
 		ext = null,
 	}: AddFileArgs): Promise<MiDriveFile> {
-		let skipNsfwCheck = false;
 		const userRoleNSFW = user && (await this.roleService.getUserPolicies(user.id)).alwaysMarkNsfw;
-		if (user == null) {
-			skipNsfwCheck = true;
-		} else if (userRoleNSFW) {
-			skipNsfwCheck = true;
-		}
-		if (this.meta.sensitiveMediaDetection === 'none') skipNsfwCheck = true;
-		if (user && this.meta.sensitiveMediaDetection === 'local' && this.userEntityService.isRemoteUser(user)) skipNsfwCheck = true;
-		if (user && this.meta.sensitiveMediaDetection === 'remote' && this.userEntityService.isLocalUser(user)) skipNsfwCheck = true;
 
-		const info = await this.fileInfoService.getFileInfo(path, {
-			skipSensitiveDetection: skipNsfwCheck,
-			sensitiveThreshold: // 感度が高いほどしきい値は低くすることになる
-			this.meta.sensitiveMediaDetectionSensitivity === 'veryHigh' ? 0.1 :
-			this.meta.sensitiveMediaDetectionSensitivity === 'high' ? 0.3 :
-			this.meta.sensitiveMediaDetectionSensitivity === 'low' ? 0.7 :
-			this.meta.sensitiveMediaDetectionSensitivity === 'veryLow' ? 0.9 :
-			0.5,
-			sensitiveThresholdForPorn: 0.75,
-			enableSensitiveMediaDetectionForVideos: this.meta.enableSensitiveMediaDetectionForVideos,
-		});
+		const info = await this.fileInfoService.getFileInfo(path);
 		//ファイル単位の容量制限チェック
 		if (user == null) {
 			//system user skip
@@ -666,7 +647,6 @@ export class DriveService {
 
 		if (user && this.utilityService.isMediaSilencedHost(this.meta.mediaSilencedHosts, user.host)) file.isSensitive = true;
 		if (info.sensitive && profile?.autoSensitive) file.isSensitive = true;
-		if (info.sensitive && this.meta.setSensitiveFlagAutomatically) file.isSensitive = true;
 		if (userRoleNSFW) file.isSensitive = true;
 
 		if (url !== null) {
