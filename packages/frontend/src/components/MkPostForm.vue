@@ -789,7 +789,6 @@ function saveDraft() {
 			poll: poll.value,
 			event: event.value,
 			visibleUserIds: visibility.value === 'specified' ? visibleUsers.value.map(x => x.id) : undefined,
-			scheduledNoteDelete: scheduledNoteDelete.value,
 			quoteId: quoteId.value,
 			reactionAcceptance: reactionAcceptance.value,
 			scheduledNoteDelete: scheduledNoteDelete.value,
