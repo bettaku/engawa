@@ -17,7 +17,6 @@ import { WebhookTestService } from '@/core/WebhookTestService.js';
 import { FlashService } from '@/core/FlashService.js';
 import { AccountMoveService } from './AccountMoveService.js';
 import { AccountUpdateService } from './AccountUpdateService.js';
-import { AiService } from './AiService.js';
 import { AnnouncementService } from './AnnouncementService.js';
 import { AntennaService } from './AntennaService.js';
 import { AppLockService } from './AppLockService.js';
@@ -164,7 +163,6 @@ const $AbuseReportService: Provider = { provide: 'AbuseReportService', useExisti
 const $AbuseReportNotificationService: Provider = { provide: 'AbuseReportNotificationService', useExisting: AbuseReportNotificationService };
 const $AccountMoveService: Provider = { provide: 'AccountMoveService', useExisting: AccountMoveService };
 const $AccountUpdateService: Provider = { provide: 'AccountUpdateService', useExisting: AccountUpdateService };
-const $AiService: Provider = { provide: 'AiService', useExisting: AiService };
 const $AnnouncementService: Provider = { provide: 'AnnouncementService', useExisting: AnnouncementService };
 const $AntennaService: Provider = { provide: 'AntennaService', useExisting: AntennaService };
 const $AppLockService: Provider = { provide: 'AppLockService', useExisting: AppLockService };
@@ -319,7 +317,6 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		AbuseReportNotificationService,
 		AccountMoveService,
 		AccountUpdateService,
-		AiService,
 		AnnouncementService,
 		AntennaService,
 		AppLockService,
@@ -470,7 +467,6 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		$AbuseReportNotificationService,
 		$AccountMoveService,
 		$AccountUpdateService,
-		$AiService,
 		$AnnouncementService,
 		$AntennaService,
 		$AppLockService,
@@ -622,7 +618,6 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		AbuseReportNotificationService,
 		AccountMoveService,
 		AccountUpdateService,
-		AiService,
 		AnnouncementService,
 		AntennaService,
 		AppLockService,
@@ -772,7 +767,6 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		$AbuseReportNotificationService,
 		$AccountMoveService,
 		$AccountUpdateService,
-		$AiService,
 		$AnnouncementService,
 		$AntennaService,
 		$AppLockService,

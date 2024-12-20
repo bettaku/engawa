@@ -5364,10 +5364,6 @@ export type operations = {
             mcaptchaSecretKey: string | null;
             recaptchaSecretKey: string | null;
             turnstileSecretKey: string | null;
-            sensitiveMediaDetection: string;
-            sensitiveMediaDetectionSensitivity: string;
-            setSensitiveFlagAutomatically: boolean;
-            enableSensitiveMediaDetectionForVideos: boolean;
             /** Format: id */
             proxyAccountId: string | null;
             email: string | null;
@@ -10395,12 +10391,6 @@ export type operations = {
           turnstileSiteKey?: string | null;
           turnstileSecretKey?: string | null;
           enableTestcaptcha?: boolean;
-          /** @enum {string} */
-          sensitiveMediaDetection?: 'none' | 'all' | 'local' | 'remote';
-          /** @enum {string} */
-          sensitiveMediaDetectionSensitivity?: 'medium' | 'low' | 'high' | 'veryLow' | 'veryHigh';
-          setSensitiveFlagAutomatically?: boolean;
-          enableSensitiveMediaDetectionForVideos?: boolean;
           /** Format: misskey:id */
           proxyAccountId?: string | null;
           maintainerName?: string | null;
