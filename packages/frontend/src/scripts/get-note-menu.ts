@@ -218,7 +218,7 @@ export function getNoteMenu(props: {
 				noteId: appearNote.id,
 			});
 
-			os.post({ initialNote: appearNote, renote: appearNote.renote, reply: appearNote.reply, channel: appearNote.channel });
+			os.post({ initialNote: appearNote, renote: appearNote.renote, reply: appearNote.reply });
 
 			if (Date.now() - new Date(appearNote.createdAt).getTime() < 1000 * 60) {
 				claimAchievement('noteDeletedWithin1min');
@@ -260,7 +260,7 @@ export function getNoteMenu(props: {
 			}
 		}
 
-		await os.post({ initialNote: appearNote, renote: appearNote.renote, reply: appearNote.reply, channel: appearNote.channel, updateMode: true });
+		await os.post({ initialNote: appearNote, renote: appearNote.renote, reply: appearNote.reply, updateMode: true });
 	}
 
 	function copyEdit(): void {
@@ -270,7 +270,7 @@ export function getNoteMenu(props: {
 		}).then(({ canceled }) => {
 			if (canceled) return;
 
-			os.post({ initialNote: appearNote, renote: appearNote.renote, reply: appearNote.reply, channel: appearNote.channel });
+			os.post({ initialNote: appearNote, renote: appearNote.renote, reply: appearNote.reply });
 		});
 	}
 
@@ -560,41 +560,6 @@ export function getNoteMenu(props: {
 			if (props.note.userId !== $i.id) menuItems.push(getAbuseNoteMenu(props.note, i18n.ts.reportAbuseRenote));
 		}
 
-		if (appearNote.channel && (appearNote.channel.userId === $i.id || $i.isModerator || $i.isAdmin)) {
-			menuItems.push({ type: 'divider' });
-			menuItems.push({
-				type: 'parent',
-				icon: 'ti ti-device-tv',
-				text: i18n.ts.channel,
-				children: async () => {
-					const channelChildMenu = [] as MenuItem[];
-
-					const channel = await misskeyApi('channels/show', { channelId: appearNote.channel!.id });
-
-					if (channel.pinnedNoteIds.includes(appearNote.id)) {
-						channelChildMenu.push({
-							icon: 'ti ti-pinned-off',
-							text: i18n.ts.unpin,
-							action: () => os.apiWithDialog('channels/update', {
-								channelId: appearNote.channel!.id,
-								pinnedNoteIds: channel.pinnedNoteIds.filter(id => id !== appearNote.id),
-							}),
-						});
-					} else {
-						channelChildMenu.push({
-							icon: 'ti ti-pin',
-							text: i18n.ts.pin,
-							action: () => os.apiWithDialog('channels/update', {
-								channelId: appearNote.channel!.id,
-								pinnedNoteIds: [...channel.pinnedNoteIds, appearNote.id],
-							}),
-						});
-					}
-					return channelChildMenu;
-				},
-			});
-		}
-
 		if (appearNote.userId === $i.id || $i.isModerator || $i.isAdmin) {
 			menuItems.push({ type: 'divider' });
 			if (appearNote.userId === $i.id) {
@@ -760,22 +725,6 @@ export function getQuoteMenu(props: {
 			},
 		});
 	}
-
-	if (appearNote.channel) {
-		menu.push({
-			text: i18n.ts.inChannelQuote,
-			icon: 'ti ti-device-tv',
-			action: () => {
-				if (!props.mock) {
-					os.post({
-						renote: appearNote,
-						channel: appearNote.channel,
-					});
-				}
-			},
-		});
-	}
-
 	return { menu };
 }
 
@@ -790,55 +739,6 @@ export function getRenoteMenu(props: {
 	const normalRenoteItems: MenuItem[] = [];
 	const normalExternalChannelRenoteItems: MenuItem[] = [];
 	const visibilityRenoteItems: MenuItem[] = [];
-
-	// Add channel renote/quote buttons
-	if (appearNote.channel) {
-		const channelRenoteButton = {
-			text: i18n.ts.inChannelRenote,
-			icon: 'ti ti-repeat',
-			action: () => {
-				const el = props.renoteButton.value;
-				if (el) {
-					const rect = el.getBoundingClientRect();
-					const x = rect.left + (el.offsetWidth / 2);
-					const y = rect.top + (el.offsetHeight / 2);
-					const { dispose } = os.popup(MkRippleEffect, { x, y }, {
-						end: () => dispose(),
-					});
-				}
-
-				if (!props.mock) {
-					misskeyApi('notes/create', {
-						renoteId: appearNote.id,
-						channelId: appearNote.channelId,
-					}).then(() => {
-						os.toast(i18n.ts.renoted, 'renote');
-					});
-				}
-			},
-		};
-		if (defaultStore.state.renoteQuoteButtonSeparation) {
-			normalRenoteItems.unshift(channelRenoteButton);
-		} else {
-			channelRenoteItems.push(channelRenoteButton);
-		}
-
-		// Add quote button if quote button is not separated
-		if (!defaultStore.state.renoteQuoteButtonSeparation) {
-			channelRenoteItems.push({
-				text: i18n.ts.inChannelQuote,
-				icon: 'ti ti-quote',
-				action: () => {
-					if (!props.mock) {
-						os.post({
-							renote: appearNote,
-							channel: appearNote.channel,
-						});
-					}
-				},
-			});
-		}
-	}
 
 	if (!appearNote.channel || appearNote.channel.allowRenoteToExternal) {
 		normalRenoteItems.push({
@@ -888,41 +788,6 @@ export function getRenoteMenu(props: {
 				},
 			});
 		}
-
-		normalExternalChannelRenoteItems.push({
-			type: 'parent',
-			icon: 'ti ti-repeat',
-			text: appearNote.channel ? i18n.ts.renoteToOtherChannel : i18n.ts.renoteToChannel,
-			children: async () => {
-				const channels = await favoritedChannelsCache.fetch();
-				return channels.filter((channel) => {
-					if (!appearNote.channelId) return true;
-					return channel.id !== appearNote.channelId;
-				}).map((channel) => ({
-					text: channel.name,
-					action: () => {
-						const el = props.renoteButton.value;
-						if (el) {
-							const rect = el.getBoundingClientRect();
-							const x = rect.left + (el.offsetWidth / 2);
-							const y = rect.top + (el.offsetHeight / 2);
-							const { dispose } = os.popup(MkRippleEffect, { x, y }, {
-								end: () => dispose(),
-							});
-						}
-
-						if (!props.mock) {
-							misskeyApi('notes/create', {
-								renoteId: appearNote.id,
-								channelId: channel.id,
-							}).then(() => {
-								os.toast(i18n.tsx.renotedToX({ name: channel.name }));
-							});
-						}
-					},
-				}));
-			},
-		});
 
 		// Add visibility section
 		if (
@@ -986,7 +851,6 @@ export function getRenoteMenu(props: {
 		normalRenoteItems,
 		channelRenoteItems,
 		visibilityRenoteItems,
-		normalExternalChannelRenoteItems,
 	);
 
 	return {
