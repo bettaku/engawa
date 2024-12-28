@@ -15,6 +15,36 @@
 ### Misc
 
 -->
+## 20241228
+
+### Release Date
+
+### General
+- CherryPickのdevelopブランチに追従
+
+### Client
+- feat: MFMの検索構文で使える検索エンジンを変更できるように
+
+### Server
+- 
+
+### Misc
+
+## 20241222
+
+### Release Date
+
+### General
+- CherryPick 4.14.1-alpha.0に追従
+
+### Client
+- fix: チャンネルが存在しないのにチャンネルにリノートが存在した問題を修正
+
+### Server
+- drop: AiServiceとセンシティブなメディアの自動検出を削除
+
+### Misc
+
 ## 0.6.2(unreleased)
 
 ### Release Date
