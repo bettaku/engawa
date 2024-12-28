@@ -11,7 +11,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<Transition :name="defaultStore.state.animation ? 'fade' : ''" mode="out-in">
 				<div v-if="note">
 					<div v-if="showNext" class="_margin">
-						<MkNotes class="" :pagination="showNext === 'channel' ? nextChannelPagination : nextUserPagination" :noGap="true" :disableAutoLoad="true"/>
+						<MkNotes class="" :pagination="nextUserPagination" :noGap="true" :disableAutoLoad="true"/>
 					</div>
 
 					<div class="_margin">
@@ -36,7 +36,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					</div>
 
 					<div v-if="showPrev" class="_margin">
-						<MkNotes class="" :pagination="showPrev === 'channel' ? prevChannelPagination : prevUserPagination" :noGap="true"/>
+						<MkNotes class="" :pagination="prevUserPagination" :noGap="true"/>
 					</div>
 				</div>
 				<MkError v-else-if="error" @retry="fetchNote()"/>
@@ -95,25 +95,6 @@ const nextUserPagination: Paging = {
 	limit: 10,
 	params: computed(() => note.value ? ({
 		userId: note.value.userId,
-		sinceId: note.value.id,
-	}) : undefined),
-};
-
-const prevChannelPagination: Paging = {
-	endpoint: 'channels/timeline',
-	limit: 10,
-	params: computed(() => note.value ? ({
-		channelId: note.value.channelId,
-		untilId: note.value.id,
-	}) : undefined),
-};
-
-const nextChannelPagination: Paging = {
-	reversed: true,
-	endpoint: 'channels/timeline',
-	limit: 10,
-	params: computed(() => note.value ? ({
-		channelId: note.value.channelId,
 		sinceId: note.value.id,
 	}) : undefined),
 };

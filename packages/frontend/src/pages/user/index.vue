@@ -47,6 +47,7 @@ import { defaultStore } from '@/store.js';
 import { deviceKind } from '@/scripts/device-kind.js';
 import MkHorizontalSwipe from '@/components/MkHorizontalSwipe.vue';
 import { serverContext, assertServerContext } from '@/server-context.js';
+import { $i } from '@/account.js';
 
 const MOBILE_THRESHOLD = 500;
 
