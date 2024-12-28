@@ -15,6 +15,22 @@
 ### Misc
 
 -->
+## 20241229
+
+### Release Date
+
+### General
+- 
+
+### Client
+- feat: リモートのURLをコピーできるメニューを追加
+- fix: ユーザーページが開けない問題
+
+### Server
+- fix: Instance is blockedでエラーを出さず、ログを出すように
+
+### Misc
+
 ## 20241228
 
 ### Release Date
