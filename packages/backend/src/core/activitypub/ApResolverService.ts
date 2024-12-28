@@ -100,7 +100,7 @@ export class Resolver {
 		}
 
 		if (!this.utilityService.isFederationAllowedHost(host)) {
-			throw new IdentifiableError('09d79f9e-64f1-4316-9cfa-e75c4d091574', 'Instance is blocked');
+			this.logger.warn(`resolve: federation not allowed: ${host}`);
 		}
 
 		if (this.config.signToActivityPubGet && !this.user) {
