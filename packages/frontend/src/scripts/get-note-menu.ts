@@ -3,27 +3,27 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { defineAsyncComponent, Ref, ShallowRef } from 'vue';
-import * as Misskey from 'cherrypick-js';
-import { url } from '@@/js/config.js';
-import { shouldCollapsed } from '@@/js/collapsed.js';
-import { claimAchievement } from './achievements.js';
-import type { MenuItem } from '@/types/menu.js';
 import { $i } from '@/account.js';
-import { i18n } from '@/i18n.js';
-import { instance } from '@/instance.js';
-import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
-import { copyToClipboard } from '@/scripts/copy-to-clipboard.js';
-import { defaultStore, noteActions } from '@/store.js';
-import { miLocalStorage } from '@/local-storage.js';
-import { getUserMenu } from '@/scripts/get-user-menu.js';
 import { clipsCache, favoritedChannelsCache } from '@/cache.js';
 import MkRippleEffect from '@/components/MkRippleEffect.vue';
-import { isSupportShare } from '@/scripts/navigator.js';
+import { i18n } from '@/i18n.js';
+import { instance } from '@/instance.js';
+import { miLocalStorage } from '@/local-storage.js';
+import * as os from '@/os.js';
+import { addDividersBetweenMenuSections } from '@/scripts/add-dividers-between-menu-sections.js';
+import { copyToClipboard } from '@/scripts/copy-to-clipboard.js';
 import { getAppearNote } from '@/scripts/get-appear-note.js';
 import { genEmbedCode } from '@/scripts/get-embed-code.js';
-import { addDividersBetweenMenuSections } from '@/scripts/add-dividers-between-menu-sections.js';
+import { getUserMenu } from '@/scripts/get-user-menu.js';
+import { misskeyApi } from '@/scripts/misskey-api.js';
+import { isSupportShare } from '@/scripts/navigator.js';
+import { defaultStore, noteActions } from '@/store.js';
+import type { MenuItem } from '@/types/menu.js';
+import { shouldCollapsed } from '@@/js/collapsed.js';
+import { url } from '@@/js/config.js';
+import * as Misskey from 'cherrypick-js';
+import { defineAsyncComponent, Ref, ShallowRef } from 'vue';
+import { claimAchievement } from './achievements.js';
 
 export async function getNoteClipMenu(props: {
 	note: Misskey.entities.Note;
@@ -161,6 +161,17 @@ export function getCopyNoteLinkMenu(note: Misskey.entities.Note, text: string): 
 			os.toast(i18n.ts.copiedLink, 'copied');
 		},
 	};
+}
+
+export function getCopyNoteOriginalLinkMenu(note: Misskey.entities.Note, text: string): MenuItem {
+	return {
+		icon: 'ti ti-line',
+		text,
+		action: (): void => {
+			copyToClipboard(note.url ?? note.uri);
+			os.toast(i18n.ts.copiedLink, 'copied');
+		}
+	}
 }
 
 function getNoteEmbedCodeMenu(note: Misskey.entities.Note, text: string): MenuItem | undefined {
@@ -400,6 +411,10 @@ export function getNoteMenu(props: {
 				text: i18n.ts.share,
 				action: share,
 			});
+		}
+
+		if (appearNote.url || appearNote.uri) {
+			menuItems.push(getCopyNoteOriginalLinkMenu(appearNote, i18n.ts.copyRemoteLink))
 		}
 
 		menuItems.push(getCopyNoteLinkMenu(appearNote, i18n.ts.copyLink), {
