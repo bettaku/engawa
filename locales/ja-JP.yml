@@ -3346,60 +3346,10 @@ _getQRCode:
   title: "QRコードをスキャンする"
   description: "以下のQRコードをスキャンまたは共有できます。"
 
-_advancedSearch:
-  _fileOption:
-    title: "ファイルの添付状態"
-    fileAttachedOnly: "あり"
-    noFile: "なし"
-    combined: "全て"
-  _searchOption:
-    toggleCW: "NSFWを除外する"
-    toggleReply: "リプライを除外する"
-    toggleDate: "日時を指定する"
-    toggleAdvancedSearch: "高度な検索を有効にする"
-    toggleQuote: "引用を除外する"
-  _specifyDate:
-    startDate: "から"
-    endDate: "まで"
-  _description:
-    other: "その他の設定"
-  _fileNsfwOption:
-    title: "添付ファイルのセンシティブ状態"
-    combined: "フィルタしない"
-    withOutSensitive: "除外"
-    includeSensitive: "含むもの"
-    sensitiveOnly: "全てセンシティブ"
-  _orderBy:
-    asc: "昇順"
-    desc: "降順"
-
-_searchOrApShow:
-  question: "照会を行いますか？"
-  search: "検索"
-  lookup: "照会"
-
-_isIndexable:
-  title: "公開インデックス化"
-  description: "自身のアカウントや投稿を検索することを許可します"
-
-_searchableBy:
-  searchableBy: "検索可能範囲"
-  public: "公開(検索)"
-  followers: "フォロワー限定(検索)"
-  reacted: "リアクション限定(検索)"
-  limited: "自分限定(検索)"
-
 _searchSite:
   title: "検索エンジン"
-  description: "MFMの検索構文で検索できるサイトを変更します。"
-  google: "Google"
-  bing: "Bing"
-  yahoo: "Yahoo"
-  baidu: "Baidu"
-  naver: "NAVER"
-  duckduckgo: "DuckDuckGo"
-  other: "その他"
+  description: "MFCの検索構文で検索できるサイトを変更します。"
   otherSearchEngine: "その他の検索エンジン"
   otherDescription: "その他の検索エンジンを使用します。"
   query: "検索クエリ"
-  queryDescription: "検索エンジンが使用するクエリを入力します。(例: https://www.ecosia.org/search?q=test の場合qを入れる)"
+  queryDescription: "検索エンジンが使用するクエリを入力します。(例: https://www.google.com/search?q=test の場合qを入れる)"

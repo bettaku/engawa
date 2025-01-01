@@ -154,13 +154,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<MkSelect v-model="searchEngine">
 				<template #label>{{ i18n.ts._searchSite.title }}</template>
 				<template #caption>{{ i18n.ts._searchSite.description }}</template>
-				<option value="google">{{ i18n.ts._searchSite.google }}</option>
-				<option value="bing">{{ i18n.ts._searchSite.bing }}</option>
-				<option value="yahoo">{{ i18n.ts._searchSite.yahoo }}</option>
-				<option value="baidu">{{ i18n.ts._searchSite.baidu }}</option>
-				<option value="naver">{{ i18n.ts._searchSite.naver }}</option>
-				<option value="duckduckgo">{{ i18n.ts._searchSite.duckduckgo }}</option>
-				<option value="other">{{ i18n.ts._searchSite.other }}</option>
+				<option value="google">Google</option>
+				<option value="bing">Bing</option>
+				<option value="yahoo">Yahoo</option>
+				<option value="baidu">Baidu</option>
+				<option value="naver">NAVER</option>
+				<option value="daum">Daum</option>
+				<option value="duckduckgo">DuckDuckGo</option>
+				<option value="other">{{ i18n.ts.other }}</option>
 			</MkSelect>
 			<MkInput v-if="defaultStore.state.searchEngine == 'other'" v-model="searchEngineUrl">
 				<template #label>{{ i18n.ts._searchSite.otherSearchEngine }}</template>
@@ -187,29 +188,29 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue';
-import { langs } from '@@/js/config.js';
-import MkSwitch from '@/components/MkSwitch.vue';
-import MkSelect from '@/components/MkSelect.vue';
+import { $i } from '@/account.js';
+import FormLink from '@/components/form/link.vue';
+import FormSection from '@/components/form/section.vue';
+import MkButton from '@/components/MkButton.vue';
+import MkFolder from '@/components/MkFolder.vue';
+import MkInfo from '@/components/MkInfo.vue';
+import { default as MkInput } from '@/components/MkInput.vue';
+import MkLink from '@/components/MkLink.vue';
 import MkRadios from '@/components/MkRadios.vue';
 import MkRange from '@/components/MkRange.vue';
-import MkFolder from '@/components/MkFolder.vue';
-import MkButton from '@/components/MkButton.vue';
-import FormSection from '@/components/form/section.vue';
-import FormLink from '@/components/form/link.vue';
-import MkLink from '@/components/MkLink.vue';
-import MkInfo from '@/components/MkInfo.vue';
+import MkSelect from '@/components/MkSelect.vue';
+import MkSwitch from '@/components/MkSwitch.vue';
 import MkTextarea from '@/components/MkTextarea.vue';
-import { defaultStore } from '@/store.js';
+import { globalEvents } from '@/events.js';
+import { i18n } from '@/i18n.js';
+import { miLocalStorage } from '@/local-storage.js';
 import * as os from '@/os.js';
 import { misskeyApi } from '@/scripts/misskey-api.js';
-import { reloadAsk } from '@/scripts/reload-ask.js';
-import { i18n } from '@/i18n.js';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
-import { miLocalStorage } from '@/local-storage.js';
-import { globalEvents } from '@/events.js';
-import { $i } from '@/account.js';
-import MkInput from '@/components/MkInput.vue';
+import { reloadAsk } from '@/scripts/reload-ask.js';
+import { defaultStore } from '@/store.js';
+import { langs } from '@@/js/config.js';
+import { computed, ref, watch } from 'vue';
 
 const lang = ref(miLocalStorage.getItem('lang'));
 const dataSaver = ref(defaultStore.state.dataSaver);

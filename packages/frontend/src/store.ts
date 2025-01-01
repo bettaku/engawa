@@ -3,16 +3,16 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { markRaw, ref } from 'vue';
-import * as Misskey from 'cherrypick-js';
-import { hemisphere } from '@@/js/intl-const.js';
-import lightTheme from '@@/themes/l-cherrypick.json5';
-import darkTheme from '@@/themes/d-cherrypick.json5';
-import type { SoundType } from '@/scripts/sound.js';
-import type { Ast } from '@syuilo/aiscript';
-import { DEFAULT_DEVICE_KIND, type DeviceKind } from '@/scripts/device-kind.js';
 import { miLocalStorage } from '@/local-storage.js';
 import { Storage } from '@/pizzax.js';
+import { DEFAULT_DEVICE_KIND, type DeviceKind } from '@/scripts/device-kind.js';
+import type { SoundType } from '@/scripts/sound.js';
+import { hemisphere } from '@@/js/intl-const.js';
+import darkTheme from '@@/themes/d-cherrypick.json5';
+import lightTheme from '@@/themes/l-cherrypick.json5';
+import type { Ast } from '@syuilo/aiscript';
+import * as Misskey from 'cherrypick-js';
+import { markRaw, ref } from 'vue';
 
 interface PostFormAction {
 	title: string,
@@ -589,7 +589,7 @@ export const defaultStore = markRaw(new Storage('base', {
 	},
 	searchEngine: {
 		where: 'device',
-		default: 'google' as 'google' | 'bing' | 'yahoo' | 'baidu'| 'naver' | 'duckduckgo' | 'other',
+		default: 'google' as 'google' | 'bing' | 'yahoo' | 'baidu' | 'naver' | 'daum' | 'duckduckgo' | 'other',
 	},
 	searchEngineUrl: {
 		where: 'device',

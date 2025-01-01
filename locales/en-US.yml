@@ -3184,50 +3184,10 @@ _scheduledNoteDelete:
 _getQRCode:
   title: "Scan QR Code"
   description: "Can scan or share the QR code below."
-
-_advancedSearch:
-  _fileOption:
-    title: "File attachment status"
-    fileAttachedOnly: "with file"
-    noFile: "No file"
-    combined: "both"
-  _searchOption:
-    toggleNsfw: "Exclude CW"
-    toggleReply: "Exclude Reply"
-    toggleDate: "Specify date and time"
-    toggleAdvancedSearch: "Enable Advanced Search"
-  _specifyDate:
-    startDate: "From"
-    endDate: "Until"
-  _description:
-    other: "Other settings"
-
-_searchOrApShow:
-  question: "Want to search?"
-  search: "Search"
-  lookup: "Lookup"
-
-_isIndexable:
-  title: "Indexable"
-  description: "This is kmyblue compatible feature. If you want to prevent your account from being indexed by search engines, please disable this option."
-
-_searchableBy:
-  searchableBy: "Searchable by"
-  public: "Public(search)"
-  followers: "Followers(search)"
-  reacted: "Reacted(search)"
-  limited: "Myself only(search)"
-
 _searchSite:
   title: "Search Engine"
-  description: "Change search engine that used in search MFM."
-  google: "Google"
-  bing: "Bing"
-  yahoo: "Yahoo"
-  baidu: "Baidu"
-  naver: "NAVER"
-  duckduckgo: "DuckDuckGo"
-  other: "Other"
-  otherDescription: "Use Other search engine"
+  description: "Change search engine that used in search MFC."
+  otherSearchEngine: "Other search engines"
+  otherDescription: "Use other search engine"
   query: "Query"
-  queryDescription: "Input query scheme for search engine. For example, If https://www.ecosia.org/search?q=test, input 'q'."
+  queryDescription: "Input query scheme for search engine. For example, if https://www.google.com/search?q=test, input 'q'."

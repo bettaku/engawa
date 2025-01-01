@@ -11,9 +11,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
 import { i18n } from '@/i18n.js';
-import { defaultStore } from '@/store';
+import { defaultStore } from '@/store.js';
+import { ref } from 'vue';
 
 const props = defineProps<{
 	q: string;
@@ -45,6 +45,10 @@ const search = () => {
 		case 'naver':
 			sp.append('query', query.value);
 			url = `https://search.naver.com/search.naver?${sp.toString()}`;
+			break;
+		case 'daum':
+			sp.append('q', query.value);
+			url = `https://search.daum.net/search?${sp.toString()}`;
 			break;
 		case 'duckduckgo':
 			sp.append('q', query.value);

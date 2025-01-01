@@ -12545,179 +12545,15 @@ export interface Locale extends ILocale {
          */
         "description": string;
     };
-    "_advancedSearch": {
-        "_fileOption": {
-            /**
-             * ファイルの添付状態
-             */
-            "title": string;
-            /**
-             * あり
-             */
-            "fileAttachedOnly": string;
-            /**
-             * なし
-             */
-            "noFile": string;
-            /**
-             * 全て
-             */
-            "combined": string;
-        };
-        "_searchOption": {
-            /**
-             * NSFWを除外する
-             */
-            "toggleCW": string;
-            /**
-             * リプライを除外する
-             */
-            "toggleReply": string;
-            /**
-             * 日時を指定する
-             */
-            "toggleDate": string;
-            /**
-             * 高度な検索を有効にする
-             */
-            "toggleAdvancedSearch": string;
-            /**
-             * 引用を除外する
-             */
-            "toggleQuote": string;
-        };
-        "_specifyDate": {
-            /**
-             * から
-             */
-            "startDate": string;
-            /**
-             * まで
-             */
-            "endDate": string;
-        };
-        "_description": {
-            /**
-             * その他の設定
-             */
-            "other": string;
-        };
-        "_fileNsfwOption": {
-            /**
-             * 添付ファイルのセンシティブ状態
-             */
-            "title": string;
-            /**
-             * フィルタしない
-             */
-            "combined": string;
-            /**
-             * 除外
-             */
-            "withOutSensitive": string;
-            /**
-             * 含むもの
-             */
-            "includeSensitive": string;
-            /**
-             * 全てセンシティブ
-             */
-            "sensitiveOnly": string;
-        };
-        "_orderBy": {
-            /**
-             * 昇順
-             */
-            "asc": string;
-            /**
-             * 降順
-             */
-            "desc": string;
-        };
-    };
-    "_searchOrApShow": {
-        /**
-         * 照会を行いますか？
-         */
-        "question": string;
-        /**
-         * 検索
-         */
-        "search": string;
-        /**
-         * 照会
-         */
-        "lookup": string;
-    };
-    "_isIndexable": {
-        /**
-         * 公開インデックス化
-         */
-        "title": string;
-        /**
-         * 自身のアカウントや投稿を検索することを許可します
-         */
-        "description": string;
-    };
-    "_searchableBy": {
-        /**
-         * 検索可能範囲
-         */
-        "searchableBy": string;
-        /**
-         * 公開(検索)
-         */
-        "public": string;
-        /**
-         * フォロワー限定(検索)
-         */
-        "followers": string;
-        /**
-         * リアクション限定(検索)
-         */
-        "reacted": string;
-        /**
-         * 自分限定(検索)
-         */
-        "limited": string;
-    };
     "_searchSite": {
         /**
          * 検索エンジン
          */
         "title": string;
         /**
-         * MFMの検索構文で検索できるサイトを変更します。
+         * MFCの検索構文で検索できるサイトを変更します。
          */
         "description": string;
-        /**
-         * Google
-         */
-        "google": string;
-        /**
-         * Bing
-         */
-        "bing": string;
-        /**
-         * Yahoo
-         */
-        "yahoo": string;
-        /**
-         * Baidu
-         */
-        "baidu": string;
-        /**
-         * NAVER
-         */
-        "naver": string;
-        /**
-         * DuckDuckGo
-         */
-        "duckduckgo": string;
-        /**
-         * その他
-         */
-        "other": string;
         /**
          * その他の検索エンジン
          */
@@ -12731,7 +12567,7 @@ export interface Locale extends ILocale {
          */
         "query": string;
         /**
-         * 検索エンジンが使用するクエリを入力します。(例: https://www.ecosia.org/search?q=test の場合qを入れる)
+         * 検索エンジンが使用するクエリを入力します。(例: https://www.google.com/search?q=test の場合qを入れる)
          */
         "queryDescription": string;
     };

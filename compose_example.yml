@@ -92,14 +92,11 @@ services:
 #    volumes:
 #      - ./meili_data:/meili_data
 
-#  tunnel:
-#    image: cloudflare/cloudflared:latest
-#    command:
-#      - tunnel
-#      - --no-autoupdate
-#      - run
-#    environment:
-#      - TUNNEL_TOKEN=YOUR_TOKEN_HERE
+#  translator:
+#    restart: always
+#    image: libretranslate/libretranslate:latest
+#    healthcheck:
+#    test: ['CMD-SHELL', './venv/bin/python scripts/healthcheck.py']
 
 networks:
   internal_network:

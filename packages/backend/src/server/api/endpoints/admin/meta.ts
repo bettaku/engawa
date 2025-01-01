@@ -452,6 +452,14 @@ export const meta = {
 				type: 'boolean',
 				optional: false, nullable: false,
 			},
+			libreTranslateEndPoint: {
+				type: 'string',
+				optional: false, nullable: true,
+			},
+			libreTranslateApiKey: {
+				type: 'string',
+				optional: false, nullable: true,
+			},
 			defaultDarkTheme: {
 				type: 'string',
 				optional: false, nullable: true,
@@ -749,6 +757,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				ctav3Location: instance.ctav3Location,
 				ctav3Model: instance.ctav3Model,
 				ctav3Glossary: instance.ctav3Glossary,
+				libreTranslateEndPoint: instance.libreTranslateEndPoint,
+				libreTranslateApiKey: instance.libreTranslateApiKey,
 				enableIpLogging: instance.enableIpLogging,
 				enableActiveEmailValidation: instance.enableActiveEmailValidation,
 				enableVerifymailApi: instance.enableVerifymailApi,
