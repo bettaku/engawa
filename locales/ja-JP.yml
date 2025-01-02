@@ -3353,3 +3353,10 @@ _searchSite:
   otherDescription: "その他の検索エンジンを使用します。"
   query: "検索クエリ"
   queryDescription: "検索エンジンが使用するクエリを入力します。(例: https://www.google.com/search?q=test の場合qを入れる)"
+
+_searchableBy:
+  searchableBy: "検索可能範囲"
+  public: "公開"
+  followers: "フォロワー限定"
+  reacted: "リアクションしたユーザー"
+  limited: "自分限定"

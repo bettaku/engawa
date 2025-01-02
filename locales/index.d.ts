@@ -12571,6 +12571,28 @@ export interface Locale extends ILocale {
          */
         "queryDescription": string;
     };
+    "_searchableBy": {
+        /**
+         * 検索可能範囲
+         */
+        "searchableBy": string;
+        /**
+         * 公開
+         */
+        "public": string;
+        /**
+         * フォロワー限定
+         */
+        "followers": string;
+        /**
+         * リアクションしたユーザー
+         */
+        "reacted": string;
+        /**
+         * 自分限定
+         */
+        "limited": string;
+    };
 }
 declare const locales: {
     [lang: string]: Locale;
