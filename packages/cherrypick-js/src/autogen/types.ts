@@ -5248,6 +5248,7 @@ export type components = {
       disableRegistrationWhenInactive: boolean;
       disablePublicNoteWhenInactive: boolean;
       moderatorInactivityLimitDays: number;
+      statusUrl: string | null;
     };
     MetaDetailedOnly: {
       features?: {
@@ -5466,6 +5467,7 @@ export type operations = {
             disablePublicNoteWhenInactive: boolean;
             moderatorInactivityLimitDays: number;
             bubbleInstances: string[];
+            statusUrl: string | null;
           };
         };
       };

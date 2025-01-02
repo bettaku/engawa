@@ -3,19 +3,19 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { Brackets } from 'typeorm';
-import { Inject, Injectable } from '@nestjs/common';
-import JSON5 from 'json5';
-import type { Packed } from '@/misc/json-schema.js';
-import type { MiMeta } from '@/models/Meta.js';
-import type { AdsRepository } from '@/models/_.js';
+import type { Config } from '@/config.js';
 import { MAX_NOTE_TEXT_LENGTH } from '@/const.js';
-import { bindThis } from '@/decorators.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { InstanceActorService } from '@/core/InstanceActorService.js';
-import type { Config } from '@/config.js';
-import { DI } from '@/di-symbols.js';
 import { DEFAULT_POLICIES } from '@/core/RoleService.js';
+import { bindThis } from '@/decorators.js';
+import { DI } from '@/di-symbols.js';
+import type { Packed } from '@/misc/json-schema.js';
+import type { AdsRepository } from '@/models/_.js';
+import type { MiMeta } from '@/models/Meta.js';
+import { Inject, Injectable } from '@nestjs/common';
+import JSON5 from 'json5';
+import { Brackets } from 'typeorm';
 
 @Injectable()
 export class MetaEntityService {
@@ -139,6 +139,7 @@ export class MetaEntityService {
 			urlPreviewEndpoint: instance.directSummalyProxy ? (instance.urlPreviewSummaryProxyUrl || `${this.config.url}/url` ) : `${this.config.url}/url`,
 			noteSearchableScope: (this.config.meilisearch == null || this.config.meilisearch.scope !== 'local') ? 'global' : 'local',
 			maxFileSize: this.config.maxFileSize,
+			statusUrl: instance.statusUrl,
 		};
 
 		return packed;

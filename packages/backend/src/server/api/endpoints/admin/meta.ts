@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { Inject, Injectable } from '@nestjs/common';
-import { Endpoint } from '@/server/api/endpoint-base.js';
-import { MetaService } from '@/core/MetaService.js';
 import type { Config } from '@/config.js';
-import { DI } from '@/di-symbols.js';
+import { MetaService } from '@/core/MetaService.js';
 import { DEFAULT_POLICIES } from '@/core/RoleService.js';
+import { DI } from '@/di-symbols.js';
+import { Endpoint } from '@/server/api/endpoint-base.js';
+import { Inject, Injectable } from '@nestjs/common';
 
 export const meta = {
 	tags: ['meta'],
@@ -627,6 +627,10 @@ export const meta = {
 				items: {
 					type: 'string',
 				},
+			},
+			statusUrl: {
+				type: 'string',
+				optional: false, nullable: true,
 			},
 		},
 	},

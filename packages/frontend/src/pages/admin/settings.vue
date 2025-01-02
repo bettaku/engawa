@@ -72,6 +72,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<template #caption>{{ i18n.ts.impressumDescription }}</template>
 							<template #prefix><i class="ti ti-link"></i></template>
 						</MkInput>
+
+						<MkInput v-model="infoForm.state.statusUrl" type="url">
+							<template #label>{{ i18n.ts.statusUrl }}<span v-if="infoForm.modifiedStates.statusUrl" class="_modified">{{ i18n.ts.modified }}</span></template>
+							<template #prefix><i class="ti ti-activity"></i></template>
+						</MkInput>
 					</div>
 				</MkFolder>
 
@@ -281,24 +286,24 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue';
-import XHeader from './_header_.vue';
-import MkSwitch from '@/components/MkSwitch.vue';
-import MkInput from '@/components/MkInput.vue';
-import MkTextarea from '@/components/MkTextarea.vue';
-import MkInfo from '@/components/MkInfo.vue';
-import FormSplit from '@/components/form/split.vue';
-import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
-import { fetchInstance, instance } from '@/instance.js';
-import { i18n } from '@/i18n.js';
-import { definePageMetadata } from '@/scripts/page-metadata.js';
 import MkButton from '@/components/MkButton.vue';
 import MkFolder from '@/components/MkFolder.vue';
-import MkKeyValue from '@/components/MkKeyValue.vue';
-import { useForm } from '@/scripts/use-form.js';
 import MkFormFooter from '@/components/MkFormFooter.vue';
+import MkInfo from '@/components/MkInfo.vue';
+import MkInput from '@/components/MkInput.vue';
+import MkKeyValue from '@/components/MkKeyValue.vue';
 import MkRadios from '@/components/MkRadios.vue';
+import MkSwitch from '@/components/MkSwitch.vue';
+import MkTextarea from '@/components/MkTextarea.vue';
+import FormSplit from '@/components/form/split.vue';
+import { i18n } from '@/i18n.js';
+import { fetchInstance, instance } from '@/instance.js';
+import * as os from '@/os.js';
+import { misskeyApi } from '@/scripts/misskey-api.js';
+import { definePageMetadata } from '@/scripts/page-metadata.js';
+import { useForm } from '@/scripts/use-form.js';
+import { computed, ref } from 'vue';
+import XHeader from './_header_.vue';
 
 const meta = await misskeyApi('admin/meta');
 
@@ -315,6 +320,7 @@ const infoForm = useForm({
 	inquiryUrl: meta.inquiryUrl ?? '',
 	repositoryUrl: meta.repositoryUrl ?? '',
 	impressumUrl: meta.impressumUrl ?? '',
+	statusUrl: meta.statusUrl ?? '',
 }, async (state) => {
 	await os.apiWithDialog('admin/update-meta', {
 		name: state.name,
@@ -327,6 +333,7 @@ const infoForm = useForm({
 		inquiryUrl: state.inquiryUrl,
 		repositoryUrl: state.repositoryUrl,
 		impressumUrl: state.impressumUrl,
+		statusUrl: state.statusUrl,
 	});
 	fetchInstance(true);
 });
