@@ -1561,6 +1561,7 @@ declare namespace entities {
         IRevokeTokenRequest,
         ISigninHistoryRequest,
         ISigninHistoryResponse,
+        ITruncateAccountRequest,
         IUnpinRequest,
         IUnpinResponse,
         IUpdateEmailRequest,
@@ -2391,6 +2392,9 @@ export interface IStream extends EventEmitter<StreamEvents> {
     // (undocumented)
     useChannel<C extends keyof Channels>(channel: C, params?: Channels[C]['params'], name?: string): IChannelConnection<Channels[C]>;
 }
+
+// @public (undocumented)
+type ITruncateAccountRequest = operations['i___truncate-account']['requestBody']['content']['application/json'];
 
 // @public (undocumented)
 type IUnpinRequest = operations['i___unpin']['requestBody']['content']['application/json'];

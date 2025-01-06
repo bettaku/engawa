@@ -996,6 +996,7 @@ function showOnRemote() {
 .noteHeaderBadgeRole {
 	height: 1.3em;
 	vertical-align: -20%;
+	border-radius: 0.4em;
 
 	& + .noteHeaderBadgeRole {
 		margin-left: 0.2em;
@@ -1233,6 +1234,7 @@ function showOnRemote() {
 .badgeRole {
 	height: 1.3em;
 	vertical-align: -20%;
+	border-radius: 0.4em;
 
 	& + .badgeRole {
 		margin-left: 0.2em;

@@ -29,8 +29,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { computed, useTemplateRef } from 'vue';
 import * as Misskey from 'cherrypick-js';
+import { computed, useTemplateRef } from 'vue';
 
 import MkAnimBg from '@/components/MkAnimBg.vue';
 import MkAuthConfirm from '@/components/MkAuthConfirm.vue';
@@ -59,18 +59,18 @@ async function onAccept(token: string) {
 		name: props.name,
 		iconUrl: props.icon,
 		permission: _permissions.value,
-	}, token).catch(() => {
+	}, token).then(() => {
+		if (props.callback && props.callback !== '') {
+			const cbUrl = new URL(props.callback);
+			if (['javascript:', 'file:', 'data:', 'mailto:', 'tel:', 'vbscript:', 'line:'].includes(cbUrl.protocol)) throw new Error('invalid url');
+			cbUrl.searchParams.set('session', props.session);
+			location.href = cbUrl.toString();
+		} else {
+			authRoot.value?.showUI('success');
+		}
+	}).catch(() => {
 		authRoot.value?.showUI('failed');
 	});
-
-	if (props.callback && props.callback !== '') {
-		const cbUrl = new URL(props.callback);
-		if (['javascript:', 'file:', 'data:', 'mailto:', 'tel:', 'vbscript:', 'line:'].includes(cbUrl.protocol)) throw new Error('invalid url');
-		cbUrl.searchParams.set('session', props.session);
-		location.href = cbUrl.toString();
-	} else {
-		authRoot.value?.showUI('success');
-	}
 }
 
 function onDeny() {

@@ -3,24 +3,24 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { Inject, Injectable } from '@nestjs/common';
-import { Brackets, In } from 'typeorm';
-import { DI } from '@/di-symbols.js';
 import type { Config } from '@/config.js';
-import { bindThis } from '@/decorators.js';
-import { MiNote } from '@/models/Note.js';
-import { MiUser } from '@/models/_.js';
-import type { NotesRepository, UsersRepository, FollowingsRepository, DriveFilesRepository } from '@/models/_.js';
-import { sqlLikeEscape } from '@/misc/sql-like-escape.js';
-import { isUserRelated } from '@/misc/is-user-related.js';
 import { CacheService } from '@/core/CacheService.js';
-import { QueryService } from '@/core/QueryService.js';
 import { IdService } from '@/core/IdService.js';
-import type { Index, Meilisearch } from 'meilisearch';
-import { Client as ElasticSearch } from '@elastic/elasticsearch';
+import { QueryService } from '@/core/QueryService.js';
+import { bindThis } from '@/decorators.js';
+import { DI } from '@/di-symbols.js';
 import { isQuote, isRenote } from '@/misc/is-renote.js';
+import { isUserRelated } from '@/misc/is-user-related.js';
+import { sqlLikeEscape } from '@/misc/sql-like-escape.js';
+import { MiNote } from '@/models/Note.js';
+import type { DriveFilesRepository, FollowingsRepository, NotesRepository, UsersRepository } from '@/models/_.js';
+import { MiUser } from '@/models/_.js';
 import { noteMapping, noteSettings } from '@/models/elasticsearch/note.js';
 import { userMapping, userSettings } from '@/models/elasticsearch/user.js';
+import { Client as ElasticSearch } from '@elastic/elasticsearch';
+import { Inject, Injectable } from '@nestjs/common';
+import type { Index, Meilisearch } from 'meilisearch';
+import { Brackets, In } from 'typeorm';
 
 type K = string;
 type V = string | number | boolean;
@@ -595,7 +595,7 @@ export class SearchService {
 			}
 
 			query
-				.andWhere('note.text ILIKE :q', { q: `%${ sqlLikeEscape(q) }%` })
+				.andWhere('LOWER(note.text) LIKE :q', { q: `%${ sqlLikeEscape(q.toLowerCase()) }%` })
 				.andWhere(new Brackets(qb => {
 					qb.andWhere('note.searchableBy = :public', { public: 'public' })
 						.orWhere(new Brackets(qb2 => {

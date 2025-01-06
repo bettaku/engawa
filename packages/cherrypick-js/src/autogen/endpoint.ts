@@ -361,6 +361,7 @@ import type {
 	IRevokeTokenRequest,
 	ISigninHistoryRequest,
 	ISigninHistoryResponse,
+	ITruncateAccountRequest,
 	IUnpinRequest,
 	IUnpinResponse,
 	IUpdateEmailRequest,
@@ -855,6 +856,7 @@ export type Endpoints = {
 	'i/registry/set': { req: IRegistrySetRequest; res: EmptyResponse };
 	'i/revoke-token': { req: IRevokeTokenRequest; res: EmptyResponse };
 	'i/signin-history': { req: ISigninHistoryRequest; res: ISigninHistoryResponse };
+	'i/truncate-account': { req: ITruncateAccountRequest; res: EmptyResponse };
 	'i/unpin': { req: IUnpinRequest; res: IUnpinResponse };
 	'i/update-email': { req: IUpdateEmailRequest; res: IUpdateEmailResponse };
 	'i/update': { req: IUpdateRequest; res: IUpdateResponse };
