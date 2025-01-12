@@ -15,6 +15,22 @@
 ### Misc
 
 -->
+## 20250112
+
+### Release Date
+
+### General
+-
+
+### Client
+- chore: UrlPreviewの取得に失敗した際リトライするように
+- fix: MFCチートシートが開けない問題を修正
+
+### Server
+-
+
+### Misc
+
 ## 20241229
 
 ### Release Date
