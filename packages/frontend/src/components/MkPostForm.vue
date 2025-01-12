@@ -102,43 +102,44 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { inject, watch, nextTick, onMounted, defineAsyncComponent, provide, shallowRef, ref, computed } from 'vue';
-import * as mfm from 'mfc-js';
-import * as Misskey from 'cherrypick-js';
-import insertTextAtCursor from 'insert-text-at-cursor';
-import { toASCII } from 'punycode/';
-import { host, url } from '@@/js/config.js';
-import { erase, unique } from '@@/js/array.js';
-import type { MenuItem } from '@/types/menu.js';
-import type { PostFormProps } from '@/types/post-form.js';
-import MkNoteSimple from '@/components/MkNoteSimple.vue';
-import MkNotePreview from '@/components/MkNotePreview.vue';
-import XPostFormAttaches from '@/components/MkPostFormAttaches.vue';
-import MkPollEditor, { type PollEditorModelValue } from '@/components/MkPollEditor.vue';
+import { getAccounts, incNotesCount, notesCount, openAccountMenu as openAccountMenu_, signinRequired } from '@/account.js';
 import MkEventEditor from '@/components/MkEventEditor.vue';
-import { extractMentions } from '@/scripts/extract-mentions.js';
-import { formatTimeString } from '@/scripts/format-time-string.js';
-import { Autocomplete } from '@/scripts/autocomplete.js';
-import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
-import { selectFiles } from '@/scripts/select-file.js';
-import { defaultStore, notePostInterruptors, postFormActions } from '@/store.js';
 import MkInfo from '@/components/MkInfo.vue';
-import { i18n } from '@/i18n.js';
-import { instance } from '@/instance.js';
-import { signinRequired, notesCount, incNotesCount, getAccounts, openAccountMenu as openAccountMenu_ } from '@/account.js';
-import { uploadFile } from '@/scripts/upload.js';
-import { deepClone } from '@/scripts/clone.js';
+import MkMfmCheatSheetDialog from '@/components/MkMfmCheatSheetDialog.vue';
+import MkNotePreview from '@/components/MkNotePreview.vue';
+import MkNoteSimple from '@/components/MkNoteSimple.vue';
+import MkPollEditor, { type PollEditorModelValue } from '@/components/MkPollEditor.vue';
+import XPostFormAttaches from '@/components/MkPostFormAttaches.vue';
 import MkRippleEffect from '@/components/MkRippleEffect.vue';
-import { miLocalStorage } from '@/local-storage.js';
-import { claimAchievement } from '@/scripts/achievements.js';
-import { emojiPicker } from '@/scripts/emoji-picker.js';
-import { vibrate } from '@/scripts/vibrate.js';
-import * as sound from '@/scripts/sound.js';
-import { mfmFunctionPicker } from '@/scripts/mfm-function-picker.js';
 import MkScheduledNoteDelete, { type DeleteScheduleEditorModelValue } from '@/components/MkScheduledNoteDelete.vue';
 import MkSchedulePostEditor from '@/components/MkSchedulePostEditor.vue';
+import { i18n } from '@/i18n.js';
+import { instance } from '@/instance.js';
+import { miLocalStorage } from '@/local-storage.js';
+import * as os from '@/os.js';
 import { listScheduleNotePost } from '@/os.js';
+import { claimAchievement } from '@/scripts/achievements.js';
+import { Autocomplete } from '@/scripts/autocomplete.js';
+import { deepClone } from '@/scripts/clone.js';
+import { emojiPicker } from '@/scripts/emoji-picker.js';
+import { extractMentions } from '@/scripts/extract-mentions.js';
+import { formatTimeString } from '@/scripts/format-time-string.js';
+import { mfmFunctionPicker } from '@/scripts/mfm-function-picker.js';
+import { misskeyApi } from '@/scripts/misskey-api.js';
+import { selectFiles } from '@/scripts/select-file.js';
+import * as sound from '@/scripts/sound.js';
+import { uploadFile } from '@/scripts/upload.js';
+import { vibrate } from '@/scripts/vibrate.js';
+import { defaultStore, notePostInterruptors, postFormActions } from '@/store.js';
+import type { MenuItem } from '@/types/menu.js';
+import type { PostFormProps } from '@/types/post-form.js';
+import { erase, unique } from '@@/js/array.js';
+import { host, url } from '@@/js/config.js';
+import * as Misskey from 'cherrypick-js';
+import insertTextAtCursor from 'insert-text-at-cursor';
+import * as mfm from 'mfc-js';
+import { toASCII } from 'punycode/';
+import { computed, defineAsyncComponent, inject, nextTick, onMounted, provide, ref, shallowRef, watch } from 'vue';
 
 const $i = signinRequired();
 
@@ -1100,8 +1101,10 @@ function showActions(ev: MouseEvent) {
 }
 
 async function openMfmCheatSheet() {
-	os.popup(defineAsyncComponent(() => import('@/components/MkMfmCheatSheetDialog.vue')), {}, 'closed');
-}
+	const { dispose } = os.popup(MkMfmCheatSheetDialog, {}, {
+		closed: () => dispose(),
+	});
+};
 
 const postAccount = ref<Misskey.entities.UserDetailed | null>(null);
 

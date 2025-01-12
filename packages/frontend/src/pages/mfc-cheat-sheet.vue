@@ -381,9 +381,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</div>
 		</div>
 		<div :class="$style.section">
-			<div :class="$style.title">{{ i18n.ts._mfm.border }}</div>
+			<div :class="$style.title">{{ i18n.ts._mfc.border }}</div>
 			<div :class="$style.content">
-				<p>{{ i18n.ts._mfm.borderDescription }}</p>
+				<p>{{ i18n.ts._mfc.borderDescription }}</p>
 				<div :class="$style.preview">
 					<Mfm :text="preview_border"/>
 					<MkTextarea v-model="preview_border" :class="$style.text"><span>MFM {{ i18n.ts.sample }}</span></MkTextarea>
@@ -395,11 +395,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
 import MkTextarea from '@/components/MkTextarea.vue';
-import { definePageMetadata } from '@/scripts/page-metadata.js';
-import { i18n } from '@/i18n.js';
 import { customEmojis } from '@/custom-emojis.js';
+import { i18n } from '@/i18n.js';
+import { definePageMetadata } from '@/scripts/page-metadata.js';
+import { computed, ref } from 'vue';
 
 defineProps<{
   popup?: boolean;
