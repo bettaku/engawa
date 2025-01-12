@@ -101,17 +101,17 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { defineAsyncComponent, onDeactivated, onUnmounted, ref } from 'vue';
-import { url as local } from '@@/js/config.js';
-import { versatileLang } from '@@/js/intl-const.js';
-import type { summaly } from '@misskey-dev/summaly';
+import MkButton from '@/components/MkButton.vue';
 import { i18n } from '@/i18n.js';
 import * as os from '@/os.js';
 import { deviceKind } from '@/scripts/device-kind.js';
-import MkButton from '@/components/MkButton.vue';
 import { transformPlayerUrl } from '@/scripts/player-url-transform.js';
-import { defaultStore } from '@/store.js';
 import { warningExternalWebsite } from '@/scripts/warning-external-website.js';
+import { defaultStore } from '@/store.js';
+import { url as local } from '@@/js/config.js';
+import { versatileLang } from '@@/js/intl-const.js';
+import type { summaly } from '@misskey-dev/summaly';
+import { defineAsyncComponent, onDeactivated, onUnmounted, ref } from 'vue';
 
 type SummalyResult = Awaited<ReturnType<typeof summaly>>;
 
@@ -187,17 +187,33 @@ if (requestUrl.hostname === 'music.youtube.com' && requestUrl.pathname.match('^/
 
 requestUrl.hash = '';
 
-window.fetch(`/url?url=${encodeURIComponent(requestUrl.href)}&lang=${versatileLang}`)
-	.then(res => {
+async function fetchUrlPreview(url: string, lang: string, retries: number = 3, interval: number = 1000): Promise<SummalyResult | null> {
+	try {
+		const res = await window.fetch(`/url?url=${encodeURIComponent(url)}&lang=${lang}`);
 		if (!res.ok) {
 			if (_DEV_) {
 				console.warn(`[HTTP${res.status}] Failed to fetch url preview`);
 			}
+			if (retries > 0) {
+				await new Promise(resolve => setTimeout(resolve, interval));
+				return await fetchUrlPreview(url, lang, retries - 1, interval);
+			}
 			return null;
 		}
+		return await res.json();
+	} catch (e) {
+		if (_DEV_) {
+			console.warn('Failed to fetch url preview', e);
+		}
+		if (retries > 0) {
+			await new Promise(resolve => setTimeout(resolve, interval));
+			return await fetchUrlPreview(url, lang, retries - 1, interval);
+		}
+		return null;
+	}
+}
 
-		return res.json();
-	})
+fetchUrlPreview(requestUrl.href, versatileLang)
 	.then((info: SummalyResult | null) => {
 		if (!info || info.url == null) {
 			fetching.value = false;
