@@ -304,13 +304,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<MkFoldableSection>
 						<template #header>{{ i18n.ts._role.manualRoles }}</template>
 						<div class="_gaps_s">
-							<MkRolePreview v-for="role in roles.filter(x => x.target === 'manual')" :key="role.id" :role="role" :forModeration="true"/>
+							<MkRolePreview v-for="role in roles.filter(x => x.target === 'manual')" :key="role.id" :role="role" :forModeration="true" :detailed="true"/>
 						</div>
 					</MkFoldableSection>
 					<MkFoldableSection>
 						<template #header>{{ i18n.ts._role.conditionalRoles }}</template>
 						<div class="_gaps_s">
-							<MkRolePreview v-for="role in roles.filter(x => x.target === 'conditional')" :key="role.id" :role="role" :forModeration="true"/>
+							<MkRolePreview v-for="role in roles.filter(x => x.target === 'conditional')" :key="role.id" :role="role" :forModeration="true" :detailed="true" />
 						</div>
 					</MkFoldableSection>
 				</div>
