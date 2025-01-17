@@ -12635,6 +12635,16 @@ export interface Locale extends ILocale {
          */
         "limited": string;
     };
+    "_isIndexable": {
+        /**
+         * インデックス許可
+         */
+        "title": string;
+        /**
+         * 検索エンジンにインデックスされるかを設定します。
+         */
+        "description": string;
+    };
 }
 declare const locales: {
     [lang: string]: Locale;
