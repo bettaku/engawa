@@ -10,6 +10,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<div class="_gaps_m">
 			<MkSwitch v-model="enableHomeTimeline"><i class="ti ti-home"></i> {{ i18n.ts._timelines.home }}</MkSwitch>
 			<MkSwitch v-model="enableLocalTimeline"><i class="ti ti-planet"></i> {{ i18n.ts._timelines.local }}</MkSwitch>
+			<MkSwitch v-model="enableMediaTimeline"><i class="ti ti-photo"></i> {{ i18n.ts._timelines.media }} </MkSwitch>
 			<MkSwitch v-model="enableSocialTimeline"><i class="ti ti-universe"></i> {{ i18n.ts._timelines.social }}</MkSwitch>
 			<MkSwitch v-model="enableGlobalTimeline"><i class="ti ti-world"></i> {{ i18n.ts._timelines.global }}</MkSwitch>
 			<MkSwitch v-model="enableBubbleTimeline"><i class="ti ti-droplet"></i> {{ i18n.ts._timelines.bubble }}</MkSwitch>
@@ -48,6 +49,7 @@ const enableGlobalTimeline = computed(defaultStore.makeGetterSetter('enableGloba
 const enableBubbleTimeline = computed(defaultStore.makeGetterSetter('enableBubbleTimeline'));
 const enableListTimeline = computed(defaultStore.makeGetterSetter('enableListTimeline'));
 const enableAntennaTimeline = computed(defaultStore.makeGetterSetter('enableAntennaTimeline'));
+const enableMediaTimeline = computed(defaultStore.makeGetterSetter('enableMediaTimeline'));
 
 const headerActions = computed(() => []);
 

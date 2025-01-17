@@ -46,7 +46,7 @@ export function isAvailableBasicTimeline(timeline: BasicTimelineType | undefined
 		case 'local':
 			return ($i == null && instance.policies.ltlAvailable) || ($i != null && $i.policies.ltlAvailable && defaultStore.state.enableLocalTimeline);
 		case 'media':
-			return ($i == null && instance.policies.gtlAvailable) || ($i != null && $i.policies.gtlAvailable && defaultStore.state.enableGlobalTimeline);
+			return ($i == null && instance.policies.gtlAvailable) || ($i != null && $i.policies.gtlAvailable && defaultStore.state.enableMediaTimeline);
 		case 'social':
 			return $i != null && instance.policies.ltlAvailable && defaultStore.state.enableSocialTimeline;
 		case 'global':

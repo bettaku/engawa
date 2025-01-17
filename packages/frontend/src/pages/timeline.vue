@@ -185,6 +185,7 @@ const enableBubbleTimeline = ref(defaultStore.state.enableBubbleTimeline);
 const enableListTimeline = ref(defaultStore.state.enableListTimeline);
 const enableAntennaTimeline = ref(defaultStore.state.enableAntennaTimeline);
 const enableChannelTimeline = ref(defaultStore.state.enableChannelTimeline);
+const enableMediaTimeline = ref(defaultStore.state.enableMediaTimeline);
 
 const collapseRenotes = ref(defaultStore.state.collapseRenotes);
 const collapseReplies = ref(defaultStore.state.collapseReplies);
@@ -244,6 +245,11 @@ watch(enableAntennaTimeline, (x) => {
 
 watch(enableChannelTimeline, (x) => {
 	defaultStore.set('enableChannelTimeline', x);
+	reloadAsk({ reason: i18n.ts.reloadToApplySetting, unison: true });
+});
+
+watch(enableMediaTimeline, (x) => {
+	defaultStore.set('enableMediaTimeline', x);
 	reloadAsk({ reason: i18n.ts.reloadToApplySetting, unison: true });
 });
 
@@ -470,6 +476,11 @@ const headerActions = computed(() => {
 							text: i18n.ts._timelines.local,
 							icon: 'ti ti-planet',
 							ref: enableLocalTimeline,
+						}, {
+							type: 'switch',
+							text: i18n.ts._timelines.media,
+							icon: 'ti ti-photo',
+							ref: enableMediaTimeline,
 						}, {
 							type: 'switch',
 							text: i18n.ts._timelines.social,
