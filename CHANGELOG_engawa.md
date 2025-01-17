@@ -15,6 +15,23 @@
 ### Misc
 
 -->
+## 20250117
+
+### Release Date
+
+### General
+-
+
+### Client
+- fix: メディアタイムラインをオフにできない設定
+- fix: indexableの設定のロケールが存在しなかった問題
+
+### Server
+-
+
+### Misc
+
+
 ## 20250112
 
 ### Release Date
