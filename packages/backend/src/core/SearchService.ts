@@ -372,7 +372,7 @@ export class SearchService {
     }
 
 		if (this.provider === 'sqlPgroonga') {
-			query.andWhere('note."text" &@ :q', { q: q });
+			query.andWhere('note."text" &@~ :q', { q: q });
 		} else {
 			query.andWhere('LOWER(note."text") LIKE :q', { q: `%${ sqlLikeEscape(q.toLowerCase())}%` });
 		}
