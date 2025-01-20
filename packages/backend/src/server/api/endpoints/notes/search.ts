@@ -78,7 +78,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				fileOption: ps.fileOption,
 				excludeNsfw: ps.excludeNsfw,
 				excludeBot: ps.excludeBot,
-				orderBy: ps.orderBy,
 			}, {
 				untilId: ps.untilId,
 				sinceId: ps.sinceId,

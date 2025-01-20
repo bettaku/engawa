@@ -151,8 +151,6 @@ export class SignupService {
 			}));
 		});
 
-		await this.searchService.indexUser(account);
-
 		this.usersChart.update(account, true);
 		this.userService.notifySystemWebhook(account, 'userCreated');
 

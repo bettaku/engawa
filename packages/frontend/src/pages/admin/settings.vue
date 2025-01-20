@@ -432,9 +432,7 @@ function chooseProxyAccount() {
 }
 
 async function reIndex() {
-	await os.apiWithDialog('admin/index/reindex', {
-		index: 'all',
-	})
+	await os.apiWithDialog('admin/index/reindex', {});
 }
 
 const headerTabs = computed(() => []);

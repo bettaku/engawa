@@ -15,35 +15,15 @@ export const meta = {
 	kind: 'write:index:full',
 } as const;
 
-export const paramDef = {
-	type: 'object',
-	properties: {
-		index: {
-			type: 'string',
-			enum: ['all', 'notes', 'users'],
-		},
-	},
-	required: ['index'],
-} as const;
+export const paramDef = { } as const;
 
 @Injectable()
 export default class extends Endpoint<typeof meta, typeof paramDef> {
 	constructor(
 		private searchService: SearchService,
 	) {
-		super(meta, paramDef, async (ps, me) => {
-			switch (ps.index) {
-				case 'all':
-					this.searchService.reindexNote();
-					this.searchService.reindexUser();
-					break;
-				case 'notes':
-					this.searchService.reindexNote();
-					break;
-				case 'users':
-					this.searchService.reindexUser();
-					break;
-			}
+		super(meta, paramDef, async () => {
+			return this.searchService.reindexNote();
 		});
 	}
 }
