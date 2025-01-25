@@ -3275,6 +3275,8 @@ _customEmojisManager:
     registrationLogsCaption: "絵文字更新・削除時のログが表示されます。更新・削除操作を行ったり、ページを遷移・リロードすると消えます。"
     alertEmojisRegisterFailedTitle: "エラー"
     alertEmojisRegisterFailedDescription: "絵文字の更新・削除に失敗しました。詳細は登録ログをご確認ください。"
+    numberOfDisplayEmojis: "絵文字の最大表示件数"
+    settings: "設定"
   _logs:
     showSuccessLogSwitch: "成功ログを表示"
     failureLogNothing: "失敗ログはありません。"

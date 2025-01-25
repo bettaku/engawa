@@ -12320,6 +12320,14 @@ export interface Locale extends ILocale {
              * 絵文字の更新・削除に失敗しました。詳細は登録ログをご確認ください。
              */
             "alertEmojisRegisterFailedDescription": string;
+            /**
+             * 絵文字の最大表示件数
+             */
+            "numberOfDisplayEmojis": string;
+            /**
+             * 設定
+             */
+            "settings": string;
         };
         "_logs": {
             /**

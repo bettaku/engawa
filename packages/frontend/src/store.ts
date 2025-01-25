@@ -888,6 +888,11 @@ export const defaultStore = markRaw(new Storage('base', {
 	mobileHideAvatars: {
 		where: 'device',
 		default: true,
+	},
+	// Admin - Emoji Grid
+	numberOfDisplayEmojis: {
+		where: 'device',
+		default: 100,
 	}
 	// #endregion
 }));

@@ -77,6 +77,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 			<XRegisterLogsFolder :logs="requestLogs"/>
 
+			<MkFolder>
+				<template #icon><i class="ti ti-settings"></i></template>
+				<template #label>{{ i18n.ts.settings }}</template>
+				<MkInput v-model="maxNumberOfDisplayEmojis" type="number" :max="100" :min="10">
+					<template #label>{{ i18n.ts._customEmojisManager._gridCommon.numberOfDisplayEmojis }}</template>
+				</MkInput>
+			</MkFolder>
+
 			<component :is="loadingHandler.component.value" v-if="loadingHandler.showing.value"/>
 			<template v-else>
 				<div v-if="gridItems.length === 0" style="text-align: center">
@@ -136,6 +144,7 @@ import MkPagingButtons from '@/components/MkPagingButtons.vue';
 import MkSortOrderEditor from '@/components/MkSortOrderEditor.vue';
 import { SortOrder } from '@/components/MkSortOrderEditor.define.js';
 import { useLoading } from '@/components/hook/useLoading.js';
+import { defaultStore } from '@/store';
 
 type GridItem = {
 	checked: boolean;
@@ -151,7 +160,7 @@ function setupGrid(): GridSetting {
 	return {
 		row: {
 			// グリッドの行数をあらかじめ100行確保する
-			minimumDefinitionCount: 100,
+			minimumDefinitionCount: maxNumberOfDisplayEmojis.value,
 			styleRules: [
 				{
 					// チェックされたら背景色を変える
@@ -217,6 +226,8 @@ const gridItems = ref<GridItem[]>([]);
 
 const spMode = computed(() => ['smartphone', 'tablet'].includes(deviceKind));
 const checkedItemsCount = computed(() => gridItems.value.filter(it => it.checked).length);
+
+const maxNumberOfDisplayEmojis = computed(defaultStore.makeGetterSetter('numberOfDisplayEmojis'));
 
 function onSortOrderUpdate(_sortOrders: SortOrder<GridSortOrderKey>[]) {
 	sortOrders.value = _sortOrders;

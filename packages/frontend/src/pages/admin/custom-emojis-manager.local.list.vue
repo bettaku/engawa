@@ -136,6 +136,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 			<XRegisterLogsFolder :logs="requestLogs"/>
 
+			<MkFolder>
+				<template #icon><i class="ti ti-settings"></i></template>
+				<template #label>{{ i18n.ts.settings }}</template>
+				<MkInput v-model="maxNumberOfDisplayEmojis" type="number" :max="100" :min="10">
+					<template #label>{{ i18n.ts._customEmojisManager._gridCommon.numberOfDisplayEmojis }}</template>
+				</MkInput>
+			</MkFolder>
+
 			<component :is="loadingHandler.component.value" v-if="loadingHandler.showing.value"/>
 			<template v-else>
 				<div v-if="gridItems.length === 0" style="text-align: center">
@@ -203,6 +211,7 @@ import { copyGridDataToClipboard, removeDataFromGrid } from '@/components/grid/g
 import MkSortOrderEditor from '@/components/MkSortOrderEditor.vue';
 import { SortOrder } from '@/components/MkSortOrderEditor.define.js';
 import { useLoading } from '@/components/hook/useLoading.js';
+import { defaultStore } from '@/store';
 
 type GridItem = {
 	checked: boolean;
@@ -234,7 +243,7 @@ function setupGrid(): GridSetting {
 			showNumber: true,
 			selectable: true,
 			// グリッドの行数をあらかじめ100行確保する
-			minimumDefinitionCount: 100,
+			minimumDefinitionCount: maxNumberOfDisplayEmojis.value,
 			styleRules: [
 				{
 					// 初期値から変わっていたら背景色を変更
@@ -405,6 +414,7 @@ const updatedItemsCount = computed(() => {
 	return gridItems.value.filter((it, idx) => !it.checked && JSON.stringify(it) !== JSON.stringify(originGridItems.value[idx])).length;
 });
 const deleteItemsCount = computed(() => gridItems.value.filter(it => it.checked).length);
+const maxNumberOfDisplayEmojis = computed(defaultStore.makeGetterSetter('numberOfDisplayEmojis'));
 
 async function onUpdateButtonClicked() {
 	const _items = gridItems.value;
@@ -574,7 +584,7 @@ function onGridCellValueChange(event: GridCellValueChangeEvent) {
 }
 
 async function refreshCustomEmojis() {
-	const limit = 100;
+	const limit = maxNumberOfDisplayEmojis.value;
 
 	const query: Misskey.entities.V2AdminEmojiListRequest['query'] = {
 		name: emptyStrToUndefined(queryName.value),
