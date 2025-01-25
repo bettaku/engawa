@@ -181,7 +181,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, useCssModule } from 'vue';
+import { computed, onMounted, ref, useCssModule, watch } from 'vue';
 import * as Misskey from 'cherrypick-js';
 import * as os from '@/os.js';
 import {
@@ -415,6 +415,10 @@ const updatedItemsCount = computed(() => {
 });
 const deleteItemsCount = computed(() => gridItems.value.filter(it => it.checked).length);
 const maxNumberOfDisplayEmojis = computed(defaultStore.makeGetterSetter('numberOfDisplayEmojis'));
+
+watch(() => maxNumberOfDisplayEmojis.value, async () => {
+	await refreshCustomEmojis();
+});
 
 async function onUpdateButtonClicked() {
 	const _items = gridItems.value;

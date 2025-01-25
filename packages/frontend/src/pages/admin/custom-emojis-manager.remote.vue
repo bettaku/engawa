@@ -121,7 +121,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, useCssModule } from 'vue';
+import { computed, onMounted, ref, useCssModule, watch } from 'vue';
 import * as Misskey from 'cherrypick-js';
 import { misskeyApi } from '@/scripts/misskey-api.js';
 import { i18n } from '@/i18n.js';
@@ -229,6 +229,11 @@ const checkedItemsCount = computed(() => gridItems.value.filter(it => it.checked
 
 const maxNumberOfDisplayEmojis = computed(defaultStore.makeGetterSetter('numberOfDisplayEmojis'));
 
+watch(() => maxNumberOfDisplayEmojis.value, async () => {
+	await refreshCustomEmojis();
+});
+
+
 function onSortOrderUpdate(_sortOrders: SortOrder<GridSortOrderKey>[]) {
 	sortOrders.value = _sortOrders;
 }
@@ -327,7 +332,7 @@ async function refreshCustomEmojis() {
 	}
 
 	const result = await loadingHandler.scope(() => misskeyApi('v2/admin/emoji/list', {
-		limit: 100,
+		limit: maxNumberOfDisplayEmojis.value,
 		query: query,
 		page: currentPage.value,
 		sortKeys: sortOrders.value.map(({ key, direction }) => `${direction}${key}`) as never[],
