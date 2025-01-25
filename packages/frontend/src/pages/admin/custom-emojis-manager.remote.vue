@@ -143,6 +143,7 @@ type GridItem = {
 	url: string;
 	name: string;
 	host: string;
+	license: string;
 }
 
 function setupGrid(): GridSetting {
@@ -180,6 +181,7 @@ function setupGrid(): GridSetting {
 			{ bindTo: 'host', title: 'host', type: 'text', editable: false, width: 'auto' },
 			{ bindTo: 'uri', title: 'uri', type: 'text', editable: false, width: 'auto' },
 			{ bindTo: 'publicUrl', title: 'publicUrl', type: 'text', editable: false, width: 'auto' },
+			{ bindTo: 'license', title: 'license', type: 'text', editable: false, width: 'auto' },
 		],
 		cells: {
 			contextMenuFactory: (col, row, value, context) => {
@@ -331,6 +333,7 @@ async function refreshCustomEmojis() {
 		url: it.publicUrl,
 		name: it.name,
 		host: it.host!,
+		license: it.license!,
 	}));
 }
 
