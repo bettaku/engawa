@@ -1,12 +1,12 @@
 <template>
 <div :class="$style.root">
 	<div>
-		<MkInput v-model="diceCount" small type="text" :class="$style.input">
+		<MkInput v-model="diceCount" small type="number" :class="$style.input">
 			<template #label>{{ i18n.ts._dice.diceCount }}</template>
 		</MkInput>
 	</div>
 	<div>
-		<MkInput v-model="diceFaces" small type="text" :class="$style.input">
+		<MkInput v-model="diceFaces" small type="number" :class="$style.input">
 			<template #label>{{ i18n.ts._dice.diceFaces }}</template>
 		</MkInput>
 	</div>
