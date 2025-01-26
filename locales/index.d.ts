@@ -5947,6 +5947,10 @@ export interface Locale extends ILocale {
      * 開く
      */
     "open": string;
+    /**
+     * キーボードショートカット
+     */
+    "keyboardShortcuts": string;
     "_nsfwOpenBehavior": {
         /**
          * タップして開く
@@ -12935,6 +12939,40 @@ export interface Locale extends ILocale {
          * 検索エンジンにインデックスされるかを設定します。
          */
         "description": string;
+    };
+    "_keyboardShortCut": {
+        /**
+         * キーボードショートカット
+         */
+        "keyboardShortCut": string;
+        /**
+         * Web上で使えるキーボードショートカットの一覧です。
+         */
+        "description": string;
+        /**
+         * ショートカット一覧
+         */
+        "list": string;
+        /**
+         * 一般
+         */
+        "general": string;
+        /**
+         * 投稿フォーム
+         */
+        "postForm": string;
+        /**
+         * 投稿フォームを開く
+         */
+        "openPostForm": string;
+        /**
+         * ダークモードを切り替える
+         */
+        "toggleDarkMode": string;
+        /**
+         * 検索ページに移動
+         */
+        "redirectToSearch": string;
     };
 }
 declare const locales: {
