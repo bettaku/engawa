@@ -20,7 +20,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<div :class="$style.section">
 					<div :class="$style.title">{{ i18n.ts._keyboardShortCut._general.toggleDarkMode }}</div>
 					<div :class="$style.content">
-						<kbd>D</kbd>
+						<kbd>Ctrl</kbd> + <kbd>D</kbd>
 					</div>
 				</div>
 				<div :class="$style.section">
