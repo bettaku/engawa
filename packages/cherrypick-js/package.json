@@ -1,7 +1,7 @@
 {
 	"type": "module",
 	"name": "cherrypick-js",
-	"version": "4.15.0-beta.1-engawa20250125",
+	"version": "4.15.0-beta.1-engawa20250127",
 	"basedMisskeyVersion": "2025.1.0-beta.2",
 	"description": "CherryPick SDK for JavaScript",
 	"license": "MIT",
