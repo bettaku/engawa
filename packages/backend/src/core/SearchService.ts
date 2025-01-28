@@ -5,6 +5,7 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { Brackets, In } from 'typeorm';
+import { Client as ElasticSearch } from '@elastic/elasticsearch';
 import { DI } from '@/di-symbols.js';
 import { type Config, FulltextSearchProvider } from '@/config.js';
 import { bindThis } from '@/decorators.js';
@@ -18,9 +19,8 @@ import { CacheService } from '@/core/CacheService.js';
 import { QueryService } from '@/core/QueryService.js';
 import { IdService } from '@/core/IdService.js';
 import { LoggerService } from '@/core/LoggerService.js';
-import type { Index, MeiliSearch } from 'meilisearch';
-import { Client as ElasticSearch } from '@elastic/elasticsearch';
 import { noteMapping, noteSettings } from '@/models/elasticsearch/note.js';
+import type { Index, MeiliSearch } from 'meilisearch';
 
 type K = string;
 type V = string | number | boolean;
@@ -156,10 +156,10 @@ export class SearchService {
 							properties: noteMapping.properties,
 						},
 						settings: noteSettings.settings,
-					})?.catch((e) => {
+					}).catch((e) => {
 						console.error(e);
-					})
-				]
+					}),
+				];
 			});
 		}
 
@@ -230,7 +230,6 @@ export class SearchService {
 				isBot: isBot,
 			};
 
-
 			switch (this.elasticsearchIndexScope) {
 				case 'global':
 					break;
@@ -249,7 +248,7 @@ export class SearchService {
 				document: document,
 			}).catch((e) => {
 				console.error(e);
-			})
+			});
 		}
 	}
 
@@ -290,7 +289,7 @@ export class SearchService {
 			notes.forEach(note => {
 				this.indexNote(note);
 				latestId = note.id;
-			})
+			});
 		}
 	}
 
@@ -313,7 +312,7 @@ export class SearchService {
 
 		await this.fullIndexNote().catch((e) => {
 			console.error(e);
-		})
+		});
 	}
 
 	@bindThis
@@ -353,8 +352,8 @@ export class SearchService {
 					.orWhere(new Brackets(qb2 => {
 						qb2.where('note."searchableBy" = :followers AND (note."userId" IN (SELECT "followeeId" FROM following WHERE following."followerId" = :meId) OR note."userId" = :meId)', { followers: 'followers', meId: me?.id })
 							.orWhere('note."searchableBy" = :limited AND note."userId" = :meId', { limited: 'limited', meId: me?.id })
-							.orWhere('note."searchableBy" = :reacted AND (note."userId" IN (SELECT "userId" FROM note_reaction) OR note."userId" = :meId)', { reacted: 'reacted', meId: me?.id })
-					}))
+							.orWhere('note."searchableBy" = :reacted AND (note."userId" IN (SELECT "userId" FROM note_reaction) OR note."userId" = :meId)', { reacted: 'reacted', meId: me?.id });
+					}));
 			}))
 			.leftJoinAndSelect('note.reply', 'reply')
 			.leftJoinAndSelect('note.renote', 'renote')
@@ -362,14 +361,14 @@ export class SearchService {
 			.leftJoinAndSelect('renote.user', 'renoteUser');
 
 		if (opts.host) {
-      if (opts.host === '.') {
-          query.innerJoin('note.user', 'user')
-              .andWhere('user.host IS NULL');
-      } else {
-          query.innerJoin('note.user', 'user')
-              .andWhere('user.host = :host', { host: opts.host });
-      }
-    }
+			if (opts.host === '.') {
+				query.innerJoin('note.user', 'user')
+					.andWhere('user.host IS NULL');
+			} else {
+				query.innerJoin('note.user', 'user')
+					.andWhere('user.host = :host', { host: opts.host });
+			}
+		}
 
 		if (this.provider === 'sqlPgroonga') {
 			query.andWhere('note."text" &@~ :q', { q: q });
@@ -379,16 +378,16 @@ export class SearchService {
 
 		if (opts.excludeBot) {
 			query.innerJoin('note.user', 'user')
-					.andWhere('user.isIndexable = TRUE')
-					.andWhere('user.isBot = FALSE');
+				.andWhere('user.isIndexable = TRUE')
+				.andWhere('user.isBot = FALSE');
 		} else {
 			query.innerJoin('note.user', 'user')
-					.andWhere('user.isIndexable = TRUE');
+				.andWhere('user.isIndexable = TRUE');
 		}
 
 		if (opts.excludeNsfw) {
 			query.andWhere('note.cw IS NULL')
-					.andWhere('NOT EXISTS (SELECT 1 FROM drive_file df WHERE df.id = ANY(note.fileIds) AND df.isSensitive = TRUE)');
+				.andWhere('NOT EXISTS (SELECT 1 FROM drive_file df WHERE df.id = ANY(note.fileIds) AND df.isSensitive = TRUE)');
 		} else {
 			query.orWhere('LOWER(note.cw) LIKE :q', { q: `%${sqlLikeEscape(q.toLowerCase())}%` });
 		}
@@ -468,7 +467,7 @@ export class SearchService {
 		])
 		: [new Set<string>(), new Set<string>()];
 		const notes = (await this.notesRepository.findBy({
-			id: In(res.hits.map(x => x.id))
+			id: In(res.hits.map(x => x.id)),
 		})).filter(note => {
 			if (me && isUserRelated(note, userIdWhoBlockingMe)) return false;
 			if (me && isUserRelated(note, userIdWhoMeMuting)) return false;
@@ -492,22 +491,22 @@ export class SearchService {
 			range: {
 				createdAt: {
 					lt: this.idService.parse(pagination.untilId).date.getTime(),
-				}
-			}
+				},
+			},
 		});
 
 		if (pagination.sinceId) filter.bool.must.push({
 			range: {
 				createdAt: {
 					gt: this.idService.parse(pagination.sinceId).date.getTime(),
-				}
-			}
+				},
+			},
 		});
 
 		if (opts.userId) filter.bool.must.push({
 			term: {
 				userId: opts.userId,
-			}
+			},
 		});
 
 		if (opts.host) {
@@ -516,12 +515,12 @@ export class SearchService {
 					exists: {
 						field: 'userHost',
 					},
-				})
+				});
 			} else {
 				filter.bool.must.push({
 					term: {
 						userHost: opts.host,
-					}
+					},
 				});
 			}
 		};
@@ -531,13 +530,13 @@ export class SearchService {
 				filter.bool.must.push({
 					exists: {
 						field: 'fileIds',
-					}
+					},
 				});
 			} else if (opts.fileOption === 'noFile') {
 				filter.bool.must_not.push({
 					exists: {
 						field: 'fileIds',
-					}
+					},
 				});
 			}
 		}
@@ -552,7 +551,7 @@ export class SearchService {
 			filter.bool.must_not.push({
 				terms: {
 					userId: botIds.map(b => b.id),
-				}
+				},
 			});
 		}
 
@@ -569,28 +568,28 @@ export class SearchService {
 				filter.bool.must.push({
 					bool: {
 						should: shouldQueries.flatMap(q => [
-							{ wildcard: { 'text': `*${q}*`}},
-							{ simple_query_string: { fields: ['text'], 'query': q, default_operator: 'and' }},
+							{ wildcard: { 'text': `*${q}*` } },
+							{ simple_query_string: { fields: ['text'], 'query': q, default_operator: 'and' } },
 						]),
 						minimum_should_match: 1,
-					}
+					},
 				});
 				filter.bool.must_not.push({
 					terms: {
 						fileIds: sensitiveFileIds.map(f => f.id),
-					}
+					},
 				});
 			} else {
 				filter.bool.must.push({
 					bool: {
 						should: shouldQueries.flatMap(q => [
-							{ wildcard: { 'text': `*${q}*`}},
-							{ simple_query_string: { fields: ['text'], 'query': q, default_operator: 'and' }},
-							{ wildcard: { 'cw': `*${q}*`}},
-							{ simple_query_string: { fields: ['cw'], 'query': q, default_operator: 'and' }},
+							{ wildcard: { 'text': `*${q}*` } },
+							{ simple_query_string: { fields: ['text'], 'query': q, default_operator: 'and' } },
+							{ wildcard: { 'cw': `*${q}*` } },
+							{ simple_query_string: { fields: ['cw'], 'query': q, default_operator: 'and' } },
 						]),
 						minimum_should_match: 1,
-					}
+					},
 				});
 			}
 		};
@@ -616,7 +615,7 @@ export class SearchService {
 					{
 						bool: {
 							must: [
-								{ term: { searchableBy: 'followers'} },
+								{ term: { searchableBy: 'followers' } },
 								{
 									bool: {
 										should: [
@@ -631,7 +630,7 @@ export class SearchService {
 					},
 				],
 				minimum_should_match: 1,
-			}
+			},
 		});
 
 		const res = await this.elasticsearch?.search({
