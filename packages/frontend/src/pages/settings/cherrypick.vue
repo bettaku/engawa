@@ -15,9 +15,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</MkSwitch>
 
 			<div class="_gaps_s">
-				<MkSwitch v-model="useEnterToSend">
+				<MkSwitch v-model="useEnterToSend" v-if="!defaultStore.state.useShiftEnterToSend">
 					<template #label>{{ i18n.ts._cherrypick.useEnterToSend }}</template>
 					<template #caption>{{ i18n.ts._cherrypick.useEnterToSendDescription }}</template>
+				</MkSwitch>
+				<MkSwitch v-model="useShiftEnterToSend" v-if="!defaultStore.state.useEnterToSend">
+					<template #label>{{ i18n.ts._cherrypick.useShiftEnterToSend }}</template>
+					<template #caption>{{ i18n.ts._cherrypick.useShiftEnterToSendDescription }}</template>
 				</MkSwitch>
 				<MkSwitch v-model="postFormVisibilityHotkey">
 					<template #label>{{ i18n.ts._cherrypick.postFormVisibilityHotkey }}</template>
@@ -63,7 +67,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 				{{ i18n.ts._cherrypick.renameTheButtonInPostFormToNya }}
 				<template #caption>{{ i18n.ts._cherrypick.renameTheButtonInPostFormToNyaDescription }}</template>
 			</MkSwitch>
-			<MkSwitch v-model="mobileHideAvatars">{{ i18n.ts._cherrypick.mobileHideAvatars }}</MkSwitch>
 		</div>
 	</FormSection>
 
@@ -123,6 +126,7 @@ const friendlyUiEnableNotificationsArea = computed(defaultStore.makeGetterSetter
 const enableLongPressOpenAccountMenu = computed(defaultStore.makeGetterSetter('enableLongPressOpenAccountMenu'));
 const friendlyUiShowAvatarDecorationsInNavBtn = computed(defaultStore.makeGetterSetter('friendlyUiShowAvatarDecorationsInNavBtn'));
 const mobileHideAvatars = computed(defaultStore.makeGetterSetter('mobileHideAvatars'));
+const useShiftEnterToSend = computed(defaultStore.makeGetterSetter('useShiftEnterToSend'));
 
 watch([
 	renameTheButtonInPostFormToNya,

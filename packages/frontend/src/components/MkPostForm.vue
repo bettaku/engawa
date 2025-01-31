@@ -639,8 +639,10 @@ function clear() {
 function onKeydown(ev: KeyboardEvent) {
 	if (defaultStore.state.useEnterToSend && !ev.shiftKey) {
 		if (ev.key === 'Enter' && canPost.value) post();
+	} else if (defaultStore.state.useShiftEnterToSend) {
+		if (ev.key === 'Enter' && ev.shiftKey && canPost.value) post();
 	} else {
-		if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey || ev.shiftKey) && canPost.value) post();
+		if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey) && canPost.value) post();
 	}
 
 	if (defaultStore.state.postFormVisibilityHotkey) {

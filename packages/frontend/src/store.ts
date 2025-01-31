@@ -829,6 +829,10 @@ export const defaultStore = markRaw(new Storage('base', {
 		where: 'device',
 		default: false,
 	},
+	useShiftEnterToSend: {
+		where: 'device',
+		default: false,
+	},
 	postFormVisibilityHotkey: {
 		where: 'device',
 		default: true,
