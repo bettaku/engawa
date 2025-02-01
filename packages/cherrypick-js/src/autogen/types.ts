@@ -5249,6 +5249,7 @@ export type components = {
       recaptchaSiteKey: string | null;
       enableTurnstile: boolean;
       turnstileSiteKey: string | null;
+      robotsTxt: string | null;
       enableTestcaptcha: boolean;
       swPublickey: string | null;
       /** @default /assets/ai.png */
@@ -9036,6 +9037,7 @@ export type operations = {
             enableChartsForFederatedInstances: boolean;
             enableStatsForFederatedInstances: boolean;
             enableServerMachineStats: boolean;
+            robotsTxt: string | null;
             enableIdenticonGeneration: boolean;
             manifestJsonOverride: string;
             policies: Record<string, never>;
@@ -11537,6 +11539,7 @@ export type operations = {
           enableChartsForFederatedInstances?: boolean;
           enableStatsForFederatedInstances?: boolean;
           enableServerMachineStats?: boolean;
+          robotsTxt?: string | null;
           enableIdenticonGeneration?: boolean;
           serverRules?: string[];
           bannedEmailDomains?: string[];
