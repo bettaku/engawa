@@ -8,7 +8,6 @@ import { Endpoint } from '@/server/api/endpoint-base.js';
 import type { DriveFilesRepository } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
 import { CustomEmojiService } from '@/core/CustomEmojiService.js';
-import { DriveService } from '@/core/DriveService.js';
 import { EmojiEntityService } from '@/core/entities/EmojiEntityService.js';
 import { secureRndstr } from '@/misc/secure-rndstr.js';
 import { FILE_TYPE_IMAGE } from '@/const.js';
@@ -82,25 +81,12 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		@Inject(DI.driveFilesRepository)
 		private driveFilesRepository: DriveFilesRepository,
 		private customEmojiService: CustomEmojiService,
-		private driveService: DriveService,
 		private emojiEntityService: EmojiEntityService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			let driveFile = await this.driveFilesRepository.findOneBy({ id: ps.fileId });
 			if (driveFile == null) throw new ApiError(meta.errors.noSuchFile);
 			if (!FILE_TYPE_IMAGE.includes(driveFile.type)) throw new ApiError(meta.errors.unsupportedFileType);
-
-			if (!driveFile.user?.isRoot) {
-				try {
-					driveFile = await this.driveService.uploadFromUrl({
-						url: driveFile.url,
-						user: null,
-						force: true,
-					})
-				} catch (e) {
-					throw new ApiError(meta.errors.noSuchFile);
-				}
-			}
 
 			const name = driveFile.name.split('.')[0].match(/^[a-z0-9_]+$/) ? driveFile.name.split('.')[0] : `_${secureRndstr(8)}_`;
 
