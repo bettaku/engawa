@@ -831,7 +831,7 @@ export class MiMeta {
 	public disablePublicNoteWhenInactive: boolean;
 
 	@Column('integer', {
-		nullable: false,
+		default: 7,
 	})
 	public moderatorInactivityLimitDays: number;
 
