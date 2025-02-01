@@ -5951,6 +5951,14 @@ export interface Locale extends ILocale {
      * キーボードショートカット
      */
     "keyboardShortcuts": string;
+    /**
+     * robots.txtの上書き
+     */
+    "overrideRobotsTxt": string;
+    /**
+     * robots.txtの内容を上書きします。最大2048文字です。
+     */
+    "overrideRobotsTxtDescription": string;
     "_nsfwOpenBehavior": {
         /**
          * タップして開く

@@ -1480,6 +1480,8 @@ trustedLinkUrlPatterns: "外部サイトへのリンク警告 除外リスト"
 trustedLinkUrlPatternsDescription: "スペースで区切るとAND指定になり、改行で区切るとOR指定になります。スラッシュで囲むと正規表現になります。ドメイン名だけ書くと後方一致になります。"
 open: "開く"
 keyboardShortcuts: "キーボードショートカット"
+overrideRobotsTxt: "robots.txtの上書き"
+overrideRobotsTxtDescription: "robots.txtの内容を上書きします。最大2048文字です。"
 
 _nsfwOpenBehavior:
   click: "タップして開く"

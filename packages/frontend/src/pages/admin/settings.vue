@@ -272,6 +272,21 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</MkFolder>
 
 				<MkFolder>
+					<template #icon><i class="ti ti-adjustments"></i></template>
+					<template #label>{{ i18n.ts.otherSettings }}</template>
+					<template v-if="otherSettingsForm.modified.value" #footer>
+						<MkFormFooter :form="otherSettingsForm"/>
+					</template>
+
+					<div class="_gaps_m">
+						<MkTextarea v-model="otherSettingsForm.state.robotTxt">
+							<template #label>{{ i18n.ts.overrideRobotsTxt }}<span v-if="otherSettingsForm.modifiedStates.robotTxt" class="_modified">{{ i18n.ts.modified }}</span></template>
+							<template #caption>{{ i18n.ts.overrideRobotsTxtDescription }}</template>
+						</MkTextarea>
+					</div>
+				</MkFolder>
+
+				<MkFolder>
 					<template #icon><i class="ti ti-file-search"></i></template>
 					<template #label>{{ i18n.ts.search }}</template>
 
@@ -415,6 +430,15 @@ const emailToReceiveAbuseReportForm = useForm({
 }, async (state) => {
 	await os.apiWithDialog('admin/update-meta', {
 		emailToReceiveAbuseReport: state.emailToReceiveAbuseReport,
+	});
+	fetchInstance(true);
+});
+
+const otherSettingsForm = useForm({
+	robotTxt: meta.robotsTxt,
+}, async (state) => {
+	await os.apiWithDialog('admin/update-meta', {
+		robotsTxt: state.robotTxt,
 	});
 	fetchInstance(true);
 });
