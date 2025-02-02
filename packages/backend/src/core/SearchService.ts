@@ -362,10 +362,10 @@ export class SearchService {
 
 		if (opts.host) {
 			if (opts.host === '.') {
-				query.innerJoin('note.user', 'user')
+				query
 					.andWhere('user.host IS NULL');
 			} else {
-				query.innerJoin('note.user', 'user')
+				query
 					.andWhere('user.host = :host', { host: opts.host });
 			}
 		}
