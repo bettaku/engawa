@@ -50,7 +50,7 @@ const $scheduledNoteDeleted: Provider = {
 	provide: 'queue:scheduledNoteDelete',
 	useFactory: (config: Config, redisForJobQueue: Redis.Redis) => new Bull.Queue(QUEUE.SCHEDULED_NOTE_DELETE, baseQueueOptions(config, QUEUE.SCHEDULED_NOTE_DELETE, redisForJobQueue)),
 	inject: [DI.config, DI.redisForJobQueue],
-}
+};
 
 const $deliver: Provider = {
 	provide: 'queue:deliver',

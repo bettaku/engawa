@@ -6,10 +6,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import type { UsersRepository, UserProfilesRepository } from '@/models/_.js';
-import type { MiUser } from '@/models/User.js';
 import { ModerationLogService } from '@/core/ModerationLogService.js';
 import { DI } from '@/di-symbols.js';
-import { bindThis } from '@/decorators.js';
 import { RoleService } from '@/core/RoleService.js';
 import { QueueService } from '@/core/QueueService.js';
 
@@ -66,6 +64,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 				userUsername: user.username,
 				userHost: user.host,
 			});
-		})
+		});
 	}
 }
