@@ -67,6 +67,8 @@ describe('ユーザー', () => {
 			isLocked: user.isLocked,
 			isSilenced: user.isSilenced,
 			isSuspended: user.isSuspended,
+			isSensitive: user.isSensitive,
+			isIndexable: user.isIndexable,
 			description: user.description,
 			location: user.location,
 			birthday: user.birthday,
@@ -472,6 +474,8 @@ describe('ユーザー', () => {
 		{ parameters: () => ({ notificationRecieveConfig: {} }) },
 		{ parameters: () => ({ emailNotificationTypes: ['mention', 'reply', 'quote', 'follow', 'receiveFollowRequest'] }) },
 		{ parameters: () => ({ emailNotificationTypes: [] }) },
+		{ parameters: () => ({ isIndexable: true }) },
+		{ parameters: () => ({ isIndexable: false }) },
 	] as const)('を書き換えることができる($#)', async ({ parameters }) => {
 		const response = await successfulApiCall({ endpoint: 'i/update', parameters: parameters(), user: alice });
 		const expected = { ...meDetailed(alice, true), ...parameters() };
