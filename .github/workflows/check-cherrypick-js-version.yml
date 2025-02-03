@@ -13,6 +13,10 @@ on:
       - packages/cherrypick-js/package.json
       - package.json
       - .github/workflows/check-cherrypick-js-version.yml
+
+env:
+  COREPACK_DEFAULT_TO_LATEST: 0
+
 jobs:
   check-version:
     # ルートの package.json と packages/cherrypick-js/package.json のバージョンが一致しているかを確認する

@@ -9,6 +9,9 @@ on:
     paths:
       - packages/backend/**
 
+env:
+  COREPACK_DEFAULT_TO_LATEST: 0
+
 jobs:
   # pull_request_target safety: permissions: read-all, and there are no secrets used in this job
   generate-cherrypick-js:

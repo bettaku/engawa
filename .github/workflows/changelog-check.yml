@@ -6,6 +6,9 @@ on:
       - master
       - develop
 
+env:
+  COREPACK_DEFAULT_TO_LATEST: 0
+
 jobs:
   check-changelog:
     runs-on: ubuntu-latest
