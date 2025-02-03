@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project, noridev, cherrypick-project, esurio
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 export class AddPrivateVisibility1721550461923 {
     name = 'AddPrivateVisibility1721550461923'
 
