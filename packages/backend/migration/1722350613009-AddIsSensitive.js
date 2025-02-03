@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project, noridev, cherrypick-project, esurio
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
+
 export class AddIsSensitive1722350613009 {
     name = 'AddIsSensitive1722350613009'
 

@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project, noridev, cherrypick-project, esurio
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+s
 export class AddSensitiveProfile1722353293595 {
     name = 'AddSensitiveProfile1722353293595'
 
