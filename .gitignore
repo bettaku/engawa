@@ -1,0 +1,16 @@
+# npm
+node_modules
+
+# editor
+.vscode
+
+# app dir
+built
+temp
+
+# Intelij-IDEA
+/.idea
+
+coverage
+
+src/internal/parser.js
