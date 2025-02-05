@@ -155,6 +155,7 @@ export class ClientServerService {
 			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 			'name': this.meta.name || this.config.host,
 			'start_url': '/',
+			'scope': '/',
 			'display': 'standalone',
 			'background_color': '#95e3e8',
 			// 空文字列の場合右辺を使いたいため
