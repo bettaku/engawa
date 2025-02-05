@@ -15,6 +15,22 @@
 ### Misc
 
 -->
+## 20250205
+
+### Release Date
+
+### General
+- feat: add 'scope': '/' to the web app manifest
+
+### Client
+- enhance: preview AP objects as quotes (cherry-picked from https://activitypub.software/TransFem-org/Sharkey/-/merge_requests/826)
+
+### Server
+- refactor: use recursion in mfmService.fromHtml to parse remote's ul/ol tag (Originally from https://firefish.dev/firefish/firefish/-/merge_requests/10694)
+
+### Misc
+
+
 ## 20250117
 
 ### Release Date
