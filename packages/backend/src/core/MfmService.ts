@@ -22,6 +22,7 @@ type ChildNode = DefaultTreeAdapterMap['childNode'];
 
 const urlRegex = /^https?:\/\/[\w\/:%#@$&?!()\[\]~.,=+\-]+/;
 const urlRegexFull = /^https?:\/\/[\w\/:%#@$&?!()\[\]~.,=+\-]+$/;
+const MAX_FLAT = 100;
 
 @Injectable()
 export class MfmService {
@@ -40,13 +41,11 @@ export class MfmService {
 
 		const dom = parse5.parseFragment(html);
 
-		let text = '';
+		return toMFM(dom.childNodes, '');
 
-		for (const n of dom.childNodes) {
-			analyze(n);
+		function toMFM(childNode: ChildNode[], background = ''): string {
+			return appendChildren(childNode, background).join('').trim();
 		}
-
-		return text.trim();
 
 		function getText(node: Node): string {
 			if (treeAdapter.isTextNode(node)) return node.value;
@@ -60,29 +59,27 @@ export class MfmService {
 			return '';
 		}
 
-		function appendChildren(childNodes: ChildNode[]): void {
+		function appendChildren(childNodes: ChildNode[], background = ''): string[] {
 			if (childNodes) {
-				for (const n of childNodes) {
-					analyze(n);
-				}
+				return childNodes.map((n, index) => analyze(n, index + 1, background)).flat(MAX_FLAT);
+			} else {
+				return [''];
 			}
 		}
 
-		function analyze(node: Node) {
+		function analyze(node: Node, index = 1, background = ''): (string | string[])[] {
 			if (treeAdapter.isTextNode(node)) {
-				text += node.value;
-				return;
+				return [node.value];
 			}
 
 			// Skip comment or document type node
 			if (!treeAdapter.isElementNode(node)) {
-				return;
+				return [];
 			}
 
 			switch (node.nodeName) {
 				case 'br': {
-					text += '\n';
-					break;
+					return ['\n'];
 				}
 
 				case 'a': {
@@ -92,83 +89,68 @@ export class MfmService {
 
 					// ハッシュタグ
 					if (normalizedHashtagNames && href && normalizedHashtagNames.has(normalizeForSearch(txt))) {
-						text += txt;
+						return [txt];
 						// メンション
 					} else if (txt.startsWith('@') && !(rel && rel.value.startsWith('me '))) {
 						const part = txt.split('@');
 
 						if (part.length === 2 && href) {
 							//#region ホスト名部分が省略されているので復元する
-							const acct = `${txt}@${(new URL(href.value)).hostname}`;
-							text += acct;
+							return [`${txt}@${new URL(href.value).hostname}`];
 							//#endregion
 						} else if (part.length === 3) {
-							text += txt;
+							return [txt];
 						}
 						// その他
 					} else {
-						const generateLink = () => {
-							if (!href && !txt) {
-								return '';
-							}
-							if (!href) {
-								return txt;
-							}
-							if (!txt || txt === href.value) {	// #6383: Missing text node
-								if (href.value.match(urlRegexFull)) {
-									return href.value;
-								} else {
-									return `<${href.value}>`;
-								}
-							}
-							if (href.value.match(urlRegex) && !href.value.match(urlRegexFull)) {
-								return `[${txt}](<${href.value}>)`;	// #6846
+						if (!href && !txt) {
+							return [''];
+						}
+						if (!href) {
+							return [txt];
+						}
+						if (!txt || txt === href.value) {	// #6383: Missing text node
+							if (href.value.match(urlRegexFull)) {
+								return [href.value];
 							} else {
-								return `[${txt}](${href.value})`;
+								return [`<${href.value}>`];
 							}
-						};
-
-						text += generateLink();
+						}
+						if (href.value.match(urlRegex) && !href.value.match(urlRegexFull)) {
+							return [`[${txt}](<${href.value}>)`];	// #6846
+						} else {
+							return [`[${txt}](${href.value})`];
+						}
 					}
 					break;
 				}
 
 				case 'h1': {
-					text += '【';
-					appendChildren(node.childNodes);
-					text += '】\n';
-					break;
+					return ['\n\n', '**$[x2', appendChildren(node.childNodes), ' ]**'];
+				}
+
+				case 'h2':
+				case 'h3': {
+					return ['\n\n', '**', appendChildren(node.childNodes), '**'];
 				}
 
 				case 'b':
 				case 'strong': {
-					text += '**';
-					appendChildren(node.childNodes);
-					text += '**';
-					break;
+					return ['**', appendChildren(node.childNodes), '**'];
 				}
 
 				case 'small': {
-					text += '<small>';
-					appendChildren(node.childNodes);
-					text += '</small>';
-					break;
+					return ['<small>', appendChildren(node.childNodes), '</small>'];
 				}
 
 				case 's':
 				case 'del': {
-					text += '~~';
-					appendChildren(node.childNodes);
-					text += '~~';
-					break;
+					return ['~~', appendChildren(node.childNodes), '~~'];
 				}
 
 				case 'i':
 				case 'em': {
-					text += '<i>';
-					appendChildren(node.childNodes);
-					text += '</i>';
-					break;
+					return ['<i>', appendChildren(node.childNodes), '</i>'];
 				}
 
 				case 'ruby': {
@@ -186,8 +168,7 @@ export class MfmService {
 							if (/\s|\[|\]/.test(rt)) {
 								// If any space is included in rt, it is treated as a normal text
 								ruby = [];
-								appendChildren(node.childNodes);
-								break;
+								return appendChildren(node.childNodes);
 							} else {
 								ruby.at(-1)![1] = rt;
 								continue;
@@ -195,53 +176,38 @@ export class MfmService {
 						}
 						// If any other element is included in ruby, it is treated as a normal text
 						ruby = [];
-						appendChildren(node.childNodes);
-						break;
+						return appendChildren(node.childNodes);
 					}
-					for (const [base, rt] of ruby) {
-						text += `$[ruby ${base} ${rt}]`;
-					}
-					break;
+					return ruby.map(([base, rt]) => `$[ruby ${base} ${rt}]`);
 				}
 
 				// block code (<pre><code>)
 				case 'pre': {
 					if (node.childNodes.length === 1 && node.childNodes[0].nodeName === 'code') {
-						text += '\n```\n';
-						text += getText(node.childNodes[0]);
-						text += '\n```\n';
+						return [
+							'\n```\n',
+							getText(node.childNodes[0]),
+							'\n```\n',
+						];
 					} else {
-						appendChildren(node.childNodes);
+						return appendChildren(node.childNodes);
 					}
-					break;
 				}
 
 				// inline code (<code>)
 				case 'code': {
-					text += '`';
-					appendChildren(node.childNodes);
-					text += '`';
-					break;
+					return ['`', appendChildren(node.childNodes), '`'];
 				}
 
 				case 'blockquote': {
-					const t = getText(node);
-					if (t) {
-						text += '\n> ';
-						text += t.split('\n').join('\n> ');
-					}
-					break;
+					return ['\n', toMFM(node.childNodes).split('\n').join('\n> ').trim()];
 				}
 
 				case 'p':
-				case 'h2':
-				case 'h3':
 				case 'h4':
 				case 'h5':
 				case 'h6': {
-					text += '\n\n';
-					appendChildren(node.childNodes);
-					break;
+					return ['\n\n', appendChildren(node.childNodes)];
 				}
 
 				// other block elements
@@ -249,20 +215,34 @@ export class MfmService {
 				case 'header':
 				case 'footer':
 				case 'article':
-				case 'li':
 				case 'dt':
 				case 'dd': {
-					text += '\n';
-					appendChildren(node.childNodes);
-					break;
+					return ['\n', appendChildren(node.childNodes)];
+				}
+
+				case 'ul': {
+					return ['\n', toMFM(node.childNodes, 'ul').split('\n').join('\n').trim()];
+				}
+
+				case 'ol': {
+					return ['\n', toMFM(node.childNodes, 'ol').split('\n').join('\n').trim()];
+				}
+
+				case 'li': {
+					if (background === 'ol') {
+						const order = index - 1;
+						return ['\n', `${order}. `, toMFM(node.childNodes).split('\n').join('\n').trim()];
+					} else {
+						return ['\n', '- ', toMFM(node.childNodes).split('\n').join('\n').trim()];
+					}
 				}
 
 				default:	// includes inline elements
 				{
-					appendChildren(node.childNodes);
-					break;
+					return appendChildren(node.childNodes);
 				}
 			}
+			return [];
 		}
 	}
 
@@ -439,7 +419,7 @@ export class MfmService {
 			mention: (node) => {
 				const a = doc.createElement('a');
 				const { username, host, acct } = node.props;
-				const remoteUserInfo = mentionedRemoteUsers.find(remoteUser => remoteUser.username.toLowerCase() === username.toLowerCase() && remoteUser.host?.toLowerCase() === host?.toLowerCase());
+				const remoteUserInfo = mentionedRemoteUsers.find(remoteUser => remoteUser.username.toLowerCase() === username.toLowerCase() && remoteUser.host.toLowerCase() === host?.toLowerCase());
 				a.setAttribute('href', remoteUserInfo
 					? (remoteUserInfo.url ? remoteUserInfo.url : remoteUserInfo.uri)
 					: `${this.config.url}/${acct.endsWith(`@${this.config.url}`) ? acct.substring(0, acct.length - this.config.url.length - 1) : acct}`);
