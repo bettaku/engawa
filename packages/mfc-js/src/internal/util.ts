@@ -1,4 +1,4 @@
-import { isMfmBlock, MfmInline, MfmNode, MfmText, TEXT } from '../node';
+import { isMfmBlock, MfmInline, MfmNode, MfmText, TEXT } from '../node.js';
 
 type ArrayRecursive<T> = T | Array<ArrayRecursive<T>>;
 
@@ -21,11 +21,9 @@ export function mergeText<T extends MfmNode>(nodes: ArrayRecursive<((T extends M
 		if (typeof node === 'string') {
 			// Store the char.
 			storedChars.push(node);
-		}
-		else if (!Array.isArray(node) && node.type === 'text') {
+		} else if (!Array.isArray(node) && node.type === 'text') {
 			storedChars.push((node as MfmText).props.text);
-		}
-		else {
+		} else {
 			generateText();
 			dest.push(node);
 		}
@@ -87,8 +85,7 @@ export function stringifyNode(node: MfmNode): string {
 		case 'url': {
 			if (node.props.brackets) {
 				return `<${ node.props.url }>`;
-			}
-			else {
+			} else {
 				return node.props.url;
 			}
 		}
@@ -101,8 +98,7 @@ export function stringifyNode(node: MfmNode): string {
 				const value = node.props.args[key];
 				if (value === true) {
 					return key;
-				}
-				else {
+				} else {
 					return `${ key }=${ value }`;
 				}
 			});
@@ -116,10 +112,9 @@ export function stringifyNode(node: MfmNode): string {
 			return node.props.text;
 		}
 	}
-	throw new Error('unknown mfc node');
 }
 
-enum stringifyState {
+enum StringifyState {
 	none = 0,
 	inline,
 	block
@@ -127,7 +122,7 @@ enum stringifyState {
 
 export function stringifyTree(nodes: MfmNode[]): string {
 	const dest: MfmNode[] = [];
-	let state: stringifyState = stringifyState.none;
+	let state: StringifyState = StringifyState.none;
 
 	for (const node of nodes) {
 		// 文脈に合わせて改行を追加する。
@@ -140,16 +135,15 @@ export function stringifyTree(nodes: MfmNode[]): string {
 
 		let pushLf = true;
 		if (isMfmBlock(node)) {
-			if (state === stringifyState.none) {
+			if (state === StringifyState.none) {
 				pushLf = false;
 			}
-			state = stringifyState.block;
-		}
-		else {
-			if (state === stringifyState.none || state === stringifyState.inline) {
+			state = StringifyState.block;
+		} else {
+			if (state === StringifyState.none || state === StringifyState.inline) {
 				pushLf = false;
 			}
-			state = stringifyState.inline;
+			state = StringifyState.inline;
 		}
 		if (pushLf) {
 			dest.push(TEXT('\n'));

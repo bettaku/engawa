@@ -1,6 +1,6 @@
-import * as M from '..';
-import { language } from './parser';
-import { mergeText } from './util';
+import * as M from '../index.js';
+import { language } from './parser.js';
+import { mergeText } from './util.js';
 
 export type FullParserOpts = {
 	nestLimit?: number;

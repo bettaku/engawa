@@ -4,7 +4,7 @@ export {
 	toString,
 	inspect,
 	extract,
-} from './api';
+} from './api.js';
 
 export {
 	NodeType,
@@ -12,7 +12,7 @@ export {
 	MfmSimpleNode,
 	MfmBlock,
 	MfmInline,
-} from './node';
+} from './node.js';
 
 export {
 	// block
@@ -38,7 +38,7 @@ export {
 	MfmFn,
 	MfmPlain,
 	MfmText,
-} from './node';
+} from './node.js';
 
 export {
 	// block
@@ -64,4 +64,4 @@ export {
 	FN,
 	PLAIN,
 	TEXT,
-} from './node';
+} from './node.js';

@@ -1,6 +1,6 @@
-import { fullParser, simpleParser } from './internal';
-import { inspectOne, stringifyNode, stringifyTree } from './internal/util';
-import { MfmNode, MfmSimpleNode } from './node';
+import { fullParser, simpleParser } from './internal/index.js';
+import { inspectOne, stringifyNode, stringifyTree } from './internal/util.js';
+import { MfmNode, MfmSimpleNode } from './node.js';
 
 /**
  * Generates a MfmNode tree from the MFC string.
@@ -28,8 +28,7 @@ export function toString(node: MfmNode): string
 export function toString(node: MfmNode | MfmNode[]): string {
 	if (Array.isArray(node)) {
 		return stringifyTree(node);
-	}
-	else {
+	} else {
 		return stringifyNode(node);
 	}
 }
@@ -44,8 +43,7 @@ export function inspect(node: (MfmNode | MfmNode[]), action: (node: MfmNode) => 
 		for (const n of node) {
 			inspectOne(n, action);
 		}
-	}
-	else {
+	} else {
 		inspectOne(node, action);
 	}
 }

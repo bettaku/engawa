@@ -146,7 +146,7 @@
 		"jsrsasign": "11.1.0",
 		"juice": "11.0.0",
 		"meilisearch": "0.45.0",
-		"mfc-js": "0.24.0-cherrypick.9",
+		"mfc-js": "workspace:*",
 		"microformats-parser": "2.0.2",
 		"mime-types": "2.1.35",
 		"ms": "3.0.0-canary.1",
