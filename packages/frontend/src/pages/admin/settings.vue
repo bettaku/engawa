@@ -277,21 +277,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<template v-if="otherSettingsForm.modified.value" #footer>
 						<MkFormFooter :form="otherSettingsForm"/>
 					</template>
-
 					<div class="_gaps_m">
-						<MkTextarea v-model="otherSettingsForm.state.robotTxt">
-							<template #label>{{ i18n.ts.overrideRobotsTxt }}<span v-if="otherSettingsForm.modifiedStates.robotTxt" class="_modified">{{ i18n.ts.modified }}</span></template>
+						<MkTextarea v-model="otherSettingsForm.state.customRobotsTxt">
+							<template #label>{{ i18n.ts.overrideRobotsTxt }}<span v-if="otherSettingsForm.modifiedStates.customRobotsTxt" class="_modified">{{ i18n.ts.modified }}</span></template>
 							<template #caption>{{ i18n.ts.overrideRobotsTxtDescription }}</template>
 						</MkTextarea>
-					</div>
-				</MkFolder>
-
-				<MkFolder>
-					<template #icon><i class="ti ti-file-search"></i></template>
-					<template #label>{{ i18n.ts.search }}</template>
-
-					<div class="_gaps_m">
-						<MkButton primary @click="reIndex">{{ i18n.ts._serverSettings.reIndex }}</MkButton>
 					</div>
 				</MkFolder>
 			</div>
@@ -301,6 +291,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
+import { computed, ref } from 'vue';
+import XHeader from './_header_.vue';
 import MkButton from '@/components/MkButton.vue';
 import MkFolder from '@/components/MkFolder.vue';
 import MkFormFooter from '@/components/MkFormFooter.vue';
@@ -317,8 +309,6 @@ import * as os from '@/os.js';
 import { misskeyApi } from '@/scripts/misskey-api.js';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
 import { useForm } from '@/scripts/use-form.js';
-import { computed, ref } from 'vue';
-import XHeader from './_header_.vue';
 
 const meta = await misskeyApi('admin/meta');
 
@@ -435,10 +425,10 @@ const emailToReceiveAbuseReportForm = useForm({
 });
 
 const otherSettingsForm = useForm({
-	robotTxt: meta.robotsTxt,
+	customRobotsTxt: meta.customRobotsTxt,
 }, async (state) => {
 	await os.apiWithDialog('admin/update-meta', {
-		robotsTxt: state.robotTxt,
+		customRobotsTxt: state.customRobotsTxt,
 	});
 	fetchInstance(true);
 });
@@ -452,7 +442,6 @@ function chooseProxyAccount() {
 			fetchInstance(true);
 		});
 	});
-
 }
 
 async function reIndex() {

@@ -1,5 +1,9 @@
 ---
 _lang_: "English"
+overrideRobotsTxt: "Override robots.txt"
+overrideRobotsTxtDescription: "Override the default robots.txt. Maximum 2048 characters."
+setFederationAvatarShape: "Federation of avatar shape settings"
+setFederationAvatarShapeDescription: "If you turn this setting on, you can federation the shape(circle, square) of your profile icon to local and remote users, and users on the corresponding server will see the profile icon shape you specified if they are using the feature. If you turn it off, all users will see the profile icon shape you specified."
 keyboardShortcuts: "Keyboard shortcuts"
 truncateAccount: "Truncate account"
 truncateAccountConfirm: "All notes and files will be deleted except those associated with direct messages and pinned notes. Still continue?"
@@ -1477,8 +1481,6 @@ translateProfile: "Translate profile"
 trustedLinkUrlPatterns: "Link to external site warning exclusion list"
 trustedLinkUrlPatternsDescription: "Separate with spaces for an AND condition or with line breaks for an OR condition. Using surrounding keywords with slashes will turn them into a regular expression. If you write only the domain name, it will be a backward match."
 open: "Open"
-overrideRobotsTxt: "Override robots.txt"
-overrideRobotsTxtDescription: "Override the default robots.txt. Maximum 2048 characters."
 _nsfwOpenBehavior:
   click: "Click to open"
   doubleClick: "Double click to open"
@@ -2085,6 +2087,7 @@ _role:
     canImportFollowing: "Allow importing following"
     canImportMuting: "Allow importing muting"
     canImportUserLists: "Allow importing lists"
+    canSetFederationAvatarShape: "Allow federation of avatar shape settings"
   _condition:
     roleAssignedTo: "Assigned to manual roles"
     isLocal: "Local user"

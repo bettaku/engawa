@@ -841,4 +841,9 @@ export class MiMeta {
 		default: '{}',
 	})
 	public bubbleInstances: string[];
+
+	@Column('varchar', {
+		length: 2048, nullable: true,
+	})
+	public customRobotsTxt: string | null;
 }

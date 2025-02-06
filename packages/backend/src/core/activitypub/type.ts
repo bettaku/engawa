@@ -205,6 +205,8 @@ export interface IActor extends IObject {
 	'vcard:bday'?: string;
 	'vcard:Address'?: string;
 	indexable?: boolean;
+	setFederationAvatarShape?: boolean,
+	isSquareAvatars?: boolean,
 }
 
 export const isCollection = (object: IObject): object is ICollection =>

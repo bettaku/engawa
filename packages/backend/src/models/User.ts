@@ -292,6 +292,16 @@ export class MiUser {
 	})
 	public isSensitive: boolean;
 
+	@Column('boolean', {
+		default: false,
+	})
+	public setFederationAvatarShape: boolean;
+
+	@Column('boolean', {
+		default: false,
+	})
+	public isSquareAvatars: boolean;
+
 	constructor(data: Partial<MiUser>) {
 		if (data == null) return;
 

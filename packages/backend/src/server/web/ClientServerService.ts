@@ -475,9 +475,10 @@ export class ClientServerService {
 		});
 
 		fastify.get('/robots.txt', async (request, reply) => {
-			if (this.meta.robotsTxt) {
+			// return await reply.sendFile('/robots.txt', staticAssets);
+			if (this.meta.customRobotsTxt) {
 				let content = '';
-				content += this.meta.robotsTxt;
+				content += this.meta.customRobotsTxt;
 				reply.header('Content-Type', 'text/plain');
 				return await reply.send(content);
 			} else {

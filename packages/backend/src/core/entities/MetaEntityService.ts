@@ -128,6 +128,7 @@ export class MetaEntityService {
 			notesPerOneAd: instance.notesPerOneAd,
 			enableEmail: instance.enableEmail,
 			enableServiceWorker: instance.enableServiceWorker,
+			customRobotsTxt: instance.customRobotsTxt,
 
 			translatorAvailable: instance.translatorType != null,
 

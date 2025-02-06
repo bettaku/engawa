@@ -3990,6 +3990,8 @@ export type components = {
           iconUrl: string | null;
           displayOrder: number;
         })[];
+      setFederationAvatarShape: boolean;
+      isSquareAvatars: boolean;
     };
     UserDetailedNotMeOnly: {
       /** Format: url */
@@ -5221,6 +5223,7 @@ export type components = {
       canImportUserLists: boolean;
       canEditNote: boolean;
       scheduleNoteMax: number;
+      canSetFederationAvatarShape: boolean;
     };
     MetaLite: {
       maintainerName: string | null;
@@ -5310,6 +5313,7 @@ export type components = {
       disablePublicNoteWhenInactive: boolean;
       moderatorInactivityLimitDays: number;
       statusUrl: string | null;
+      customRobotsTxt: string | null;
     };
     MetaDetailedOnly: {
       features?: {
@@ -9103,6 +9107,7 @@ export type operations = {
             moderatorInactivityLimitDays: number;
             bubbleInstances: string[];
             statusUrl: string | null;
+            customRobotsTxt: string | null;
           };
         };
       };
@@ -10656,6 +10661,8 @@ export type operations = {
                 expiresAt: string | null;
                 roleId: string;
               })[];
+            setFederationAvatarShape: boolean;
+            isSquareAvatars: boolean;
           };
         };
       };
@@ -11584,6 +11591,7 @@ export type operations = {
           disablePublicNoteWhenInactive?: boolean | null;
           moderatorInactivityLimitDays?: number;
           bubbleInstances?: string[];
+          customRobotsTxt?: string | null;
         };
       };
     };
@@ -21498,6 +21506,8 @@ export type operations = {
           };
           emailNotificationTypes?: string[];
           alsoKnownAs?: string[];
+          setFederationAvatarShape?: boolean;
+          isSquareAvatars?: boolean;
         };
       };
     };

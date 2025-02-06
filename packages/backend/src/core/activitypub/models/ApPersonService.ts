@@ -471,6 +471,8 @@ export class ApPersonService implements OnModuleInit {
 					makeNotesHiddenBefore: (person as any).makeNotesHiddenBefore ?? null,
 					isIndexable: person.indexable ?? true,
 					emojis,
+					setFederationAvatarShape: person.setFederationAvatarShape,
+					isSquareAvatars: person.isSquareAvatars,
 				})) as MiRemoteUser;
 
 				let _description: string | null = null;
@@ -720,6 +722,8 @@ export class ApPersonService implements OnModuleInit {
 			movedToUri: person.movedTo ?? null,
 			alsoKnownAs: person.alsoKnownAs ?? null,
 			isExplorable: person.discoverable,
+			setFederationAvatarShape: person.setFederationAvatarShape,
+			isSquareAvatars: person.isSquareAvatars,
 			...(await this.resolveAvatarAndBanner(exist, person.icon, person.image).catch(() => ({}))),
 		} as Partial<MiRemoteUser> & Pick<MiRemoteUser, 'isBot' | 'isCat' | 'isLocked' | 'movedToUri' | 'alsoKnownAs' | 'isExplorable' | 'isIndexable'>;
 

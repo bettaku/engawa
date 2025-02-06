@@ -1,5 +1,9 @@
 _lang_: "日本語"
 
+overrideRobotsTxt: "robots.txtの上書き"
+overrideRobotsTxtDescription: "robots.txtの内容を上書きします。最大2048文字です。"
+setFederationAvatarShape: "アイコンの形設定の連合"
+setFederationAvatarShapeDescription: "この設定をオンにすると、自分のアイコンの形(円形、四角形)をローカルユーザ及び遠隔ユーザに連合させることができ、対応するサーバのユーザは、機能を使用している場合は、そのユーザが指定したアイコンの形に見えるようになります。 オフにすると、すべてのユーザーが私が設定したアイコンの形に見えます。"
 keyboardShortcuts: "キーボードショートカット"
 truncateAccount: "アカウント整理"
 truncateAccountConfirm: "ダイレクトメッセージと固定されたノートに関連付けられているファイルを除くすべてのノートとファイルが削除されます。それでも続行しますか？"
@@ -1480,8 +1484,6 @@ translateProfile: "プロフィールを翻訳する"
 trustedLinkUrlPatterns: "外部サイトへのリンク警告 除外リスト"
 trustedLinkUrlPatternsDescription: "スペースで区切るとAND指定になり、改行で区切るとOR指定になります。スラッシュで囲むと正規表現になります。ドメイン名だけ書くと後方一致になります。"
 open: "開く"
-overrideRobotsTxt: "robots.txtの上書き"
-overrideRobotsTxtDescription: "robots.txtの内容を上書きします。最大2048文字です。"
 
 _nsfwOpenBehavior:
   click: "タップして開く"
@@ -2138,6 +2140,7 @@ _role:
     canImportFollowing: "フォローのインポートを許可"
     canImportMuting: "ミュートのインポートを許可"
     canImportUserLists: "リストのインポートを許可"
+    canSetFederationAvatarShape: "アイコンの形設定の連合を許可"
   _condition:
     roleAssignedTo: "マニュアルロールにアサイン済み"
     isLocal: "ローカルユーザー"
