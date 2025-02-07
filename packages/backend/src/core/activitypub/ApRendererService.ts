@@ -571,8 +571,8 @@ export class ApRendererService {
 			isCat: user.isCat,
 			indexable: user.isIndexable,
 			attachment: attachment.length ? attachment : undefined,
-			setFederationAvatarShape: user.setFederationAvatarShape,
-			isSquareAvatars: user.isSquareAvatars,
+			setFederationAvatarShape: user.setFederationAvatarShape ?? undefined,
+			isSquareAvatars: user.isSquareAvatars ?? undefined,
 		};
 
 		if (user.movedToUri) {

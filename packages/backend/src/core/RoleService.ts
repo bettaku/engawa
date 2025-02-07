@@ -69,6 +69,7 @@ export type RolePolicies = {
 	canImportFollowing: boolean;
 	canImportMuting: boolean;
 	canImportUserLists: boolean;
+	noteDraftLimit: number;
 	canSetFederationAvatarShape: boolean;
 };
 
@@ -110,6 +111,7 @@ export const DEFAULT_POLICIES: RolePolicies = {
 	canImportFollowing: true,
 	canImportMuting: true,
 	canImportUserLists: true,
+	noteDraftLimit: 10,
 	canSetFederationAvatarShape: true,
 };
 
@@ -424,6 +426,7 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 			canImportFollowing: calc('canImportFollowing', vs => vs.some(v => v === true)),
 			canImportMuting: calc('canImportMuting', vs => vs.some(v => v === true)),
 			canImportUserLists: calc('canImportUserLists', vs => vs.some(v => v === true)),
+			noteDraftLimit: calc('noteDraftLimit', vs => Math.max(...vs)),
 			canSetFederationAvatarShape: calc('canSetFederationAvatarShape', vs => vs.some(v => v === true)),
 		};
 	}

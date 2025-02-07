@@ -123,6 +123,10 @@ export const packedUserLiteSchema = {
 			type: 'boolean',
 			nullable: false, optional: true,
 		},
+		isProxy: {
+			type: 'boolean',
+			nullable: false, optional: true,
+		},
 		requireSigninToViewContents: {
 			type: 'boolean',
 			nullable: false, optional: true,
@@ -201,11 +205,11 @@ export const packedUserLiteSchema = {
 		},
 		setFederationAvatarShape: {
 			type: 'boolean',
-			nullable: false, optional: false,
+			nullable: false, optional: true,
 		},
 		isSquareAvatars: {
 			type: 'boolean',
-			nullable: false, optional: false,
+			nullable: false, optional: true,
 		},
 	},
 } as const;

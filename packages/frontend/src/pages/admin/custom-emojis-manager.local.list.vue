@@ -594,7 +594,7 @@ const headerActions = computed(() => [{
 				dispose();
 			},
 		});
-	}
+	},
 }]);
 </script>
 

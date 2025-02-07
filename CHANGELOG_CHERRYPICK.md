@@ -1,8 +1,8 @@
 <!--
 ## 4.x.x
 출시일: unreleased<br>
-기반 Misskey 버전: 2024.x.x<br>
-Misskey의 전체 변경 사항을 확인하려면, [CHANGELOG.md#2024xx](CHANGELOG.md#2024xx) 문서를 참고하십시오.
+기반 Misskey 버전: 2025.x.x<br>
+Misskey의 전체 변경 사항을 확인하려면, [CHANGELOG.md#2025xx](CHANGELOG.md#2025xx) 문서를 참고하십시오.
 
 ### NOTE
 - 
@@ -25,8 +25,8 @@ Misskey의 전체 변경 사항을 확인하려면, [CHANGELOG.md#2024xx](CHANGE
 
 ## 4.x.x
 출시일: unreleased<br>
-기반 Misskey 버전: 2024.x.x<br>
-Misskey의 전체 변경 사항을 확인하려면, [CHANGELOG.md#2024xx](CHANGELOG.md#2024xx) 문서를 참고하십시오.
+기반 Misskey 버전: 2025.x.x<br>
+Misskey의 전체 변경 사항을 확인하려면, [CHANGELOG.md#2025xx](CHANGELOG.md#2025xx) 문서를 참고하십시오.
 
 ### General
 - Feat: 계정 정리 기능 ([yodangang-express/cherrypick@dc51c907](https://github.com/yodangang-express/cherrypick/commit/dc51c907236570d6f072409832d312c937239514))
@@ -39,11 +39,20 @@ Misskey의 전체 변경 사항을 확인하려면, [CHANGELOG.md#2024xx](CHANGE
     - 이 역할이 꺼져있으면 프로필 아이콘 모양 설정이 연합되지 않으며, 모든 사용자의 프로필 아이콘 모양이 `프로필 아이콘을 사각형으로 표시` 설정에 따라 표시됩니다.
 - Feat: robots.txt 사용자화 (bettaku/engawa#226)
   - 기본 `robots.txt`에 정의된 내용을 사용자화 할 수 있습니다.
+- Feat: 노트의 초안을 저장할 수 있음 (kokonect-link/cherrypick#513, misskey-dev/misskey#15298)
+  - 작성 중인 노트를 서버 또는 기기에 저장할 수 있습니다.
+  - 서버에 저장된 초안은 모든 기기에서 동기화 됩니다.
+- Enhance: 프록시 계정을 확인할 수 있는 배지 추가 (misskey-dev/misskey#14855)
 
 ### Client
+- Feat: 노트 게시 전에 첨부된 이미지를 미리 볼 수 있음 (misskey-dev/misskey#15341)
 - Enhance: 사용자 페이지에서 `이름`, `자기소개`, `팔로우 메시지`, `추가 정보`에 포함된 외부 이모지를 가져올 수 있음
 - Enhance: 노트에 여러 장의 이미지가 있을 때 미디어 탭에서 이미지 수를 숫자로 표시함
 - Enhance: 키보드 단축키 목록을 볼 수 있음 (kokonect-link/cherrypick#562)
+- Enhance: 아바타 장식 개선
+  - 세부 설정값을 더욱 세밀하게 조절할 수 있습니다.
+    - `각도`는 이제 `1°` 단위로 조절할 수 있습니다.
+    - `X 위치`, `Y 위치`, `불투명도`는 이제 `1%` 단위로 조절할 수 있습니다.
 - Fix: 노트 헤더의 사용자 이름을 클릭하면 페이지가 중복으로 이동됨
 - Fix: CherryPick 클라이언트 업데이트 알림이 잘못 반환될 수 있음
   - 출시 전 빌드 태그가 고려되지 않음(`alpha`, `beta`, `rc`)
@@ -54,6 +63,8 @@ Misskey의 전체 변경 사항을 확인하려면, [CHANGELOG.md#2024xx](CHANGE
     - `민감한 콘텐츠로 표시된 미디어를 열 때` 설정이 반영되지 않음
     - `데이터 절약 모드` 설정이 반영되지 않음
   - 미디어 왼쪽 상단에 `ALT`/`GIF`/`APNG`/`NSFW` 표시
+- Fix: 움직이는 이미지를 아바타 장식으로 붙이지 못할 수 있음
+- Fix: 노트 게시를 예약할 때 잘못된 내용의 토스트 알림이 표시될 수 있음
 
 ### Server
 - Fix: 신고 즉시 해결 기능에서 발생할 수 있는 일부 문제 해결 ([misskey-dev/misskey#11032 (review)](https://github.com/misskey-dev/misskey/pull/11032#pullrequestreview-2425669540))
