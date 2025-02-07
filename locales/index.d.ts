@@ -299,7 +299,7 @@ export interface Locale extends ILocale {
      */
     "noteEdited": string;
     /**
-     * ノートの保存しました。
+     * ノートの下書きを保存しました。
      */
     "noteDrafted": string;
     /**

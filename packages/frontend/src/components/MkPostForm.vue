@@ -106,6 +106,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
+import { erase, unique } from '@@/js/array.js';
+import { host, url } from '@@/js/config.js';
+import * as Misskey from 'cherrypick-js';
+import insertTextAtCursor from 'insert-text-at-cursor';
+import * as mfm from 'mfc-js';
+import { toASCII } from 'punycode.js';
+import { computed, defineAsyncComponent, inject, nextTick, onMounted, provide, ref, shallowRef, watch, type ShallowRef } from 'vue';
+import type { MenuItem } from '@/types/menu.js';
+import type { PostFormProps } from '@/types/post-form.js';
 import MkEventEditor from '@/components/MkEventEditor.vue';
 import MkInfo from '@/components/MkInfo.vue';
 import MkMfmCheatSheetDialog from '@/components/MkMfmCheatSheetDialog.vue';
@@ -134,15 +143,6 @@ import * as sound from '@/scripts/sound.js';
 import { uploadFile } from '@/scripts/upload.js';
 import { vibrate } from '@/scripts/vibrate.js';
 import { defaultStore, notePostInterruptors, postFormActions } from '@/store.js';
-import type { MenuItem } from '@/types/menu.js';
-import type { PostFormProps } from '@/types/post-form.js';
-import { erase, unique } from '@@/js/array.js';
-import { host, url } from '@@/js/config.js';
-import * as Misskey from 'cherrypick-js';
-import insertTextAtCursor from 'insert-text-at-cursor';
-import * as mfm from 'mfc-js';
-import { toASCII } from 'punycode.js';
-import { computed, defineAsyncComponent, inject, nextTick, onMounted, provide, ref, shallowRef, watch, type ShallowRef } from 'vue';
 import { getAccounts, incNotesCount, notesCount, openAccountMenu as openAccountMenu_, signinRequired } from '@/account.js';
 
 const $i = signinRequired();
@@ -359,7 +359,7 @@ if ($i.isSilenced && visibility.value === 'public') {
 
 if ($i.isSensitive && !useCw.value) {
 	useCw.value = true;
-	cw.value = i18n.ts.sensitiveUserCaution
+	cw.value = i18n.ts.sensitiveUserCaution;
 }
 
 if (targetChannel.value) {
@@ -843,7 +843,10 @@ async function saveServerDraft(clearLocal = false): Promise<{ canClosePostForm: 
 		quoteId: quoteId.value,
 		channelId: targetChannel.value ? targetChannel.value.id : undefined,
 		reactionAcceptance: reactionAcceptance.value,
-		scheduledNoteDelete: scheduledNoteDelete.value,
+		scheduledNoteDelete: scheduledNoteDelete.value ? {
+			deleteAt: scheduledNoteDelete.value.deleteAt,
+			deleteAfter: scheduledNoteDelete.value.deleteAfter,
+		} : null,
 		scheduleNote: scheduleNote.value,
 	}).then(() => {
 		if (clearLocal) {
@@ -1200,7 +1203,7 @@ async function openMfmCheatSheet() {
 	const { dispose } = os.popup(MkMfmCheatSheetDialog, {}, {
 		closed: () => dispose(),
 	});
-};
+}
 
 const postAccount = ref<Misskey.entities.UserDetailed | null>(null);
 
