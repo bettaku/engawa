@@ -92,9 +92,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</MkSelect>
 				<MkSwitch v-model="highlightSensitiveMedia">{{ i18n.ts.highlightSensitiveMedia }}</MkSwitch>
 				<MkSwitch v-model="squareAvatars">{{ i18n.ts.squareAvatars }}</MkSwitch>
-				<MkSwitch v-model="setFederationAvatarShape" :disabled="!$i?.policies.canSetFederationAvatarShape" @update:modelValue="cantUseSetFederationAvatarShape">
+				<MkSwitch v-model="setFederationAvatarShape" @update:modelValue="cantUseSetFederationAvatarShape">
 					{{ i18n.ts.setFederationAvatarShape }} <span class="_beta" style="vertical-align: middle;">CherryPick</span>
-					<template #caption>{{ $i?.policies.canSetFederationAvatarShape ? i18n.ts.setFederationAvatarShapeDescription : i18n.ts.cannotBeUsedFunc }}</template>
+					<template #caption>{{ $i?.policies.canSetFederationAvatarShape ? i18n.ts.setFederationAvatarShapeDescription : i18n.ts.cannotBeUsedFunc }}<span v-if="!$i?.policies.canSetFederationAvatarShape" style="margin-left: 3px;"><a class="_link" @click="learnMoreCantUseSetFederationAvatarShape">{{ i18n.ts.learnMore }}</a></span></template>
 				</MkSwitch>
 				<MkSwitch v-model="showAvatarDecorations">{{ i18n.ts.showAvatarDecorations }}</MkSwitch>
 				<MkSwitch v-model="useSystemFont">{{ i18n.ts.useSystemFont }}</MkSwitch>
@@ -132,7 +132,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 		<div class="_gaps_m">
 			<div class="_gaps_s">
-				<MkSwitch v-model="collapseRenotes">
+				<MkSwitch v-model="forceCollapseAllRenotes">
+					<template #label>{{ i18n.ts.forceCollapseAllRenotes }}</template>
+					<template #caption>{{ i18n.ts.forceCollapseAllRenotesDescription }}</template>
+				</MkSwitch>
+				<MkSwitch v-model="collapseRenotes" :disabled="forceCollapseAllRenotes">
 					<template #label>{{ i18n.ts.collapseRenotes }}</template>
 					<template #caption>{{ i18n.ts.collapseRenotesDescription }}</template>
 				</MkSwitch>
@@ -306,6 +310,7 @@ const showNoteActionsOnlyHover = computed(defaultStore.makeGetterSetter('showNot
 const showClipButtonInNoteFooter = computed(defaultStore.makeGetterSetter('showClipButtonInNoteFooter'));
 const reactionsDisplaySize = computed(defaultStore.makeGetterSetter('reactionsDisplaySize'));
 const limitWidthOfReaction = computed(defaultStore.makeGetterSetter('limitWidthOfReaction'));
+const forceCollapseAllRenotes = computed(defaultStore.makeGetterSetter('forceCollapseAllRenotes'));
 const collapseRenotes = computed(defaultStore.makeGetterSetter('collapseRenotes'));
 const collapseReplies = computed(defaultStore.makeGetterSetter('collapseReplies'));
 const reduceAnimation = computed(defaultStore.makeGetterSetter('animation', v => !v, v => !v));
@@ -393,7 +398,7 @@ watch([
 	setFederationAvatarShape,
 ], () => {
 	misskeyApi('i/update', {
-		setFederationAvatarShape: setFederationAvatarShape.value,
+		setFederationAvatarShape: $i?.policies.canSetFederationAvatarShape ? setFederationAvatarShape.value : false,
 		isSquareAvatars: defaultStore.state.squareAvatars,
 	});
 });
@@ -411,6 +416,7 @@ watch([
 	showUnreadNotificationsCount,
 	filesGridLayoutInUserPage,
 	showFixedPostFormInReplies,
+	disableShowingAnimatedImages,
 	showingAnimatedImages,
 	enableSeasonalScreenEffect,
 ], async () => {
@@ -450,6 +456,7 @@ watch([
 });
 
 watch([
+	forceCollapseAllRenotes,
 	collapseRenotes,
 	collapseReplies,
 ], () => {
@@ -516,6 +523,15 @@ function reloadNotification() {
 
 async function cantUseSetFederationAvatarShape() {
 	if ($i && !$i.policies.canSetFederationAvatarShape && setFederationAvatarShape.value) setFederationAvatarShape.value = false;
+}
+
+function learnMoreCantUseSetFederationAvatarShape() {
+	os.alert({
+		type: 'info',
+		title: i18n.ts.setFederationAvatarShape,
+		text: i18n.tsx.cantUseThisFunctionDescription({ name: i18n.ts.setFederationAvatarShape }),
+		caption: i18n.tsx.cantUseThisFunctionCaption({ name: i18n.ts.setFederationAvatarShape }),
+	});
 }
 
 onMounted(() => {

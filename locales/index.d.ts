@@ -14,6 +14,14 @@ export interface Locale extends ILocale {
      */
     "_lang_": string;
     /**
+     * すべてのリノートの省略
+     */
+    "forceCollapseAllRenotes": string;
+    /**
+     * 私または相手がリノートしたすべてのノートをたたんで表示します。
+     */
+    "forceCollapseAllRenotesDescription": string;
+    /**
      * robots.txtの上書き
      */
     "overrideRobotsTxt": string;
@@ -82,6 +90,10 @@ export interface Locale extends ILocale {
      */
     "schedulePostList": string;
     /**
+     * {n}個の投稿が予約されたノートがあります。
+     */
+    "thereIsSchedulePost": ParameterizedString<"n">;
+    /**
      * 一定時間が経過した後に接続したときに歓迎メッセージを表示
      */
     "welcomeBackToast": string;
@@ -112,14 +124,14 @@ export interface Locale extends ILocale {
      */
     "useAutoTranslateDescription": string;
     /**
-     * サーバー管理者が自動翻訳を使用できないように設定しました。
-     * 自動翻訳を使用するには、サーバー管理者にお問い合わせください。
+     * サーバー管理者が{name}を使用できないように設定しました。
+     * {name}を使用するには、サーバー管理者にお問い合わせください。
      */
-    "cantUseAutoTranslateDescription": string;
+    "cantUseThisFunctionDescription": ParameterizedString<"name" | "name">;
     /**
-     * 有効にすると、再利用できるときに自動翻訳を適用します。
+     * 有効にすると、再利用できるときに{name}を適用します。
      */
-    "cantUseAutoTranslateCaption": string;
+    "cantUseThisFunctionCaption": ParameterizedString<"name">;
     /**
      * ウィジェット
      */
@@ -5588,6 +5600,14 @@ export interface Locale extends ILocale {
      */
     "feedbackUrl": string;
     /**
+     * お問い合わせ
+     */
+    "support": string;
+    /**
+     * {name}を支援
+     */
+    "supportThisInstance": ParameterizedString<"name">;
+    /**
      * 運営者情報
      */
     "impressum": string;
@@ -9525,6 +9545,10 @@ export interface Locale extends ILocale {
          */
         "noteMy": string;
         /**
+         * 予約投稿
+         */
+        "noteSchedulePost": string;
+        /**
          * ノートを編集
          */
         "noteEdited": string;
@@ -12589,9 +12613,13 @@ export interface Locale extends ILocale {
          */
         "description2": string;
         /**
-         * 詳しくはこちらをご確認ください。 {link}
+         * 貼り付けようとする項目が何なのか正確に理解しているのであれば、私たちと一緒にCherryPickを開発するのはいかがでしょうか？ {link}
          */
         "description3": ParameterizedString<"link">;
+        /**
+         * 詳しくはこちらをご確認ください。 {link}
+         */
+        "description4": ParameterizedString<"link">;
     };
     "_followRequest": {
         /**

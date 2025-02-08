@@ -161,6 +161,8 @@ export const defaultStore = markRaw(new Storage('base', {
 			'explore',
 			'search',
 			'announcements',
+			'-',
+			'support',
 		],
 	},
 	visibility: {
@@ -536,6 +538,10 @@ export const defaultStore = markRaw(new Storage('base', {
 		where: 'device',
 		default: { type: 'syuilo/n-cea-4va', volume: 1 } as SoundStore,
 	},
+	sound_noteSchedulePost: {
+		where: 'device',
+		default: { type: 'syuilo/n-cea', volume: 1 } as SoundStore,
+	},
 	sound_noteEdited: {
 		where: 'device',
 		default: { type: 'syuilo/n-eca', volume: 1 } as SoundStore,
@@ -605,6 +611,10 @@ export const defaultStore = markRaw(new Storage('base', {
 	},
 
 	// - Settings/Appearance
+	forceCollapseAllRenotes: {
+		where: 'account',
+		default: false,
+	},
 	collapseReplies: {
 		where: 'account',
 		default: false,

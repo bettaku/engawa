@@ -4003,6 +4003,7 @@ export type components = {
           /** Format: url */
           url: string;
         }[];
+      isLocked: boolean;
       isBot?: boolean;
       isCat?: boolean;
       isProxy?: boolean;
@@ -4027,8 +4028,8 @@ export type components = {
           iconUrl: string | null;
           displayOrder: number;
         })[];
-      setFederationAvatarShape?: boolean;
-      isSquareAvatars?: boolean;
+      setFederationAvatarShape?: boolean | null;
+      isSquareAvatars?: boolean | null;
     };
     UserDetailedNotMeOnly: {
       /** Format: url */
@@ -4047,7 +4048,6 @@ export type components = {
       /** Format: url */
       bannerUrl: string | null;
       bannerBlurhash: string | null;
-      isLocked: boolean;
       isSilenced: boolean;
       /** @example false */
       isSuspended: boolean;
@@ -10758,8 +10758,8 @@ export type operations = {
                 expiresAt: string | null;
                 roleId: string;
               })[];
-            setFederationAvatarShape?: boolean | null;
-            isSquareAvatars?: boolean | null;
+            setFederationAvatarShape: boolean | null;
+            isSquareAvatars: boolean | null;
           };
         };
       };

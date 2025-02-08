@@ -1081,6 +1081,7 @@ async function post(ev?: MouseEvent) {
 	});
 	textareaEl.value.style.height = '140px';
 	if (props.updateMode) sound.playMisskeySfx('noteEdited');
+	else if (scheduleNote.value) sound.playMisskeySfx('noteSchedulePost');
 	vibrate(defaultStore.state.vibrateSystem ? [10, 20, 10, 20, 10, 20, 60] : []);
 }
 
@@ -1363,7 +1364,7 @@ function showOtherMenu(ev: MouseEvent) {
 			type: 'button',
 			text: i18n.ts.schedulePostList,
 			icon: 'ti ti-calendar-event',
-			action: listScheduleNotePost,
+			action: os.listScheduleNotePost,
 		});
 	}
 

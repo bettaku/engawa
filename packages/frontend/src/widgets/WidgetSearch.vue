@@ -4,14 +4,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-	<MkContainer :showHeader="widgetProps.showHeader" class="skw-search">
-		<MkInput v-model="searchQuery" :large="true" type="search" @keydown="onInputKeydown">
-			<template #suffix>
-				<button style="border: none; background: none; margin-right: 0.5em; z-index: 2; pointer-events: auto; position: relative; margin-top: 0 auto;" @click="onFilterClick"><i class="ti ti-filter"></i></button>
-				<button style="border: none; background: none; z-index: 2; pointer-events: auto; position: relative; margin: 0 auto;" @click="search"><i class="ti ti-zoom"></i></button>
-			</template>
-		</MkInput>
-	</MkContainer>
+<MkContainer :showHeader="widgetProps.showHeader" :class="$style.skwSearch">
+	<MkInput ref="searchQueryEl" v-model="searchQuery" :large="true" type="search" @keydown="onInputKeydown">
+		<template #suffix>
+			<button v-if="searchQuery != ''" type="button" :class="$style.deleteBtn" tabindex="-1" @click="searchQuery = ''; searchQueryEl?.focus();"><i class="ti ti-x"></i></button>
+			<button :class="$style.searchBtn" @click="search"><i class="ti ti-zoom"></i></button>
+		</template>
+	</MkInput>
+</MkContainer>
 </template>
 
 <script lang="ts" setup>
@@ -26,6 +26,8 @@ import { useRouter } from '@/router/supplier.js';
 import { GetFormResultType } from '@/scripts/form.js';
 
 const name = 'search';
+
+const searchQueryEl = ref(null);
 
 const widgetPropsDef = {
 	showHeader: {
@@ -154,12 +156,17 @@ defineExpose<WidgetComponentExpose>({
 	border-radius: var(--MI-radius-sm) !important;
 }
 
-.searchBtn {
+.searchBtn, .deleteBtn {
 	position: relative;
 	z-index: 2;
 	margin: 0 auto;
 	border: none;
 	background: none;
+	color: inherit;
 	pointer-events: auto;
+}
+
+.deleteBtn {
+	font-size: 0.8em;
 }
 </style>
