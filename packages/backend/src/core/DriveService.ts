@@ -205,8 +205,7 @@ export class DriveService {
 				?? `${ objectStorageUseSSL ? 'https' : 'http' }://${ objectStorageEndpoint }${ objectStoragePort ? `:${ objectStoragePort }` : '' }/${ objectStorageBucket }`;
 
 			// for original
-			const prefix = this.meta.objectStoragePrefix ? `${this.meta.objectStoragePrefix}/` : '';
-			const key = `${prefix}${randomUUID()}${ext}`;
+			const key = `${objectStoragePrefix}/${randomUUID()}${ext}`;
 			const url = `${ baseUrl }/${ key }`;
 
 			// for alts
@@ -223,7 +222,7 @@ export class DriveService {
 			];
 
 			if (alts.webpublic) {
-				webpublicKey = `${prefix}webpublic-${randomUUID()}.${alts.webpublic.ext}`;
+				webpublicKey = `${objectStoragePrefix}/webpublic-${randomUUID()}.${alts.webpublic.ext}`;
 				webpublicUrl = `${ baseUrl }/${ webpublicKey }`;
 
 				this.registerLogger.info(`uploading webpublic: ${webpublicKey}`);
@@ -231,7 +230,7 @@ export class DriveService {
 			}
 
 			if (alts.thumbnail) {
-				thumbnailKey = `${prefix}thumbnail-${randomUUID()}.${alts.thumbnail.ext}`;
+				thumbnailKey = `${objectStoragePrefix}/thumbnail-${randomUUID()}.${alts.thumbnail.ext}`;
 				thumbnailUrl = `${ baseUrl }/${ thumbnailKey }`;
 
 				this.registerLogger.info(`uploading thumbnail: ${thumbnailKey}`);
