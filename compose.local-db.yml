@@ -44,3 +44,6 @@ services:
 #    healthcheck:
 #    test: ['CMD-SHELL', './venv/bin/python scripts/healthcheck.py']
 
+volumes:
+  redis:
+  db:
