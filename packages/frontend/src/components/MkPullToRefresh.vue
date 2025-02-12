@@ -214,7 +214,7 @@ onActivated(() => {
 onDeactivated(() => {
 	scrollEl!.style.touchAction = 'auto';
 	isRefreshing.value = true;
-})
+});
 
 onMounted(() => {
 	if (rootEl.value == null) return;

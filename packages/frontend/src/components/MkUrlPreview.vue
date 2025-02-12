@@ -103,17 +103,17 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <script lang="ts" setup>
 import { defineAsyncComponent, onDeactivated, onUnmounted, ref, watch } from 'vue';
-import MkButton from '@/components/MkButton.vue';
 import { url as local } from '@@/js/config.js';
 import { versatileLang } from '@@/js/intl-const.js';
+import * as Misskey from 'cherrypick-js';
 import type { summaly } from '@misskey-dev/summaly';
+import MkButton from '@/components/MkButton.vue';
 import { i18n } from '@/i18n.js';
 import * as os from '@/os.js';
 import { deviceKind } from '@/scripts/device-kind.js';
 import { transformPlayerUrl } from '@/scripts/player-url-transform.js';
 import { warningExternalWebsite } from '@/scripts/warning-external-website.js';
 import { defaultStore } from '@/store.js';
-import * as Misskey from 'cherrypick-js';
 import { misskeyApi } from '@/scripts/misskey-api.js';
 
 const XNoteSimple = defineAsyncComponent(() => import('@/components/MkNoteSimple.vue'));
@@ -172,17 +172,17 @@ onDeactivated(() => {
 });
 
 watch(activityPub, async (uri) => {
-		if (!props.showAsQuote) return;
-		if (!uri) return;
-		try {
-			const response = await misskeyApi('ap/show', { uri });
-			if (response.type !== 'Note') return;
-			theNote.value = response['object'];
-		} catch (err) {
-			if (_DEV_) {
-				console.error(`failed to extract note for preview of ${uri}`, err);
-			}
+	if (!props.showAsQuote) return;
+	if (!uri) return;
+	try {
+		const response = await misskeyApi('ap/show', { uri });
+		if (response.type !== 'Note') return;
+		theNote.value = response['object'];
+	} catch (err) {
+		if (_DEV_) {
+			console.error(`failed to extract note for preview of ${uri}`, err);
 		}
+	}
 });
 
 const requestUrl = new URL(props.url);
@@ -210,7 +210,7 @@ if (requestUrl.hostname === 'music.youtube.com' && requestUrl.pathname.match('^/
 
 requestUrl.hash = '';
 
-async function fetchUrlPreview(url: string, lang: string, retries: number = 3, interval: number = 1000): Promise<SummalyResult | null> {
+async function fetchUrlPreview(url: string, lang: string, retries = 3, interval = 1000): Promise<SummalyResult | null> {
 	try {
 		const res = await window.fetch(`/url?url=${encodeURIComponent(url)}&lang=${lang}`);
 		if (!res.ok) {
@@ -224,9 +224,9 @@ async function fetchUrlPreview(url: string, lang: string, retries: number = 3, i
 			return null;
 		}
 		return await res.json();
-	} catch (e) {
+	} catch (err) {
 		if (_DEV_) {
-			console.warn('Failed to fetch url preview', e);
+			console.warn('Failed to fetch url preview', err);
 		}
 		if (retries > 0) {
 			await new Promise(resolve => setTimeout(resolve, interval));

@@ -15,11 +15,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</MkSwitch>
 
 			<div class="_gaps_s">
-				<MkSwitch v-model="useEnterToSend" v-if="!defaultStore.state.useShiftEnterToSend">
+				<MkSwitch v-if="!defaultStore.state.useShiftEnterToSend" v-model="useEnterToSend">
 					<template #label>{{ i18n.ts._cherrypick.useEnterToSend }}</template>
 					<template #caption>{{ i18n.ts._cherrypick.useEnterToSendDescription }}</template>
 				</MkSwitch>
-				<MkSwitch v-model="useShiftEnterToSend" v-if="!defaultStore.state.useEnterToSend">
+				<MkSwitch v-if="!defaultStore.state.useEnterToSend" v-model="useShiftEnterToSend">
 					<template #label>{{ i18n.ts._cherrypick.useShiftEnterToSend }}</template>
 					<template #caption>{{ i18n.ts._cherrypick.useShiftEnterToSendDescription }}</template>
 				</MkSwitch>
@@ -125,7 +125,6 @@ const enableWidgetsArea = computed(defaultStore.makeGetterSetter('enableWidgetsA
 const friendlyUiEnableNotificationsArea = computed(defaultStore.makeGetterSetter('friendlyUiEnableNotificationsArea'));
 const enableLongPressOpenAccountMenu = computed(defaultStore.makeGetterSetter('enableLongPressOpenAccountMenu'));
 const friendlyUiShowAvatarDecorationsInNavBtn = computed(defaultStore.makeGetterSetter('friendlyUiShowAvatarDecorationsInNavBtn'));
-const mobileHideAvatars = computed(defaultStore.makeGetterSetter('mobileHideAvatars'));
 const useShiftEnterToSend = computed(defaultStore.makeGetterSetter('useShiftEnterToSend'));
 
 watch([
