@@ -5,13 +5,13 @@
 			<i class="ti ti-map-pin"></i> {{ location }}
 		</div>
 		<div :class="$style.current">
-			<i :class="getWeatherIcon(Number(weatherData.hourly.weatherCode[0]))"></i>
-			<div>{{ Math.round(Number(weatherData.hourly.temperature2m[0])) }}</div>
+			<i :class="getWeatherIcon(Number(weatherData.current.weatherCode))"></i>
+			<div>{{ Math.round(Number(weatherData.current.temperature2m)) }}</div>
 		</div>
 		<div :class="$style.details">
-			<div>{{ i18n.ts._weather.humidity }}: {{ Math.round(Number(weatherData.hourly.humidity[0])) }} %</div>
-			<div>{{ i18n.ts._weather.pressure }}: {{ Math.round(Number(weatherData.hourly.surfacePressure[0])) }} hPa</div>
-			<div>{{ i18n.ts._weather.precipitation }}: {{ Math.round(Number(weatherData.hourly.precipitation[0])) }} mm/h</div>
+			<div>{{ i18n.ts._weather.humidity }}: {{ Math.round(Number(weatherData.current.humidity)) }} %</div>
+			<div>{{ i18n.ts._weather.pressure }}: {{ Math.round(Number(weatherData.current.surfacePressure)) }} hPa</div>
+			<div>{{ i18n.ts._weather.precipitation }}: {{ Math.round(Number(weatherData.current.precipitation)) }} mm/h</div>
 		</div>
 		<div :class="$style.daily">
 			<div v-for="(day, i) in weatherData.daily.time.slice(0, 3)" :key="i" :class="$style.day">
@@ -78,6 +78,15 @@ interface WeatherData {
 		precipitationSum: Float32Array;
 		precipitationProbabilityMean: Float32Array;
 	};
+	current: {
+		time: Date;
+		temperature2m: number;
+		apparentTemperature: number;
+		weatherCode: number;
+		surfacePressure: number;
+		humidity: number;
+		precipitation: number;
+	};
 }
 
 async function fetchWeather() {
@@ -87,6 +96,7 @@ async function fetchWeather() {
 		'longitude': props.longtitude,
 		'hourly': ['temperature_2m', 'surface_pressure', 'weather_code', 'precipitation', 'relative_humidity_2m'],
 		'daily': ['weather_code', 'temperature_2m_max', 'temperature_2m_min', 'precipitation_sum', 'precipitation_probability_mean'],
+		'current': ['temperature_2m', 'apparent_temperature', 'weather_code', 'surface_pressure', 'relative_humidity_2m', 'precipitation'],
 		'timezone': 'auto',
 	};
 
@@ -94,6 +104,7 @@ async function fetchWeather() {
 	const data = res[0];
 	const hourly = data.hourly()!;
 	const daily = data.daily()!;
+	const current = data.current()!;
 	const utcOffsetSeconds = data.utcOffsetSeconds();
 
 	const range = (start: number, stop: number, step: number) => Array.from({ length: (stop - start) / step }, (_, i) => start + i * step);
@@ -115,7 +126,17 @@ async function fetchWeather() {
 			precipitationSum: daily.variables(3)!.valuesArray()!,
 			precipitationProbabilityMean: daily.variables(4)!.valuesArray()!,
 		},
+		current: {
+			time: new Date((Number(current.time()) + utcOffsetSeconds) * 1000),
+			temperature2m: current.variables(0)!.value()!,
+			apparentTemperature: current.variables(1)!.value()!,
+			weatherCode: current.variables(2)!.value(),
+			surfacePressure: current.variables(3)!.value()!,
+			humidity: current.variables(4)!.value()!,
+			precipitation: current.variables(5)!.value()!,
+		},
 	};
+	console.log(newWeatherData);
 	weatherData.value = newWeatherData;
 }
 
