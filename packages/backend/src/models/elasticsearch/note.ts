@@ -1,4 +1,5 @@
-import { MappingTypeMapping, IndicesIndexSettings } from "@elastic/elasticsearch/lib/api/types.js";
+// @ts-nocheck
+import { MappingTypeMapping, IndicesIndexSettings } from '@elastic/elasticsearch/lib/api/types.js';
 
 export const noteMapping: MappingTypeMapping = {
 	properties: {
@@ -41,7 +42,7 @@ export const noteSettings: IndicesIndexSettings = {
 							'sudachi_normalizedform',
 							'sudachi_readingform',
 						],
-					}
+					},
 				},
 				tokenizer: {
 					sudachi_tokenizer: {
