@@ -89,6 +89,7 @@ interface WeatherData {
 	};
 }
 
+// TODO: hourlyのパラメータはほとんど使ってないのでsurface_pressureだけにする
 async function fetchWeather() {
 	const url = 'https://api.open-meteo.com/v1/forecast';
 	const params = {
