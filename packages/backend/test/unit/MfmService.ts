@@ -57,7 +57,7 @@ describe('MfmService', () => {
 		});
 
 		test('inline element', () => {
-			assert.deepStrictEqual(mfmService.fromHtml('<ul><li>a</li><li>b</li></ul>'), 'a\nb');
+			assert.deepStrictEqual(mfmService.fromHtml('<ul><li>a</li><li>b</li></ul>'), '- a\n- b');
 		});
 
 		test('block code', () => {

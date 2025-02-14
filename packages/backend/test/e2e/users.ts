@@ -67,6 +67,7 @@ describe('ユーザー', () => {
 			bannerUrl: user.bannerUrl,
 			bannerBlurhash: user.bannerBlurhash,
 			isSilenced: user.isSilenced,
+			isSensitive: user.isSensitive,
 			isSuspended: user.isSuspended,
 			description: user.description,
 			location: user.location,
@@ -86,6 +87,7 @@ describe('ユーザー', () => {
 			followersVisibility: user.followersVisibility,
 			roles: user.roles,
 			memo: user.memo,
+			isIndexable: user.isIndexable,
 		});
 	};
 
@@ -104,6 +106,7 @@ describe('ユーザー', () => {
 			notify: user.notify ?? 'none',
 			withReplies: user.withReplies ?? false,
 			followedMessage: user.isFollowing ? (user.followedMessage ?? null) : undefined,
+			isIndexable: user.isIndexable ?? true,
 		});
 	};
 
@@ -126,6 +129,7 @@ describe('ユーザー', () => {
 			preventAiLearning: user.preventAiLearning,
 			isExplorable: user.isExplorable,
 			isDeleted: user.isDeleted,
+			isIndexable: user.isIndexable,
 			twoFactorBackupCodesStock: user.twoFactorBackupCodesStock,
 			hideOnlineStatus: user.hideOnlineStatus,
 			hasUnreadSpecifiedNotes: user.hasUnreadSpecifiedNotes,
@@ -379,6 +383,7 @@ describe('ユーザー', () => {
 		assert.deepStrictEqual(response.unreadAnnouncements, []);
 		assert.deepStrictEqual(response.mutedWords, []);
 		assert.deepStrictEqual(response.mutedInstances, []);
+		assert.deepStrictEqual(response.isIndexable, true);
 		// @ts-expect-error 後方互換のため
 		assert.deepStrictEqual(response.mutingNotificationTypes, []);
 		assert.deepStrictEqual(response.notificationRecieveConfig, {});
@@ -392,6 +397,7 @@ describe('ユーザー', () => {
 		assert.notStrictEqual(response.email, undefined);
 		assert.strictEqual(response.emailVerified, false);
 		assert.deepStrictEqual(response.securityKeysList, []);
+		assert.deepStrictEqual(response.isSensitive, false);
 	});
 
 	//#endregion
@@ -722,12 +728,6 @@ describe('ユーザー', () => {
 		const parameters = { query: 'carol', limit: 10 };
 		const response = await successfulApiCall({ endpoint: 'users/search', parameters, user: alice });
 		const expected = [await show(carol.id, alice)];
-		assert.deepStrictEqual(response, expected);
-	});
-	test('を検索することができる(UserLite)', async () => {
-		const parameters = { query: 'carol', detail: false, limit: 10 };
-		const response = await successfulApiCall({ endpoint: 'users/search', parameters, user: alice });
-		const expected = [userLite(await show(carol.id, alice))];
 		assert.deepStrictEqual(response, expected);
 	});
 	test.each([

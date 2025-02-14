@@ -217,7 +217,7 @@ describe('Block', () => {
 				'a.test', alice,
 				async () => await bob.client.request('notes/create', { text }),
 				notification => notification.type === 'mention' && notification.userId === bobInA.id && notification.note.text === text,
-				true,
+				false, // ミュートしてるので
 			);
 		});
 	});
