@@ -1,6 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
+import { randomBytes } from 'crypto';
 import bcrypt from 'bcryptjs';
 import * as argon2 from 'argon2';
-import { randomBytes } from 'crypto';
 
 export async function hashPassword(password: string): Promise<string> {
 	const salt = randomBytes(32);
