@@ -43,6 +43,7 @@ describe('Note', () => {
 				'userId',
 				'user',
 				'uri',
+				'searchableBy',
 			]);
 			strictEqual(aliceInB.id, resolvedNote.userId);
 		});
@@ -69,6 +70,7 @@ describe('Note', () => {
 				'userId',
 				'user',
 				'uri',
+				'searchableBy',
 			]);
 			assert(resolvedNote.replyId != null);
 			assert(resolvedNote.reply != null);
