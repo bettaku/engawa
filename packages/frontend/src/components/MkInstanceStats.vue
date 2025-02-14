@@ -108,6 +108,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 <script lang="ts" setup>
 import { onMounted, ref, computed, shallowRef } from 'vue';
 import { Chart } from 'chart.js';
+import MkNumberDiff from './MkNumberDiff.vue';
 import MkSelect from '@/components/MkSelect.vue';
 import MkChart from '@/components/MkChart.vue';
 import { useChartTooltip } from '@/scripts/use-chart-tooltip.js';
@@ -122,7 +123,6 @@ import MkRetentionHeatmap from '@/components/MkRetentionHeatmap.vue';
 import MkRetentionLineChart from '@/components/MkRetentionLineChart.vue';
 import { initChart } from '@/scripts/init-chart.js';
 import number from '@/filters/number';
-import MkNumberDiff from './MkNumberDiff.vue';
 
 initChart();
 
@@ -201,7 +201,7 @@ onMounted(async () => {
 	federationPubActiveDiff.value = chart.pubActive[0] - chart.pubActive[1];
 	federationSubActive.value = chart.subActive[0];
 	federationSubActiveDiff.value = chart.subActive[0] - chart.subActive[1];
-})
+});
 
 onMounted(() => {
 	misskeyApiGet('federation/stats', { limit: 30 }).then(fedStats => {

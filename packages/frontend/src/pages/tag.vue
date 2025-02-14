@@ -21,6 +21,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <script lang="ts" setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import * as Misskey from 'cherrypick-js';
 import MkNotes from '@/components/MkNotes.vue';
 import MkButton from '@/components/MkButton.vue';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
@@ -29,7 +30,6 @@ import { $i } from '@/account.js';
 import { defaultStore } from '@/store.js';
 import * as os from '@/os.js';
 import { useStream } from '@/stream';
-import * as Misskey from 'cherrypick-js';
 import { globalEvents } from '@/events';
 import { genEmbedCode } from '@/scripts/get-embed-code.js';
 
@@ -72,7 +72,7 @@ function refreshChannel() {
 }
 
 onMounted(() => {
-	globalEvents.on('reloadTimeline',() => reloadTimeline());
+	globalEvents.on('reloadTimeline', () => reloadTimeline());
 });
 
 onUnmounted(() => {

@@ -3,6 +3,12 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import { shouldCollapsed } from '@@/js/collapsed.js';
+import { url } from '@@/js/config.js';
+import * as Misskey from 'cherrypick-js';
+import { defineAsyncComponent, Ref, ShallowRef } from 'vue';
+import { claimAchievement } from './achievements.js';
+import type { MenuItem } from '@/types/menu.js';
 import { $i } from '@/account.js';
 import { clipsCache, favoritedChannelsCache } from '@/cache.js';
 import MkRippleEffect from '@/components/MkRippleEffect.vue';
@@ -18,12 +24,6 @@ import { getUserMenu } from '@/scripts/get-user-menu.js';
 import { misskeyApi } from '@/scripts/misskey-api.js';
 import { isSupportShare } from '@/scripts/navigator.js';
 import { defaultStore, noteActions } from '@/store.js';
-import type { MenuItem } from '@/types/menu.js';
-import { shouldCollapsed } from '@@/js/collapsed.js';
-import { url } from '@@/js/config.js';
-import * as Misskey from 'cherrypick-js';
-import { defineAsyncComponent, Ref, ShallowRef } from 'vue';
-import { claimAchievement } from './achievements.js';
 
 export async function getNoteClipMenu(props: {
 	note: Misskey.entities.Note;
@@ -170,8 +170,8 @@ export function getCopyNoteOriginalLinkMenu(note: Misskey.entities.Note, text: s
 		action: (): void => {
 			copyToClipboard(note.url ?? note.uri);
 			os.toast(i18n.ts.copiedLink, 'copied');
-		}
-	}
+		},
+	};
 }
 
 function getNoteEmbedCodeMenu(note: Misskey.entities.Note, text: string): MenuItem | undefined {
@@ -409,7 +409,7 @@ export function getNoteMenu(props: {
 		}
 
 		if (appearNote.url || appearNote.uri) {
-			menuItems.push(getCopyNoteOriginalLinkMenu(appearNote, i18n.ts.copyRemoteLink))
+			menuItems.push(getCopyNoteOriginalLinkMenu(appearNote, i18n.ts.copyRemoteLink));
 		}
 
 		menuItems.push(getCopyNoteLinkMenu(appearNote, i18n.ts.copyLink), {

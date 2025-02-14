@@ -4,10 +4,10 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { comparePassword, hashPassword, isOldAlgorithm } from '@/misc/password.js';
 import * as OTPAuth from 'otpauth';
 import { IsNull } from 'typeorm';
 import * as Misskey from 'cherrypick-js';
+import { comparePassword, hashPassword, isOldAlgorithm } from '@/misc/password.js';
 import { DI } from '@/di-symbols.js';
 import type {
 	MiMeta,
@@ -214,7 +214,7 @@ export class SigninApiService {
 					const newHash = await hashPassword(password);
 					this.userProfilesRepository.update(user.id, {
 						password: newHash,
-					})
+					});
 				}
 				return this.signinService.signin(request, reply, user);
 			} else {

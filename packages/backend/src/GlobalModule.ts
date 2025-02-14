@@ -58,14 +58,14 @@ const $elasticsearch: Provider = {
 		if (config.elasticsearch) {
 			return new ElasticSearch({
 				nodes: {
-					url: new URL(`${config.elasticsearch?.ssl ? 'https' : 'http'}://${config.elasticsearch?.host}:${config.elasticsearch?.port}`),
+					url: new URL(`${config.elasticsearch.ssl ? 'https' : 'http'}://${config.elasticsearch.host}:${config.elasticsearch.port}`),
 				},
-				auth: (config.elasticsearch?.user && config.elasticsearch?.pass) ? {
+				auth: (config.elasticsearch.user && config.elasticsearch.pass) ? {
 					username: config.elasticsearch.user,
 					password: config.elasticsearch.pass,
 				} : undefined,
 				tls: {
-					rejectUnauthorized: config.elasticsearch?.rejectUnauthorized ?? false,
+					rejectUnauthorized: config.elasticsearch.rejectUnauthorized ?? false,
 				},
 				pingTimeout: config.elasticsearch.pingTimeout ?? 3000,
 				requestTimeout: config.elasticsearch.requestTimeout ?? 30000,
@@ -206,8 +206,8 @@ const $redisForJobQueue: Provider = {
 @Global()
 @Module({
 	imports: [RepositoryModule],
-	providers: [$config, $db, $meta, $meilisearch,  $elasticsearch ,$cloudLogging, $redis, $redisForPub, $redisForSub, $redisForTimelines, $redisForReactions, $redisForJobQueue],
-	exports: [$config, $db, $meta, $meilisearch,  $elasticsearch ,$cloudLogging, $redis, $redisForPub, $redisForSub, $redisForTimelines, $redisForReactions, $redisForJobQueue, RepositoryModule],
+	providers: [$config, $db, $meta, $meilisearch, $elasticsearch, $cloudLogging, $redis, $redisForPub, $redisForSub, $redisForTimelines, $redisForReactions, $redisForJobQueue],
+	exports: [$config, $db, $meta, $meilisearch, $elasticsearch, $cloudLogging, $redis, $redisForPub, $redisForSub, $redisForTimelines, $redisForReactions, $redisForJobQueue, RepositoryModule],
 })
 export class GlobalModule implements OnApplicationShutdown {
 	constructor(

@@ -25,6 +25,7 @@ import { bindThis } from '@/decorators.js';
 import { checkHttps } from '@/misc/check-https.js';
 import { NoteUpdateService } from '@/core/NoteUpdateService.js';
 import { IdentifiableError } from '@/misc/identifiable-error.js';
+import search from '@/server/api/endpoints/hashtags/search.js';
 import { getOneApId, getApId, getOneApHrefNullable, validPost, isEmoji, getApType } from '../type.js';
 import { ApLoggerService } from '../ApLoggerService.js';
 import { ApMfmService } from '../ApMfmService.js';
@@ -39,7 +40,6 @@ import { ApEventService } from './ApEventService.js';
 import { ApImageService } from './ApImageService.js';
 import type { Resolver } from '../ApResolverService.js';
 import type { IObject, IPost } from '../type.js';
-import search from '@/server/api/endpoints/hashtags/search.js';
 
 @Injectable()
 export class ApNoteService {
@@ -237,7 +237,7 @@ export class ApNoteService {
 
 		let isMessaging = note._misskey_talk && visibility === 'specified';
 
-		let searchableActivity = toArray(note.searchableBy);
+		const searchableActivity = toArray(note.searchableBy);
 		let searchable: string[] = [];
 		if (searchableActivity.includes('https://www.w3.org/ns/activitystreams#Public')) {
 			searchable = ['public'];

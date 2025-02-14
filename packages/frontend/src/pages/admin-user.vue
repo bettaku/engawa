@@ -346,7 +346,7 @@ async function toggleSensitive(v) {
 	if (confirm.canceled) {
 		isSensitive.value = !v;
 	} else {
-		await misskeyApi(v? 'admin/set-user-sensitive' : 'admin/unset-user-sensitive', { userId: user.value.id });
+		await misskeyApi(v ? 'admin/set-user-sensitive' : 'admin/unset-user-sensitive', { userId: user.value.id });
 		await refreshUser();
 	}
 }

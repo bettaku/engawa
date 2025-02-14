@@ -77,6 +77,10 @@ function generateDummyUser(override?: Partial<MiUser>): MiUser {
 		isExplorable: true,
 		isHibernated: false,
 		isDeleted: false,
+		isIndexable: true,
+		isSensitive: false,
+		isSquareAvatars: true,
+		setFederationAvatarShape: true,
 		requireSigninToViewContents: false,
 		makeNotesFollowersOnlyBefore: null,
 		makeNotesHiddenBefore: null,
@@ -137,6 +141,7 @@ function generateDummyNote(override?: Partial<MiNote>): MiNote {
 		hasEvent: false,
 		disableRightClick: false,
 		deleteAt: null,
+		searchableBy: 'public',
 		...override,
 	};
 }
@@ -225,6 +230,7 @@ function toPackedUserDetailedNotMe(user: MiUser, override?: Packed<'UserDetailed
 		bannerBlurhash: user.bannerBlurhash,
 		isSilenced: false,
 		isSuspended: user.isSuspended,
+		isSensitive: user.isSensitive,
 		description: null,
 		location: null,
 		birthday: null,

@@ -4512,7 +4512,7 @@ export type components = {
       renote?: components['schemas']['Note'] | null;
       disableRightClick?: boolean;
       /** @enum {string} */
-      visibility: 'public' | 'home' | 'followers' | 'specified';
+      visibility: 'public' | 'home' | 'followers' | 'specified' | 'private';
       visibleUserIds?: string[];
       fileIds?: string[];
       files?: components['schemas']['DriveFile'][];
@@ -24962,7 +24962,7 @@ export type operations = {
                 cw?: string | null;
                 fileIds: string[];
                 /** @enum {string} */
-                visibility: 'public' | 'home' | 'followers' | 'specified';
+                visibility: 'public' | 'home' | 'followers' | 'specified' | 'private';
                 visibleUsers: components['schemas']['UserLite'][];
                 user: components['schemas']['User'];
                 /**
@@ -25709,6 +25709,8 @@ export type operations = {
           withFiles?: boolean;
           /** @default false */
           withCats?: boolean;
+          /** @default false */
+          withoutBots?: boolean;
         };
       };
     };
