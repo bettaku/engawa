@@ -28,6 +28,7 @@ import { addCustomEmoji, removeCustomEmojis, updateCustomEmojis } from '@/custom
 import { userName } from '@/filters/user.js';
 import { vibrate } from '@/scripts/vibrate.js';
 import { misskeyApi } from '@/scripts/misskey-api.js';
+import { unisonReload } from '@/scripts/unison-reload.js';
 
 export async function mainBoot() {
 	const { isClientUpdated, isClientMigrated } = await common(() => {
@@ -454,6 +455,41 @@ export async function mainBoot() {
 		// 環境によるかもしれないが?では反応しないため、shift+/にする必要がある
 		'shift+/': () => {
 			os.popup(defineAsyncComponent(() => import('@/components/MkKeyboardShortcut.vue')), {}, {});
+		},
+		'c': () => {
+			if ($i == null) return;
+			mainRouter.push('/my/clips');
+		},
+		'f': () => {
+			if ($i == null) return;
+			mainRouter.push('/my/favorites');
+		},
+		'd': () => {
+			if ($i == null) return;
+			mainRouter.push('/my/drive');
+		},
+		'h': () => {
+			mainRouter.push('/');
+		},
+		'ctrl+shift+f': () => {
+			if ($i == null) return;
+			miLocalStorage.setItem('ui', 'friendly');
+			unisonReload();
+		},
+		'ctrl+shift+z': () => {
+			if ($i == null) return;
+			miLocalStorage.setItem('ui', 'default');
+			unisonReload();
+		},
+		'ctrl+shift+d': () => {
+			if ($i == null) return;
+			miLocalStorage.setItem('ui', 'deck');
+			unisonReload();
+		},
+		'ctrl+shift+c': () => {
+			if ($i == null) return;
+			miLocalStorage.setItem('ui', 'classic');
+			unisonReload();
 		},
 	} as const satisfies Keymap;
 	document.addEventListener('keydown', makeHotkey(keymap), { passive: false });
