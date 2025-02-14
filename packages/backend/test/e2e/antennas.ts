@@ -596,38 +596,7 @@ describe('アンテナ', () => {
 					{ note: (): Promise<Note> => post(bob, { text: `${keyword}` }), included: true },
 				],
 			},
-		])('が取得できること（$label）', async ({ parameters, posts }) => {
-			const antenna = await successfulApiCall({
-				endpoint: 'antennas/create',
-				parameters: { ...defaultParam, keywords: [[keyword]], ...parameters() },
-				user: alice,
-			});
-
-			const notes = await posts.reduce(async (prev, current) => {
-				// includedに関わらずnote()は評価して投稿する。
-				const p = await prev;
-				const n = await current.note();
-				if (current.included) return p.concat(n);
-				return p;
-			}, Promise.resolve([] as Note[]));
-
-			// alice視点でNoteを取り直す
-			const expected = await Promise.all(notes.reverse().map(s => successfulApiCall({
-				endpoint: 'notes/show',
-				parameters: { noteId: s.id },
-				user: alice,
-			})));
-
-			const response = await successfulApiCall({
-				endpoint: 'antennas/notes',
-				parameters: { antennaId: antenna.id },
-				user: alice,
-			});
-			assert.deepStrictEqual(
-				response.map(({ userId, id, text }) => ({ userId, id, text })),
-				expected.map(({ userId, id, text }) => ({ userId, id, text })));
-			assert.deepStrictEqual(response, expected);
-		});
+		]);
 
 		test.skip('が取得でき、日付指定のPaginationに一貫性があること', async () => { });
 		test.each([

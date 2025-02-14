@@ -67,6 +67,7 @@ describe('ユーザー', () => {
 			bannerUrl: user.bannerUrl,
 			bannerBlurhash: user.bannerBlurhash,
 			isSilenced: user.isSilenced,
+			isSensitive: user.isSensitive,
 			isSuspended: user.isSuspended,
 			description: user.description,
 			location: user.location,
@@ -126,6 +127,7 @@ describe('ユーザー', () => {
 			preventAiLearning: user.preventAiLearning,
 			isExplorable: user.isExplorable,
 			isDeleted: user.isDeleted,
+			isIndexable: user.isIndexable,
 			twoFactorBackupCodesStock: user.twoFactorBackupCodesStock,
 			hideOnlineStatus: user.hideOnlineStatus,
 			hasUnreadSpecifiedNotes: user.hasUnreadSpecifiedNotes,
@@ -379,6 +381,7 @@ describe('ユーザー', () => {
 		assert.deepStrictEqual(response.unreadAnnouncements, []);
 		assert.deepStrictEqual(response.mutedWords, []);
 		assert.deepStrictEqual(response.mutedInstances, []);
+		assert.deepStrictEqual(response.isIndexable, true);
 		// @ts-expect-error 後方互換のため
 		assert.deepStrictEqual(response.mutingNotificationTypes, []);
 		assert.deepStrictEqual(response.notificationRecieveConfig, {});
@@ -392,6 +395,7 @@ describe('ユーザー', () => {
 		assert.notStrictEqual(response.email, undefined);
 		assert.strictEqual(response.emailVerified, false);
 		assert.deepStrictEqual(response.securityKeysList, []);
+		assert.deepStrictEqual(response.isSensitive, false);
 	});
 
 	//#endregion

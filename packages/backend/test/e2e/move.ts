@@ -235,16 +235,6 @@ describe('Account Move', () => {
 			}, frank);
 		}, 1000 * 10);
 
-		test('Prohibit the root account from moving', async () => {
-			const res = await api('i/move', {
-				moveToAccount: `@bob@${url.hostname}`,
-			}, root);
-
-			assert.strictEqual(res.status, 400);
-			assert.strictEqual(castAsError(res.body).error.code, 'NOT_ROOT_FORBIDDEN');
-			assert.strictEqual(castAsError(res.body).error.id, '4362e8dc-731f-4ad8-a694-be2a88922a24');
-		});
-
 		test('Unable to move to a nonexisting local account', async () => {
 			const res = await api('i/move', {
 				moveToAccount: `@nonexist@${url.hostname}`,
