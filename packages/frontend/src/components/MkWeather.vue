@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 <template>
 <div :class="$style.root">
 	<div v-if="weatherData">
@@ -287,7 +292,7 @@ watch([() => weatherData.value, () => props.showSurfacePressure],
 		nextTick(() => {
 			createPressureChart();
 		});
-	}
+	},
 );
 </script>
 
