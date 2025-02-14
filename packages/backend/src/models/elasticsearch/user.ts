@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 import { IndicesIndexSettings, MappingTypeMapping } from "@elastic/elasticsearch/lib/api/types.js";
 
 export const userMapping: MappingTypeMapping = {
