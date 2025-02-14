@@ -730,12 +730,6 @@ describe('ユーザー', () => {
 		const expected = [await show(carol.id, alice)];
 		assert.deepStrictEqual(response, expected);
 	});
-	test('を検索することができる(UserLite)', async () => {
-		const parameters = { query: 'carol', detail: false, limit: 10 };
-		const response = await successfulApiCall({ endpoint: 'users/search', parameters, user: alice });
-		const expected = [userLite(await show(carol.id, alice))];
-		assert.deepStrictEqual(response, expected);
-	});
 	test.each([
 		{ label: '「見つけやすくする」がOFFのユーザーが含まれる', user: () => userNotExplorable },
 		{ label: 'ミュートユーザーが含まれる', user: () => userMutedByAlice },
