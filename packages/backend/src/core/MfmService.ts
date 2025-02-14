@@ -200,7 +200,7 @@ export class MfmService {
 				}
 
 				case 'blockquote': {
-					return ['\n', toMFM(node.childNodes).split('\n').join('\n> ').trim()];
+					return ['\n', toMFM(node.childNodes).split('\n').map(line => `> ${line}`).join('\n> ')];
 				}
 
 				case 'p':
