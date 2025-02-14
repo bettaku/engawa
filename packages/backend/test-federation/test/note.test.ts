@@ -84,6 +84,7 @@ describe('Note', () => {
 				'uri',
 				// flaky because this is parallelly incremented, so let's check it below
 				'repliesCount',
+				'searchableBy',
 			]);
 			strictEqual(aliceInB.id, resolvedNote.userId);
 
