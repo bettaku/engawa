@@ -111,6 +111,7 @@ describe('Note', () => {
 				'userId',
 				'user',
 				'uri',
+				'searchableBy',
 			]);
 			assert(resolvedNote.renoteId != null);
 			assert(resolvedNote.renote != null);
@@ -120,6 +121,7 @@ describe('Note', () => {
 				'userId',
 				'user',
 				'uri',
+				'searchableBy',
 			]);
 			strictEqual(aliceInB.id, resolvedNote.userId);
 		});
