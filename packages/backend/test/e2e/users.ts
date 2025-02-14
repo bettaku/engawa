@@ -87,6 +87,7 @@ describe('ユーザー', () => {
 			followersVisibility: user.followersVisibility,
 			roles: user.roles,
 			memo: user.memo,
+			isIndexable: user.isIndexable,
 		});
 	};
 
@@ -105,6 +106,7 @@ describe('ユーザー', () => {
 			notify: user.notify ?? 'none',
 			withReplies: user.withReplies ?? false,
 			followedMessage: user.isFollowing ? (user.followedMessage ?? null) : undefined,
+			isIndexable: user.isIndexable ?? true,
 		});
 	};
 
