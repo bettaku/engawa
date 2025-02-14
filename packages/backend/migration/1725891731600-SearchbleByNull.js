@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 export class SearchbleByNull1725891731600 {
     name = 'SearchbleByNull1725891731600'
 
