@@ -4773,6 +4773,15 @@ export type components = {
           name: string;
         };
       };
+    } | {
+      /** Format: id */
+      id: string;
+      /** Format: date-time */
+      createdAt: string;
+      /** @enum {string} */
+      type: 'note:grouped';
+      notes: components['schemas']['Note'][];
+      users: components['schemas']['UserLite'][];
     };
     DriveFile: {
       /**
