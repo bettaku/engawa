@@ -108,6 +108,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 <script lang="ts" setup>
 import { onMounted, ref, computed, shallowRef } from 'vue';
 import { Chart } from 'chart.js';
+import type { HeatmapSource } from '@/components/MkHeatmap.vue';
 import MkNumberDiff from './MkNumberDiff.vue';
 import MkSelect from '@/components/MkSelect.vue';
 import MkChart from '@/components/MkChart.vue';
@@ -117,7 +118,7 @@ import * as os from '@/os.js';
 import { misskeyApiGet } from '@/scripts/misskey-api.js';
 import { instance } from '@/instance.js';
 import { i18n } from '@/i18n.js';
-import MkHeatmap, { type HeatmapSource } from '@/components/MkHeatmap.vue';
+import MkHeatmap from '@/components/MkHeatmap.vue';
 import MkFoldableSection from '@/components/MkFoldableSection.vue';
 import MkRetentionHeatmap from '@/components/MkRetentionHeatmap.vue';
 import MkRetentionLineChart from '@/components/MkRetentionLineChart.vue';

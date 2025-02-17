@@ -6,7 +6,7 @@
 import { shouldCollapsed } from '@@/js/collapsed.js';
 import { url } from '@@/js/config.js';
 import * as Misskey from 'cherrypick-js';
-import { defineAsyncComponent, Ref, ShallowRef } from 'vue';
+import { defineAsyncComponent, type Ref, type ShallowRef } from 'vue';
 import { claimAchievement } from './achievements.js';
 import type { MenuItem } from '@/types/menu.js';
 import { $i } from '@/account.js';

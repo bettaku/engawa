@@ -100,7 +100,7 @@ const MOBILE_THRESHOLD = 500;
 
 // デスクトップでウィンドウを狭くしたときモバイルUIが表示されて欲しいことはあるので deviceKind === 'desktop' の判定は行わない
 const isDesktop = ref(window.innerWidth >= DESKTOP_THRESHOLD);
-const isMobile = ref(deviceKind === 'smartphone' || window.innerWidth <= MOBILE_THRESHOLD);
+const isMobile = ref(['smartphone', 'tablet'].includes(<string>deviceKind) || window.innerWidth <= MOBILE_THRESHOLD);
 window.addEventListener('resize', () => {
 	isMobile.value = deviceKind === 'smartphone' || window.innerWidth <= MOBILE_THRESHOLD;
 });
@@ -191,6 +191,7 @@ const enableAntennaTimeline = ref(defaultStore.state.enableAntennaTimeline);
 const enableChannelTimeline = ref(defaultStore.state.enableChannelTimeline);
 const enableMediaTimeline = ref(defaultStore.state.enableMediaTimeline);
 
+const forceCollapseAllRenotes = ref(defaultStore.state.forceCollapseAllRenotes);
 const collapseRenotes = ref(defaultStore.state.collapseRenotes);
 const collapseReplies = ref(defaultStore.state.collapseReplies);
 const collapseLongNoteContent = ref(defaultStore.state.collapseLongNoteContent);
@@ -255,6 +256,11 @@ watch(enableChannelTimeline, (x) => {
 watch(enableMediaTimeline, (x) => {
 	defaultStore.set('enableMediaTimeline', x);
 	reloadAsk({ reason: i18n.ts.reloadToApplySetting, unison: true });
+});
+
+watch(forceCollapseAllRenotes, (x) => {
+	defaultStore.set('forceCollapseAllRenotes', x);
+	reloadTimeline();
 });
 
 watch(collapseRenotes, (x) => {
@@ -557,6 +563,10 @@ const headerActions = computed(() => {
 							text: i18n.ts.showCatOnly,
 							ref: onlyCats,
 						}, { type: 'divider' }, {
+							type: 'switch',
+							text: i18n.ts.forceCollapseAllRenotes,
+							ref: forceCollapseAllRenotes,
+						}, {
 							type: 'switch',
 							text: i18n.ts.collapseRenotes,
 							ref: collapseRenotes,

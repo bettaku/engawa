@@ -23,6 +23,22 @@ Misskey의 전체 변경 사항을 확인하려면, [CHANGELOG.md#2025xx](CHANGE
 # 릴리스 노트
 이 문서는 CherryPick의 변경 사항만 포함합니다.
 
+## 4.x.x
+출시일: unreleased<br>
+기반 Misskey 버전: 2025.x.x<br>
+Misskey의 전체 변경 사항을 확인하려면, [CHANGELOG.md#2025xx](CHANGELOG.md#2025xx) 문서를 참고하십시오.
+
+### Client
+- Enhance: (Friendly) 태블릿 환경에서도 특정 페이지에서 아래로 스크롤하면 헤더가 숨겨짐
+- Enhance: 여러 노트를 표시하는 요소에서 `타임라인의 노트 사이를 띄워서 표시` 설정 적용
+- Fix: `대화`에서 발생하는 일부 문제를 해결함 (kokonect-link/cherrypick#563, kokonect-link/cherrypick#568)
+  - `더 보기`를 눌러 이전 대화를 볼 수 없음
+  - 개행만으로 메시지를 보낼 수 있음
+    - 이 변경으로 더 이상 첫 줄에 개행을 입력할 수 없게 됩니다.
+- Fix: `모든 리노트 간략화하기` 설정이 타임라인 헤더 메뉴에 표시되지 않음
+
+---
+
 ## 4.15.0
 출시일: 2025/2/8<br>
 기반 Misskey 버전: 2025.2.0<br>
@@ -879,7 +895,7 @@ Misskey의 전체 변경 사항을 확인하려면, [CHANGELOG.md#202391](CHANGE
 - Fix: 누락된 안테나 소스 추가
 - Fix: OffscreenCanvas undefined (MisskeyIO/misskey#165)
 - Fix: 대화 삭제가 올바르게 작동하지 않음
-- Fix: 유저 메뉴에서 '대화 시작하기'를 클릭하면 잘못된 페이지가 호출됨화
+- Fix: 유저 메뉴에서 '대화 시작하기'를 클릭하면 잘못된 페이지가 호출됨
 - Fix: 대화 페이지의 스크롤이 의도하지 않은 방향으로 작동할 수 있음
 
 ### Server
