@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: marie and other Sharkey contributors
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 export class AddAvatarRawUrl1739785206096 {
     name = 'AddAvatarRawUrl1739785206096'
 
