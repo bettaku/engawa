@@ -149,17 +149,15 @@ export class SearchService {
 			this.elasticsearch?.indices.exists({
 				index: this.elasticsearchNoteIndex,
 			}).then((indexExists) => {
-				if (!indexExists) [
-					this.elasticsearch?.indices.create({
-						index: NoteIndex,
-						mappings: {
-							properties: noteMapping.properties,
-						},
-						settings: noteSettings.settings,
-					}).catch((e) => {
-						console.error(e);
-					}),
-				];
+				if (!indexExists) this.elasticsearch?.indices.create({
+					index: NoteIndex,
+					mappings: {
+						properties: noteMapping.properties,
+					},
+					settings: noteSettings.settings,
+				}).catch((e) => {
+					console.error(e);
+				});
 			});
 		}
 
