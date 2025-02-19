@@ -46,11 +46,6 @@ export class InstanceActorService {
 		}) as MiLocalUser | undefined;
 
 		if (user) {
-			if (!user.isSystem) {
-				await this.usersRepository.update(user.id, {
-					isSystem: true,
-				});
-			}
 			this.cache.set(user);
 			return user;
 		} else {
