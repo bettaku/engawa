@@ -50,6 +50,7 @@ export class RelayService {
 				await this.usersRepository.update(user.id, {
 					isSystem: true,
 				});
+				(user as MiLocalUser).isSystem = true;
 			}
 			return user as MiLocalUser;
 		}

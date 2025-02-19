@@ -50,6 +50,7 @@ export class InstanceActorService {
 				await this.usersRepository.update(user.id, {
 					isSystem: true,
 				});
+				user.isSystem = true;
 			}
 			this.cache.set(user);
 			return user;
