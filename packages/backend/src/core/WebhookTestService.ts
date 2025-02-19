@@ -74,6 +74,7 @@ function generateDummyUser(override?: Partial<MiUser>): MiUser {
 		isBot: false,
 		isCat: true,
 		isRoot: false,
+		isSystem: false,
 		isExplorable: true,
 		isHibernated: false,
 		isDeleted: false,
