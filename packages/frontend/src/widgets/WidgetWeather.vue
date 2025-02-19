@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: noridev and cherrypick-project
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
@@ -10,18 +10,22 @@ SPDX-License-Identifier: AGPL-3.0-only
 			:key="`${widgetProps.latitude},${widgetProps.longtitude}`"
 			:latitude="widgetProps.latitude"
 			:longtitude="widgetProps.longtitude"
+			:setTempUnitFahrenheit="widgetProps.setTempUnitFahrenheit"
 			:showSurfacePressure="widgetProps.showSurfacePressure"
+			:show12Hours="widgetProps.show12Hours"
+			:useCurrentLocation="widgetProps.useCurrentLocation"
 		/>
 	</div>
 </MkContainer>
 </template>
 
 <script lang="ts" setup>
-import { watch } from 'vue';
-import { useWidgetPropsManager, WidgetComponentEmits, WidgetComponentExpose, WidgetComponentProps } from './widget.js';
+import { onMounted, watch } from 'vue';
+import { useWidgetPropsManager } from './widget.js';
+import type { WidgetComponentEmits, WidgetComponentExpose, WidgetComponentProps } from './widget.js';
+import type { GetFormResultType } from '@/scripts/form.js';
 import MkContainer from '@/components/MkContainer.vue';
 import MkWeather from '@/components/MkWeather.vue';
-import { GetFormResultType } from '@/scripts/form.js';
 
 const name = 'weather';
 
@@ -32,15 +36,27 @@ const widgetPropsDef = {
 	},
 	latitude: {
 		type: 'number' as const,
-		default: 35.6895,
+		default: 37.566,
 	},
 	longtitude: {
 		type: 'number' as const,
-		default: 139.6917,
+		default: 126.9784,
+	},
+	setTempUnitFahrenheit: {
+		type: 'boolean' as const,
+		default: false,
 	},
 	showSurfacePressure: {
 		type: 'boolean' as const,
 		default: false,
+	},
+	show12Hours: {
+		type: 'boolean' as const,
+		default: false,
+	},
+	useCurrentLocation: {
+		type: 'boolean' as const,
+		default: true,
 	},
 };
 
@@ -55,8 +71,29 @@ const { widgetProps, configure } = useWidgetPropsManager(name,
 	emit,
 );
 
+const getLocation = () => {
+	if (widgetProps.useCurrentLocation && navigator.geolocation) {
+		navigator.geolocation.getCurrentPosition(
+			(position) => {
+				widgetProps.latitude = position.coords.latitude;
+				widgetProps.longtitude = position.coords.longitude;
+			},
+			(error) => {
+				console.warn('Geolocation error:', error);
+			},
+		);
+	}
+};
+
+onMounted(() => {
+	getLocation();
+});
+
 watch(() => [widgetProps.latitude, widgetProps.longtitude], { immediate: true });
+watch(() => widgetProps.setTempUnitFahrenheit, { immediate: true });
 watch(() => widgetProps.showSurfacePressure, { immediate: true });
+watch(() => widgetProps.show12Hours, { immediate: true });
+watch(() => widgetProps.useCurrentLocation, { immediate: true });
 
 defineExpose<WidgetComponentExpose>({
 	name,

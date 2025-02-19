@@ -65,7 +65,7 @@ export type RouterEvent = {
 		key: string;
 	}) => void;
 	same: () => void;
-}
+};
 
 export type Resolved = {
 	route: RouteDef;
@@ -241,8 +241,6 @@ export class Router extends EventEmitter<RouterEvent> implements IRouter {
 			queryString,
 			hash,
 		};
-
-		if (_DEV_) console.log('Routing: ', path, queryString);
 
 		function check(routes: RouteDef[], _parts: string[]): Resolved | null {
 			forEachRouteLoop:

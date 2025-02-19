@@ -1,30 +1,39 @@
 <!--
-SPDX-FileCopyrightText: syuilo and misskey-project
+SPDX-FileCopyrightText: noridev and cherrypick-project
 SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
 <div :class="$style.root">
 	<div v-if="weatherData">
-		<div v-if="location">
-			<i class="ti ti-map-pin"></i> {{ location }}
+		<div v-if="location" style="display: flex; align-items: center;">
+			<i style="margin-right: 4px;" class="ti ti-map-pin"></i>
+			{{ location }}
+			<i v-if="props.useCurrentLocation" style="font-size: 0.7em; margin-left: 2px;" :class="locationLoading ? 'ti ti-location-search' : (supportsGeolocation ? 'ti ti-location-filled' : 'ti ti-location-off')"></i>
 		</div>
-		<div :class="$style.current">
-			<i :class="getWeatherIcon(Number(weatherData.current.weatherCode))"></i>
-			<div>{{ Math.round(Number(weatherData.current.temperature2m)) }}</div>
+		<div style="display: flex; justify-content: center; align-items: center;">
+			<div :class="$style.current">
+				<!-- ここをhourlyにすると現在の天気を正しく取得できない -->
+				<i :class="getWeatherIcon(Number(weatherData.current.weatherCode))"></i>
+				<div>{{ Math.round(Number(weatherData.current.temperature2m)) }}</div>
+				<span :class="$style.tempUnit">{{ temperatureUnit }}</span>
+			</div>
+			<div :class="$style.details">
+				<!-- ここをhourlyにすると現在の天気を正しく取得できない -->
+				<div>・{{ i18n.ts._weather.humidity }}: <span style="opacity: 0.7;">{{ Math.round(Number(weatherData.current.humidity)) }}</span><span :class="$style.detailsUnit">%</span></div>
+				<div>・{{ i18n.ts._weather.pressure }}: <span style="opacity: 0.7;">{{ Math.round(Number(weatherData.current.surfacePressure)) }}</span><span :class="$style.detailsUnit">hPa</span></div>
+				<div>・{{ i18n.ts._weather.precipitation }}: <span style="opacity: 0.7;">{{ Math.round(Number(weatherData.current.precipitation)) }}</span><span :class="$style.detailsUnit">mm/h</span></div>
+			</div>
 		</div>
-		<div :class="$style.details">
-			<div>{{ i18n.ts._weather.humidity }}: {{ Math.round(Number(weatherData.current.humidity)) }} %</div>
-			<div>{{ i18n.ts._weather.pressure }}: {{ Math.round(Number(weatherData.current.surfacePressure)) }} hPa</div>
-			<div>{{ i18n.ts._weather.precipitation }}: {{ Math.round(Number(weatherData.current.precipitation)) }} mm/h</div>
-		</div>
-		<div :class="$style.daily">
-			<div v-for="(day, i) in weatherData.daily.time.slice(0, 3)" :key="i" :class="$style.day">
-				<div>{{ formatDate(day) }}</div>
-				<i :class="getWeatherIcon(Number(weatherData.daily.weatherCode[i]))"></i>
-				<div>{{ Math.round(Number(weatherData.daily.temperature2mMax[i])) }} / {{ Math.round(Number(weatherData.daily.temperature2mMin[i])) }} °C</div>
-				<div>{{ Math.round(Number(weatherData.daily.precipitationSum[i])) }} mm</div>
-				<div>{{ Math.round(Number(weatherData.daily.precipitationProbabilityMean[i])) }} %</div>
+		<div style="border-top: solid 1px var(--MI_THEME-divider); padding-top: 12px;">
+			<div :class="$style.daily">
+				<div v-for="(day, i) in weatherData.daily.time.slice(0, 3)" :key="i" :class="$style.day">
+					<div style="font-size: 0.8em;">{{ formatDate(day) }}</div>
+					<i style="margin: 4px 0;" :class="getWeatherIcon(Number(weatherData.daily.weatherCode[i]))"></i>
+					<div><span style="opacity: 0.7;">{{ Math.round(Number(weatherData.daily.temperature2mMax[i])) }}</span> / <span style="opacity: 0.7;">{{ Math.round(Number(weatherData.daily.temperature2mMin[i])) }}</span><span :class="$style.detailsUnit">{{ temperatureUnit }}</span></div>
+					<div><span style="opacity: 0.7;">{{ Math.round(Number(weatherData.daily.precipitationSum[i])) }}</span><span :class="$style.detailsUnit">mm</span></div>
+					<div><span style="opacity: 0.7;">{{ Math.round(Number(weatherData.daily.precipitationProbabilityMean[i])) }}</span><span :class="$style.detailsUnit">%</span></div>
+				</div>
 			</div>
 		</div>
 		<div v-if="props.showSurfacePressure" :class="$style.pressureChart">
@@ -38,22 +47,28 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, watch, nextTick } from 'vue';
+import { ref, onMounted, watch, nextTick, onUnmounted } from 'vue';
 import { fetchWeatherApi } from 'openmeteo';
 import { Chart, registerables } from 'chart.js';
 import { chartVLine } from '@/scripts/chart-vline.js';
-import { i18n } from '@/i18n';
-import { miLocalStorage } from '@/local-storage';
+import { i18n } from '@/i18n.js';
+import { miLocalStorage } from '@/local-storage.js';
 import { defaultStore } from '@/store.js';
 
 const props = withDefaults(defineProps<{
 	latitude?: number;
 	longtitude?: number;
+	setTempUnitFahrenheit?: boolean;
 	showSurfacePressure?: boolean;
+	show12Hours?: boolean;
+	useCurrentLocation?: boolean;
 }>(), {
-	latitude: 35.6895,
-	longtitude: 139.6917,
+	latitude: 37.566,
+	longtitude: 126.9784,
+	setTempUnitFahrenheit: false,
 	showSurfacePressure: false,
+	show12Hours: false,
+	useCurrentLocation: true,
 });
 
 Chart.register(...registerables);
@@ -66,6 +81,12 @@ const location = ref<string>('');
 const pressureChartEl = ref<HTMLCanvasElement | null>(null);
 let pressureChart: Chart | null = null;
 
+const supportsGeolocation = ref<boolean>(false);
+const locationLoading = ref(true);
+
+const temperatureUnit = ref('°C');
+
+// TODO: currentを復活させる
 interface WeatherData {
 	hourly: {
 		time: Date[];
@@ -94,16 +115,19 @@ interface WeatherData {
 	};
 }
 
-// TODO: hourlyのパラメータはほとんど使ってないのでsurface_pressureだけにする
 async function fetchWeather() {
-	const url = 'https://api.open-meteo.com/v1/forecast';
-	const params = {
+	if (props.setTempUnitFahrenheit) temperatureUnit.value = '°F';
+	else temperatureUnit.value = '°C';
+
+	const url = 'https://api.open-meteo.com/v1/forecast'; // TODO: バックエンドからOpenMeteoのURLを取得する
+	const params = { // TODO: hourlyのデータ取得量を減らしてcurrentのデータを増やす
 		'latitude': props.latitude,
 		'longitude': props.longtitude,
 		'hourly': ['temperature_2m', 'surface_pressure', 'weather_code', 'precipitation', 'relative_humidity_2m'],
 		'daily': ['weather_code', 'temperature_2m_max', 'temperature_2m_min', 'precipitation_sum', 'precipitation_probability_mean'],
 		'current': ['temperature_2m', 'apparent_temperature', 'weather_code', 'surface_pressure', 'relative_humidity_2m', 'precipitation'],
 		'timezone': 'auto',
+		'temperature_unit': props.setTempUnitFahrenheit ? 'fahrenheit' : 'celsius',
 	};
 
 	const res = await fetchWeatherApi(url, params);
@@ -142,7 +166,6 @@ async function fetchWeather() {
 			precipitation: current.variables(5)!.value()!,
 		},
 	};
-	console.log(newWeatherData);
 	weatherData.value = newWeatherData;
 }
 
@@ -202,8 +225,9 @@ function createPressureChart() {
 	const hours = weatherData.value.hourly.time
 		.slice(startIndex, endIndex)
 		.map(time => new Date(time).toLocaleTimeString(locale, {
-			hour: '2-digit',
+			hour: 'numeric',
 			minute: '2-digit',
+			hour12: props.show12Hours,
 		}));
 
 	const pressures = Array.from(
@@ -263,20 +287,35 @@ function createPressureChart() {
 	});
 }
 
-onMounted(() => {
-	Promise.all([
-		fetchWeather(),
-		fetchLocation(),
-	]).then(() => {
-		createPressureChart();
-	});
+const getLocation = () => {
+	if (!props.useCurrentLocation && !navigator.geolocation) {
+		locationLoading.value = false;
+		return;
+	}
 
-	const interval = setInterval(() => {
-		fetchWeather().then(() => {
-			createPressureChart();
-		});
+	navigator.geolocation.getCurrentPosition(() => {
+		supportsGeolocation.value = true;
+		locationLoading.value = false;
+	}, () => {
+		supportsGeolocation.value = false;
+		locationLoading.value = false;
+	});
+};
+
+onMounted(async () => {
+	getLocation();
+
+	await Promise.all([fetchWeather(), fetchLocation()]);
+	createPressureChart();
+
+	const interval = setInterval(async () => {
+		await fetchWeather();
+		createPressureChart();
 	}, 1000 * 60 * 60);
-	return () => clearInterval(interval);
+
+	onUnmounted(() => {
+		clearInterval(interval);
+	});
 });
 
 watch([() => props.latitude, () => props.longtitude], async () => {
@@ -309,42 +348,47 @@ watch([() => weatherData.value, () => props.showSurfacePressure],
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	gap: 16px;
+	// gap: 16px;
 	margin: 16px 0;
 	padding: 16px;
+	font-size: 2.2em;
 
 	& > i {
-		font-size: 2.5em;
 		color: var(--MI_THEME-accent);
 		opacity: 0.9;
+		margin-right: 6px;
 	}
 
 	& > div {
-		font-size: 2.5em;
 		font-weight: bold;
 		color: var(--MI_THEME-fg);
-
-		&::after {
-			content: '℃';
-			font-size: 0.7em;
-			opacity: 0.8;
-			margin-left: 2px;
-		}
 	}
 }
 
+.tempUnit {
+	font-size: 0.7em;
+	opacity: 0.8;
+	margin-left: 2px;
+}
+
 .details {
-	text-align: center;
-	padding: 8px 0;
-	border-top: solid 1px var(--MI_THEME-divider);
+	text-align: left;
+	margin: 16px 0;
+	padding: 16px;
+	border-left: solid 1px var(--MI_THEME-divider);
+}
+
+.detailsUnit {
+	font-size: 0.8em;
+	margin-left: 2px;
+	opacity: 0.5;
 }
 
 .daily {
 	display: flex;
 	justify-content: space-between;
 	text-align: center;
-	border-top: solid 1px var(--MI_THEME-divider);
-	padding-top: 12px;
+	margin: 0 24px;
 }
 
 .day {

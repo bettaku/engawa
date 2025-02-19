@@ -50,6 +50,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <script setup lang="ts">
 import { computed, onMounted, ref, toRefs, watch } from 'vue';
+import type { DataSource, GridSetting, GridState, Size } from '@/components/grid/grid.js';
+import type { CellAddress, CellValue, GridCell } from '@/components/grid/cell.js';
+import type { GridContext, GridEvent } from '@/components/grid/grid-event.js';
+import type { GridColumn } from '@/components/grid/column.js';
+import type { GridRow, GridRowSetting } from '@/components/grid/row.js';
+import type { MenuItem } from '@/types/menu.js';
 import { GridEventEmitter } from '@/components/grid/grid.js';
 import MkDataRow from '@/components/grid/MkDataRow.vue';
 import MkHeaderRow from '@/components/grid/MkHeaderRow.vue';
@@ -68,18 +74,11 @@ import { createColumn } from '@/components/grid/column.js';
 import { createRow, defaultGridRowSetting, resetRow } from '@/components/grid/row.js';
 import { handleKeyEvent } from '@/scripts/key-event.js';
 
-import type { DataSource, GridSetting, GridState, Size } from '@/components/grid/grid.js';
-import type { CellAddress, CellValue, GridCell } from '@/components/grid/cell.js';
-import type { GridContext, GridEvent } from '@/components/grid/grid-event.js';
-import type { GridColumn } from '@/components/grid/column.js';
-import type { GridRow, GridRowSetting } from '@/components/grid/row.js';
-import type { MenuItem } from '@/types/menu.js';
-
 type RowHolder = {
 	row: GridRow,
 	cells: GridCell[],
 	origin: DataSource,
-}
+};
 
 const emit = defineEmits<{
 	(ev: 'event', event: GridEvent, context: GridContext): void;
@@ -1287,7 +1286,7 @@ onMounted(() => {
 });
 </script>
 
-<style module lang="scss">
+<style lang="scss" module>
 .grid {
 	font-size: 90%;
 	overflow-x: scroll;
@@ -1301,7 +1300,7 @@ onMounted(() => {
 }
 </style>
 
-<style lang="scss">
+<style lang="scss" scoped>
 $borderSetting: solid 0.5px var(--MI_THEME-divider);
 
 // 配下コンポーネントを含めて一括してコントロールするため、scopedもmoduleも使用できない

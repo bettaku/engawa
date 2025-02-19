@@ -1,5 +1,6 @@
 _lang_: "日本語"
 
+replyTo: "{user}さんに返信"
 forceCollapseAllRenotes: "すべてのリノートの省略"
 forceCollapseAllRenotesDescription: "私または相手がリノートしたすべてのノートをたたんで表示します。"
 overrideRobotsTxt: "robots.txtの上書き"
@@ -38,6 +39,7 @@ showNoAltWarning: "キャプション未設定案内"
 showNoAltWarningDescription: "画像に代替テキストが設定されていない場合に警告を表示する"
 filesGridLayoutInUserPage: "メディアタブをグリッドレイアウトに変更"
 filesGridLayoutInUserPageDescription: "この設定をオンにすると、ユーザーページのメディアタブがアルバム形式で表示されます。\nオフにすると、元のノートのタイムラインに変更されます。"
+showReplyTargetNote: "返信対象ノートを表示"
 showReplyTargetNoteInSemiTransparent: "返信対象ノートを半透明に表示"
 noteFooterButton: "ノートにアクションボタンを表示"
 collapseReplies: "返信のスマート省略"
@@ -1483,7 +1485,12 @@ availableRoles: "利用可能なロール"
 acknowledgeNotesAndEnable: "注意事項を理解した上でオンにします。"
 federationSpecified: "このサーバーはホワイトリスト連合で運用されています。管理者が指定したサーバー以外とやり取りすることはできません。"
 federationDisabled: "このサーバーは連合が無効化されています。他のサーバーのユーザーとやり取りすることはできません。"
+confirmOnReact: "リアクションする際に確認する"
+reactAreYouSure: "\" {emoji} \" をリアクションしますか？"
+textCount: "文字数"
 draft: "下書き"
+draftNoteList: "下書き一覧"
+saveAsDraft: "下書きで保存"
 showUnreadNotificationsCount: "未読の通知の数を表示する"
 showCatOnly: "ネコミミ付きのみ"
 additionalPermissionsForFlash: "Playへの追加許可"
@@ -3411,8 +3418,6 @@ _bootErrors:
 
 _drafts:
   select: "下書きを選択"
-  saveConfirm: "サーバーに下書きを保存しますか？"
-  saveConfirmDescription: "ここで「保存しない」を選択しても、下書きは端末内に保存されます。"
   delete: "下書きを削除"
   deleteAreYouSure: "下書きを削除しますか？"
   noDrafts: "下書きはありません。"
@@ -3526,4 +3531,6 @@ _weather:
   humidity: "湿度"
   pressure: "気圧"
   precipitation: "降水量"
+
+
 

@@ -55,7 +55,7 @@ export type SoundStore = {
 	fileUrl: string;
 
 	volume: number;
-}
+};
 
 export const postFormActions: PostFormAction[] = [];
 export const userActions: UserAction[] = [];
@@ -505,6 +505,10 @@ export const defaultStore = markRaw(new Storage('base', {
 		where: 'device',
 		default: false,
 	},
+	confirmOnReact: {
+		where: 'device',
+		default: false,
+	},
 	showUnreadNotificationsCount: {
 		where: 'deviceAccount',
 		default: false,
@@ -690,6 +694,10 @@ export const defaultStore = markRaw(new Storage('base', {
 	alwaysShowCw: {
 		where: 'device',
 		default: false,
+	},
+	showReplyTargetNote: {
+		where: 'device',
+		default: true,
 	},
 	showReplyTargetNoteInSemiTransparent: {
 		where: 'device',

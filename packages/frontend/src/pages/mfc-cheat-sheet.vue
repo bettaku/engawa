@@ -402,7 +402,7 @@ import { definePageMetadata } from '@/scripts/page-metadata.js';
 import { computed, ref } from 'vue';
 
 defineProps<{
-  popup?: boolean;
+	popup?: boolean;
 }>();
 
 const preview_mention = ref('@example');

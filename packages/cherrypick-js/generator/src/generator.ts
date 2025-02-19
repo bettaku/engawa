@@ -173,7 +173,7 @@ async function generateEndpoints(
 	endpointOutputLine.push(
 		...endpoints.map(it => '\t' + it.toLine()),
 	);
-	endpointOutputLine.push('}');
+	endpointOutputLine.push('};');
 	endpointOutputLine.push('');
 
 	function generateEndpointReqMediaTypesType() {
@@ -290,7 +290,7 @@ function toImportPath(fileName: string, fromPath = '/built/autogen', toPath = ''
 
 enum OperationsAliasType {
 	REQUEST = 'Request',
-	RESPONSE = 'Response'
+	RESPONSE = 'Response',
 }
 
 interface IOperationTypeAlias {
