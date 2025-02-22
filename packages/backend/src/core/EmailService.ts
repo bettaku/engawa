@@ -43,6 +43,7 @@ export class EmailService {
 
 		const iconUrl = `${this.config.url}/static-assets/mi-white.png`;
 		const emailSettingUrl = `${this.config.url}/settings/email`;
+		const instanceName = this.meta.name ?? this.config.host;
 
 		const enableAuth = this.meta.smtpUser != null && this.meta.smtpUser !== '';
 
@@ -64,50 +65,51 @@ export class EmailService {
 		<meta charset="utf-8">
 		<title>${ subject }</title>
 		<style>
-			html {
-				background: #eee;
-			}
-
 			body {
 				padding: 16px;
 				margin: 0;
 				font-family: sans-serif;
 				font-size: 14px;
-			}
-
-			a {
-				text-decoration: none;
-				color: #ffbcdc;
-			}
-			a:hover {
-				text-decoration: underline;
+				background: #191724;
 			}
 
 			main {
 				max-width: 500px;
 				margin: 0 auto;
-				background: #fff;
-				color: #555;
+				background: #1f1d2e;
+				color: #eceff4;
+				border-radius: 25px;
 			}
 				main > header {
 					padding: 32px;
-					background: #ffbcdc;
+					background: #b597f6;
+					color: #e0def4;
+					border-radius: 25px;
+					display: flex;
 				}
 					main > header > img {
 						max-width: 128px;
-						max-height: 28px;
+						max-height: 72px;
 						vertical-align: bottom;
+						margin-right: 16px;
+					}
+					main > header > h1 {
+						margin: 0 0 1em 0;
 					}
 				main > article {
 					padding: 32px;
 				}
 					main > article > h1 {
 						margin: 0 0 1em 0;
+						color: #ebbcba;
 					}
 				main > footer {
 					padding: 32px;
 					border-top: solid 1px #eee;
 				}
+					main > footer > a {
+						color: rgb(177, 211, 255);
+					}
 
 			nav {
 				box-sizing: border-box;
@@ -116,7 +118,7 @@ export class EmailService {
 				padding: 0 32px;
 			}
 				nav > a {
-					color: #888;
+					color: rgb(177, 211, 255);
 				}
 		</style>
 	</head>
@@ -124,6 +126,7 @@ export class EmailService {
 		<main>
 			<header>
 				<img src="${ this.meta.logoImageUrl ?? this.meta.iconUrl ?? iconUrl }"/>
+				<h1>${ instanceName }</h1>
 			</header>
 			<article>
 				<h1>${ subject }</h1>
