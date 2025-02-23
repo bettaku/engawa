@@ -307,7 +307,7 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 
 	@bindThis
 	public checkDuplicate(url: string, name: string): Promise<boolean> {
-		return this.avatarDecorationsRepository.exists({ where: { url, name, host: IsNull() } });
+		return this.avatarDecorationsRepository.findOneBy({ name, host: IsNull() }).then((decoration) => decoration != null);
 	}
 
 	@bindThis
