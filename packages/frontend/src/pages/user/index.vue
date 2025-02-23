@@ -35,6 +35,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
+import * as Misskey from 'cherrypick-js';
+import { computed, defineAsyncComponent, ref, watch } from 'vue';
 import { $i } from '@/account.js';
 import MkHorizontalSwipe from '@/components/MkHorizontalSwipe.vue';
 import { acct as getAcct } from '@/filters/user.js';
@@ -47,8 +49,6 @@ import { misskeyApi } from '@/scripts/misskey-api.js';
 import { definePageMetadata } from '@/scripts/page-metadata.js';
 import { assertServerContext, serverContext } from '@/server-context.js';
 import { defaultStore } from '@/store.js';
-import * as Misskey from 'cherrypick-js';
-import { computed, defineAsyncComponent, ref, watch } from 'vue';
 
 const MOBILE_THRESHOLD = 500;
 

@@ -66,6 +66,11 @@ export function openInstanceMenu(ev: MouseEvent) {
 		text: i18n.ts.customEmojis,
 		icon: 'ti ti-icons',
 		to: '/about#emojis',
+	}, {
+		type: 'link',
+		text: i18n.ts.avatarDecorations,
+		icon: 'ti ti-mood-spark',
+		to: '/about#decoration',
 	});
 
 	if (instance.federation !== 'none') {

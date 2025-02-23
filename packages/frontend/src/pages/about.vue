@@ -13,6 +13,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<MkSpacer v-else-if="tab === 'emojis'" :contentMax="1000" :marginMin="20">
 			<XEmojis/>
 		</MkSpacer>
+		<MkSpacer v-else-if="tab === 'decoration'" :contentMax="1000" :marginMin="20">
+			<XDecoration/>
+		</MkSpacer>
 		<MkSpacer v-else-if="instance.federation !== 'none' && tab === 'federation'" :contentMax="1000" :marginMin="20">
 			<XFederation/>
 		</MkSpacer>
@@ -35,6 +38,7 @@ const XOverview = defineAsyncComponent(() => import('@/pages/about.overview.vue'
 const XEmojis = defineAsyncComponent(() => import('@/pages/about.emojis.vue'));
 const XFederation = defineAsyncComponent(() => import('@/pages/about.federation.vue'));
 const MkInstanceStats = defineAsyncComponent(() => import('@/components/MkInstanceStats.vue'));
+const XDecoration = defineAsyncComponent(() => import('@/pages/about.decoration.vue'));
 
 const props = withDefaults(defineProps<{
 	initialTab?: string;
@@ -62,6 +66,10 @@ const headerTabs = computed(() => {
 		key: 'emojis',
 		title: i18n.ts.customEmojis,
 		icon: 'ti ti-icons',
+	}, {
+		key: 'decoration',
+		title: i18n.ts.avatarDecorations,
+		icon: 'ti ti-mood-spark',
 	});
 
 	if (instance.federation !== 'none') {
