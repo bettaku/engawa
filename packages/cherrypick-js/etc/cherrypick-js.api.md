@@ -2483,6 +2483,673 @@ type IWebhooksTestRequest = operations['i___webhooks___test']['requestBody']['co
 type IWebhooksUpdateRequest = operations['i___webhooks___update']['requestBody']['content']['application/json'];
 
 // @public (undocumented)
+export const langmap: {
+    ach: {
+        nativeName: string;
+    };
+    ady: {
+        nativeName: string;
+    };
+    af: {
+        nativeName: string;
+    };
+    'af-NA': {
+        nativeName: string;
+    };
+    'af-ZA': {
+        nativeName: string;
+    };
+    ak: {
+        nativeName: string;
+    };
+    ar: {
+        nativeName: string;
+    };
+    'ar-AR': {
+        nativeName: string;
+    };
+    'ar-MA': {
+        nativeName: string;
+    };
+    'ar-SA': {
+        nativeName: string;
+    };
+    'ay-BO': {
+        nativeName: string;
+    };
+    az: {
+        nativeName: string;
+    };
+    'az-AZ': {
+        nativeName: string;
+    };
+    'be-BY': {
+        nativeName: string;
+    };
+    bg: {
+        nativeName: string;
+    };
+    'bg-BG': {
+        nativeName: string;
+    };
+    bn: {
+        nativeName: string;
+    };
+    'bn-IN': {
+        nativeName: string;
+    };
+    'bn-BD': {
+        nativeName: string;
+    };
+    br: {
+        nativeName: string;
+    };
+    'bs-BA': {
+        nativeName: string;
+    };
+    ca: {
+        nativeName: string;
+    };
+    'ca-ES': {
+        nativeName: string;
+    };
+    cak: {
+        nativeName: string;
+    };
+    'ck-US': {
+        nativeName: string;
+    };
+    cs: {
+        nativeName: string;
+    };
+    'cs-CZ': {
+        nativeName: string;
+    };
+    cy: {
+        nativeName: string;
+    };
+    'cy-GB': {
+        nativeName: string;
+    };
+    da: {
+        nativeName: string;
+    };
+    'da-DK': {
+        nativeName: string;
+    };
+    de: {
+        nativeName: string;
+    };
+    'de-AT': {
+        nativeName: string;
+    };
+    'de-DE': {
+        nativeName: string;
+    };
+    'de-CH': {
+        nativeName: string;
+    };
+    dsb: {
+        nativeName: string;
+    };
+    el: {
+        nativeName: string;
+    };
+    'el-GR': {
+        nativeName: string;
+    };
+    en: {
+        nativeName: string;
+    };
+    'en-GB': {
+        nativeName: string;
+    };
+    'en-AU': {
+        nativeName: string;
+    };
+    'en-CA': {
+        nativeName: string;
+    };
+    'en-IE': {
+        nativeName: string;
+    };
+    'en-IN': {
+        nativeName: string;
+    };
+    'en-PI': {
+        nativeName: string;
+    };
+    'en-SG': {
+        nativeName: string;
+    };
+    'en-UD': {
+        nativeName: string;
+    };
+    'en-US': {
+        nativeName: string;
+    };
+    'en-ZA': {
+        nativeName: string;
+    };
+    'en@pirate': {
+        nativeName: string;
+    };
+    eo: {
+        nativeName: string;
+    };
+    'eo-EO': {
+        nativeName: string;
+    };
+    es: {
+        nativeName: string;
+    };
+    'es-AR': {
+        nativeName: string;
+    };
+    'es-419': {
+        nativeName: string;
+    };
+    'es-CL': {
+        nativeName: string;
+    };
+    'es-CO': {
+        nativeName: string;
+    };
+    'es-EC': {
+        nativeName: string;
+    };
+    'es-ES': {
+        nativeName: string;
+    };
+    'es-LA': {
+        nativeName: string;
+    };
+    'es-NI': {
+        nativeName: string;
+    };
+    'es-MX': {
+        nativeName: string;
+    };
+    'es-US': {
+        nativeName: string;
+    };
+    'es-VE': {
+        nativeName: string;
+    };
+    et: {
+        nativeName: string;
+    };
+    'et-EE': {
+        nativeName: string;
+    };
+    eu: {
+        nativeName: string;
+    };
+    'eu-ES': {
+        nativeName: string;
+    };
+    fa: {
+        nativeName: string;
+    };
+    'fa-IR': {
+        nativeName: string;
+    };
+    'fb-LT': {
+        nativeName: string;
+    };
+    ff: {
+        nativeName: string;
+    };
+    fi: {
+        nativeName: string;
+    };
+    'fi-FI': {
+        nativeName: string;
+    };
+    fo: {
+        nativeName: string;
+    };
+    'fo-FO': {
+        nativeName: string;
+    };
+    fr: {
+        nativeName: string;
+    };
+    'fr-CA': {
+        nativeName: string;
+    };
+    'fr-FR': {
+        nativeName: string;
+    };
+    'fr-BE': {
+        nativeName: string;
+    };
+    'fr-CH': {
+        nativeName: string;
+    };
+    'fy-NL': {
+        nativeName: string;
+    };
+    ga: {
+        nativeName: string;
+    };
+    'ga-IE': {
+        nativeName: string;
+    };
+    gd: {
+        nativeName: string;
+    };
+    gl: {
+        nativeName: string;
+    };
+    'gl-ES': {
+        nativeName: string;
+    };
+    'gn-PY': {
+        nativeName: string;
+    };
+    'gu-IN': {
+        nativeName: string;
+    };
+    gv: {
+        nativeName: string;
+    };
+    'gx-GR': {
+        nativeName: string;
+    };
+    he: {
+        nativeName: string;
+    };
+    'he-IL': {
+        nativeName: string;
+    };
+    hi: {
+        nativeName: string;
+    };
+    'hi-IN': {
+        nativeName: string;
+    };
+    hr: {
+        nativeName: string;
+    };
+    'hr-HR': {
+        nativeName: string;
+    };
+    hsb: {
+        nativeName: string;
+    };
+    ht: {
+        nativeName: string;
+    };
+    hu: {
+        nativeName: string;
+    };
+    'hu-HU': {
+        nativeName: string;
+    };
+    hy: {
+        nativeName: string;
+    };
+    'hy-AM': {
+        nativeName: string;
+    };
+    id: {
+        nativeName: string;
+    };
+    'id-ID': {
+        nativeName: string;
+    };
+    is: {
+        nativeName: string;
+    };
+    'is-IS': {
+        nativeName: string;
+    };
+    it: {
+        nativeName: string;
+    };
+    'it-IT': {
+        nativeName: string;
+    };
+    ja: {
+        nativeName: string;
+    };
+    'ja-JP': {
+        nativeName: string;
+    };
+    'jv-ID': {
+        nativeName: string;
+    };
+    'ka-GE': {
+        nativeName: string;
+    };
+    'kk-KZ': {
+        nativeName: string;
+    };
+    km: {
+        nativeName: string;
+    };
+    kl: {
+        nativeName: string;
+    };
+    'km-KH': {
+        nativeName: string;
+    };
+    kab: {
+        nativeName: string;
+    };
+    kn: {
+        nativeName: string;
+    };
+    'kn-IN': {
+        nativeName: string;
+    };
+    ko: {
+        nativeName: string;
+    };
+    'ko-KR': {
+        nativeName: string;
+    };
+    'ku-TR': {
+        nativeName: string;
+    };
+    kw: {
+        nativeName: string;
+    };
+    la: {
+        nativeName: string;
+    };
+    'la-VA': {
+        nativeName: string;
+    };
+    lb: {
+        nativeName: string;
+    };
+    'li-NL': {
+        nativeName: string;
+    };
+    lt: {
+        nativeName: string;
+    };
+    'lt-LT': {
+        nativeName: string;
+    };
+    lv: {
+        nativeName: string;
+    };
+    'lv-LV': {
+        nativeName: string;
+    };
+    mai: {
+        nativeName: string;
+    };
+    'mg-MG': {
+        nativeName: string;
+    };
+    mk: {
+        nativeName: string;
+    };
+    'mk-MK': {
+        nativeName: string;
+    };
+    ml: {
+        nativeName: string;
+    };
+    'ml-IN': {
+        nativeName: string;
+    };
+    'mn-MN': {
+        nativeName: string;
+    };
+    mr: {
+        nativeName: string;
+    };
+    'mr-IN': {
+        nativeName: string;
+    };
+    ms: {
+        nativeName: string;
+    };
+    'ms-MY': {
+        nativeName: string;
+    };
+    mt: {
+        nativeName: string;
+    };
+    'mt-MT': {
+        nativeName: string;
+    };
+    my: {
+        nativeName: string;
+    };
+    no: {
+        nativeName: string;
+    };
+    nb: {
+        nativeName: string;
+    };
+    'nb-NO': {
+        nativeName: string;
+    };
+    ne: {
+        nativeName: string;
+    };
+    'ne-NP': {
+        nativeName: string;
+    };
+    nl: {
+        nativeName: string;
+    };
+    'nl-BE': {
+        nativeName: string;
+    };
+    'nl-NL': {
+        nativeName: string;
+    };
+    'nn-NO': {
+        nativeName: string;
+    };
+    oc: {
+        nativeName: string;
+    };
+    'or-IN': {
+        nativeName: string;
+    };
+    pa: {
+        nativeName: string;
+    };
+    'pa-IN': {
+        nativeName: string;
+    };
+    pl: {
+        nativeName: string;
+    };
+    'pl-PL': {
+        nativeName: string;
+    };
+    'ps-AF': {
+        nativeName: string;
+    };
+    pt: {
+        nativeName: string;
+    };
+    'pt-BR': {
+        nativeName: string;
+    };
+    'pt-PT': {
+        nativeName: string;
+    };
+    'qu-PE': {
+        nativeName: string;
+    };
+    'rm-CH': {
+        nativeName: string;
+    };
+    ro: {
+        nativeName: string;
+    };
+    'ro-RO': {
+        nativeName: string;
+    };
+    ru: {
+        nativeName: string;
+    };
+    'ru-RU': {
+        nativeName: string;
+    };
+    'sa-IN': {
+        nativeName: string;
+    };
+    'se-NO': {
+        nativeName: string;
+    };
+    sh: {
+        nativeName: string;
+    };
+    'si-LK': {
+        nativeName: string;
+    };
+    sk: {
+        nativeName: string;
+    };
+    'sk-SK': {
+        nativeName: string;
+    };
+    sl: {
+        nativeName: string;
+    };
+    'sl-SI': {
+        nativeName: string;
+    };
+    'so-SO': {
+        nativeName: string;
+    };
+    sq: {
+        nativeName: string;
+    };
+    'sq-AL': {
+        nativeName: string;
+    };
+    sr: {
+        nativeName: string;
+    };
+    'sr-RS': {
+        nativeName: string;
+    };
+    su: {
+        nativeName: string;
+    };
+    sv: {
+        nativeName: string;
+    };
+    'sv-SE': {
+        nativeName: string;
+    };
+    sw: {
+        nativeName: string;
+    };
+    'sw-KE': {
+        nativeName: string;
+    };
+    ta: {
+        nativeName: string;
+    };
+    'ta-IN': {
+        nativeName: string;
+    };
+    te: {
+        nativeName: string;
+    };
+    'te-IN': {
+        nativeName: string;
+    };
+    tg: {
+        nativeName: string;
+    };
+    'tg-TJ': {
+        nativeName: string;
+    };
+    th: {
+        nativeName: string;
+    };
+    'th-TH': {
+        nativeName: string;
+    };
+    fil: {
+        nativeName: string;
+    };
+    tlh: {
+        nativeName: string;
+    };
+    tr: {
+        nativeName: string;
+    };
+    'tr-TR': {
+        nativeName: string;
+    };
+    'tt-RU': {
+        nativeName: string;
+    };
+    uk: {
+        nativeName: string;
+    };
+    'uk-UA': {
+        nativeName: string;
+    };
+    ur: {
+        nativeName: string;
+    };
+    'ur-PK': {
+        nativeName: string;
+    };
+    uz: {
+        nativeName: string;
+    };
+    'uz-UZ': {
+        nativeName: string;
+    };
+    vi: {
+        nativeName: string;
+    };
+    'vi-VN': {
+        nativeName: string;
+    };
+    'xh-ZA': {
+        nativeName: string;
+    };
+    yi: {
+        nativeName: string;
+    };
+    'yi-DE': {
+        nativeName: string;
+    };
+    zh: {
+        nativeName: string;
+    };
+    'zh-Hans': {
+        nativeName: string;
+    };
+    'zh-Hant': {
+        nativeName: string;
+    };
+    'zh-CN': {
+        nativeName: string;
+    };
+    'zh-HK': {
+        nativeName: string;
+    };
+    'zh-SG': {
+        nativeName: string;
+    };
+    'zh-TW': {
+        nativeName: string;
+    };
+    'zu-ZA': {
+        nativeName: string;
+    };
+};
+
+// @public (undocumented)
 type MeDetailed = components['schemas']['MeDetailed'];
 
 // @public (undocumented)

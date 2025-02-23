@@ -21,7 +21,8 @@ import * as entities from './entities.js';
 import * as acct from './acct.js';
 import * as note from './note.js';
 import { nyaize } from './nyaize.js';
-export { api, entities, acct, note, nyaize };
+import { langmap } from './langmap.js';
+export { api, entities, acct, note, nyaize, langmap };
 
 //#region standalone types
 import type { Endpoints } from './api.types.js';
