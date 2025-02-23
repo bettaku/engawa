@@ -71,6 +71,7 @@ export class EmailService {
 				font-family: sans-serif;
 				font-size: 14px;
 				background: #191724;
+				border-radius: 25px;
 			}
 
 			main {
