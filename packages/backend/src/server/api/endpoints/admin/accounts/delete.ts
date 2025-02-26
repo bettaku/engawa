@@ -10,6 +10,7 @@ import { QueueService } from '@/core/QueueService.js';
 import { DI } from '@/di-symbols.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { DeleteAccountService } from '@/core/DeleteAccountService.js';
+import { isSystemAccount } from '@/misc/is-system-account.js';
 
 export const meta = {
 	tags: ['admin'],
@@ -44,6 +45,10 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			if (user.isRoot) {
 				throw new Error('cannot delete a root account');
+			}
+
+			if (isSystemAccount(user)) {
+				throw new Error('cannot delete a system account');
 			}
 
 			await this.deleteAccoountService.deleteAccount(user, me);

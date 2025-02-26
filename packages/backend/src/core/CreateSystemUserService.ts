@@ -5,8 +5,8 @@
 
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
-import { hashPassword } from '@/misc/password.js';
 import { IsNull, DataSource } from 'typeorm';
+import { hashPassword } from '@/misc/password.js';
 import { genRsaKeyPair } from '@/misc/gen-key-pair.js';
 import { MiUser } from '@/models/User.js';
 import { MiUserProfile } from '@/models/UserProfile.js';
@@ -60,6 +60,7 @@ export class CreateSystemUserService {
 				isLocked: true,
 				isExplorable: false,
 				isBot: true,
+				isSystem: true,
 			}).then(x => transactionalEntityManager.findOneByOrFail(MiUser, x.identifiers[0]));
 
 			await transactionalEntityManager.insert(MiUserKeypair, {

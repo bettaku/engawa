@@ -45,7 +45,15 @@ export class RelayService {
 			username: ACTOR_USERNAME,
 		});
 
-		if (user) return user as MiLocalUser;
+		if (user) {
+			if (!user.isSystem) {
+				await this.usersRepository.update(user.id, {
+					isSystem: true,
+				});
+				(user as MiLocalUser).isSystem = true;
+			}
+			return user as MiLocalUser;
+		}
 
 		const created = await this.createSystemUserService.createSystemUser(ACTOR_USERNAME);
 		return created as MiLocalUser;
