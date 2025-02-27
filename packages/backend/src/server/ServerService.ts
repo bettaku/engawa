@@ -10,6 +10,7 @@ import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import Fastify, { FastifyInstance } from 'fastify';
 import fastifyStatic from '@fastify/static';
 import fastifyRawBody from 'fastify-raw-body';
+import fastifyRateLimit from '@fastify/rate-limit';
 import { IsNull } from 'typeorm';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import type { Config } from '@/config.js';
@@ -133,12 +134,17 @@ export class ServerService implements OnApplicationShutdown {
 				reply.header('content-type', 'text/plain; charset=utf-8');
 				reply.header('link', `<${encodeURI(location)}>; rel="canonical"`);
 				done(null, [
-					"Refusing to relay remote ActivityPub object lookup.",
-					"",
+					'Refusing to relay remote ActivityPub object lookup.',
+					'',
 					`Please remove 'application/activity+json' and 'application/ld+json' from the Accept header or fetch using the authoritative URL at ${location}.`,
 				].join('\n'));
 			});
 		}
+
+		fastify.register(fastifyRateLimit, {
+			max: 200,
+			timeWindow: 500,
+		});
 
 		fastify.register(this.apiServerService.createServer, { prefix: '/api' });
 		fastify.register(this.openApiServerService.createServer);
