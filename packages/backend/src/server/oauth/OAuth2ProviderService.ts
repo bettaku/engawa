@@ -13,7 +13,6 @@ import oauth2orize, { type OAuth2, AuthorizationError, ValidateFunctionArity2, O
 import oauth2Pkce from 'oauth2orize-pkce';
 import fastifyCors from '@fastify/cors';
 import fastifyView from '@fastify/view';
-import rateLimit from '@fastify/rate-limit';
 import pug from 'pug';
 import bodyParser from 'body-parser';
 import fastifyExpress from '@fastify/express';
@@ -30,9 +29,11 @@ import { IdService } from '@/core/IdService.js';
 import { CacheService } from '@/core/CacheService.js';
 import type { MiLocalUser } from '@/models/User.js';
 import { MemoryKVCache } from '@/misc/cache.js';
+import { getIpHash } from '@/misc/get-ip-hash.js';
 import { LoggerService } from '@/core/LoggerService.js';
 import Logger from '@/logger.js';
 import { StatusError } from '@/misc/status-error.js';
+import { RateLimiterService } from '@/server/api/RateLimiterService.js';
 import type { ServerResponse } from 'node:http';
 import type { FastifyInstance } from 'fastify';
 
@@ -244,6 +245,7 @@ export class OAuth2ProviderService {
 		private usersRepository: UsersRepository,
 		private cacheService: CacheService,
 		loggerService: LoggerService,
+		private rateLimiterService: RateLimiterService,
 	) {
 		this.#logger = loggerService.getLogger('oauth');
 
@@ -369,6 +371,7 @@ export class OAuth2ProviderService {
 	@bindThis
 	public async createServer(fastify: FastifyInstance): Promise<void> {
 		fastify.get('/authorize', async (request, reply) => {
+			await this.rateLimiterService.limit({ key: 'oauth-authorize', duration: 60 * 30 * 1000, max: 200, minInterval: 250 }, getIpHash(request.ip));
 			const oauth2 = (request.raw as MiddlewareRequest).oauth2;
 			if (!oauth2) {
 				throw new Error('Unexpected lack of authorization information');
@@ -383,7 +386,9 @@ export class OAuth2ProviderService {
 				scope: oauth2.req.scope.join(' '),
 			});
 		});
-		fastify.post('/decision', async () => { });
+		fastify.post('/decision', async (request) => {
+			await this.rateLimiterService.limit({ key: 'oauth-decision', duration: 60 * 30 * 1000, max: 200, minInterval: 250 }, getIpHash(request.ip));
+		});
 
 		fastify.register(fastifyView, {
 			root: fileURLToPath(new URL('../web/views', import.meta.url)),
@@ -392,11 +397,6 @@ export class OAuth2ProviderService {
 				version: this.config.version,
 				config: this.config,
 			},
-		});
-
-		await fastify.register(rateLimit, {
-			max: 100,
-			timeWindow: '1 hour',
 		});
 
 		await fastify.register(fastifyExpress);
@@ -487,7 +487,9 @@ export class OAuth2ProviderService {
 	@bindThis
 	public async createTokenServer(fastify: FastifyInstance): Promise<void> {
 		fastify.register(fastifyCors);
-		fastify.post('', async () => { });
+		fastify.post('', async (request) => {
+			await this.rateLimiterService.limit({ key: 'oauth-token', duration: 60 * 30 * 1000, max: 200, minInterval: 250 }, getIpHash(request.ip));
+		});
 
 		await fastify.register(fastifyExpress);
 		// Clients may use JSON or urlencoded
