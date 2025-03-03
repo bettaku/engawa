@@ -541,7 +541,6 @@ export class UserEntityService implements OnModuleInit {
 			isLocked: user.isLocked,
 			isBot: user.isBot,
 			isCat: user.isCat,
-			isProxy: this.meta.proxyAccountId === user.id,
 			requireSigninToViewContents: user.requireSigninToViewContents === false ? undefined : true,
 			makeNotesFollowersOnlyBefore: user.makeNotesFollowersOnlyBefore ?? undefined,
 			makeNotesHiddenBefore: user.makeNotesHiddenBefore ?? undefined,

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { Entity, Column, JoinColumn, PrimaryColumn, ManyToOne } from 'typeorm';
+import { Entity, Column, PrimaryColumn, ManyToOne } from 'typeorm';
 import { id } from './util/id.js';
 import { MiUser } from './User.js';
 
@@ -189,18 +189,6 @@ export class MiMeta {
 		default: true,
 	})
 	public cacheRemoteSensitiveFiles: boolean;
-
-	@Column({
-		...id(),
-		nullable: true,
-	})
-	public proxyAccountId: MiUser['id'] | null;
-
-	@ManyToOne(type => MiUser, {
-		onDelete: 'SET NULL',
-	})
-	@JoinColumn()
-	public proxyAccount: MiUser | null;
 
 	@Column('boolean', {
 		default: false,

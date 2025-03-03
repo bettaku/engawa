@@ -11758,8 +11758,6 @@ export type operations = {
           turnstileSecretKey?: string | null;
           enableTestcaptcha?: boolean;
           googleAnalyticsMeasurementId?: string | null;
-          /** Format: misskey:id */
-          proxyAccountId?: string | null;
           maintainerName?: string | null;
           maintainerEmail?: string | null;
           langs?: string[];
