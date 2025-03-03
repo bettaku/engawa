@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
-import { MiUser } from './User.js';
+import { Entity, Column, JoinColumn, PrimaryColumn, ManyToOne } from 'typeorm';
 import { id } from './util/id.js';
+import { MiUser } from './User.js';
 
 @Entity('meta')
 export class MiMeta {
@@ -14,6 +14,18 @@ export class MiMeta {
 		length: 32,
 	})
 	public id: string;
+
+	@Column({
+		...id(),
+		nullable: true,
+	})
+	public rootUserId: MiUser['id'] | null;
+
+	@ManyToOne(type => MiUser, {
+		onDelete: 'SET NULL',
+		nullable: true,
+	})
+	public rootUser: MiUser | null;
 
 	@Column('varchar', {
 		length: 1024, nullable: true,

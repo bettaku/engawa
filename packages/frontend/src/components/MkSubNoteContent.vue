@@ -57,8 +57,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 		</div>
 		<div v-show="showContent">
 			<div v-if="note.files && note.files.length > 0">
-				<MkMediaList v-if="note.disableRightClick" :mediaList="note.files" @click.stop @contextmenu.prevent/>
-				<MkMediaList v-else :mediaList="note.files" @click.stop/>
+				<MkMediaList :mediaList="note.files" :disableRightClick="note.disableRightClick" @click.stop @contextmenu="disableRightClickHandler"/>
 			</div>
 			<div v-if="note.poll">
 				<MkPoll :noteId="note.id" :poll="note.poll" :author="note.user" :emojiUrls="note.emojis" @click.stop/>
@@ -141,6 +140,7 @@ import * as Misskey from 'cherrypick-js';
 import { shouldCollapsed, shouldMfmCollapsed } from '@@/js/collapsed.js';
 import { concat } from '@@/js/array.js';
 import { host } from '@@/js/config.js';
+import { toUnicode } from 'punycode.js';
 import type { Ref } from 'vue';
 import type { OpenOnRemoteOptions } from '@/scripts/please-login.js';
 import * as os from '@/os.js';
@@ -227,12 +227,16 @@ const collapseLabel = computed(() => {
 });
 
 const replyTo = computed(() => {
-	const username = props.note.reply.user.username;
+	const username = props.note.reply.user.host == null ? `@${props.note.reply.user.username}` : `@${props.note.reply.user.username}@${toUnicode(appearNote.value.reply.user.host)}`;
 	const text = i18n.tsx.replyTo({ user: username });
 	const user = `<span style="color: var(--MI_THEME-accent); margin-right: 0.25em;">@${username}</span>`;
 
 	return text.replace(username, user);
 });
+
+const disableRightClickHandler = (event: Event) => {
+	if (props.note.disableRightClick) event.preventDefault();
+};
 
 if (props.mock) {
 	watch(() => props.note, (to) => {
@@ -343,7 +347,7 @@ function react(): void {
 			reaction: '❤️',
 		});
 		const el = reactButton.value;
-		if (el) {
+		if (el && defaultStore.state.animation) {
 			const rect = el.getBoundingClientRect();
 			const x = rect.left + (el.offsetWidth / 2);
 			const y = rect.top + (el.offsetHeight / 2);
@@ -422,11 +426,13 @@ function heartReact(): void {
 		claimAchievement('reactWithoutRead');
 	}
 	const el = heartReactButton.value;
-	if (el) {
+	if (el && defaultStore.state.animation) {
 		const rect = el.getBoundingClientRect();
 		const x = rect.left + (el.offsetWidth / 2);
 		const y = rect.top + (el.offsetHeight / 2);
-		os.popup(MkRippleEffect, { x, y }, {}, 'end');
+		const { dispose } = os.popup(MkRippleEffect, { x, y }, {
+			end: () => dispose(),
+		});
 	}
 }
 

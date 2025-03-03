@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import ms from 'ms';
 
 import { Endpoint } from '@/server/api/endpoint-base.js';
@@ -19,6 +19,8 @@ import { ApPersonService } from '@/core/activitypub/models/ApPersonService.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 
 import * as Acct from '@/misc/acct.js';
+import { DI } from '@/di-symbols.js';
+import { MiMeta } from '@/models/_.js';
 
 export const meta = {
 	tags: ['users'],
@@ -76,6 +78,9 @@ export const paramDef = {
 @Injectable()
 export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-disable-line import/no-default-export
 	constructor(
+		@Inject(DI.meta)
+		private serverSettings: MiMeta,
+
 		private remoteUserResolveService: RemoteUserResolveService,
 		private apiLoggerService: ApiLoggerService,
 		private accountMoveService: AccountMoveService,

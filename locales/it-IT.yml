@@ -2512,7 +2512,7 @@ _notification:
   youWereFollowed: "Follower aggiuntivo"
   youReceivedFollowRequest: "Hai ricevuto una richiesta di follow"
   yourFollowRequestAccepted: "La tua richiesta di follow è stata accettata"
-  youWereInvitedToGroup: "Invitat@ al gruppo"
+  youWereInvitedToGroup: "{userName} Invitat@ al gruppo"
   pollEnded: "Risultati del sondaggio."
   newNote: "Nuove Note"
   unreadAntennaNote: "Antenna {name}"
@@ -2943,3 +2943,7 @@ _bootErrors:
   otherOption1: "Nelle impostazioni, cancellare le impostazioni del client e svuotare la cache"
   otherOption2: "Avviare il client predefinito"
   otherOption3: "Avviare lo strumento di riparazione"
+_search:
+  searchScopeAll: "Tutte"
+  searchScopeLocal: "Locale"
+  searchScopeUser: "Profilo specifico"

@@ -425,7 +425,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 				set.googleAnalyticsMeasurementId = ps.googleAnalyticsMeasurementId || null;
 			}
-
 			if (ps.proxyAccountId !== undefined) {
 				set.proxyAccountId = ps.proxyAccountId;
 			}

@@ -60,6 +60,7 @@ import { MiRegistryItem } from '@/models/RegistryItem.js';
 import { MiRelay } from '@/models/Relay.js';
 import { MiSignin } from '@/models/Signin.js';
 import { MiSwSubscription } from '@/models/SwSubscription.js';
+import { MiSystemAccount } from '@/models/SystemAccount.js';
 import { MiUsedUsername } from '@/models/UsedUsername.js';
 import { MiUser } from '@/models/User.js';
 import { MiUserGroup } from '@/models/UserGroup.js';
@@ -183,6 +184,7 @@ export {
 	MiRelay,
 	MiSignin,
 	MiSwSubscription,
+	MiSystemAccount,
 	MiUsedUsername,
 	MiUser,
 	MiUserGroup,
@@ -260,6 +262,7 @@ export type RegistryItemsRepository = Repository<MiRegistryItem> & MiRepository<
 export type RelaysRepository = Repository<MiRelay> & MiRepository<MiRelay>;
 export type SigninsRepository = Repository<MiSignin> & MiRepository<MiSignin>;
 export type SwSubscriptionsRepository = Repository<MiSwSubscription> & MiRepository<MiSwSubscription>;
+export type SystemAccountsRepository = Repository<MiSystemAccount> & MiRepository<MiSystemAccount>;
 export type UsedUsernamesRepository = Repository<MiUsedUsername> & MiRepository<MiUsedUsername>;
 export type UsersRepository = Repository<MiUser> & MiRepository<MiUser>;
 export type UserGroupsRepository = Repository<MiUserGroup> & MiRepository<MiUserGroup>;

@@ -204,7 +204,7 @@ async function composeNotification(data: PushNotificationDataMap[keyof PushNotif
 					}];
 
 				case 'groupInvited':
-					return [i18n.tsx._notification.youWereInvitedToGroup({ userName: getUserName({ username: data.body.user.username }) }), {
+					return [i18n.tsx._notification.youWereInvitedToGroup({ userName: getUserName(data.body.user) }), {
 						body: data.body.invitation.group.name,
 						badge: iconUrl('users'),
 						data,

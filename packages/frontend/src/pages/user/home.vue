@@ -13,8 +13,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 			<div class="profile _gaps">
 				<MkAccountMoved v-if="user.movedTo" :movedTo="user.movedTo"/>
-				<MkRemoteCaution v-if="user.host != null" :href="user.url ?? user.uri!" class="warn"/>
-				<MkUserSensitiveCaution v-if="user.isSensitive" />
+				<MkRemoteCaution v-if="user.host != null" :href="user.url ?? user.uri!"/>
+				<MkInfo v-if="user.host == null && user.username.includes('.')">{{ i18n.ts.isSystemAccount }}</MkInfo>
 
 				<div :key="user.id" class="main _panel">
 					<div class="banner-container" :style="style">
@@ -55,7 +55,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 						</div>
 					</div>
 					<div v-if="user.followedMessage != null" class="followedMessage">
-						<MkFukidashi class="fukidashi" :tail="narrow ? 'none' : 'left'" negativeMargin shadow>
+						<MkFukidashi class="fukidashi" :tail="narrow ? 'none' : 'left'" negativeMargin>
 							<div class="messageHeader">{{ i18n.ts.messageToFollower }}</div>
 							<div><MkSparkle><Mfm :plain="true" :text="user.followedMessage" :author="user" :enableEmojiMenu="!!$i"/></MkSparkle></div>
 						</MkFukidashi>
@@ -90,14 +90,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 					</div>
 					<div class="description">
 						<MkOmit>
-							<Mfm v-if="user.description" :text="user.description" :isNote="false" :author="user" :enableEmojiMenu="!!$i" :class="descClass" />
+							<Mfm v-if="user.description" :text="user.description" :isNote="false" :author="user" :enableEmojiMenu="!!$i" :class="descClass"/>
 							<p v-else class="empty">{{ i18n.ts.noAccountDescription }}</p>
 							<div v-if="user.description && isForeignLanguage">
 								<MkButton v-if="!(translating || translation)" class="translateButton" small @click="translate"><i class="ti ti-language-hiragana"></i> {{ i18n.ts.translateProfile }}</MkButton>
 								<MkButton v-else class="translateButton" small @click="translation = null"><i class="ti ti-x"></i> {{ i18n.ts.close }}</MkButton>
 							</div>
 							<div v-if="user.description">
-								<MkButton v-if="!isVertical" class="translateButton" small @click="toggleDescriptionClass"><i class="ti ti-dots-vertical"></i>{{ i18n.ts._profile.makeVertical}}</MkButton>
+								<MkButton v-if="!isVertical" class="translateButton" small @click="toggleDescriptionClass"><i class="ti ti-dots-vertical"></i>{{ i18n.ts._profile.makeVertical }}</MkButton>
 								<MkButton v-else class="translateButton" small @click="toggleDescriptionClass"><i class="ti ti-dots"></i>{{ i18n.ts._profile.makeHorizontal }}</MkButton>
 							</div>
 							<div v-if="translating || translation" class="translation">
@@ -189,6 +189,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
+import { getScrollPosition } from '@@/js/scroll.js';
+import * as Misskey from 'cherrypick-js';
+import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { $i, iAmModerator } from '@/account.js';
 import MkAccountMoved from '@/components/MkAccountMoved.vue';
 import MkButton from '@/components/MkButton.vue';
@@ -220,9 +223,6 @@ import { getStaticImageUrl } from '@/scripts/media-proxy.js';
 import { misskeyApi } from '@/scripts/misskey-api.js';
 import { vibrate } from '@/scripts/vibrate.js';
 import { defaultStore } from '@/store.js';
-import { getScrollPosition } from '@@/js/scroll.js';
-import * as Misskey from 'cherrypick-js';
-import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 
 function calcAge(birthdate: string): number {
 	const date = new Date(birthdate);

@@ -167,6 +167,7 @@ const props = withDefaults(defineProps<PostFormProps & {
 	autofocus: true,
 	mock: false,
 	initialLocalOnly: undefined,
+	deleteInitialNoteAfterPost: false,
 });
 
 provide('mock', props.mock);
@@ -231,6 +232,7 @@ const searchableBy = ref(defaultStore.state.searchableBy);
 const scheduleNote = ref<{
 	scheduledAt: number | null;
 } | null>(null);
+const isUploading = ref(false);
 
 const serverDraftId = ref<string | null>(null);
 
@@ -300,7 +302,7 @@ const cwTextLength = computed((): number => {
 const maxCwTextLength = 100;
 
 const canPost = computed((): boolean => {
-	return !props.mock && !posting.value && !posted.value &&
+	return !props.mock && !posting.value && !posted.value && !isUploading.value &&
 		(
 			1 <= textLength.value ||
 			1 <= files.value.length ||
@@ -529,8 +531,12 @@ function replaceFile(file: Misskey.entities.DriveFile, newFile: Misskey.entities
 function upload(file: File, name?: string): void {
 	if (props.mock) return;
 
+	isUploading.value = true;
+
 	uploadFile(file, defaultStore.state.uploadFolder, name).then(res => {
 		files.value.push(res);
+	}).finally(() => {
+		isUploading.value = false;
 	});
 }
 
@@ -677,12 +683,6 @@ function showOtherSettings() {
 		textLength: textLength.value,
 		src: otherSettingsButton.value,
 	}, {
-		changeReactionAcceptance: (value: Misskey.entities.Note['reactionAcceptance']) => {
-			reactionAcceptance.value = value;
-		},
-		reset: () => {
-			clear();
-		},
 		closed: () => dispose(),
 	});
 }
@@ -945,8 +945,7 @@ async function saveServerDraft(clearLocal = false): Promise<{ canClosePostForm: 
 async function post(ev?: MouseEvent) {
 	if (ev) {
 		const el = (ev.currentTarget ?? ev.target) as HTMLElement | null;
-
-		if (el) {
+		if (el && defaultStore.state.animation) {
 			const rect = el.getBoundingClientRect();
 			const x = rect.left + (el.offsetWidth / 2);
 			const y = rect.top + (el.offsetHeight / 2);
@@ -1088,14 +1087,22 @@ async function post(ev?: MouseEvent) {
 			clear();
 		}
 		nextTick(() => {
+			// 削除して編集の対象ノートを削除
+			if (props.initialNote && props.deleteInitialNoteAfterPost) {
+				misskeyApi('notes/delete', {
+					noteId: props.initialNote.id,
+				});
+			}
+
+			deleteDraft();
+			emit('posted');
+
 			if (replyTargetNote.value) os.toast(i18n.ts.replied, 'reply');
 			else if (renoteTargetNote.value) os.toast(i18n.ts.quoted, 'quote');
 			else if (props.updateMode) os.toast(i18n.ts.noteEdited, 'edited');
 			else if (scheduleNote.value) os.toast(i18n.ts.createSchedulePost, 'scheduled');
 			else os.toast(i18n.ts.posted, 'posted');
 
-			deleteDraft();
-			emit('posted');
 			if (postData.text && postData.text !== '') {
 				const hashtags_ = mfm.parse(postData.text).map(x => x.type === 'hashtag' && x.props.hashtag).filter(x => x) as string[];
 				const history = JSON.parse(miLocalStorage.getItem('hashtags') ?? '[]') as string[];
@@ -1147,7 +1154,11 @@ async function post(ev?: MouseEvent) {
 			if (m === 0 && s === 0) {
 				claimAchievement('postedAt0min0sec');
 			}
-
+			if (props.initialNote && props.deleteInitialNoteAfterPost) {
+				if (date.getTime() - new Date(props.initialNote.createdAt).getTime() < 1000 * 60 && props.initialNote.userId === $i.id) {
+					claimAchievement('noteDeletedWithin1min');
+				}
+			}
 			if (serverDraftId.value != null) {
 				misskeyApi('notes/drafts/delete', { draftId: serverDraftId.value });
 			}
@@ -1447,6 +1458,7 @@ function showPostMenu(ev: MouseEvent) {
 		text: i18n.ts.disableRightClick,
 		icon: 'ti ti-mouse-off',
 		ref: disableRightClick,
+		disabled: files.value.length < 1,
 	});
 
 	os.popupMenu(menuItems, ev.currentTarget ?? ev.target);
@@ -1566,6 +1578,8 @@ defineExpose({
 	&.modal {
 		width: 100%;
 		max-width: 640px;
+		overflow-x: clip;
+		overflow-y: auto;
 	}
 }
 
