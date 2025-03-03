@@ -311,7 +311,11 @@ export class NoteCreateService implements OnApplicationShutdown {
 					}
 
 					// Renote対象がfollowersならfollowersにする
-					data.visibility = 'followers';
+					if (data.visibility === 'specified') {
+						data.visibility = 'specified';
+					} else {
+						data.visibility = 'followers';
+					}
 					break;
 				case 'specified':
 				case 'private':
