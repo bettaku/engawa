@@ -8,6 +8,7 @@ import type { Locale } from '../../../locales/index.js';
 // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 const address = new URL(document.querySelector<HTMLMetaElement>('meta[property="instance_url"]')?.content || location.href);
 const siteName = document.querySelector<HTMLMetaElement>('meta[property="og:site_name"]')?.content;
+const applicationName = document.querySelector<HTMLMetaElement>('meta[name="application-name"]')?.content;
 
 export const host = address.host;
 export const hostname = address.hostname;
@@ -21,6 +22,7 @@ export let locale: Locale = preParseLocale ? JSON.parse(preParseLocale) : null;
 export const version = _VERSION_;
 export const basedMisskeyVersion = _BASEDMISSKEYVERSION_;
 export const instanceName = (siteName === 'CherryPick' || siteName == null) ? host : siteName;
+export const application = applicationName ?? instanceName;
 export const ui = localStorage.getItem('ui');
 export const debug = localStorage.getItem('debug') === 'true';
 

@@ -4,15 +4,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<div :class="$style.root" :style="themeColorStyle">
+<div v-tooltip="`${capitalize(softwareName)} ${softwareVersion}`" :class="$style.root" :style="themeColorStyle">
 	<img v-if="faviconUrl" :class="$style.icon" :src="faviconUrl"/>
 	<div :class="$style.name">{{ instanceName }}</div>
 </div>
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue';
-import { instanceName as localInstanceName } from '@@/js/config.js';
+import { capitalize, computed } from 'vue';
+import { instanceName as localInstanceName, application, version } from '@@/js/config.js';
 import type { CSSProperties } from 'vue';
 import { instance as localInstance } from '@/instance.js';
 import { getProxiedImageUrlNullable } from '@/scripts/media-proxy.js';
@@ -23,11 +23,16 @@ const props = defineProps<{
 		faviconUrl?: string | null
 		name?: string | null
 		themeColor?: string | null
+		softwareName?: string | null
+		softwareVersion?: string | null
 	}
 }>();
 
 // if no instance data is given, this is for the local instance
 const instanceName = computed(() => props.host == null ? localInstanceName : props.instance?.name ?? props.host);
+
+const softwareName = computed(() => props.host == null ? application : props.instance?.softwareName ?? '');
+const softwareVersion = computed(() => props.host == null ? version : props.instance?.softwareVersion ?? '');
 
 const faviconUrl = computed(() => {
 	let imageSrc: string | null = null;
