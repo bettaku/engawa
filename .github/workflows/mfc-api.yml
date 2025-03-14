@@ -1,4 +1,4 @@
-name: API report
+name: API report (mfc-js)
 
 on: [push, pull_request]
 
