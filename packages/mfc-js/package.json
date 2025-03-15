@@ -1,11 +1,12 @@
 {
+  "type": "module",
   "name": "mfc-js",
   "version": "0.24.0-cherrypick.9",
   "description": "An MFC parser implementation with TypeScript",
   "main": "./built/index.js",
   "types": "./built/index.d.ts",
   "scripts": {
-    "build": "npm run tsc",
+    "build": "pnpm run tsc",
     "tsc": "tsc",
     "tsd": "tsd",
     "parse": "node ./built/cli/parse",
@@ -23,9 +24,9 @@
   "author": "Marihachi",
   "license": "MIT",
   "devDependencies": {
-    "@microsoft/api-extractor": "7.38.5",
-    "@types/jest": "29.5.11",
-    "@types/node": "20.10.5",
+    "@microsoft/api-extractor": "7.51.0",
+    "@types/jest": "29.5.14",
+    "@types/node": "22.13.7",
     "@typescript-eslint/eslint-plugin": "6.14.0",
     "@typescript-eslint/parser": "6.14.0",
     "eslint": "8.56.0",
@@ -33,7 +34,7 @@
     "ts-jest": "29.1.1",
     "ts-node": "10.9.2",
     "tsd": "0.30.0",
-    "typescript": "5.3.3"
+    "typescript": "5.8.2"
   },
   "dependencies": {
     "@twemoji/parser": "15.0.0"

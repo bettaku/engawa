@@ -15,7 +15,8 @@
 		"packages/backend",
 		"packages/sw",
 		"packages/cherrypick-js",
-		"packages/misskey-bubble-game"
+		"packages/misskey-bubble-game",
+		"packages/mfc-js"
 	],
 	"private": true,
 	"scripts": {
