@@ -23,8 +23,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<SearchMarker :keywords="['hotkey', 'enable', 'enter']">
 						<MkPreferenceContainer k="useEnterToSend">
 							<MkSwitch v-if="!useShiftEnterToSend" v-model="useEnterToSend">
-								<template #label>{{ i18n.ts._cherrypick.useEnterToSend }}</template>
-								<template #caption>{{ i18n.ts._cherrypick.useEnterToSendDescription }}</template>
+								<template #label><SearchLabel>{{ i18n.ts._cherrypick.useEnterToSend }}</SearchLabel></template>
+								<template #caption><SearchKeyWord>{{ i18n.ts._cherrypick.useEnterToSendDescription }}</SearchKeyWord></template>
 							</MkSwitch>
 						</MkPreferenceContainer>
 					</SearchMarker>
