@@ -308,9 +308,9 @@ import FormSplit from '@/components/form/split.vue';
 import { i18n } from '@/i18n.js';
 import { fetchInstance, instance } from '@/instance.js';
 import * as os from '@/os.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
-import { definePageMetadata } from '@/scripts/page-metadata.js';
-import { useForm } from '@/scripts/use-form.js';
+import { misskeyApi } from '@/utility/misskey-api.js';
+import { definePage } from '@/page.js';
+import { useForm } from '@/utility/use-form.js';
 
 const meta = await misskeyApi('admin/meta');
 
@@ -450,7 +450,7 @@ async function reIndex() {
 
 const headerTabs = computed(() => []);
 
-definePageMetadata(() => ({
+definePage(() => ({
 	title: i18n.ts.general,
 	icon: 'ti ti-settings',
 }));

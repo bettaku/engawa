@@ -106,7 +106,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 									<b>{{ i18n.tsx.translatedFrom({ x: translation.sourceLang }) }}:</b><hr style="margin: 10px 0;">
 									<Mfm :text="translation.text" :isNote="false" :author="user" :nyaize="false" :enableEmojiMenu="!!$i"/>
 									<div v-if="translation.translator == 'ctav3'" style="margin-top: 10px; padding: 0 0 15px;">
-										<img v-if="!defaultStore.state.darkMode" src="/client-assets/color-short.svg" alt="" style="float: right;">
+										<img v-if="!store.s.darkMode" src="/client-assets/color-short.svg" alt="" style="float: right;">
 										<img v-else src="/client-assets/white-short.svg" alt="" style="float: right;"/>
 									</div>
 								</div>
@@ -192,7 +192,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 import { getScrollPosition } from '@@/js/scroll.js';
 import * as Misskey from 'cherrypick-js';
 import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
-import { $i, iAmModerator } from '@/account.js';
 import MkAccountMoved from '@/components/MkAccountMoved.vue';
 import MkButton from '@/components/MkButton.vue';
 import MkFollowButton from '@/components/MkFollowButton.vue';
@@ -203,26 +202,26 @@ import MkOmit from '@/components/MkOmit.vue';
 import MkRemoteCaution from '@/components/MkRemoteCaution.vue';
 import MkSparkle from '@/components/MkSparkle.vue';
 import MkTextarea from '@/components/MkTextarea.vue';
-import MkUserSensitiveCaution from '@/components/MkUserSensitiveCaution.vue';
-import { globalEvents } from '@/events.js';
-import { dateString } from '@/filters/date.js';
+import { getUserMenu } from '@/utility/get-user-menu.js';
 import number from '@/filters/number.js';
 import { userPage } from '@/filters/user.js';
 import { i18n } from '@/i18n.js';
-import { youBlockedImageUrl } from '@/instance.js';
-import { miLocalStorage } from '@/local-storage.js';
-import * as os from '@/os.js';
+import { $i, iAmModerator } from '@/account.js';
+import { dateString } from '@/filters/date.js';
+import { confetti } from '@/utility/confetti.js';
+import { misskeyApi } from '@/utility/misskey-api.js';
+import { isFollowingVisibleForMe, isFollowersVisibleForMe } from '@/utility/isFfVisibleForMe.js';
 import { useRouter } from '@/router/supplier.js';
-import { canSearchNonLocalNotes, notesSearchAvailable } from '@/scripts/check-permissions.js';
-import { confetti } from '@/scripts/confetti.js';
-import detectLanguage from '@/scripts/detect-language.js';
-import { editNickname } from '@/scripts/edit-nickname.js';
-import { getUserMenu } from '@/scripts/get-user-menu.js';
-import { isFollowersVisibleForMe, isFollowingVisibleForMe } from '@/scripts/isFfVisibleForMe.js';
-import { getStaticImageUrl } from '@/scripts/media-proxy.js';
-import { misskeyApi } from '@/scripts/misskey-api.js';
-import { vibrate } from '@/scripts/vibrate.js';
-import { defaultStore } from '@/store.js';
+import { getStaticImageUrl } from '@/utility/media-proxy.js';
+import { prefer } from '@/preferences.js';
+import { miLocalStorage } from '@/local-storage.js';
+import { editNickname } from '@/utility/edit-nickname.js';
+import { vibrate } from '@/utility/vibrate.js';
+import detectLanguage from '@/utility/detect-language.js';
+import { globalEvents } from '@/events.js';
+import { notesSearchAvailable, canSearchNonLocalNotes } from '@/utility/check-permissions.js';
+import { youBlockedImageUrl } from '@/instance.js';
+import { store } from '@/store.js';
 
 function calcAge(birthdate: string): number {
 	const date = new Date(birthdate);
@@ -279,12 +278,12 @@ watch(moderationNote, async () => {
 });
 
 const playAnimation = ref(true);
-if (defaultStore.state.showingAnimatedImages === 'interaction') playAnimation.value = false;
+if (prefer.s.showingAnimatedImages === 'interaction') playAnimation.value = false;
 let playAnimationTimer = setTimeout(() => playAnimation.value = false, 5000);
 
 const style = computed(() => {
 	if (props.user.bannerUrl == null) return {};
-	if (defaultStore.state.disableShowingAnimatedImages || defaultStore.state.dataSaver.avatar || (['interaction', 'inactive'].includes(<string>defaultStore.state.showingAnimatedImages) && !playAnimation.value)) {
+	if (prefer.s.disableShowingAnimatedImages || prefer.s.dataSaver.avatar || (['interaction', 'inactive'].includes(<string>prefer.s.showingAnimatedImages) && !playAnimation.value)) {
 		return {
 			backgroundImage: `url(${ getStaticImageUrl(props.user.bannerUrl) })`,
 		};
@@ -354,7 +353,7 @@ async function translate(): Promise<void> {
 	globalEvents.emit('showNoteContent', true);
 	translating.value = true;
 
-	vibrate(defaultStore.state.vibrateSystem ? 5 : []);
+	vibrate(prefer.s['vibrate.on.system'] ? 5 : []);
 
 	const res = await misskeyApi('users/translate', {
 		userId: props.user.id,
@@ -363,7 +362,7 @@ async function translate(): Promise<void> {
 	translating.value = false;
 	translation.value = res;
 
-	vibrate(defaultStore.state.vibrateSystem ? [5, 5, 10] : []);
+	vibrate(prefer.s['vibrate.on.system'] ? [5, 5, 10] : []);
 }
 
 function toggleDescriptionClass() {
@@ -409,7 +408,7 @@ onMounted(() => {
 		adjustMemoTextarea();
 	});
 
-	if (defaultStore.state.showingAnimatedImages === 'inactive') {
+	if (prefer.s.showingAnimatedImages === 'inactive') {
 		window.addEventListener('mousemove', resetTimer);
 		window.addEventListener('touchstart', resetTimer);
 		window.addEventListener('touchend', resetTimer);
@@ -421,7 +420,7 @@ onUnmounted(() => {
 		window.cancelAnimationFrame(parallaxAnimationId.value);
 	}
 
-	if (defaultStore.state.showingAnimatedImages === 'inactive') {
+	if (prefer.s.showingAnimatedImages === 'inactive') {
 		window.removeEventListener('mousemove', resetTimer);
 		window.removeEventListener('touchstart', resetTimer);
 		window.removeEventListener('touchend', resetTimer);

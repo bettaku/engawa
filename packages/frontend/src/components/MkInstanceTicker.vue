@@ -15,7 +15,7 @@ import { capitalize, computed } from 'vue';
 import { instanceName as localInstanceName, application, version } from '@@/js/config.js';
 import type { CSSProperties } from 'vue';
 import { instance as localInstance } from '@/instance.js';
-import { getProxiedImageUrlNullable } from '@/scripts/media-proxy.js';
+import { getProxiedImageUrlNullable } from '@/utility/media-proxy.js';
 
 const props = defineProps<{
 	host: string | null;
