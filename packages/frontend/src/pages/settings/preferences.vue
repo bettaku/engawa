@@ -104,6 +104,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 										<option value="home">{{ i18n.ts._visibility.home }}</option>
 										<option value="followers">{{ i18n.ts._visibility.followers }}</option>
 										<option value="specified">{{ i18n.ts._visibility.specified }}</option>
+										<option value="private">{{ i18n.ts._visibility.private }}</option>
 									</MkSelect>
 								</MkPreferenceContainer>
 
@@ -113,6 +114,17 @@ SPDX-License-Identifier: AGPL-3.0-only
 							</div>
 						</MkFolder>
 					</MkDisableSection>
+				</SearchMarker>
+
+				<SearchMarker :keywords="['default', 'search', 'privacy']">
+					<MkPreferenceContainer k="defaultNoteSearchableBy">
+						<MkSelect v-model="defaultNoteSearchableBy">
+							<option value="public">{{ i18n.ts._searchableBy.public }}</option>
+							<option value="followers">{{ i18n.ts._searchableBy.followers }}</option>
+							<option value="reacted">{{ i18n.ts._searchableBy.reacted }}</option>
+							<option value="limited">{{ i18n.ts._searchableBy.limited }}</option>
+						</MkSelect>
+					</MkPreferenceContainer>
 				</SearchMarker>
 			</div>
 		</FormSection>
@@ -744,6 +756,7 @@ const confirmOnReact = prefer.model('confirmOnReact');
 const contextMenu = prefer.model('contextMenu');
 const defaultNoteVisibility = prefer.model('defaultNoteVisibility');
 const defaultNoteLocalOnly = prefer.model('defaultNoteLocalOnly');
+const defaultNoteSearchableBy = prefer.model('defaultNoteSearchableBy');
 const rememberNoteVisibility = prefer.model('rememberNoteVisibility');
 
 const forceCollapseAllRenotes = prefer.model('forceCollapseAllRenotes');

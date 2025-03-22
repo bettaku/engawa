@@ -67,6 +67,9 @@ export const PREF_DEF = {
 	defaultNoteLocalOnly: {
 		default: false,
 	},
+	defaultNoteSearchableBy: {
+		default: 'public' as 'public' | 'followers' | 'reacted' | 'limited',
+	},
 	keepCw: {
 		default: true,
 	},

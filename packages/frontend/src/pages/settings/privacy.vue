@@ -21,6 +21,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</SearchMarker>
 		</MkDisableSection>
 
+		<MkDisableSection :disabled="!isLocked">
+			<SearchMarker :keywords="['bot', 'careful']">
+				<MkSwitch v-model="carefulBot" @update:modelValue="save()">
+					<template #label><SearchLabel>{{ i18n.ts.carefulBot }}</SearchLabel></template>
+					<template #caption><SearchKeyword>{{ i18n.ts.carefulBotDescription }}</SearchKeyword></template>
+				</MkSwitch>
+			</SearchMarker>
+		</MkDisableSection>
+
 		<SearchMarker :keywords="['reaction', 'public']">
 			<MkSwitch v-model="publicReactions" @update:modelValue="save()">
 				<template #label><SearchLabel>{{ i18n.ts.makeReactionsPublic }}</SearchLabel></template>
@@ -71,6 +80,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<MkSwitch v-model="isExplorable" @update:modelValue="save()">
 				<template #label><SearchLabel>{{ i18n.ts.makeExplorable }}</SearchLabel></template>
 				<template #caption><SearchKeyword>{{ i18n.ts.makeExplorableDescription }}</SearchKeyword></template>
+			</MkSwitch>
+		</SearchMarker>
+
+		<SearchMarker :keywords="['privacy', 'indexable']">
+			<MkSwitch v-model="isIndexable" @update:modelValue="save()">
+				<template #label><SearchLabel>{{ i18n.ts._isIndexable.title }}</SearchLabel></template>
+				<template #caption><SearchKeyword>{{ i18n.ts._isIndexable.description }}</SearchKeyword></template>
 			</MkSwitch>
 		</SearchMarker>
 
