@@ -49,7 +49,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 import { ref } from 'vue';
 import type { Paging } from '@/components/MkPagination.vue';
 import MkNotes from '@/components/MkNotes.vue';
-import MkSearchInput from '@/components/MkSearchInput.vue';
 import MkRadios from '@/components/MkRadios.vue';
 import MkButton from '@/components/MkButton.vue';
 import MkSelect from '@/components/MkSelect.vue';

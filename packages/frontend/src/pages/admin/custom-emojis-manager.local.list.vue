@@ -90,7 +90,6 @@ import MkPagingButtons from '@/components/MkPagingButtons.vue';
 import { selectFile } from '@/utility/select-file.js';
 import { copyGridDataToClipboard, removeDataFromGrid } from '@/components/grid/grid-utils.js';
 import { useLoading } from '@/components/hook/useLoading.js';
-import { defaultStore } from '@/store';
 
 type GridItem = {
 	checked: boolean;
@@ -127,7 +126,7 @@ function setupGrid(): GridSetting {
 			showNumber: true,
 			selectable: true,
 			// グリッドの行数をあらかじめ100行確保する
-			minimumDefinitionCount: maxNumberOfDisplayEmojis.value,
+			minimumDefinitionCount: 100,
 			styleRules: [
 				{
 					// 初期値から変わっていたら背景色を変更
@@ -302,7 +301,6 @@ const updatedItemsCount = computed(() => {
 	return gridItems.value.filter((it, idx) => !it.checked && JSON.stringify(it) !== JSON.stringify(originGridItems.value[idx])).length;
 });
 const deleteItemsCount = computed(() => gridItems.value.filter(it => it.checked).length);
-const maxNumberOfDisplayEmojis = computed(defaultStore.makeGetterSetter('numberOfDisplayEmojis'));
 
 async function onUpdateButtonClicked() {
 	const _items = gridItems.value;

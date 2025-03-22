@@ -28,12 +28,12 @@ import * as Misskey from 'cherrypick-js';
 import type { MenuItem } from '@/types/menu';
 import { $i } from '@/account.js';
 import { i18n } from '@/i18n.js';
-import { misskeyApi } from '@/scripts/misskey-api';
+import { misskeyApi } from '@/utility/misskey-api.js';
 import MkButton from '@/components/MkButton.vue';
 import { instance } from '@/instance.js';
 import * as os from '@/os.js';
 import MkAvatarDecorationDialog from '@/components/MkAvatarDecorationDialog.vue';
-import { copyToClipboard } from '@/scripts/copy-to-clipboard';
+import { copyToClipboard } from '@/utility/copy-to-clipboard.js';
 
 const avatarDecorations = ref<Misskey.entities.GetAvatarDecorationsResponse>([]);
 const demoUser = {

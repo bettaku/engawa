@@ -61,7 +61,6 @@ import { userPage } from '@/filters/user.js';
 import { prefer } from '@/preferences.js';
 import { useRouter } from '@/router/supplier.js';
 import MkInstanceTicker from '@/components/MkInstanceTicker.vue';
-import { dateTimeFormat } from '@/scripts/intl-const';
 
 const props = defineProps<{
 	note: Misskey.entities.Note & {

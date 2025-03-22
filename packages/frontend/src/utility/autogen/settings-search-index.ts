@@ -34,31 +34,36 @@ export const searchIndexes: SearchIndexItem[] = [
 			},
 			{
 				id: '51TBiPcmy',
+				label: i18n.ts._timelines.media,
+				keywords: ['enable', 'media'],
+			},
+			{
+				id: 'eJmNR2K4s',
 				label: i18n.ts._timelines.social,
 				keywords: ['enable', 'social'],
 			},
 			{
-				id: 'eJmNR2K4s',
+				id: 'DcMJ15v74',
 				label: i18n.ts._timelines.global,
 				keywords: ['enable', 'global'],
 			},
 			{
-				id: 'DcMJ15v74',
+				id: 'A6eMdhts6',
 				label: i18n.ts._timelines.bubble,
 				keywords: ['enable', 'bubble'],
 			},
 			{
-				id: 'jEUHDjbZp',
+				id: 'zCL17RSw8',
 				label: i18n.ts.lists,
 				keywords: ['enable', 'list'],
 			},
 			{
-				id: 'zCL17RSw8',
+				id: '7qtfCXog',
 				label: i18n.ts.antennas,
 				keywords: ['enable', 'antenna'],
 			},
 			{
-				id: '7qtfCXog',
+				id: '1FaiKDihE',
 				label: i18n.ts.channel,
 				keywords: ['enable', 'channel'],
 			},
@@ -913,24 +918,29 @@ export const searchIndexes: SearchIndexItem[] = [
 			},
 			{
 				id: 'DyKDeHONI',
-				label: 'Unnamed marker',
-				keywords: ['nickname', 'enable'],
+				label: i18n.ts._cherrypick.useEnterToSend,
+				keywords: ['hotkey', 'enable', 'enter'],
 			},
 			{
 				id: 'qBKqephVl',
+				label: 'Unnamed marker',
+				keywords: ['hotkey', 'enable', 'shift', 'enter'],
+			},
+			{
+				id: 'eEA7ytlZ5',
 				label: i18n.ts._cherrypick.postFormVisibilityHotkey,
 				keywords: ['post', 'form', 'visibility', 'hotkey', i18n.ts._cherrypick.postFormVisibilityHotkeyDescription],
 			},
 			{
-				id: 'eEA7ytlZ5',
+				id: 'lgY6Zesu0',
 				label: i18n.ts._cherrypick.showRenoteConfirmPopup,
 				keywords: ['show', 'renote', 'note', 'confirm', 'popup', i18n.ts._cherrypick.showRenoteConfirmPopupDescription],
 			},
 			{
-				id: 'lgY6Zesu0',
+				id: '4YCeZiMxo',
 				children: [
 					{
-						id: '4YCeZiMxo',
+						id: '2elQyWUHe',
 						label: i18n.ts._cherrypick.expandOnNoteClickBehavior,
 						keywords: ['behavior'],
 					},
@@ -939,30 +949,30 @@ export const searchIndexes: SearchIndexItem[] = [
 				keywords: ['expand', 'note', 'click', i18n.ts._cherrypick.expandOnNoteClickDescription],
 			},
 			{
-				id: 'kxtO1YGjn',
+				id: 'hPFEqGC9c',
 				label: i18n.ts._cherrypick.displayHeaderNavBarWhenScroll,
 				keywords: ['display', 'header', 'navbar', 'scroll'],
 			},
 			{
-				id: 'ucJrWjNkp',
+				id: 'iZH6o14sE',
 				children: [
 					{
-						id: 'abmEqjbI9',
+						id: 'k93tW6ZVG',
 						label: i18n.ts._cherrypick.reactableRemoteReaction,
 						keywords: ['reactable', 'remote', 'reaction', 'react', 'enable'],
 					},
 					{
-						id: 'vrQyQ7OAC',
+						id: 'AcgU5stC0',
 						label: i18n.ts._cherrypick.showFollowingMessageInsteadOfButton,
 						keywords: ['show', 'follow', 'message', 'enable'],
 					},
 					{
-						id: '9MWRArjLD',
+						id: 'tWrs2tWNj',
 						label: i18n.ts._cherrypick.mobileHeaderChange,
 						keywords: ['mobile', 'header', 'change'],
 					},
 					{
-						id: '5db7W0B5j',
+						id: 'tR1xjmKtq',
 						label: i18n.ts._cherrypick.renameTheButtonInPostFormToNya,
 						keywords: ['rename', 'post', 'form', 'nya', i18n.ts._cherrypick.renameTheButtonInPostFormToNyaDescription],
 					},
@@ -971,28 +981,28 @@ export const searchIndexes: SearchIndexItem[] = [
 				keywords: ['patch', 'behavior', i18n.ts._cherrypick.patchDescription],
 			},
 			{
-				id: 'cBQaz6sa0',
+				id: 'ij0nekgrY',
 				children: [
 					{
-						id: 'Cs2cPX8pY',
+						id: 'ugdFmvseE',
 						label: i18n.ts._cherrypick.enableWidgetsArea,
 						keywords: ['enable', 'widget'],
 					},
 					{
-						id: 'hZnNBcUjw',
+						id: 't3japQiBY',
 						children: [
 							{
-								id: 'x2O7OsvzW',
+								id: 'B8FgvXr1y',
 								label: i18n.ts._cherrypick.friendlyUiEnableNotificationsArea,
 								keywords: ['enable', 'notification'],
 							},
 							{
-								id: 'f0HK0WoY2',
+								id: 'aiUEVAQSz',
 								label: i18n.ts._cherrypick.enableLongPressOpenAccountMenu,
 								keywords: ['enable', 'long', 'press', 'open', 'account', 'menu', i18n.ts._cherrypick.enableLongPressOpenAccountMenuDescription],
 							},
 							{
-								id: 'aiUEVAQSz',
+								id: 'hD2WuUTBO',
 								label: i18n.ts._cherrypick.friendlyUiShowAvatarDecorationsInNavBtn,
 								keywords: ['show', 'avatar', 'decoration', 'navbtn'],
 							},
@@ -1005,7 +1015,7 @@ export const searchIndexes: SearchIndexItem[] = [
 				keywords: ['ui', 'show', 'display'],
 			},
 			{
-				id: 'BhJb8gpN0',
+				id: 'uAtMlnrPv',
 				label: i18n.ts.cherrypickLabs,
 				keywords: ['behavior', 'lab', i18n.ts.cherrypickLabsDescription],
 			},
@@ -1029,12 +1039,12 @@ export const searchIndexes: SearchIndexItem[] = [
 				id: 'vXTFX3YLW',
 				children: [
 					{
-						id: 'sSyWlutU1',
+						id: 'DsS2CwjYE',
 						label: i18n.ts.useBoldFont,
 						keywords: ['bold'],
 					},
 					{
-						id: '3ojrhlRkO',
+						id: 'pWZ0ypy2g',
 						label: i18n.ts.useSystemFont,
 						keywords: ['system', 'native'],
 					},
@@ -1043,125 +1053,125 @@ export const searchIndexes: SearchIndexItem[] = [
 				keywords: ['font', 'size'],
 			},
 			{
-				id: 'dr8Ns8Yz1',
+				id: 'sSyWlutU1',
 				label: i18n.ts.useBlurEffect,
 				keywords: ['blur'],
 			},
 			{
-				id: 'BminRQZR7',
+				id: 'gnihIiIkc',
 				label: i18n.ts.useBlurEffectForModal,
 				keywords: ['blur', 'modal'],
 			},
 			{
-				id: '44UmMwmUe',
+				id: '420ic9kst',
 				label: i18n.ts.removeModalBgColorForBlur,
 				keywords: ['blur', 'modal', 'bg', 'remove'],
 			},
 			{
-				id: '8xIxd4IHE',
+				id: 'ojKxdHXYj',
 				label: i18n.ts.highlightSensitiveMedia,
 				keywords: ['highlight', 'sensitive', 'nsfw', 'image', 'photo', 'picture', 'media', 'thumbnail'],
 			},
 			{
-				id: 'fDelHUrBi',
+				id: 'dEJlgPkZ6',
 				label: i18n.ts.squareAvatars,
 				keywords: ['avatar', 'icon', 'square'],
 			},
 			{
-				id: 'yuk4om1dx',
+				id: 'ylmwdEL8r',
 				label: i18n.ts.setFederationAvatarShape,
 				keywords: ['avatar', 'icon', 'square', 'federation', 'shape', $i?.policies.canSetFederationAvatarShape ? i18n.ts.setFederationAvatarShapeDescription : i18n.ts.cannotBeUsedFunc],
 			},
 			{
-				id: 'mZj648rIe',
+				id: 'Elqc8y71u',
 				label: i18n.ts.showAvatarDecorations,
 				keywords: ['avatar', 'icon', 'decoration', 'show'],
 			},
 			{
-				id: 'eQ33delPQ',
+				id: '11UxyCrpf',
 				label: i18n.ts.showGapBetweenNotesInTimeline,
 				keywords: ['note', 'timeline', 'gap'],
 			},
 			{
-				id: 'c11GtTlh2',
+				id: '67RbDkgyb',
 				label: i18n.ts.seasonalScreenEffect,
 				keywords: ['effect', 'show'],
 			},
 			{
-				id: '7PSJygnH3',
+				id: 'ndJ2pXa8x',
 				label: i18n.ts.showUnreadNotificationsCount,
 				keywords: ['show', 'unread', 'notification', 'count'],
 			},
 			{
-				id: '7AJ2vaPYD',
+				id: '9E0v8VKIY',
 				label: i18n.ts.filesGridLayoutInUserPage,
 				keywords: ['file', 'grid', 'layout', 'user', 'page', i18n.ts.filesGridLayoutInUserPageDescription],
 			},
 			{
-				id: 'EffnKHKhw',
+				id: 'gieANiqeV',
 				label: i18n.ts.menuStyle,
 				keywords: ['menu', 'style', 'popup', 'drawer'],
 			},
 			{
-				id: '8Y7iPoGwR',
+				id: 'sKK2XSS69',
 				label: i18n.ts.emojiStyle,
 				keywords: ['emoji', 'style', 'native', 'system', 'fluent', 'twemoji'],
 			},
 			{
-				id: '6unWzAfXu',
+				id: 'jFfHia3vH',
 				children: [
 					{
-						id: 'A75ebHXeF',
+						id: 'z19W9moNS',
 						label: i18n.ts.reactionsDisplaySize,
 						keywords: ['reaction', 'size', 'scale', 'display'],
 					},
 					{
-						id: 'tTRh05tPD',
+						id: 'Cd2XJNVcC',
 						label: i18n.ts.limitWidthOfReaction,
 						keywords: ['reaction', 'size', 'scale', 'display', 'width', 'limit'],
 					},
 					{
-						id: 'lr2Brh1cF',
+						id: 'AS35DDZhQ',
 						label: i18n.ts.hideAvatarsInNote,
 						keywords: ['hide', 'avatar', 'note', 'display'],
 					},
 					{
-						id: 'qqJMY1pQM',
+						id: 'BPZqhFohK',
 						label: i18n.ts.enableAbsoluteTime,
 						keywords: ['enable', 'absolute', 'time', 'note', 'display'],
 					},
 					{
-						id: '81Gy76Obg',
+						id: '6Tew0T4A8',
 						label: i18n.ts.enableMarkByDate,
 						keywords: ['enable', 'mark', 'date', 'note', 'display'],
 					},
 					{
-						id: '4dKUP4a4w',
+						id: 'EPNTmnhyG',
 						label: i18n.ts.showReplyTargetNote,
 						keywords: ['show', 'reply', 'target', 'note', 'display'],
 					},
 					{
-						id: 'lXJWBpQwd',
+						id: '85gbTAf63',
 						label: i18n.ts.showReplyTargetNoteInSemiTransparent,
 						keywords: ['show', 'reply', 'target', 'note', 'transparent', 'display'],
 					},
 					{
-						id: 'skU5WAYzx',
+						id: 'rye8Tpwzr',
 						label: i18n.ts.mediaListWithOneImageAppearance,
 						keywords: ['attachment', 'image', 'photo', 'picture', 'media', 'thumbnail', 'list', 'size', 'height'],
 					},
 					{
-						id: 'qF3TiNmB2',
+						id: 'pYNvfQTg4',
 						label: i18n.ts.instanceTicker,
 						keywords: ['ticker', 'information', 'label', 'instance', 'server', 'host', 'federation'],
 					},
 					{
-						id: 'DBRRElWha',
+						id: 'saHIrDljc',
 						label: i18n.ts.displayOfSensitiveMedia,
 						keywords: ['attachment', 'image', 'photo', 'picture', 'media', 'thumbnail', 'nsfw', 'sensitive', 'display', 'show', 'hide', 'visibility'],
 					},
 					{
-						id: '573SrjMR9',
+						id: 'rQIC3U6HK',
 						label: 'Unnamed marker',
 						keywords: ['attachment', 'image', 'photo', 'picture', 'media', 'thumbnail', 'nsfw', 'sensitive', 'display', 'show', 'hide', 'visibility', 'open', 'click', 'double'],
 					},
@@ -1170,15 +1180,15 @@ export const searchIndexes: SearchIndexItem[] = [
 				keywords: ['note', 'display'],
 			},
 			{
-				id: 'zoeGnMuF6',
+				id: '5juEb3AJO',
 				children: [
 					{
-						id: 'DuSCbaip3',
+						id: 'q5BgvEGPA',
 						label: i18n.ts.position,
 						keywords: ['position'],
 					},
 					{
-						id: 'dXMRxb8YV',
+						id: 'skR8flXKM',
 						label: i18n.ts.stackAxis,
 						keywords: ['stack', 'axis', 'direction'],
 					},
