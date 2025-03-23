@@ -137,6 +137,7 @@ export interface IPost extends IObject {
 	quoteUrl?: string;
 	_misskey_talk?: boolean;
 	searchableBy?: string[] | string;
+	quoteUri?: string;
 }
 
 export interface IQuestion extends IObject {

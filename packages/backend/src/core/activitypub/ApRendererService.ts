@@ -532,6 +532,7 @@ export class ApRendererService {
 			}),
 			_misskey_quote: quote,
 			quoteUrl: quote,
+			quoteUri: quote,
 			published: this.idService.parse(note.id).date.toISOString(),
 			updated: note.updatedAt?.toISOString() ?? undefined,
 			to,
@@ -570,7 +571,7 @@ export class ApRendererService {
 				const urlPart = match[0];
 				const urlPartParsed = new URL(urlPart);
 				const restPart = maybeUrl.slice(match[0].length);
-				
+
 				return `<a href="${urlPartParsed.href}" rel="me nofollow noopener" target="_blank">${urlPart}</a>${restPart}`;
 			} catch (e) {
 				return maybeUrl;
