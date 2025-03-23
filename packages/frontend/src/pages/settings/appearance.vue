@@ -249,7 +249,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 						</MkPreferenceContainer>
 					</SearchMarker>
 
-					<SearchMarker :keywords="['ticker', 'information', 'label', 'instance', 'server', 'host', 'federation']">
+					<SearchMarker :keywords="['ticker', 'information', 'label', 'instance', 'server', 'host', 'federation', 'note']">
 						<MkPreferenceContainer k="instanceTicker">
 							<MkSelect v-if="instance.federation !== 'none'" v-model="instanceTicker">
 								<template #label><SearchLabel>{{ i18n.ts.instanceTicker }}</SearchLabel></template>

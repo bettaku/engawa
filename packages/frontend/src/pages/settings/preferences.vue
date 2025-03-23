@@ -119,6 +119,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<SearchMarker :keywords="['default', 'search', 'privacy']">
 					<MkPreferenceContainer k="defaultNoteSearchableBy">
 						<MkSelect v-model="defaultNoteSearchableBy">
+							<template #label>{{ i18n.ts._searchableBy.searchableBy }}</template>
 							<option value="public">{{ i18n.ts._searchableBy.public }}</option>
 							<option value="followers">{{ i18n.ts._searchableBy.followers }}</option>
 							<option value="reacted">{{ i18n.ts._searchableBy.reacted }}</option>
@@ -284,7 +285,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 									<template #label><i class="ti ti-heart"></i> <SearchLabel>{{ i18n.ts.like }}</SearchLabel> <span class="_beta" style="vertical-align: middle;">CherryPick</span></template>
 									<div class="_gaps_m">
 										<MkPreferenceContainer k="selectReaction">
-											<FromSlot v-model="selectReaction">
+											<FormSlot v-model="selectReaction">
 												<template #label>{{ i18n.ts.selectReaction }}</template>
 												<MkCustomEmoji v-if="selectReaction && selectReaction.startsWith(':')" style="max-height: 3em; font-size: 1.1em;" :useOriginalSize="false" :name="selectReaction" :normal="true" :noStyle="true"/>
 												<MkEmoji v-else-if="selectReaction && !selectReaction.startsWith(':')" :emoji="selectReaction" style="max-height: 3em; font-size: 1.1em;" :normal="true" :noStyle="true"/>
@@ -293,7 +294,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 													<MkButton rounded :small="true" inline @click="chooseNewReaction"><i class="ti ti-pencil"></i> {{ i18n.ts.edit }}</MkButton>
 													<MkButton rounded :small="true" inline danger @click="resetReaction"><i class="ti ti-reload"></i> {{ i18n.ts.default }}</MkButton>
 												</div>
-											</FromSlot>
+											</FormSlot>
 										</MkPreferenceContainer>
 									</div>
 								</MkFolder>
@@ -701,6 +702,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue';
 import { langs } from '@@/js/config.js';
+import FormSlot from '@/components/form/slot.vue';
 import MkSwitch from '@/components/MkSwitch.vue';
 import MkSelect from '@/components/MkSelect.vue';
 import MkRadios from '@/components/MkRadios.vue';
