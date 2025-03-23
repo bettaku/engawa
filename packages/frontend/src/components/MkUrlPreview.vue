@@ -111,6 +111,7 @@ import { i18n } from '@/i18n.js';
 import * as os from '@/os.js';
 import { deviceKind } from '@/utility/device-kind.js';
 import MkButton from '@/components/MkButton.vue';
+import XNoteSimple from '@/components/MkNoteSimple.vue';
 import { transformPlayerUrl } from '@/utility/player-url-transform.js';
 import { store } from '@/store.js';
 import { prefer } from '@/preferences.js';

@@ -159,7 +159,7 @@ const onlyCats = computed({
 });
 
 const withoutBots = computed({
-	get: () => defaultStore.reactiveState.tl.value.filter.withoutBots,
+	get: () => store.r.tl.value.filter.withoutBots,
 	set: (x: boolean) => saveTlFilter('withoutBots', x),
 });
 

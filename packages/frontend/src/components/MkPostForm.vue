@@ -123,6 +123,7 @@ import type { MenuItem } from '@/types/menu.js';
 import type { PostFormProps } from '@/types/post-form.js';
 import type { PollEditorModelValue } from '@/components/MkPollEditor.vue';
 import type { DeleteScheduleEditorModelValue } from '@/components/MkScheduledNoteDelete.vue';
+import MkEventEditor from '@/components/MkEventEditor.vue';
 import MkNotePreview from '@/components/MkNotePreview.vue';
 import MkNoteSimple from '@/components/MkNoteSimple.vue';
 import MkPollEditor from '@/components/MkPollEditor.vue';
@@ -227,7 +228,7 @@ const postFormActions = getPluginHandlers('post_form_action');
 const replyTargetNote: ShallowRef<PostFormProps['reply'] | null> = shallowRef(props.reply);
 const targetChannel = shallowRef(props.channel);
 const scheduledNoteDelete = ref<DeleteScheduleEditorModelValue | null>(null);
-const searchableBy = ref(defaultStore.state.searchableBy);
+const searchableBy = ref(store.s.searchableBy);
 const scheduleNote = ref<{
 	scheduledAt: number | null;
 } | null>(null);
@@ -728,7 +729,7 @@ function clear() {
 function onKeydown(ev: KeyboardEvent) {
 	if (prefer.s.useEnterToSend && !ev.shiftKey) {
 		if (ev.key === 'Enter' && canPost.value) post();
-	} else if (defaultStore.state.useShiftEnterToSend) {
+	} else if (store.s.useShiftEnterToSend) {
 		if (ev.key === 'Enter' && ev.shiftKey && canPost.value) post();
 	} else {
 		if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey) && canPost.value) post();
