@@ -470,7 +470,7 @@ export const store = markRaw(new Pizzax('base', {
 	},
 	sound_notUseSound: {
 		where: 'device',
-		default: false,
+		default: true,
 	},
 	sound_useSoundOnlyWhenActive: {
 		where: 'device',

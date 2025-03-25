@@ -359,7 +359,7 @@ export const PREF_DEF = {
 		default: 0.3,
 	},
 	'sound.notUseSound': {
-		default: false,
+		default: true,
 	},
 	'sound.useSoundOnlyWhenActive': {
 		default: false,
