@@ -60,7 +60,7 @@ import MkPagination from '@/components/MkPagination.vue';
 import MkInstanceCardMini from '@/components/MkInstanceCardMini.vue';
 import FormSplit from '@/components/form/split.vue';
 import { i18n } from '@/i18n.js';
-import { $i } from '@/account.js';
+import { $i } from '@/i.js';
 
 const host = ref('');
 const state = ref('federating');
