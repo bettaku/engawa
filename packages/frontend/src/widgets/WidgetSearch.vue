@@ -164,7 +164,9 @@ defineExpose<WidgetComponentExpose>({
 	border: none;
 	background: none;
 	color: inherit;
+	cursor: pointer;
 	pointer-events: auto;
+	-webkit-tap-highlight-color: transparent;
 }
 
 .deleteBtn {
