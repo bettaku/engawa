@@ -23,7 +23,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
+import { onMounted, onUnmounted, ref, useTemplateRef, onActivated, onDeactivated } from 'vue';
 import { getScrollContainer } from '@@/js/scroll.js';
 import { i18n } from '@/i18n.js';
 import { isHorizontalSwipeSwiping } from '@/utility/touch.js';
