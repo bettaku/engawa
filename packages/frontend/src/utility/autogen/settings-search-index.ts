@@ -710,30 +710,35 @@ export const searchIndexes: SearchIndexItem[] = [
 						label: i18n.ts.defaultNoteVisibility,
 						keywords: ['default', 'note', 'visibility'],
 					},
+					{
+						id: 'h2RNg7wr5',
+						label: i18n.ts._searchableBy.searchableBy,
+						keywords: ['default', 'note', 'searchableby', 'search'],
+					},
 				],
 				label: i18n.ts.postForm,
 				keywords: ['post', 'form'],
 			},
 			{
-				id: 'wPie6t8DT',
+				id: '8U4guy9km',
 				children: [
 					{
-						id: 'dVqIXNkLn',
+						id: 'xkJOGlSXW',
 						label: i18n.ts.useGroupedNotifications,
 						keywords: ['group'],
 					},
 					{
-						id: 'EX5pZkDbX',
+						id: 'wCD0Y3p2u',
 						label: i18n.ts.showReplyInNotification,
 						keywords: ['show', 'reply', 'notification', 'note'],
 					},
 					{
-						id: 'qiFyecbJb',
+						id: '6jESVneCn',
 						label: i18n.ts.position,
 						keywords: ['position'],
 					},
 					{
-						id: '6jESVneCn',
+						id: 'nuwFTP8mO',
 						label: i18n.ts.stackAxis,
 						keywords: ['stack', 'axis', 'direction'],
 					},
@@ -742,93 +747,93 @@ export const searchIndexes: SearchIndexItem[] = [
 				keywords: ['notification'],
 			},
 			{
-				id: 'g2Ody69PE',
+				id: 'ealqrM6v6',
 				label: i18n.ts.dataSaver,
 				keywords: ['datasaver'],
 			},
 			{
-				id: 'ylZwpXb2c',
+				id: 'rN2JeTmZn',
 				label: i18n.ts._externalNavigationWarning.trustedDomainList,
 				keywords: ['external', 'navigation', 'warning', i18n.ts._externalNavigationWarning.trustedDomainListDescription],
 			},
 			{
-				id: 'ocMO5yw5v',
+				id: 'rHXmMcmy3',
 				children: [
 					{
-						id: '2gxrMkfw5',
+						id: 'aJXSwqL4x',
 						label: i18n.ts.openImageInNewTab,
 						keywords: ['image', 'photo', 'picture', 'media', 'thumbnail', 'new', 'tab'],
 					},
 					{
-						id: 'mqK1zpqHF',
+						id: 'pmTVHb7QE',
 						label: i18n.ts.withRepliesByDefaultForNewlyFollowed,
 						keywords: ['follow', 'replies'],
 					},
 					{
-						id: 'nwe6q1JJb',
+						id: 'ctQqT5nmN',
 						label: i18n.ts.autoLoadMoreReplies,
 						keywords: ['auto', 'load', 'more', 'reply', 'replies'],
 					},
 					{
-						id: 'b2PHBAyjz',
+						id: 'uz5u9Gbi6',
 						label: i18n.ts.autoLoadMoreConversation,
 						keywords: ['auto', 'load', 'more', 'conversation'],
 					},
 					{
-						id: 'yXIg4uomD',
+						id: '9MP8YCk0B',
 						label: i18n.ts.useAutoTranslate,
 						keywords: ['auto', 'translate'],
 					},
 					{
-						id: '3z4MNo72V',
+						id: 'bo5WtQV5G',
 						label: i18n.ts.welcomeBackToast,
 						keywords: ['welcome', 'toast'],
 					},
 					{
-						id: 'sWuj2MmZs',
+						id: '9YHZjljUi',
 						label: i18n.ts.noNyaization,
 						keywords: ['disable', 'nyaize', 'note'],
 					},
 					{
-						id: '5pNo4lmsO',
+						id: 'tVNWJesL5',
 						label: i18n.ts.whenServerDisconnected,
 						keywords: ['server', 'disconnect', 'reconnect', 'reload', 'streaming'],
 					},
 					{
-						id: 'tVNWJesL5',
+						id: 'gdRAnFdpc',
 						label: i18n.ts.requireRefresh,
 						keywords: ['refresh'],
 					},
 					{
-						id: 'sOSpJuait',
+						id: 'zuG1Tc6WP',
 						label: i18n.ts.newNoteReceivedNotification,
 						keywords: ['note', 'receive', 'notification'],
 					},
 					{
-						id: 'uNmBtoOJM',
+						id: 'aHpdLAVM0',
 						label: i18n.ts.numberOfPageCache,
 						keywords: ['cache', 'page'],
 					},
 					{
-						id: 'tajNoRgOD',
+						id: 'jmsspEfWb',
 						label: i18n.ts.forceShowAds,
 						keywords: ['ad', 'show'],
 					},
 					{
-						id: 'vcqfMJhWR',
+						id: '77LXHwv3K',
 						label: i18n.ts.hemisphere,
 						keywords: [],
 					},
 					{
-						id: 'g9QDVim0Y',
+						id: 'wNd1H8jbr',
 						children: [
 							{
-								id: '4hDoZFKtB',
+								id: '6AJQ9DLAH',
 								label: i18n.ts._searchSite.otherSearchEngine,
 								keywords: [i18n.ts._searchSite.otherDescription],
 							},
 							{
-								id: 'rWfMcJ8wd',
+								id: 'DXTep5Tuv',
 								label: i18n.ts._searchSite.query,
 								keywords: [i18n.ts._searchSite.queryDescription],
 							},
@@ -837,7 +842,7 @@ export const searchIndexes: SearchIndexItem[] = [
 						keywords: ['search', 'engine', i18n.ts._searchSite.description],
 					},
 					{
-						id: '7L823IOOU',
+						id: 'aZfskVUFT',
 						label: i18n.ts.additionalEmojiDictionary,
 						keywords: ['emoji', 'dictionary', 'additional', 'extra'],
 					},

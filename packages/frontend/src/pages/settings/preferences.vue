@@ -733,6 +733,18 @@ SPDX-License-Identifier: AGPL-3.0-only
 								</MkFolder>
 							</MkDisableSection>
 						</SearchMarker>
+
+						<SearchMarker :keywords="['default', 'note', 'searchableby', 'search']">
+							<MkPreferenceContainer k="defaultNoteSearchableBy">
+								<MkSelect v-model="defaultNoteSearchableBy">
+									<template #label><SearchLabel>{{ i18n.ts._searchableBy.searchableBy }}</SearchLabel></template>
+									<option value="public">{{ i18n.ts._searchableBy.public }}</option>
+									<option value="followers">{{ i18n.ts._searchableBy.followers }}</option>
+									<option value="reacted">{{ i18n.ts._searchableBy.reacted }}</option>
+									<option value="limited">{{ i18n.ts._searchableBy.limited }}</option>
+								</MkSelect>
+							</MkPreferenceContainer>
+						</SearchMarker>
 					</div>
 				</MkFolder>
 			</SearchMarker>
@@ -1162,6 +1174,7 @@ const showReplyTargetNote = prefer.model('showReplyTargetNote');
 const showReplyTargetNoteInSemiTransparent = prefer.model('showReplyTargetNoteInSemiTransparent');
 const nsfwOpenBehavior = prefer.model('nsfwOpenBehavior');
 const showProfilePreview = prefer.model('showProfilePreview');
+const defaultNoteSearchableBy = prefer.model('defaultNoteSearchableBy');
 
 watch(lang, () => {
 	miLocalStorage.setItem('lang', lang.value as string);
