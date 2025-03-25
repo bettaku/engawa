@@ -113,7 +113,7 @@ export async function loadAudio(url: string, options?: { useCache?: boolean; }) 
 	let response: Response;
 
 	try {
-		response = await fetch(url);
+		response = await window.fetch(url);
 	} catch (err) {
 		return;
 	}
@@ -231,7 +231,7 @@ export function createSourceNode(buffer: AudioBuffer, opts: {
  * @param file ファイルのURL（ドライブIDではない）
  */
 export async function getSoundDuration(file: string): Promise<number> {
-	const audioEl = document.createElement('audio');
+	const audioEl = window.document.createElement('audio');
 	audioEl.src = file;
 	return new Promise((resolve) => {
 		const si = setInterval(() => {
@@ -254,7 +254,7 @@ export function isMute(): boolean {
 	}
 
 	// noinspection RedundantIfStatementJS
-	if (prefer.s['sound.useSoundOnlyWhenActive'] && document.visibilityState === 'hidden') {
+	if (prefer.s['sound.useSoundOnlyWhenActive'] && window.document.visibilityState === 'hidden') {
 		// ブラウザがアクティブな時のみサウンドを出力する
 		return true;
 	}

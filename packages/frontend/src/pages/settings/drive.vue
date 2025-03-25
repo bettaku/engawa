@@ -6,6 +6,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 <template>
 <SearchMarker path="/settings/drive" :label="i18n.ts.drive" :keywords="['drive']" icon="ti ti-cloud">
 	<div class="_gaps_m">
+		<MkFeatureBanner icon="/client-assets/cloud_3d.png" color="#0059ff">
+			<SearchKeyword>{{ i18n.ts._settings.driveBanner }}</SearchKeyword>
+		</MkFeatureBanner>
+
 		<SearchMarker :keywords="['capacity', 'usage']">
 			<FormSection first>
 				<template #label><SearchLabel>{{ i18n.ts.usageAmount }}</SearchLabel></template>
@@ -70,12 +74,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<SearchMarker :keywords="['compression', 'compress', 'original', 'lossy', 'resize']">
 					<MkPreferenceContainer k="imageCompressionMode">
 						<MkSelect v-model="imageCompressionMode">
-							<template #label>{{ i18n.ts._imageCompressionMode.title }}</template>
+							<template #label><SearchLabel>{{ i18n.ts._imageCompressionMode.title }}</SearchLabel></template>
 							<option value="resizeCompress">{{ i18n.ts._imageCompressionMode.resizeCompress }}</option>
 							<option value="noResizeCompress">{{ i18n.ts._imageCompressionMode.noResizeCompress }}</option>
 							<option value="resizeCompressLossy">{{ i18n.ts._imageCompressionMode.resizeCompressLossy }}</option>
 							<option value="noResizeCompressLossy">{{ i18n.ts._imageCompressionMode.noResizeCompressLossy }}</option>
-							<template #caption>{{ i18n.ts._imageCompressionMode.description }}</template>
+							<template #caption><SearchKeyword>{{ i18n.ts._imageCompressionMode.description }}</SearchKeyword></template>
 						</MkSelect>
 					</MkPreferenceContainer>
 				</SearchMarker>
@@ -113,12 +117,13 @@ import bytes from '@/filters/bytes.js';
 import MkChart from '@/components/MkChart.vue';
 import { i18n } from '@/i18n.js';
 import { definePage } from '@/page.js';
-import { signinRequired } from '@/account.js';
+import { ensureSignin } from '@/i.js';
 import { prefer } from '@/preferences.js';
 import MkPreferenceContainer from '@/components/MkPreferenceContainer.vue';
+import MkFeatureBanner from '@/components/MkFeatureBanner.vue';
 import MkSelect from '@/components/MkSelect.vue';
 
-const $i = signinRequired();
+const $i = ensureSignin();
 
 const fetching = ref(true);
 const usage = ref<number | null>(null);

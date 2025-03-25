@@ -106,14 +106,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, computed, shallowRef } from 'vue';
+import { onMounted, ref, computed, useTemplateRef } from 'vue';
 import { Chart } from 'chart.js';
 import type { HeatmapSource } from '@/components/MkHeatmap.vue';
 import MkNumberDiff from './MkNumberDiff.vue';
 import MkSelect from '@/components/MkSelect.vue';
 import MkChart from '@/components/MkChart.vue';
-import { useChartTooltip } from '@/utility/use-chart-tooltip.js';
-import { $i } from '@/account.js';
+import { useChartTooltip } from '@/use/use-chart-tooltip.js';
+import { $i } from '@/i.js';
 import * as os from '@/os.js';
 import { misskeyApiGet } from '@/utility/misskey-api.js';
 import { instance } from '@/instance.js';
@@ -133,8 +133,8 @@ const chartLimit = 500;
 const chartSpan = ref<'hour' | 'day'>('hour');
 const chartSrc = ref('active-users');
 const heatmapSrc = ref<HeatmapSource>('active-users');
-const subDoughnutEl = shallowRef<HTMLCanvasElement>();
-const pubDoughnutEl = shallowRef<HTMLCanvasElement>();
+const subDoughnutEl = useTemplateRef('subDoughnutEl');
+const pubDoughnutEl = useTemplateRef('pubDoughnutEl');
 const federationPubActive = ref<number | null>(null);
 const federationPubActiveDiff = ref<number | null>(null);
 const federationSubActive = ref<number | null>(null);
@@ -154,7 +154,7 @@ function createDoughnut(chartEl, tooltip, data) {
 			labels: data.map(x => x.name),
 			datasets: [{
 				backgroundColor: data.map(x => x.color),
-				borderColor: getComputedStyle(document.documentElement).getPropertyValue('--MI_THEME-panel'),
+				borderColor: getComputedStyle(window.document.documentElement).getPropertyValue('--MI_THEME-panel'),
 				borderWidth: 2,
 				hoverOffset: 0,
 				data: data.map(x => x.value),

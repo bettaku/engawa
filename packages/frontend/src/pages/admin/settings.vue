@@ -310,7 +310,7 @@ import { fetchInstance, instance } from '@/instance.js';
 import * as os from '@/os.js';
 import { misskeyApi } from '@/utility/misskey-api.js';
 import { definePage } from '@/page.js';
-import { useForm } from '@/utility/use-form.js';
+import { useForm } from '@/use/use-form.js';
 
 const meta = await misskeyApi('admin/meta');
 

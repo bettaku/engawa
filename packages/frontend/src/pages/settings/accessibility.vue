@@ -6,6 +6,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 <template>
 <SearchMarker path="/settings/accessibility" :label="i18n.ts.accessibility" :keywords="['accessibility']" icon="ti ti-accessible">
 	<div class="_gaps_m">
+		<MkFeatureBanner icon="/client-assets/mens_room_3d.png" color="#0011ff">
+			<SearchKeyword>{{ i18n.ts._settings.accessibilityBanner }}</SearchKeyword>
+		</MkFeatureBanner>
+
 		<div class="_gaps_s">
 			<SearchMarker :keywords="['animation', 'motion', 'reduce']">
 				<MkPreferenceContainer k="animation">
@@ -22,20 +26,18 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<template #caption><i class="ti ti-alert-triangle" style="color: var(--MI_THEME-warn);"></i> {{ i18n.ts.disableShowingAnimatedImagesDescription }}</template>
 					</MkSwitch>
 				</MkPreferenceContainer>
-			</SearchMarker>
 
-			<MkDisableSection :disabled="disableShowingAnimatedImages">
-				<SearchMarker :keywords="['disable', 'animation', 'image', 'photo', 'picture', 'media', 'thumbnail', 'gif']">
+				<MkDisableSection :disabled="disableShowingAnimatedImages">
 					<MkPreferenceContainer k="disableShowingAnimatedImages">
 						<MkSelect v-model="showingAnimatedImages" style="margin-left: 44px;">
 							<option value="always">{{ i18n.ts._showingAnimatedImages.always }}</option>
 							<option value="interaction">{{ i18n.ts._showingAnimatedImages.interaction }}</option>
 							<option value="inactive">{{ i18n.ts._showingAnimatedImages.inactive }}</option>
-							<template #caption>{{ i18n.ts.showingAnimatedImagesDescription }}</template>
+							<template #caption><SearchKeyword>{{ i18n.ts.showingAnimatedImagesDescription }}</SearchKeyword></template>
 						</MkSelect>
 					</MkPreferenceContainer>
-				</SearchMarker>
-			</MkDisableSection>
+				</MkDisableSection>
+			</SearchMarker>
 
 			<MkDisableSection :disabled="!prefer.s.advancedMfm">
 				<SearchMarker :keywords="['mfm', 'mfc', 'enable', 'show', 'animated']">
@@ -79,7 +81,27 @@ SPDX-License-Identifier: AGPL-3.0-only
 					</MkSwitch>
 				</MkPreferenceContainer>
 			</SearchMarker>
+
+			<SearchMarker :keywords="['text', 'selectable']">
+				<MkPreferenceContainer k="makeEveryTextElementsSelectable">
+					<MkSwitch v-model="makeEveryTextElementsSelectable">
+						<template #label><SearchLabel>{{ i18n.ts._settings.makeEveryTextElementsSelectable }}</SearchLabel></template>
+						<template #caption>{{ i18n.ts._settings.makeEveryTextElementsSelectable_description }}</template>
+					</MkSwitch>
+				</MkPreferenceContainer>
+			</SearchMarker>
 		</div>
+
+		<SearchMarker :keywords="['menu', 'style', 'popup', 'drawer']">
+			<MkPreferenceContainer k="menuStyle">
+				<MkSelect v-model="menuStyle">
+					<template #label><SearchLabel>{{ i18n.ts.menuStyle }}</SearchLabel></template>
+					<option value="auto">{{ i18n.ts.auto }}</option>
+					<option value="popup">{{ i18n.ts.popup }}</option>
+					<option value="drawer">{{ i18n.ts.drawer }}</option>
+				</MkSelect>
+			</MkPreferenceContainer>
+		</SearchMarker>
 
 		<SearchMarker :keywords="['contextmenu', 'system', 'native']">
 			<MkPreferenceContainer k="contextMenu">
@@ -104,6 +126,7 @@ import { reloadAsk } from '@/utility/reload-ask.js';
 import { i18n } from '@/i18n.js';
 import { definePage } from '@/page.js';
 import MkPreferenceContainer from '@/components/MkPreferenceContainer.vue';
+import MkFeatureBanner from '@/components/MkFeatureBanner.vue';
 import MkDisableSection from '@/components/MkDisableSection.vue';
 
 const reduceAnimation = prefer.model('animation', v => !v, v => !v);
@@ -113,6 +136,8 @@ const keepScreenOn = prefer.model('keepScreenOn');
 const enableHorizontalSwipe = prefer.model('enableHorizontalSwipe');
 const useNativeUiForVideoAudioPlayer = prefer.model('useNativeUiForVideoAudioPlayer');
 const contextMenu = prefer.model('contextMenu');
+const menuStyle = prefer.model('menuStyle');
+const makeEveryTextElementsSelectable = prefer.model('makeEveryTextElementsSelectable');
 
 const showingAnimatedImages = prefer.model('showingAnimatedImages');
 const emojiStyle = prefer.model('emojiStyle');
@@ -120,6 +145,7 @@ const emojiStyle = prefer.model('emojiStyle');
 watch([
 	keepScreenOn,
 	contextMenu,
+	makeEveryTextElementsSelectable,
 	disableShowingAnimatedImages,
 	showingAnimatedImages,
 ], async () => {
