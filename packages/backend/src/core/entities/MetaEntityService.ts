@@ -3,9 +3,6 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { Inject, Injectable } from '@nestjs/common';
-import JSON5 from 'json5';
-import { Brackets } from 'typeorm';
 import type { Config } from '@/config.js';
 import { MAX_NOTE_TEXT_LENGTH } from '@/const.js';
 import { SystemAccountService } from '@/core/SystemAccountService.js';
@@ -15,6 +12,9 @@ import { DI } from '@/di-symbols.js';
 import type { Packed } from '@/misc/json-schema.js';
 import type { AdsRepository } from '@/models/_.js';
 import type { MiMeta } from '@/models/Meta.js';
+import { Inject, Injectable } from '@nestjs/common';
+import JSON5 from 'json5';
+import { Brackets } from 'typeorm';
 
 @Injectable()
 export class MetaEntityService {
@@ -55,12 +55,14 @@ export class MetaEntityService {
 		if (instance.defaultLightTheme) {
 			try {
 				defaultLightTheme = JSON.stringify(JSON5.parse(instance.defaultLightTheme));
-			} catch (e) { /* empty */ }
+			} catch (e) {
+			}
 		}
 		if (instance.defaultDarkTheme) {
 			try {
 				defaultDarkTheme = JSON.stringify(JSON5.parse(instance.defaultDarkTheme));
-			} catch (e) { /* empty */ }
+			} catch (e) {
+			}
 		}
 
 		const packed: Packed<'MetaLite'> = {
@@ -126,7 +128,6 @@ export class MetaEntityService {
 			enableEmail: instance.enableEmail,
 			enableServiceWorker: instance.enableServiceWorker,
 			customRobotsTxt: instance.customRobotsTxt,
-			enableAuthorizedFetch: instance.enableAuthorizedFetch,
 
 			translatorAvailable: instance.translatorType != null,
 

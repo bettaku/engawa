@@ -42,9 +42,6 @@ export class ActivityPubServerService {
 		@Inject(DI.config)
 		private config: Config,
 
-		@Inject(DI.meta)
-		private meta: MiMeta,
-
 		@Inject(DI.usersRepository)
 		private usersRepository: UsersRepository,
 
@@ -105,10 +102,6 @@ export class ActivityPubServerService {
 
 	@bindThis
 	private inbox(request: FastifyRequest, reply: FastifyReply) {
-		if (this.meta.federation === 'none' || (this.meta.federation === 'specified' && !this.meta.federationHosts.includes(request.url))) {
-			reply.code(403);
-			return;
-		}
 		let signature;
 
 		try {
@@ -272,11 +265,7 @@ export class ActivityPubServerService {
 				user.followersCount,
 				`${partOf}?page=true`,
 			);
-			if (this.meta.enableAuthorizedFetch) {
-				reply.header('Cache-Control', 'private, max-age=0, must-revalidate');
-			} else {
-				reply.header('Cache-Control', 'public, max-age=180');
-			}
+			reply.header('Cache-Control', 'public, max-age=180');
 			this.setResponseType(request, reply);
 			return (this.apRendererService.addContext(rendered));
 		}
@@ -373,11 +362,7 @@ export class ActivityPubServerService {
 				user.followingCount,
 				`${partOf}?page=true`,
 			);
-			if (this.meta.enableAuthorizedFetch) {
-				reply.header('Cache-Control', 'private, max-age=0, must-revalidate');
-			} else {
-				reply.header('Cache-Control', 'public, max-age=180');
-			}
+			reply.header('Cache-Control', 'public, max-age=180');
 			this.setResponseType(request, reply);
 			return (this.apRendererService.addContext(rendered));
 		}
@@ -421,11 +406,7 @@ export class ActivityPubServerService {
 			renderedNotes,
 		);
 
-		if (this.meta.enableAuthorizedFetch) {
-			reply.header('Cache-Control', 'private, max-age=0, must-revalidate');
-		} else {
-			reply.header('Cache-Control', 'public, max-age=180');
-		}
+		reply.header('Cache-Control', 'public, max-age=180');
 		this.setResponseType(request, reply);
 		return (this.apRendererService.addContext(rendered));
 	}
@@ -519,11 +500,7 @@ export class ActivityPubServerService {
 				`${partOf}?page=true`,
 				`${partOf}?page=true&since_id=000000000000000000000000`,
 			);
-			if (this.meta.enableAuthorizedFetch) {
-				reply.header('Cache-Control', 'private, max-age=0, must-revalidate');
-			} else {
-				reply.header('Cache-Control', 'public, max-age=180');
-			}
+			reply.header('Cache-Control', 'public, max-age=180');
 			this.setResponseType(request, reply);
 			return (this.apRendererService.addContext(rendered));
 		}
@@ -551,11 +528,7 @@ export class ActivityPubServerService {
 			return;
 		}
 
-		if (this.meta.enableAuthorizedFetch) {
-			reply.header('Cache-Control', 'private, max-age=0, must-revalidate');
-		} else {
-			reply.header('Cache-Control', 'public, max-age=180');
-		}
+		reply.header('Cache-Control', 'public, max-age=180');
 		this.setResponseType(request, reply);
 		return (this.apRendererService.addContext(await this.apRendererService.renderPerson(user as MiLocalUser)));
 	}
@@ -648,11 +621,7 @@ export class ActivityPubServerService {
 				return;
 			}
 
-			if (this.meta.enableAuthorizedFetch) {
-				reply.header('Cache-Control', 'private, max-age=0, must-revalidate');
-			} else {
-				reply.header('Cache-Control', 'public, max-age=180');
-			}
+			reply.header('Cache-Control', 'public, max-age=180');
 			this.setResponseType(request, reply);
 			return this.apRendererService.addContext(await this.apRendererService.renderNote(note, false));
 		});
@@ -678,11 +647,7 @@ export class ActivityPubServerService {
 				return;
 			}
 
-			if (this.meta.enableAuthorizedFetch) {
-				reply.header('Cache-Control', 'private, max-age=0, must-revalidate');
-			} else {
-				reply.header('Cache-Control', 'public, max-age=180');
-			}
+			reply.header('Cache-Control', 'public, max-age=180');
 			this.setResponseType(request, reply);
 			return (this.apRendererService.addContext(await this.packActivity(note)));
 		});
@@ -730,11 +695,7 @@ export class ActivityPubServerService {
 			const keypair = await this.userKeypairService.getUserKeypair(user.id);
 
 			if (this.userEntityService.isLocalUser(user)) {
-				if (this.meta.enableAuthorizedFetch) {
-					reply.header('Cache-Control', 'private, max-age=0, must-revalidate');
-				} else {
-					reply.header('Cache-Control', 'public, max-age=180');
-				}
+				reply.header('Cache-Control', 'public, max-age=180');
 				this.setResponseType(request, reply);
 				return (this.apRendererService.addContext(this.apRendererService.renderKey(user, keypair)));
 			} else {
@@ -824,11 +785,7 @@ export class ActivityPubServerService {
 				return;
 			}
 
-			if (this.meta.enableAuthorizedFetch) {
-				reply.header('Cache-Control', 'private, max-age=0, must-revalidate');
-			} else {
-				reply.header('Cache-Control', 'public, max-age=180');
-			}
+			reply.header('Cache-Control', 'public, max-age=180');
 			this.setResponseType(request, reply);
 			return (this.apRendererService.addContext(await this.apRendererService.renderLike(reaction, note)));
 		});
@@ -859,11 +816,7 @@ export class ActivityPubServerService {
 				return;
 			}
 
-			if (this.meta.enableAuthorizedFetch) {
-				reply.header('Cache-Control', 'private, max-age=0, must-revalidate');
-			} else {
-				reply.header('Cache-Control', 'public, max-age=180');
-			}
+			reply.header('Cache-Control', 'public, max-age=180');
 			this.setResponseType(request, reply);
 			return (this.apRendererService.addContext(this.apRendererService.renderFollow(follower, followee)));
 		});
@@ -903,11 +856,7 @@ export class ActivityPubServerService {
 				return;
 			}
 
-			if (this.meta.enableAuthorizedFetch) {
-				reply.header('Cache-Control', 'private, max-age=0, must-revalidate');
-			} else {
-				reply.header('Cache-Control', 'public, max-age=180');
-			}
+			reply.header('Cache-Control', 'public, max-age=180');
 			this.setResponseType(request, reply);
 			return (this.apRendererService.addContext(this.apRendererService.renderFollow(follower, followee)));
 		});

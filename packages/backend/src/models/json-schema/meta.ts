@@ -314,10 +314,6 @@ export const packedMetaLiteSchema = {
 			type: 'string',
 			optional: false, nullable: true,
 		},
-		enableAuthorizedFetch: {
-			type: 'boolean',
-			optional: false, nullable: false,
-		},
 	},
 } as const;
 

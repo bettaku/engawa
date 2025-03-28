@@ -228,7 +228,6 @@ export const paramDef = {
 		moderatorInactivityLimitDays: { type: 'integer', nullable: false },
 		bubbleInstances: { type: 'array', items: { type: 'string' } },
 		customRobotsTxt: { type: 'string', nullable: true },
-		enableAuthorizedFetch: { type: 'boolean' },
 	},
 	required: [],
 } as const;
@@ -854,10 +853,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			if (ps.customRobotsTxt !== undefined) {
 				set.customRobotsTxt = ps.customRobotsTxt;
-			}
-
-			if (ps.enableAuthorizedFetch !== undefined) {
-				set.enableAuthorizedFetch = ps.enableAuthorizedFetch;
 			}
 
 			const before = await this.metaService.fetch(true);

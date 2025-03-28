@@ -852,9 +852,4 @@ export class MiMeta {
 		length: 2048, nullable: true,
 	})
 	public customRobotsTxt: string | null;
-
-	@Column('boolean', {
-		default: false,
-	})
-	public enableAuthorizedFetch: boolean;
 }

@@ -5455,7 +5455,6 @@ export type components = {
       moderatorInactivityLimitDays: number;
       statusUrl: string | null;
       customRobotsTxt: string | null;
-      enableAuthorizedFetch: boolean;
     };
     MetaDetailedOnly: {
       features?: {
@@ -9383,7 +9382,6 @@ export type operations = {
             bubbleInstances: string[];
             statusUrl: string | null;
             customRobotsTxt: string | null;
-            enableAuthorizedFetch: boolean;
           };
         };
       };
@@ -11867,7 +11865,6 @@ export type operations = {
           moderatorInactivityLimitDays?: number;
           bubbleInstances?: string[];
           customRobotsTxt?: string | null;
-          enableAuthorizedFetch?: boolean;
         };
       };
     };

@@ -132,7 +132,6 @@ export class NodeinfoServerService {
 					enableServiceWorker: meta.enableServiceWorker,
 					proxyAccountName: proxyAccount.username,
 					themeColor: meta.themeColor ?? '#ffbcdc',
-					enableAuthorizedFetch: meta.enableAuthorizedFetch,
 				},
 			};
 			if (version >= 21) {
