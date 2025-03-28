@@ -383,6 +383,11 @@ export const packedUserDetailedNotMeOnlySchema = {
 			nullable: false, optional: false,
 			enum: ['public', 'followers', 'private'],
 		},
+		chatScope: {
+			type: 'string',
+			nullable: false, optional: false,
+			enum: ['everyone', 'following', 'followers', 'mutual', 'none'],
+		},
 		roles: {
 			type: 'array',
 			nullable: false, optional: false,
@@ -569,11 +574,11 @@ export const packedMeDetailedOnlySchema = {
 			type: 'boolean',
 			nullable: false, optional: false,
 		},
-		hasUnreadMessagingMessage: {
+		hasUnreadChannel: {
 			type: 'boolean',
 			nullable: false, optional: false,
 		},
-		hasUnreadChannel: {
+		hasUnreadChatMessages: {
 			type: 'boolean',
 			nullable: false, optional: false,
 		},
@@ -637,6 +642,7 @@ export const packedMeDetailedOnlySchema = {
 				followRequestAccepted: { optional: true, ...notificationRecieveConfig },
 				groupInvited: { optional: true, ...notificationRecieveConfig },
 				roleAssigned: { optional: true, ...notificationRecieveConfig },
+				chatRoomInvitationReceived: { optional: true, ...notificationRecieveConfig },
 				achievementEarned: { optional: true, ...notificationRecieveConfig },
 				app: { optional: true, ...notificationRecieveConfig },
 				test: { optional: true, ...notificationRecieveConfig },

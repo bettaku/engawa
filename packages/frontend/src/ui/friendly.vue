@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <template>
 <div :class="$style.root">
-	<XSidebar v-if="!isMobile" :class="$style.sidebar"/>
+	<XSidebar v-if="!isMobile" :class="$style.sidebar" :showWidgetButton="!isDesktop" @widgetButtonClick="widgetsShowing = true"/>
 
 	<div :class="$style.contents" @contextmenu.stop="onContextmenu">
 		<div v-if="!showEl2">
@@ -17,7 +17,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<StackingRouterView v-if="prefer.s['experimental.stackingRouterView']"/>
 			<RouterView v-else/>
 		</div>
-		<div v-if="isMobile" ref="navFooter" :class="[$style.nav, { [$style.reduceAnimation]: !prefer.s.animation, [$style.showEl]: (showEl && ['hideFloatBtnNavBar', 'hide'].includes(<string>prefer.s.displayHeaderNavBarWhenScroll)) }]">
+		<div v-if="isMobile" ref="navFooter" :class="[$style.nav, { [$style.reduceBlurEffect]: !prefer.s.useBlurEffect, [$style.reduceAnimation]: !prefer.s.animation, [$style.showEl]: (showEl && ['hideFloatBtnNavBar', 'hide'].includes(<string>prefer.s.displayHeaderNavBarWhenScroll)) }]">
 			<!-- <button v-if="store.s.showMenuButtonInNavbar" v-vibrate="prefer.s['vibrate.on.system'] ? 5 : []" :class="$style.navButton" class="_button" @click="drawerMenuShowing = true"><i :class="$style.navButtonIcon" class="ti ti-menu-2"></i><span v-if="menuIndicated" :class="$style.navButtonIndicator" class="_blink"><i class="_indicatorCircle"></i></span></button> -->
 			<button v-if="store.s.showHomeButtonInNavbar" v-vibrate="prefer.s['vibrate.on.system'] ? 5 : []" :class="[$style.navButton, { [$style.active]: isRoot }]" class="_button" @click="mainRouter.push('/')" @touchstart="openAccountMenu" @touchend="closeAccountMenu"><i :class="$style.navButtonIcon" class="ti ti-home"></i></button>
 			<button v-if="store.s.showExploreButtonInNavbar" v-vibrate="prefer.s['vibrate.on.system'] ? 5 : []" :class="[$style.navButton, { [$style.active]: mainRouter.currentRoute.value.name === 'explore' }]" class="_button" @click="mainRouter.push('/explore')"><i :class="$style.navButtonIcon" class="ti ti-hash"></i></button>
@@ -29,9 +29,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<i v-else class="_indicatorCircle"></i>
 				</span>
 			</button>
-			<button v-if="store.s.showMessageButtonInNavbar" v-vibrate="prefer.s['vibrate.on.system'] ? 5 : []" :class="[$style.navButton, { [$style.active]: ['messaging', 'messaging-room', 'messaging-room-group'].includes(<string>mainRouter.currentRoute.value.name) }]" class="_button" @click="mainRouter.push('/my/messaging')">
+			<button v-if="store.s.showChatButtonInNavbar" v-vibrate="prefer.s['vibrate.on.system'] ? 5 : []" :class="[$style.navButton, { [$style.active]: ['chat', 'chat-room'].includes(<string>mainRouter.currentRoute.value.name) }]" class="_button" @click="mainRouter.push('/chat')">
 				<i :class="$style.navButtonIcon" class="ti ti-messages"></i>
-				<span v-if="$i?.hasUnreadMessagingMessage" :class="$style.navButtonIndicator" class="_blink">
+				<span v-if="$i != null && $i.hasUnreadChatMessages" :class="$style.navButtonIndicator" class="_blink">
 					<i class="_indicatorCircle"></i>
 				</span>
 			</button>
@@ -49,10 +49,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</div>
 
 	<button v-if="isMobile && enableNavButton.includes(<string>mainRouter.currentRoute.value.name)" v-vibrate="prefer.s['vibrate.on.system'] ? 5 : []" :class="[$style.floatNavButton, { [$style.reduceBlurEffect]: !prefer.s.useBlurEffect, [$style.reduceAnimation]: !prefer.s.animation, [$style.showEl]: (showEl && ['hideHeaderFloatBtn', 'hideFloatBtnOnly', 'hideFloatBtnNavBar', 'hide'].includes(<string>prefer.s.displayHeaderNavBarWhenScroll)) }]" class="_button" @click="drawerMenuShowing = true"><CPAvatar :class="$style.floatNavButtonAvatar" :user="$i"/></button>
-
-	<button v-if="isMobile && enablePostButton.includes(<string>mainRouter.currentRoute.value.name)" v-vibrate="prefer.s['vibrate.on.system'] ? 5 : []" :class="[$style.floatPostButton, { [$style.reduceBlurEffect]: !prefer.s.useBlurEffect, [$style.reduceAnimation]: !prefer.s.animation, [$style.showEl]: (showEl && ['hideHeaderFloatBtn', 'hideFloatBtnOnly', 'hideFloatBtnNavBar', 'hide'].includes(<string>prefer.s.displayHeaderNavBarWhenScroll)) }]" :style="{ background: PostBg }" class="_button" @click="openMessage"><span :class="[$style.floatPostButtonBg, { [$style.reduceBlurEffect]: !prefer.s.useBlurEffect }]"></span><i v-if="mainRouter.currentRoute.value.name === 'messaging' && !(['messaging-room', 'messaging-room-group'].includes(<string>mainRouter.currentRoute.value.name))" class="ti ti-plus"></i><i v-else-if="enablePostButton.includes(<string>mainRouter.currentRoute.value.name)" class="ti ti-pencil"></i></button>
-
-	<button v-if="!isDesktop && !pageMetadata?.needWideArea && !isMobile" v-vibrate="prefer.s['vibrate.on.system'] ? 5 : []" :class="[$style.widgetButton, { [$style.reduceAnimation]: !prefer.s.animation, [$style.showEl]: (showEl && ['hideHeaderFloatBtn', 'hideFloatBtnOnly', 'hideFloatBtnNavBar', 'hide'].includes(<string>prefer.s.displayHeaderNavBarWhenScroll)) }]" class="_button" @click="widgetsShowing = true"><i class="ti ti-apps"></i></button>
+	<button v-if="isMobile && enablePostButton.includes(<string>mainRouter.currentRoute.value.name)" v-vibrate="prefer.s['vibrate.on.system'] ? 5 : []" :class="[$style.floatPostButton, { [$style.reduceBlurEffect]: !prefer.s.useBlurEffect, [$style.reduceAnimation]: !prefer.s.animation, [$style.showEl]: (showEl && ['hideHeaderFloatBtn', 'hideFloatBtnOnly', 'hideFloatBtnNavBar', 'hide'].includes(<string>prefer.s.displayHeaderNavBarWhenScroll)) }]" :style="{ background: PostBg }" class="_button" @click="createChat"><span :class="[$style.floatPostButtonBg, { [$style.reduceBlurEffect]: !prefer.s.useBlurEffect }]"></span><i v-if="mainRouter.currentRoute.value.name === 'chat' && !(['chat-room'].includes(<string>mainRouter.currentRoute.value.name))" class="ti ti-plus"></i><i v-else-if="enablePostButton.includes(<string>mainRouter.currentRoute.value.name)" class="ti ti-pencil"></i></button>
 
 	<Transition
 		:enterActiveClass="prefer.s.animation ? $style.transition_menuDrawerBg_enterActive : ''"
@@ -161,14 +158,14 @@ const enableNavButton = [
 	'index',
 	'explore',
 	'my-notifications',
-	'messaging',
+	'chat',
 ];
 
 const enablePostButton = [
 	'index',
 	'explore',
 	'my-notifications',
-	'messaging',
+	'chat',
 	'user',
 ];
 
@@ -256,11 +253,11 @@ onMounted(() => {
 	globalEvents.on('queueUpdated', (q) => queueUpdated(q));
 
 	calcBg();
-	globalEvents.on('themeChanged', calcBg);
+	globalEvents.on('themeChanging', calcBg);
 });
 
 onUnmounted(() => {
-	globalEvents.off('themeChanged', calcBg);
+	globalEvents.off('themeChanging', calcBg);
 });
 
 const onContextmenu = (ev) => {
@@ -301,8 +298,8 @@ function closeAccountMenu() {
 	longTouchNavHome.value = false;
 }
 
-function openMessage(ev: MouseEvent) {
-	if (mainRouter.currentRoute.value.name === 'messaging' && !(['messaging-room', 'messaging-room-group'].includes(<string>mainRouter.currentRoute.value.name))) globalEvents.emit('openMessage', ev);
+function createChat(ev: MouseEvent) {
+	if (mainRouter.currentRoute.value.name === 'chat' && !(['chat-room'].includes(<string>mainRouter.currentRoute.value.name))) globalEvents.emit('createChat', ev);
 	else if (enablePostButton.includes(<string>mainRouter.currentRoute.value.name)) os.post();
 }
 
@@ -389,7 +386,7 @@ $float-button-size: 65px;
 .transition_widgetsDrawer_enterFrom,
 .transition_widgetsDrawer_leaveTo {
 	opacity: 0;
-	transform: translateX(240px);
+	transform: translateX(-240px);
 }
 
 .root {
@@ -422,13 +419,13 @@ $float-button-size: 65px;
 	position: fixed;
 	z-index: 1000;
 	bottom: 0;
+	padding: 0 10px;
 	display: flex;
 	width: 100%;
 	box-sizing: border-box;
 	-webkit-backdrop-filter: var(--MI-blur, blur(15px));
 	backdrop-filter: var(--MI-blur, blur(15px));
 	border-top: solid 0.5px var(--MI_THEME-divider);
-	padding: 0 10px;
 	transition: opacity 0.5s, transform 0.5s;
 
 	&.reduceBlurEffect {
@@ -628,29 +625,6 @@ $float-button-size: 65px;
 	}
 }
 
-.widgetButton {
-	display: block;
-	position: fixed;
-	z-index: 1000;
-	bottom: 32px;
-	right: 32px;
-	width: 64px;
-	height: 64px;
-	border-radius: 100%;
-	box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.2), 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12);
-	font-size: 22px;
-	background: var(--MI_THEME-panel);
-	transition: opacity 0.5s, transform 0.5s;
-
-	&.reduceAnimation {
-		transition: opacity 0s, transform 0s;
-	}
-
-	&.showEl {
-		transform: translateX(100px);
-	}
-}
-
 .widgetsDrawerBg {
 	z-index: 1001;
 }
@@ -658,7 +632,7 @@ $float-button-size: 65px;
 .widgetsDrawer {
 	position: fixed;
 	top: 0;
-	right: 0;
+	left: 0;
 	z-index: 1001;
 	width: 310px;
 	height: 100dvh;
