@@ -81,7 +81,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<div v-if="targetChannel" :class="$style.colorBar" :style="{ background: targetChannel.color }"></div>
 		<textarea ref="textareaEl" v-model="text" :class="[$style.text]" :disabled="posting || posted" :readonly="textAreaReadOnly" :placeholder="placeholder" data-cy-post-form-text @click="formClick" @keydown="onKeydown" @keyup="onKeyup" @paste="onPaste" @compositionupdate="onCompositionUpdate" @compositionend="onCompositionEnd"/>
 		<div v-if="maxTextLength - textLength < 100" :class="['_acrylic', $style.textCount, { [$style.textOver]: textLength > maxTextLength }]">{{ maxTextLength - textLength }}</div>
-		<div v-if="!showForm" style="position: absolute; bottom: 0; right: 12px;" :class="$style.submit">
+		<div v-if="!showForm" style="position: fixed; bottom: 0; right: 8px;" :class="$style.submit">
 			<button v-click-anime class="_button" :class="$style.submitButton" :disabled="!canPost && $i" data-cy-open-post-form-submit @click="$i ? post : signin()">
 				<div :class="$style.submitInner">
 					<template v-if="posted"></template>
@@ -182,7 +182,7 @@ import * as sound from '@/utility/sound.js';
 
 const $i = ensureSignin();
 
-const modal = inject('modal');
+const modal = inject(DI.inModal, false);
 
 const props = withDefaults(defineProps<PostFormProps & {
 	fixed?: boolean;
@@ -1639,6 +1639,7 @@ defineExpose({
 }
 
 .submit {
+	display: flex;
 	margin: 12px 12px 12px 6px;
 	vertical-align: bottom;
 }
@@ -1807,7 +1808,7 @@ html[data-color-scheme=light] .preview {
 	padding: 0 30px;
 	margin: 0;
 	width: 100%;
-	font-size: 16px;
+	font-size: 110%;
 	border: none;
 	border-radius: 0;
 	background: transparent;
@@ -1867,7 +1868,7 @@ html[data-color-scheme=light] .preview {
 	}
 
   &.showForm {
-    margin-top: 20px;
+    margin: 20px 0;
   }
 }
 

@@ -18,7 +18,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import XHome from './home.home.vue';
 import XInvitations from './home.invitations.vue';
 import XJoiningRooms from './home.joiningRooms.vue';
@@ -28,16 +28,17 @@ import { definePage } from '@/page.js';
 import MkHorizontalSwipe from '@/components/MkHorizontalSwipe.vue';
 import MkPolkadots from '@/components/MkPolkadots.vue';
 import { globalEvents } from '@/events.js';
+import { $i } from '@/i.js';
 
 const tab = ref('home');
 
-const headerActions = computed(() => [{
+const headerActions = computed(() => [$i?.policies.canChat ? {
 	icon: 'ti ti-plus',
 	text: i18n.ts.startChat,
 	handler: (ev) => {
 		globalEvents.emit('createChat', ev);
 	},
-}]);
+} : null]);
 
 const headerTabs = computed(() => [{
 	key: 'home',

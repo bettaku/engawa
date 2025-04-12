@@ -315,7 +315,7 @@ export function getUserMenu(user: Misskey.entities.UserDetailed, router: Router 
 	} else {
 		menuItems.push({
 			icon: 'ti ti-code',
-			text: i18n.ts.genEmbedCode,
+			text: i18n.ts.embed,
 			type: 'parent',
 			children: [{
 				text: i18n.ts.noteOfThisUser,
@@ -561,12 +561,16 @@ export function getUserMenu(user: Misskey.entities.UserDetailed, router: Router 
 				const canonical = user.host === null ? `@${user.username}` : `@${user.username}@${user.host}`;
 				os.post({ specified: user, initialText: `${canonical} ` });
 			},
-		}, {
-			type: 'link',
-			icon: 'ti ti-messages',
-			text: i18n.ts._chat.chatWithThisUser,
-			to: `/chat/user/${user.id}`,
 		});
+
+		if ($i.policies.canChat && user.canChat && user.host == null) {
+			menuItems.push({
+				type: 'link',
+				icon: 'ti ti-messages',
+				text: i18n.ts._chat.chatWithThisUser,
+				to: `/chat/user/${user.id}`,
+			});
+		}
 
 		if (meId !== user.id) {
 			if (user.host === null) {

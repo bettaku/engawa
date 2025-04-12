@@ -135,6 +135,7 @@ export class MetaEntityService {
 
 			policies: { ...DEFAULT_POLICIES, ...instance.policies },
 
+			sentryForFrontend: this.config.sentryForFrontend ?? null,
 			mediaProxy: this.config.mediaProxy,
 			enableUrlPreview: instance.urlPreviewEnabled,
 			urlPreviewEndpoint: instance.directSummalyProxy ? (instance.urlPreviewSummaryProxyUrl || `${this.config.url}/url` ) : `${this.config.url}/url`,
