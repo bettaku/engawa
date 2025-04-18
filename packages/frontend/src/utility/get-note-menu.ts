@@ -417,7 +417,7 @@ export function getNoteMenu(props: {
 			menuItems.push(getCopyNoteOriginalLinkMenu(appearNote, i18n.ts.copyRemoteLink));
 		}
 
-		menuItems.push(getCopyNoteLinkMenu(appearNote, 'link'), {
+		menuItems.push(getCopyNoteLinkMenu(appearNote, i18n.ts.copyLink), {
 			icon: 'ti ti-copy',
 			text: i18n.ts.copyContent,
 			action: copyContent,
@@ -606,7 +606,7 @@ export function getNoteMenu(props: {
 			});
 		}
 	} else {
-		menuItems.push(getCopyNoteLinkMenu(appearNote, i18n.ts.copyLink, 'link'), {
+		menuItems.push(getCopyNoteLinkMenu(appearNote, i18n.ts.copyLink), {
 			icon: 'ti ti-copy',
 			text: i18n.ts.copyContent,
 			action: copyContent,
