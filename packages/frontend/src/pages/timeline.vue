@@ -190,7 +190,6 @@ const enableGlobalTimeline = ref(prefer.s.enableGlobalTimeline);
 const enableBubbleTimeline = ref(prefer.s.enableBubbleTimeline);
 const enableListTimeline = ref(prefer.s.enableListTimeline);
 const enableAntennaTimeline = ref(prefer.s.enableAntennaTimeline);
-const enableChannelTimeline = ref(prefer.s.enableChannelTimeline);
 
 const forceCollapseAllRenotes = ref(prefer.s.forceCollapseAllRenotes);
 const collapseRenotes = ref(prefer.s.collapseRenotes);
@@ -249,11 +248,6 @@ watch(enableListTimeline, (x) => {
 
 watch(enableAntennaTimeline, (x) => {
 	prefer.commit('enableAntennaTimeline', x);
-	reloadAsk({ reason: i18n.ts.reloadToApplySetting, unison: true });
-});
-
-watch(enableChannelTimeline, (x) => {
-	prefer.commit('enableChannelTimeline', x);
 	reloadAsk({ reason: i18n.ts.reloadToApplySetting, unison: true });
 });
 
@@ -524,11 +518,6 @@ const headerActions = computed(() => {
 							text: i18n.ts.antennas,
 							icon: 'ti ti-antenna',
 							ref: enableAntennaTimeline,
-						}, {
-							type: 'switch',
-							text: i18n.ts.channel,
-							icon: 'ti ti-device-tv',
-							ref: enableChannelTimeline,
 						});
 
 						return displayOfTimelineChildMenu;
@@ -641,11 +630,6 @@ const headerTabs = computed(() => [...(prefer.r.pinnedUserLists.value.map(l => (
 	title: i18n.ts.antennas,
 	iconOnly: true,
 	onClick: chooseAntenna,
-}] : []), ...(prefer.s.enableChannelTimeline ? [{
-	icon: 'ti ti-device-tv',
-	title: i18n.ts.channel,
-	iconOnly: true,
-	onClick: chooseChannel,
 }] : [])] as Tab[]);
 
 const headerTabsWhenNotLogin = computed(() => [...availableBasicTimelines().map(tl => ({

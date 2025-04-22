@@ -32,10 +32,9 @@ import { vibrate } from '@/utility/vibrate.js';
 import { globalEvents } from '@/events.js';
 
 const props = withDefaults(defineProps<{
-	src: BasicTimelineType | 'mentions' | 'directs' | 'list' | 'antenna' | 'channel' | 'role';
+	src: BasicTimelineType | 'mentions' | 'directs' | 'list' | 'antenna' | 'role';
 	list?: string;
 	antenna?: string;
-	channel?: string;
 	role?: string;
 	sound?: boolean;
 	withRenotes?: boolean;
@@ -60,7 +59,6 @@ const emit = defineEmits<{
 
 provide('inTimeline', true);
 provide('tl_withSensitive', computed(() => props.withSensitive));
-provide('inChannel', computed(() => props.src === 'channel'));
 
 type TimelineQueryType = {
 	antennaId?: string,
@@ -71,7 +69,6 @@ type TimelineQueryType = {
 	withoutBots?: boolean,
 	visibility?: string,
 	listId?: string,
-	channelId?: string,
 	roleId?: string
 };
 
@@ -175,11 +172,6 @@ function connectChannel() {
 			withCats: props.onlyCats,
 			listId: props.list,
 		});
-	} else if (props.src === 'channel') {
-		if (props.channel == null) return;
-		connection = stream.useChannel('channel', {
-			channelId: props.channel,
-		});
 	} else if (props.src === 'role') {
 		if (props.role == null) return;
 		connection = stream.useChannel('roleTimeline', {
@@ -268,11 +260,6 @@ function updatePaginationQuery() {
 			withFiles: props.onlyFiles ? true : undefined,
 			withCats: props.onlyCats,
 			listId: props.list,
-		};
-	} else if (props.src === 'channel') {
-		endpoint = 'channels/timeline';
-		query = {
-			channelId: props.channel,
 		};
 	} else if (props.src === 'role') {
 		endpoint = 'roles/notes';
