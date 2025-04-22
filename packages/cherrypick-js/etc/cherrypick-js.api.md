@@ -834,50 +834,6 @@ export type Channels = {
         };
         receives: null;
     };
-<<<<<<< HEAD
-=======
-    reversiGame: {
-        params: {
-            gameId: string;
-        };
-        events: {
-            started: (payload: {
-                game: ReversiGameDetailed;
-            }) => void;
-            ended: (payload: {
-                winnerId: User['id'] | null;
-                game: ReversiGameDetailed;
-            }) => void;
-            canceled: (payload: {
-                userId: User['id'];
-            }) => void;
-            changeReadyStates: (payload: {
-                user1: boolean;
-                user2: boolean;
-            }) => void;
-            updateSettings: <K extends ReversiUpdateKey>(payload: {
-                userId: User['id'];
-                key: K;
-                value: ReversiGameDetailed[K];
-            }) => void;
-            log: (payload: Record<string, unknown>) => void;
-            reacted: (payload: {
-                userId: User['id'];
-                reaction: string;
-            }) => void;
-        };
-        receives: {
-            putStone: {
-                pos: number;
-                id: string;
-            };
-            ready: boolean;
-            cancel: null | Record<string, never>;
-            updateSettings: ReversiUpdateSettings<ReversiUpdateKey>;
-            claimTimeIsUp: null | Record<string, never>;
-            reaction: string;
-        };
-    };
     chatUser: {
         params: {
             otherId: string;
@@ -926,7 +882,6 @@ export type Channels = {
             };
         };
     };
->>>>>>> upstream/develop
 };
 
 // @public (undocumented)
@@ -4513,11 +4468,6 @@ type V2AdminEmojiListResponse = operations['v2___admin___emoji___list']['respons
 //
 // src/entities.ts:50:2 - (ae-forgotten-export) The symbol "ModerationLogPayloads" needs to be exported by the entry point index.d.ts
 // src/streaming.ts:57:3 - (ae-forgotten-export) The symbol "ReconnectingWebSocket" needs to be exported by the entry point index.d.ts
-<<<<<<< HEAD
-=======
-// src/streaming.types.ts:224:4 - (ae-forgotten-export) The symbol "ReversiUpdateKey" needs to be exported by the entry point index.d.ts
-// src/streaming.types.ts:235:4 - (ae-forgotten-export) The symbol "ReversiUpdateSettings" needs to be exported by the entry point index.d.ts
->>>>>>> upstream/develop
 
 // (No @packageDocumentation comment for this package)
 
