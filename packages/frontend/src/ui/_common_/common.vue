@@ -208,7 +208,7 @@ if ($i) {
 .transition_widgetsDrawer_enterFrom,
 .transition_widgetsDrawer_leaveTo {
 	opacity: 0;
-	transform: translateX(-240px);
+	transform: translateX(240px);
 }
 
 .transition_notification_move,
