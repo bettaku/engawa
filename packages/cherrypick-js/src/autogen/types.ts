@@ -5229,7 +5229,7 @@ export type components = {
       /** @default false */
       notify: boolean;
       /** @default false */
-      hideNotesInSensitiveChannel: boolean;
+      excludeNotesInSensitiveChannel: boolean;
     };
     Clip: {
       /**
@@ -5517,7 +5517,8 @@ export type components = {
       canEditNote: boolean;
       scheduleNoteMax: number;
       canSetFederationAvatarShape: boolean;
-      canChat: boolean;
+      /** @enum {string} */
+      chatAvailability: 'available' | 'readonly' | 'unavailable';
     };
     MetaLite: {
       maintainerName: string | null;
@@ -12421,7 +12422,7 @@ export type operations = {
           excludeBots?: boolean;
           withReplies: boolean;
           withFile: boolean;
-          hideNotesInSensitiveChannel?: boolean;
+          excludeNotesInSensitiveChannel?: boolean;
         };
       };
     };
@@ -12705,7 +12706,7 @@ export type operations = {
           excludeBots?: boolean;
           withReplies?: boolean;
           withFile?: boolean;
-          hideNotesInSensitiveChannel?: boolean;
+          excludeNotesInSensitiveChannel?: boolean;
         };
       };
     };

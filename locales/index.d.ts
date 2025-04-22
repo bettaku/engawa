@@ -14,6 +14,10 @@ export interface Locale extends ILocale {
      */
     "_lang_": string;
     /**
+     * ノートの本文を離して表示
+     */
+    "showGapBodyOfTheNote": string;
+    /**
      * {user}さんに返信
      */
     "replyTo": ParameterizedString<"user">;
@@ -376,7 +380,7 @@ export interface Locale extends ILocale {
     "infoButtonForNoteActionsDescription": string;
     /**
      * 「サーバーのマシン情報を公開する」設定がオフになっています。
-     * サーバーメトリクスを表示するには、「コントロールパネル - その他」で「サーバーのマシン情報を公開する」設定を有効にしてください。
+     * サーバーメトリクスを表示するには、「コントロールパネル → その他」で「サーバーのマシン情報を公開する」設定を有効にしてください。
      */
     "disabledServerMachineStats": string;
     /**
@@ -420,7 +424,7 @@ export interface Locale extends ILocale {
      */
     "renoteConfirm": string;
     /**
-     * この設定は「設定 - CherryPick」で変更できます。
+     * この設定は「設定 → CherryPick」で変更できます。
      */
     "renoteConfirmDescription": string;
     /**
@@ -493,7 +497,7 @@ export interface Locale extends ILocale {
      */
     "cherrypickUpdatedCacheClear": string;
     /**
-     * あとでキャッシュをクリアするには、<b>設定</b> - <b>キャッシュをクリア</b>でできます！
+     * あとでキャッシュをクリアするには、<b>設定</b> → <b>キャッシュをクリア</b>でできます！
      */
     "cherrypickUpdatedCacheClearLater": string;
     /**
@@ -2275,9 +2279,9 @@ export interface Locale extends ILocale {
      */
     "withFileAntenna": string;
     /**
-     * センシティブなチャンネルのノートを非表示
+     * センシティブなチャンネルのノートを除外
      */
-    "hideNotesInSensitiveChannel": string;
+    "excludeNotesInSensitiveChannel": string;
     /**
      * ブラウザへのプッシュ通知を有効にする
      */
@@ -6092,6 +6096,18 @@ export interface Locale extends ILocale {
      */
     "embed": string;
     /**
+     * 設定を移行しています。しばらくお待ちください... (後ほど、設定→その他→旧設定情報を移行 で手動で移行することもできます)
+     */
+    "settingsMigrating": string;
+    /**
+     * 読み取り専用
+     */
+    "readonly": string;
+    /**
+     * デッキへ戻る
+     */
+    "goToDeck": string;
+    /**
      * 下書き
      */
     "draft": string;
@@ -6295,6 +6311,10 @@ export interface Locale extends ILocale {
          * このサーバー、またはこのアカウントでチャットは有効化されていません。
          */
         "chatNotAvailableForThisAccountOrServer": string;
+        /**
+         * このサーバー、またはこのアカウントでチャットは読み取り専用となっています。新たに書き込んだり、チャットルームを作成・参加したりすることはできません。
+         */
+        "chatIsReadOnlyForThisAccountOrServer": string;
         /**
          * 相手のアカウントでチャット機能が使えない状態になっています。
          */
@@ -6810,7 +6830,7 @@ export interface Locale extends ILocale {
          */
         "showRenoteConfirmPopup": string;
         /**
-         * この設定は「全般 - リノートと引用ボタンを分けて表示する」設定がオンになっている必要があります。
+         * この設定は「全般 → リノートと引用ボタンを分けて表示する」設定がオンになっている必要があります。
          */
         "showRenoteConfirmPopupDescription": string;
         /**
@@ -7028,7 +7048,7 @@ export interface Locale extends ILocale {
          */
         "skipAreYouSure": string;
         /**
-         * 今すぐ初期設定を中断しても、[もっと！ - ヘルプ - 初期設定のリプレイ]から再開することができます。
+         * 今すぐ初期設定を中断しても、[もっと！ → ヘルプ → 初期設定のリプレイ]から再開することができます。
          */
         "skipAreYouSureDescription": string;
         /**
@@ -8801,7 +8821,7 @@ export interface Locale extends ILocale {
             /**
              * チャットを許可
              */
-            "canChat": string;
+            "chatAvailability": string;
             /**
              * サーバーサイドのノートの下書きの作成可能数
              */
@@ -13492,7 +13512,7 @@ export interface Locale extends ILocale {
          */
         "noAltWarning": string;
         /**
-         * この設定は「設定 - アピアランス」で変更できます。
+         * この設定は「設定 → アピアランス」で変更できます。
          */
         "noAltWarningDescription": string;
     };
@@ -13666,6 +13686,10 @@ export interface Locale extends ILocale {
              * 検索ページに移動
              */
             "redirectToSearch": string;
+            /**
+             * キーボードショートカット一覧を見る
+             */
+            "viewKeyboardShortCutList": string;
         };
         "_postForm": {
             /**
@@ -13677,7 +13701,7 @@ export interface Locale extends ILocale {
              */
             "toggleLocalOnly": string;
             /**
-             * この機能は設定>CherryPickから該当の機能を有効にすることで利用できます。
+             * この機能は「設定 → CherryPick」から該当の機能を有効にすることで利用できます。
              */
             "featureWarn": string;
             /**

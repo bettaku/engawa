@@ -103,7 +103,7 @@ export class AntennaService implements OnApplicationShutdown {
 		if (note.visibility === 'followers') return false;
 		if (note.visibility === 'private') return false;
 
-		if (antenna.hideNotesInSensitiveChannel && note.channel?.isSensitive) return false;
+		if (antenna.excludeNotesInSensitiveChannel && note.channel?.isSensitive) return false;
 
 		if (antenna.excludeBots && noteUser.isBot) return false;
 
