@@ -131,7 +131,7 @@ export class ActivityPubServerService {
 	private inbox(request: FastifyRequest, reply: FastifyReply) {
 		let signature;
 
-		if (this.isFederationAllowed(request)) {
+		if (!this.isFederationAllowed(request)) {
 			reply.code(403);
 			return;
 		}
@@ -627,7 +627,7 @@ export class ActivityPubServerService {
 		fastify.get<{ Params: { note: string; } }>('/notes/:note', { constraints: { apOrHtml: 'ap' } }, async (request, reply) => {
 			vary(reply.raw, 'Accept');
 
-			if (this.isFederationAllowed(request)) {
+			if (!this.isFederationAllowed(request)) {
 				reply.code(403);
 				return;
 			}
@@ -662,7 +662,7 @@ export class ActivityPubServerService {
 		fastify.get<{ Params: { note: string; } }>('/notes/:note/activity', async (request, reply) => {
 			vary(reply.raw, 'Accept');
 
-			if (this.isFederationAllowed(request)) {
+			if (!this.isFederationAllowed(request)) {
 				reply.code(403);
 				return;
 			}
