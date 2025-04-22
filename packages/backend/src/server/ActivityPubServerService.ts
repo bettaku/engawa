@@ -89,6 +89,30 @@ export class ActivityPubServerService {
 		}
 	}
 
+	@bindThis
+	private getHostName(request: FastifyRequest): string | null {
+		const signature = httpSignature.parseRequest(request.raw, {
+			headers: ['(request-target)', 'host', 'date'],
+			authorizationHeaderName: 'signature',
+		});
+
+		if (signature.keyId) {
+			const url = new URL(signature.keyId);
+			return url.hostname;
+		}
+		return null;
+	}
+
+	@bindThis
+	private isFederationAllowed(request: FastifyRequest): boolean {
+		if (this.meta.federation === 'none') {
+			return false;
+		}
+		const host = this.getHostName(request);
+		if (host == null) return false;
+		return this.utilityService.isFederationAllowedHost(host);
+	}
+
 	/**
 	 * Pack Create<Note> or Announce Activity
 	 * @param note Note
@@ -106,6 +130,11 @@ export class ActivityPubServerService {
 	@bindThis
 	private inbox(request: FastifyRequest, reply: FastifyReply) {
 		let signature;
+
+		if (this.isFederationAllowed(request)) {
+			reply.code(403);
+			return;
+		}
 
 		try {
 			signature = httpSignature.parseRequest(request.raw, { 'headers': ['(request-target)', 'host', 'date'], authorizationHeaderName: 'signature' });
@@ -422,7 +451,7 @@ export class ActivityPubServerService {
 		}>,
 		reply: FastifyReply,
 	) {
-		if (this.meta.federation === 'none') {
+		if (!this.isFederationAllowed(request)) {
 			reply.code(403);
 			return;
 		}
@@ -598,7 +627,7 @@ export class ActivityPubServerService {
 		fastify.get<{ Params: { note: string; } }>('/notes/:note', { constraints: { apOrHtml: 'ap' } }, async (request, reply) => {
 			vary(reply.raw, 'Accept');
 
-			if (this.meta.federation === 'none') {
+			if (this.isFederationAllowed(request)) {
 				reply.code(403);
 				return;
 			}
@@ -633,7 +662,7 @@ export class ActivityPubServerService {
 		fastify.get<{ Params: { note: string; } }>('/notes/:note/activity', async (request, reply) => {
 			vary(reply.raw, 'Accept');
 
-			if (this.meta.federation === 'none') {
+			if (this.isFederationAllowed(request)) {
 				reply.code(403);
 				return;
 			}
