@@ -105,6 +105,10 @@ export class ActivityPubServerService {
 
 	@bindThis
 	private isFederationAllowed(request: FastifyRequest): boolean {
+		if (request.headers.host === this.config.host) {
+			return true;
+		}
+
 		if (this.meta.federation === 'none') {
 			return false;
 		}
