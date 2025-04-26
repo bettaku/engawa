@@ -30,6 +30,7 @@ import { globalEvents } from '@/events.js';
 import { store } from '@/store.js';
 import * as os from '@/os.js';
 import { genEmbedCode } from '@/utility/get-embed-code.js';
+import { useStream } from '@/stream.js';
 
 const props = defineProps<{
 	tag: string;
