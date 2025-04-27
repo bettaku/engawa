@@ -802,8 +802,7 @@ export class ActivityPubServerService {
 		fastify.get<{ Params: { user: string; } }>('/users/:user', { constraints: { apOrHtml: 'ap' } }, async (request, reply) => {
 			vary(reply.raw, 'Accept');
 
-			if (this.meta.federation === 'none') {
-				reply.code(403);
+			if (await this.shouldReject(request, reply)) {
 				return;
 			}
 
@@ -884,8 +883,7 @@ export class ActivityPubServerService {
 
 		// follow
 		fastify.get<{ Params: { follower: string; followee: string; } }>('/follows/:follower/:followee', async (request, reply) => {
-			if (this.meta.federation === 'none') {
-				reply.code(403);
+			if (await this.shouldReject(request, reply)) {
 				return;
 			}
 
