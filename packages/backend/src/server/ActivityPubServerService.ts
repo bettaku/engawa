@@ -276,8 +276,7 @@ export class ActivityPubServerService {
 		request: FastifyRequest<{ Params: { user: string; }; Querystring: { cursor?: string; page?: string; }; }>,
 		reply: FastifyReply,
 	) {
-		if (this.meta.federation === 'none') {
-			reply.code(403);
+		if (await this.shouldReject(request, reply)) {
 			return;
 		}
 
@@ -373,8 +372,7 @@ export class ActivityPubServerService {
 		request: FastifyRequest<{ Params: { user: string; }; Querystring: { cursor?: string; page?: string; }; }>,
 		reply: FastifyReply,
 	) {
-		if (this.meta.federation === 'none') {
-			reply.code(403);
+		if (await this.shouldReject(request, reply)) {
 			return;
 		}
 
@@ -467,8 +465,7 @@ export class ActivityPubServerService {
 
 	@bindThis
 	private async featured(request: FastifyRequest<{ Params: { user: string; }; }>, reply: FastifyReply) {
-		if (this.meta.federation === 'none') {
-			reply.code(403);
+		if (await this.shouldReject(request, reply)) {
 			return;
 		}
 
@@ -604,8 +601,7 @@ export class ActivityPubServerService {
 
 	@bindThis
 	private async userInfo(request: FastifyRequest, reply: FastifyReply, user: MiUser | null) {
-		if (this.meta.federation === 'none') {
-			reply.code(403);
+		if (await this.shouldReject(request, reply)) {
 			return;
 		}
 
@@ -769,8 +765,7 @@ export class ActivityPubServerService {
 
 		// publickey
 		fastify.get<{ Params: { user: string; } }>('/users/:user/publickey', async (request, reply) => {
-			if (this.meta.federation === 'none') {
-				reply.code(403);
+			if (await this.shouldReject(request, reply)) {
 				return;
 			}
 
@@ -819,8 +814,7 @@ export class ActivityPubServerService {
 		fastify.get<{ Params: { acct: string; } }>('/@:acct', { constraints: { apOrHtml: 'ap' } }, async (request, reply) => {
 			vary(reply.raw, 'Accept');
 
-			if (this.meta.federation === 'none') {
-				reply.code(403);
+			if (await this.shouldReject(request, reply)) {
 				return;
 			}
 
@@ -838,8 +832,7 @@ export class ActivityPubServerService {
 
 		// emoji
 		fastify.get<{ Params: { emoji: string; } }>('/emojis/:emoji', async (request, reply) => {
-			if (this.meta.federation === 'none') {
-				reply.code(403);
+			if (await this.shouldReject(request, reply)) {
 				return;
 			}
 
@@ -860,8 +853,7 @@ export class ActivityPubServerService {
 
 		// like
 		fastify.get<{ Params: { like: string; } }>('/likes/:like', async (request, reply) => {
-			if (this.meta.federation === 'none') {
-				reply.code(403);
+			if (await this.shouldReject(request, reply)) {
 				return;
 			}
 
@@ -917,8 +909,7 @@ export class ActivityPubServerService {
 
 		// follow
 		fastify.get<{ Params: { followRequestId: string; } }>('/follows/:followRequestId', async (request, reply) => {
-			if (this.meta.federation === 'none') {
-				reply.code(403);
+			if (await this.shouldReject(request, reply)) {
 				return;
 			}
 
