@@ -650,6 +650,10 @@ export const meta = {
 				type: 'boolean',
 				optional: false, nullable: false,
 			},
+			enableBotProtectionForAuthorizedFetch: {
+				type: 'boolean',
+				optional: false, nullable: false,
+			},
 		},
 	},
 } as const;
@@ -832,6 +836,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				bubbleInstances: instance.bubbleInstances,
 				customRobotsTxt: instance.customRobotsTxt,
 				enableAuthorizedFetch: instance.enableAuthorizedFetch,
+				enableBotProtectionForAuthorizedFetch: instance.enableBotProtectionForAuthorizedFetch,
 			};
 		});
 	}
