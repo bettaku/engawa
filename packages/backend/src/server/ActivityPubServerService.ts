@@ -106,6 +106,12 @@ export class ActivityPubServerService {
 		return this.apRendererService.renderCreate(await this.apRendererService.renderNote(note, false), note);
 	}
 
+	/**
+	 * Handle request should reject
+	 * @param request FastifyRequest
+	 * @param reply FastifyReply
+	 * @returns bool
+	 */
 	@bindThis
 	private async shouldReject(request: FastifyRequest, reply: FastifyReply): Promise<boolean> {
 		if (!this.meta.enableAuthorizedFetch) {
