@@ -857,4 +857,9 @@ export class MiMeta {
 		default: false,
 	})
 	public enableAuthorizedFetch: boolean;
+
+	@Column('boolean', {
+		default: false,
+	})
+	public enableBotProtectionForAuthorizedFetch: boolean;
 }
