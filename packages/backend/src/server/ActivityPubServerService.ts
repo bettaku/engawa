@@ -108,13 +108,10 @@ export class ActivityPubServerService {
 
 	@bindThis
 	private async shouldReject(request: FastifyRequest, reply: FastifyReply): Promise<boolean> {
-		if (this.meta.enableAuthorizedFetch) {
+		if (!this.meta.enableAuthorizedFetch) {
 			return false;
 		}
-		if (this.meta.federation === 'none') {
-			reply.code(403);
-			return true;
-		}
+
 		let signature;
 		try {
 			signature = httpSignature.parseRequest(request.raw, {
