@@ -198,7 +198,7 @@ export class ActivityPubServerService {
 	}
 
 	@bindThis
-	private inbox(request: FastifyRequest, reply: FastifyReply) {
+	private async inbox(request: FastifyRequest, reply: FastifyReply) {
 		let signature;
 
 		try {
