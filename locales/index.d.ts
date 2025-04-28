@@ -14,6 +14,14 @@ export interface Locale extends ILocale {
      */
     "_lang_": string;
     /**
+     * セキュアモード (Authorized Fetch)
+     */
+    "secureMode": string;
+    /**
+     * 有効にすると、認証情報のないサーバーからのリクエストを拒否します。
+     */
+    "secureModeDescription": string;
+    /**
      * ノートの本文を離して表示
      */
     "showGapBodyOfTheNote": string;
