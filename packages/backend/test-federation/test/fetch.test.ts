@@ -76,5 +76,14 @@ describe('Authorized Fetch', () => {
 			enableAuthorizedFetch: false,
 		});
 		await sleep();
+
+		await aAdmin.client.request('admin/update-meta', {
+			blockedHosts: [],
+		});
+		await aAdmin.client.request('admin/federation/update-instance', {
+			host: 'b.test',
+			isSuspended: false,
+		});
+		await sleep();
 	});
 });
