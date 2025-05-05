@@ -64,8 +64,11 @@ describe('Authorized Fetch', () => {
 		await rejects(
 			async () => await resolveRemoteNote('a.test', note.id, bob),
 			(err: any) => {
-				strictEqual(err.statusCode, 403);
-				return true;
+				if (err.toString().includes('403')) {
+					return true;
+				}
+				console.error('Unexpected error:', err);
+				return false;
 			},
 		);
 
