@@ -49,7 +49,7 @@ services:
       - internal_network_c
     volumes:
       - type: bind
-        source: ./volumes/db.b
+        source: ./volumes/db.c
         target: /var/lib/postgresql/data
         bind:
           create_host_path: true
