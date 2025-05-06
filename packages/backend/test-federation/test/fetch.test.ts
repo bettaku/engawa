@@ -2,23 +2,29 @@ import { strictEqual, rejects } from 'node:assert';
 import * as Misskey from 'cherrypick-js';
 import { createAccount, fetchAdmin, resolveRemoteUser, resolveRemoteNote, sleep, type LoginUser } from './utils.js';
 
-const [aAdmin, bAdmin] = await Promise.all([
+const [aAdmin, bAdmin, cAdmin] = await Promise.all([
 	fetchAdmin('a.test'),
 	fetchAdmin('b.test'),
+	fetchAdmin('c.test'),
 ]);
 
 describe('Authorized Fetch', () => {
-	let alice: LoginUser, bob: LoginUser;
-	let aliceInB, bobInA;
+	let alice: LoginUser, bob: LoginUser, charlie: LoginUser;
+	let aliceInB: Misskey.entities.UserDetailedNotMe, aliceInC: Misskey.entities.UserDetailedNotMe, bobInA: Misskey.entities.UserDetailedNotMe, bobInC: Misskey.entities.UserDetailedNotMe, charlieInA: Misskey.entities.UserDetailedNotMe, charlieInB: Misskey.entities.UserDetailedNotMe;
 	beforeAll(async () => {
-		[alice, bob] = await Promise.all([
+		[alice, bob, charlie] = await Promise.all([
 			createAccount('a.test'),
 			createAccount('b.test'),
+			createAccount('c.test'),
 		]);
 
-		[bobInA, aliceInB] = await Promise.all([
-			resolveRemoteUser('b.test', bob.id, alice),
+		[aliceInB, aliceInC, bobInA, bobInC, charlieInA, charlieInB] = await Promise.all([
 			resolveRemoteUser('a.test', alice.id, bob),
+			resolveRemoteUser('a.test', alice.id, charlie),
+			resolveRemoteUser('b.test', bob.id, alice),
+			resolveRemoteUser('b.test', bob.id, charlie),
+			resolveRemoteUser('c.test', charlie.id, alice),
+			resolveRemoteUser('c.test', charlie.id, bob),
 		]);
 	});
 
@@ -83,6 +89,76 @@ describe('Authorized Fetch', () => {
 		await aAdmin.client.request('admin/federation/update-instance', {
 			host: 'b.test',
 			isSuspended: false,
+		});
+		await sleep();
+	});
+
+	test('renote from b.test of a.test note is note deliverd to c.test', async () => {
+		await aAdmin.client.request('admin/update-meta', {
+			enableAuthorizedFetch: true,
+			blockedHosts: ['c.test'],
+		});
+		await sleep();
+
+		await bob.client.request('following/create', {
+			userId: alice.id,
+		});
+		await bob.client.request('following/create', {
+			userId: charlie.id,
+		});
+		await sleep();
+
+		await alice.client.request('following/create', {
+			userId: bob.id,
+		});
+		await sleep();
+
+		await charlie.client.request('following/create', {
+			userId: bob.id,
+		});
+		await sleep();
+
+		const aliceNote = (await alice.client.request('notes/create', { text: 'Protected Note' })).createdNote;
+		await sleep();
+
+		const bobsView = await resolveRemoteNote('a.test', aliceNote.id, bob);
+		strictEqual(bobsView.text, aliceNote.text);
+
+		await bob.client.request('notes/create', {
+			renoteId: bobsView.id,
+		});
+		await sleep(3000);
+
+		const charlieTimeline = await charlie.client.request('notes/timeline', {
+			limit: 20,
+		});
+
+		const charlieHasAliceNote = charlieTimeline.some((note: Misskey.entities.Note) => {
+			return note.renote && (note.renote.text === aliceNote.text );
+		});
+
+		strictEqual(charlieHasAliceNote, false);
+
+		await aAdmin.client.request('admin/update-meta', {
+			enableAuthorizedFetch: false,
+			blockedHosts: [],
+		});
+		await sleep();
+
+		await bob.client.request('following/delete', {
+			userId: alice.id,
+		});
+		await sleep();
+		await bob.client.request('following/delete', {
+			userId: charlie.id,
+		});
+		await sleep();
+		await alice.client.request('following/delete', {
+			userId: bob.id,
+		});
+		await sleep();
+		await charlie.client.request('following/delete', {
+			userId: bob.id,
 		});
 		await sleep();
 	});
