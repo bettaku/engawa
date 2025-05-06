@@ -32,6 +32,7 @@ services:
       - external_network
       - internal_network_a
       - internal_network_b
+      - internal_network_c
     volumes:
       - type: volume
         source: node_modules_dev
@@ -69,6 +70,25 @@ services:
       - internal_network
 
   cherrypick.b.test:
+    networks:
+      - external_network
+      - internal_network
+    volumes:
+      - type: volume
+        source: node_modules
+        target: /cherrypick/node_modules
+      - type: volume
+        source: node_modules_backend
+        target: /cherrypick/packages/backend/node_modules
+      - type: volume
+        source: node_modules_cherrypick-js
+        target: /cherrypick/packages/cherrypick-js/node_modules
+
+  c.test:
+    networks:
+      - internal_network
+
+  cherrypick.c.test:
     networks:
       - external_network
       - internal_network
