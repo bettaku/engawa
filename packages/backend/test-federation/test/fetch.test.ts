@@ -101,20 +101,20 @@ describe('Authorized Fetch', () => {
 		await sleep();
 
 		await bob.client.request('following/create', {
-			userId: alice.id,
+			userId: aliceInB.id,
 		});
 		await bob.client.request('following/create', {
-			userId: charlie.id,
+			userId: charlieInB.id,
 		});
 		await sleep();
 
 		await alice.client.request('following/create', {
-			userId: bob.id,
+			userId: bobInA.id,
 		});
 		await sleep();
 
 		await charlie.client.request('following/create', {
-			userId: bob.id,
+			userId: bobInC.id,
 		});
 		await sleep();
 
@@ -146,19 +146,19 @@ describe('Authorized Fetch', () => {
 		await sleep();
 
 		await bob.client.request('following/delete', {
-			userId: alice.id,
+			userId: aliceInB.id,
 		});
 		await sleep();
 		await bob.client.request('following/delete', {
-			userId: charlie.id,
+			userId: charlieInB.id,
 		});
 		await sleep();
 		await alice.client.request('following/delete', {
-			userId: bob.id,
+			userId: bobInA.id,
 		});
 		await sleep();
 		await charlie.client.request('following/delete', {
-			userId: bob.id,
+			userId: bobInC.id,
 		});
 		await sleep();
 	});
