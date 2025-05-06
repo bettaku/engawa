@@ -3,13 +3,13 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import { Inject, Injectable } from '@nestjs/common';
 import type { Config } from '@/config.js';
 import { MetaService } from '@/core/MetaService.js';
 import { DEFAULT_POLICIES } from '@/core/RoleService.js';
 import { SystemAccountService } from '@/core/SystemAccountService.js';
 import { DI } from '@/di-symbols.js';
 import { Endpoint } from '@/server/api/endpoint-base.js';
-import { Inject, Injectable } from '@nestjs/common';
 
 export const meta = {
 	tags: ['meta'],
@@ -646,6 +646,14 @@ export const meta = {
 				type: 'string',
 				optional: false, nullable: true,
 			},
+			enableAuthorizedFetch: {
+				type: 'boolean',
+				optional: false, nullable: false,
+			},
+			enableBotProtectionForAuthorizedFetch: {
+				type: 'boolean',
+				optional: false, nullable: false,
+			},
 		},
 	},
 } as const;
@@ -827,6 +835,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				moderatorInactivityLimitDays: instance.moderatorInactivityLimitDays,
 				bubbleInstances: instance.bubbleInstances,
 				customRobotsTxt: instance.customRobotsTxt,
+				enableAuthorizedFetch: instance.enableAuthorizedFetch,
+				enableBotProtectionForAuthorizedFetch: instance.enableBotProtectionForAuthorizedFetch,
 			};
 		});
 	}

@@ -13,10 +13,12 @@ import accepts from 'accepts';
 import vary from 'vary';
 import secureJson from 'secure-json-parse';
 import { DI } from '@/di-symbols.js';
-import type { FollowingsRepository, NotesRepository, EmojisRepository, NoteReactionsRepository, UserProfilesRepository, UserNotePiningsRepository, UsersRepository, FollowRequestsRepository, MiMeta } from '@/models/_.js';
+import type { FollowingsRepository, NotesRepository, EmojisRepository, NoteReactionsRepository, UserProfilesRepository, UserNotePiningsRepository, UsersRepository, FollowRequestsRepository, MiMeta, MiUserPublickey } from '@/models/_.js';
 import * as url from '@/misc/prelude/url.js';
 import type { Config } from '@/config.js';
+import { ApDbResolverService } from '@/core/activitypub/ApDbResolverService.js';
 import { ApRendererService } from '@/core/activitypub/ApRendererService.js';
+import { getApId } from '@/core/activitypub/type.js';
 import { QueueService } from '@/core/QueueService.js';
 import type { MiLocalUser, MiRemoteUser, MiUser } from '@/models/User.js';
 import { UserKeypairService } from '@/core/UserKeypairService.js';
@@ -71,6 +73,7 @@ export class ActivityPubServerService {
 
 		private utilityService: UtilityService,
 		private userEntityService: UserEntityService,
+		private apDbResolverService: ApDbResolverService,
 		private apRendererService: ApRendererService,
 		private queueService: QueueService,
 		private userKeypairService: UserKeypairService,
@@ -89,34 +92,6 @@ export class ActivityPubServerService {
 		}
 	}
 
-	@bindThis
-	private getHostName(request: FastifyRequest): string | null {
-		const signature = httpSignature.parseRequest(request.raw, {
-			headers: ['(request-target)', 'host', 'date'],
-			authorizationHeaderName: 'signature',
-		});
-
-		if (signature.keyId) {
-			const url = new URL(signature.keyId);
-			return url.hostname;
-		}
-		return null;
-	}
-
-	@bindThis
-	private isFederationAllowed(request: FastifyRequest): boolean {
-		if (request.headers.host === this.config.host) {
-			return true;
-		}
-
-		if (this.meta.federation === 'none') {
-			return false;
-		}
-		const host = this.getHostName(request);
-		if (host == null) return false;
-		return this.utilityService.isFederationAllowedHost(host);
-	}
-
 	/**
 	 * Pack Create<Note> or Announce Activity
 	 * @param note Note
@@ -131,14 +106,109 @@ export class ActivityPubServerService {
 		return this.apRendererService.renderCreate(await this.apRendererService.renderNote(note, false), note);
 	}
 
+	/**
+	 * Handle request should reject
+	 * @param request FastifyRequest
+	 * @param reply FastifyReply
+	 * @returns bool
+	 */
 	@bindThis
-	private inbox(request: FastifyRequest, reply: FastifyReply) {
-		let signature;
+	private async shouldReject(request: FastifyRequest, reply: FastifyReply): Promise<boolean> {
+		if (!this.meta.enableAuthorizedFetch) {
+			return false;
+		}
 
-		if (!this.isFederationAllowed(request)) {
+		let signature;
+		try {
+			signature = httpSignature.parseRequest(request.raw, {
+				headers: ['(request-target)', 'host', 'date'],
+				authorizationHeaderName: 'signature',
+			});
+		} catch (e) {
+			return true;
+		}
+
+		const keyId = new URL(signature.keyId);
+		const keyHost = this.utilityService.toPuny(keyId.hostname);
+		if (!this.utilityService.isFederationAllowedHost(keyHost)) {
 			reply.code(403);
+			return true;
+		}
+
+		const keyIdLower = signature.keyId.toLowerCase();
+		if (keyIdLower.startsWith('acct:')) {
+			reply.code(401);
+			return true;
+		}
+
+		let authUser: {
+			user: MiRemoteUser,
+			key: MiUserPublickey | null,
+		} | null = await this.apDbResolverService.getAuthUserFromKeyId(signature.keyId);
+
+		// 存在しない場合一度Resolveを試みる
+		if (authUser == null) {
+			try {
+				keyId.hash = '';
+				authUser = await this.apDbResolverService.getAuthUserFromApId(getApId(keyId.toString()));
+			} catch (e) {
+				// Resolveできなかったらreject
+				reply.code(403);
+				return true;
+			}
+		}
+
+		// 鍵がなかったらreject
+		if (authUser?.key == null) {
+			reply.code(403);
+			return true;
+		}
+
+		// 凍結されていたらreject
+		if (authUser.user.isSuspended) {
+			reply.code(403);
+			return true;
+		}
+
+		// Bot Protectionが有効かつauthUserがbotならreject
+		if (this.meta.enableBotProtectionForAuthorizedFetch && authUser.user.isBot) {
+			reply.code(403);
+			return true;
+		}
+
+		// 念の為もう一度チェック
+		if (authUser.user.host !== keyHost) {
+			reply.code(403);
+			return true;
+		}
+
+		// 鍵の検証
+		let validatedHttpSignature = httpSignature.verifySignature(signature, authUser.key.keyPem);
+		if (!validatedHttpSignature) {
+			authUser.key = await this.apDbResolverService.refetchPublicKeyForApId(authUser.user);
+			if (authUser.key == null) {
+				reply.code(403);
+				return true;
+			}
+
+			validatedHttpSignature = httpSignature.verifySignature(signature, authUser.key.keyPem);
+		}
+
+		if (!validatedHttpSignature) {
+			reply.code(403);
+			return true;
+		}
+
+		reply.header('cache-control', 'private, max-age=0, must-revalidate');
+		return false;
+	}
+
+	@bindThis
+	private async inbox(request: FastifyRequest, reply: FastifyReply) {
+		if (await this.shouldReject(request, reply)) {
 			return;
 		}
+		let signature;
 
 		try {
 			signature = httpSignature.parseRequest(request.raw, { 'headers': ['(request-target)', 'host', 'date'], authorizationHeaderName: 'signature' });
@@ -215,8 +285,7 @@ export class ActivityPubServerService {
 		request: FastifyRequest<{ Params: { user: string; }; Querystring: { cursor?: string; page?: string; }; }>,
 		reply: FastifyReply,
 	) {
-		if (this.meta.federation === 'none') {
-			reply.code(403);
+		if (await this.shouldReject(request, reply)) {
 			return;
 		}
 
@@ -312,8 +381,7 @@ export class ActivityPubServerService {
 		request: FastifyRequest<{ Params: { user: string; }; Querystring: { cursor?: string; page?: string; }; }>,
 		reply: FastifyReply,
 	) {
-		if (this.meta.federation === 'none') {
-			reply.code(403);
+		if (await this.shouldReject(request, reply)) {
 			return;
 		}
 
@@ -406,8 +474,7 @@ export class ActivityPubServerService {
 
 	@bindThis
 	private async featured(request: FastifyRequest<{ Params: { user: string; }; }>, reply: FastifyReply) {
-		if (this.meta.federation === 'none') {
-			reply.code(403);
+		if (await this.shouldReject(request, reply)) {
 			return;
 		}
 
@@ -455,8 +522,7 @@ export class ActivityPubServerService {
 		}>,
 		reply: FastifyReply,
 	) {
-		if (!this.isFederationAllowed(request)) {
-			reply.code(403);
+		if (await this.shouldReject(request, reply)) {
 			return;
 		}
 
@@ -544,8 +610,7 @@ export class ActivityPubServerService {
 
 	@bindThis
 	private async userInfo(request: FastifyRequest, reply: FastifyReply, user: MiUser | null) {
-		if (this.meta.federation === 'none') {
-			reply.code(403);
+		if (await this.shouldReject(request, reply)) {
 			return;
 		}
 
@@ -631,8 +696,7 @@ export class ActivityPubServerService {
 		fastify.get<{ Params: { note: string; } }>('/notes/:note', { constraints: { apOrHtml: 'ap' } }, async (request, reply) => {
 			vary(reply.raw, 'Accept');
 
-			if (!this.isFederationAllowed(request)) {
-				reply.code(403);
+			if (await this.shouldReject(request, reply)) {
 				return;
 			}
 
@@ -666,10 +730,9 @@ export class ActivityPubServerService {
 		fastify.get<{ Params: { note: string; } }>('/notes/:note/activity', async (request, reply) => {
 			vary(reply.raw, 'Accept');
 
-			if (!this.isFederationAllowed(request)) {
-				reply.code(403);
+			if (await this.shouldReject(request, reply)) {
 				return;
-			}
+			};
 
 			const note = await this.notesRepository.findOneBy({
 				id: request.params.note,
@@ -711,8 +774,7 @@ export class ActivityPubServerService {
 
 		// publickey
 		fastify.get<{ Params: { user: string; } }>('/users/:user/publickey', async (request, reply) => {
-			if (this.meta.federation === 'none') {
-				reply.code(403);
+			if (await this.shouldReject(request, reply)) {
 				return;
 			}
 
@@ -743,8 +805,7 @@ export class ActivityPubServerService {
 		fastify.get<{ Params: { user: string; } }>('/users/:user', { constraints: { apOrHtml: 'ap' } }, async (request, reply) => {
 			vary(reply.raw, 'Accept');
 
-			if (this.meta.federation === 'none') {
-				reply.code(403);
+			if (await this.shouldReject(request, reply)) {
 				return;
 			}
 
@@ -761,8 +822,7 @@ export class ActivityPubServerService {
 		fastify.get<{ Params: { acct: string; } }>('/@:acct', { constraints: { apOrHtml: 'ap' } }, async (request, reply) => {
 			vary(reply.raw, 'Accept');
 
-			if (this.meta.federation === 'none') {
-				reply.code(403);
+			if (await this.shouldReject(request, reply)) {
 				return;
 			}
 
@@ -780,8 +840,7 @@ export class ActivityPubServerService {
 
 		// emoji
 		fastify.get<{ Params: { emoji: string; } }>('/emojis/:emoji', async (request, reply) => {
-			if (this.meta.federation === 'none') {
-				reply.code(403);
+			if (await this.shouldReject(request, reply)) {
 				return;
 			}
 
@@ -802,8 +861,7 @@ export class ActivityPubServerService {
 
 		// like
 		fastify.get<{ Params: { like: string; } }>('/likes/:like', async (request, reply) => {
-			if (this.meta.federation === 'none') {
-				reply.code(403);
+			if (await this.shouldReject(request, reply)) {
 				return;
 			}
 
@@ -828,8 +886,7 @@ export class ActivityPubServerService {
 
 		// follow
 		fastify.get<{ Params: { follower: string; followee: string; } }>('/follows/:follower/:followee', async (request, reply) => {
-			if (this.meta.federation === 'none') {
-				reply.code(403);
+			if (await this.shouldReject(request, reply)) {
 				return;
 			}
 
@@ -859,8 +916,7 @@ export class ActivityPubServerService {
 
 		// follow
 		fastify.get<{ Params: { followRequestId: string; } }>('/follows/:followRequestId', async (request, reply) => {
-			if (this.meta.federation === 'none') {
-				reply.code(403);
+			if (await this.shouldReject(request, reply)) {
 				return;
 			}
 

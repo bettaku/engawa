@@ -71,6 +71,22 @@ SPDX-License-Identifier: AGPL-3.0-only
 					</MkSwitch>
 				</div>
 			</MkFolder>
+
+			<MkFolder>
+				<template #label>{{ i18n.ts.secureMode }}</template>
+				<template v-if="secureModeForm.savedState.enableAuthorizedFetch" #suffix>Enabled</template>
+				<template v-else #suffix>Disabled</template>
+				<template #caption>{{ i18n.ts.secureModeDescription }}</template>
+				<template v-if="secureModeForm.modified.value" #footer>
+					<MkFormFooter :form="secureModeForm"/>
+				</template>
+
+				<div class="_gaps_m">
+					<MkSwitch v-model="secureModeForm.state.enableAuthorizedFetch">
+						<template #label>Enable Secure Mode</template>
+					</MkSwitch>
+				</div>
+			</MkFolder>
 		</div>
 	</MkSpacer>
 </MkStickyContainer>
@@ -129,6 +145,17 @@ const bannedEmailDomainsForm = useForm({
 }, async (state) => {
 	await os.apiWithDialog('admin/update-meta', {
 		bannedEmailDomains: state.bannedEmailDomains.split('\n'),
+	});
+	fetchInstance(true);
+});
+
+const secureModeForm = useForm({
+	enableAuthorizedFetch: meta.enableAuthorizedFetch,
+	enableBotProtectionForAuthorizedFetch: meta.enableBotProtectionForAuthorizedFetch,
+}, async (state) => {
+	await os.apiWithDialog('admin/update-meta', {
+		enableAuthorizedFetch: state.enableAuthorizedFetch,
+		enableBotProtectionForAuthorizedFetch: state.enableBotProtectionForAuthorizedFetch,
 	});
 	fetchInstance(true);
 });

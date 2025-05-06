@@ -9643,6 +9643,8 @@ export type operations = {
             bubbleInstances: string[];
             statusUrl: string | null;
             customRobotsTxt: string | null;
+            enableAuthorizedFetch: boolean;
+            enableBotProtectionForAuthorizedFetch: boolean;
           };
         };
       };
@@ -12137,6 +12139,8 @@ export type operations = {
           moderatorInactivityLimitDays?: number;
           bubbleInstances?: string[];
           customRobotsTxt?: string | null;
+          enableAuthorizedFetch?: boolean | null;
+          enableBotProtectionForAuthorizedFetch?: boolean | null;
         };
       };
     };
