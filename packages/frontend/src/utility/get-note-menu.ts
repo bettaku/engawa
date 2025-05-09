@@ -413,10 +413,6 @@ export function getNoteMenu(props: {
 			menuItems.push(getCopyNoteOriginalLinkMenu(appearNote, i18n.ts.copyRemoteLink));
 		}
 
-		if (appearNote.url || appearNote.uri) {
-			menuItems.push(getCopyNoteOriginalLinkMenu(appearNote, i18n.ts.copyRemoteLink));
-		}
-
 		menuItems.push(getCopyNoteLinkMenu(appearNote, i18n.ts.copyLink), {
 			icon: 'ti ti-copy',
 			text: i18n.ts.copyContent,
@@ -642,24 +638,6 @@ export function getNoteMenu(props: {
 					text: i18n.ts.reactionsList,
 					action: showReactions,
 				});
-
-				if (appearNote.url ?? appearNote.uri) {
-					noteChildMenu.push({
-						icon: 'ti ti-link',
-						text: i18n.ts.copyRemoteLink,
-						action: () => {
-							copyToClipboard(appearNote.url ?? appearNote.uri, 'link');
-						},
-					}, {
-						icon: 'ti ti-external-link',
-						text: i18n.ts.showOnRemote,
-						action: () => {
-							window.open(appearNote.url ?? appearNote.uri, '_blank', 'noopener');
-						},
-					});
-				} else {
-					noteChildMenu.push(getNoteEmbedCodeMenu(appearNote, i18n.ts.embed));
-				}
 
 				noteChildMenu.push({ type: 'divider' });
 
