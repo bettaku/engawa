@@ -12,6 +12,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <script lang="ts" setup>
 import { capitalize, computed } from 'vue';
+import tinycolor from 'tinycolor2';
 import { instanceName as localInstanceName, application, version } from '@@/js/config.js';
 import type { CSSProperties } from 'vue';
 import { instance as localInstance } from '@/instance.js';
@@ -48,10 +49,33 @@ const faviconUrl = computed(() => {
 	return getProxiedImageUrlNullable(imageSrc);
 });
 
+type ITickerColors = {
+	readonly bg: string;
+	readonly fg: string;
+};
+
+const TICKER_YUV_THRESHOLD = 191 as const;
+const TICKER_FG_COLOR_LIGHT = '#ffffff' as const;
+const TICKER_FG_COLOR_DARK = '#2f2f2fcc' as const;
+
+function getTickerColors(bgHex: string): ITickerColors {
+	const tinycolorInstance = tinycolor(bgHex);
+	const { r, g, b } = tinycolorInstance.toRgb();
+	const yuv = 0.299 * r + 0.587 * g + 0.114 * b;
+	const fgHex = yuv > TICKER_YUV_THRESHOLD ? TICKER_FG_COLOR_DARK : TICKER_FG_COLOR_LIGHT;
+
+	return {
+		fg: fgHex,
+		bg: bgHex,
+	} as const satisfies ITickerColors;
+}
+
 const themeColorStyle = computed<CSSProperties>(() => {
 	const themeColor = (props.host == null ? localInstance.themeColor : props.instance?.themeColor) ?? '#777777';
+	const colors = getTickerColors(themeColor);
 	return {
-		background: `${themeColor}`,
+		background: `linear-gradient(90deg, ${colors.bg}, ${colors.bg}00)`,
+		color: colors.fg,
 	};
 });
 </script>
@@ -66,9 +90,6 @@ $height: 2ex;
 	height: $height;
 	border-radius: .5rem;
 	overflow: clip;
-	color: #000;
-	margin-top: 5px;
-	padding: 1px 5px 1px 0;
 
 	// text-shadowは重いから使うな
 
