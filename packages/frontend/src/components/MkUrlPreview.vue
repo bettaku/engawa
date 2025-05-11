@@ -58,8 +58,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 <div v-else-if="theNote" :class="[$style.link, { [$style.compact]: compact }]"><XNoteSimple :note="theNote" :class="$style.body"/></div>
 <div v-else>
-	<component :is="self ? 'MkA' : 'a'" :class="[$style.link, { [$style.compact]: compact }]" :[attr]="self ? url.substring(local.length) : url" rel="nofollow noopener" :target="target" :title="url" @click.stop="(ev: MouseEvent) => warningExternalWebsite(ev, url)">
-		<div v-if="thumbnail && !sensitive" :class="[$style.thumbnail, { [$style.thumbnailBlur]: sensitive }]" :style="prefer.s.dataSaver.urlPreview ? '' : `background-image: url('${thumbnail}')`">
+	<component :is="self ? 'MkA' : 'a'" :class="[$style.link, { [$style.compact]: compact }]" :[attr]="maybeRelativeUrl" rel="nofollow noopener" :target="target" :title="url" @click.stop="(ev: MouseEvent) => warningExternalWebsite(ev, url)">
+		<div v-if="thumbnail && !sensitive" :class="[$style.thumbnail, { [$style.thumbnailBlur]: sensitive }]" :style="prefer.s.dataSaver.urlPreview ? '' : { backgroundImage: `url('${thumbnail}')` }">
 		</div>
 		<article :class="$style.body">
 			<header :class="$style.header">
@@ -105,6 +105,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 import { defineAsyncComponent, onDeactivated, onUnmounted, ref, watch } from 'vue';
 import { url as local } from '@@/js/config.js';
 import { versatileLang } from '@@/js/intl-const.js';
+import { maybeMakeRelative } from '@@/js/url.js';
 import * as Misskey from 'cherrypick-js';
 import type { summaly } from '@misskey-dev/summaly';
 import { i18n } from '@/i18n.js';
@@ -116,6 +117,7 @@ import { transformPlayerUrl } from '@/utility/player-url-transform.js';
 import { store } from '@/store.js';
 import { prefer } from '@/preferences.js';
 import { warningExternalWebsite } from '@/utility/warning-external-website.js';
+import { misskeyApi } from '@/utility/misskey-api.js';
 
 type SummalyResult = Awaited<ReturnType<typeof summaly>>;
 
@@ -135,7 +137,8 @@ const props = withDefaults(defineProps<{
 const MOBILE_THRESHOLD = 500;
 const isMobile = ref(deviceKind === 'smartphone' || window.innerWidth <= MOBILE_THRESHOLD);
 
-const self = props.url.startsWith(local);
+const maybeRelativeUrl = maybeMakeRelative(props.url, local);
+const self = maybeRelativeUrl !== props.url;
 const attr = self ? 'to' : 'href';
 const target = self ? null : '_blank';
 const fetching = ref(true);

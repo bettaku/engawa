@@ -208,6 +208,17 @@ export const paramDef = {
 			},
 		},
 		urlPreviewDirectSummalyProxy: { type: 'boolean' },
+		deliverSuspendedSoftware: {
+			type: 'array',
+			items: {
+				type: 'object',
+				properties: {
+					software: { type: 'string' },
+					versionRange: { type: 'string' },
+				},
+				required: ['software', 'versionRange'],
+			},
+		},
 		doNotSendNotificationEmailsForAbuseReport: { type: 'boolean' },
 		emailToReceiveAbuseReport: { type: 'string', nullable: true },
 		enableReceivePrerelease: { type: 'boolean' },
@@ -799,6 +810,10 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			if (ps.federation !== undefined) {
 				set.federation = ps.federation;
+			}
+
+			if (ps.deliverSuspendedSoftware !== undefined) {
+				set.deliverSuspendedSoftware = ps.deliverSuspendedSoftware;
 			}
 
 			if (Array.isArray(ps.federationHosts)) {

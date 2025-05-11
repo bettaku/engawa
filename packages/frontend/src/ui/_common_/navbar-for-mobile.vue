@@ -163,8 +163,7 @@ function more() {
 	display: inline-block;
 	width: 50px;
 	aspect-ratio: 1;
-	margin-right: 150px;
-	border-radius: 18px;
+	border-radius: 8px;
 }
 
 .bottom {
