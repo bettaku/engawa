@@ -573,6 +573,8 @@ export class ActivityPubServerService {
 					`userTimeline:${user.id}`,
 					`userTimelineWithReplies:${user.id}`,
 				],
+				withCats: true, // TODO: paramから取りたい
+				withoutBots: false, // TODO: paramから取りたい
 				useDbFallback: true,
 				ignoreAuthorFromMute: true,
 				excludePureRenotes: false,

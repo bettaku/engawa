@@ -67,8 +67,6 @@ function generateDummyUser(override?: Partial<MiUser>): MiUser {
 		uri: null,
 		followersUri: null,
 		token: null,
-		setFederationAvatarShape: null,
-		isSquareAvatars: null,
 		...override,
 	};
 }
@@ -499,6 +497,7 @@ export class WebhookTestService {
 			isRenoteMuted: false,
 			notify: 'none',
 			withReplies: true,
+			isSensitive: false,
 			...override,
 		};
 	}
