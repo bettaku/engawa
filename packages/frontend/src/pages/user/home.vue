@@ -217,6 +217,7 @@ import detectLanguage from '@/utility/detect-language.js';
 import { globalEvents } from '@/events.js';
 import { notesSearchAvailable, canSearchNonLocalNotes } from '@/utility/check-permissions.js';
 import { store } from '@/store.js';
+import * as os from '@/os.js';
 
 function calcAge(birthdate: string): number {
 	const date = new Date(birthdate);

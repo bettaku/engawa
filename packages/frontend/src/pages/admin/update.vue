@@ -98,7 +98,7 @@ async function init() {
 
 	try {
 		// CherryPick Releases Fetch
-		const cherryPickResponse = await fetch('https://api.github.com/repos/kokonect-link/cherrypick/releases');
+		const cherryPickResponse = await window.fetch('https://api.github.com/repos/kokonect-link/cherrypick/releases');
 		const cherryPickData = await cherryPickResponse.json();
 		releasesCherryPick.value = meta.enableReceivePrerelease ? cherryPickData : cherryPickData.filter(x => !x.prerelease);
 
@@ -112,7 +112,7 @@ async function init() {
 
 	try {
 		// Misskey Releases Fetch
-		const misskeyResponse = await fetch('https://api.github.com/repos/misskey-dev/misskey/releases');
+		const misskeyResponse = await window.fetch('https://api.github.com/repos/misskey-dev/misskey/releases');
 		const misskeyData = await misskeyResponse.json();
 		releasesMisskey.value = meta.enableReceivePrerelease ? misskeyData : misskeyData.filter(x => !x.prerelease);
 	} catch (error) {

@@ -220,7 +220,7 @@ async function fetchUrlPreview(url: string, lang: string, retries = 3, interval 
 				console.warn(`[HTTP${res.status}] Failed to fetch url preview`);
 			}
 			if (retries > 0) {
-				await new Promise(resolve => setTimeout(resolve, interval));
+				await new Promise(resolve => window.setTimeout(resolve, interval));
 				return await fetchUrlPreview(url, lang, retries - 1, interval);
 			}
 			return null;
@@ -231,7 +231,7 @@ async function fetchUrlPreview(url: string, lang: string, retries = 3, interval 
 			console.warn('Failed to fetch url preview', err);
 		}
 		if (retries > 0) {
-			await new Promise(resolve => setTimeout(resolve, interval));
+			await new Promise(resolve => window.setTimeout(resolve, interval));
 			return await fetchUrlPreview(url, lang, retries - 1, interval);
 		}
 		return null;

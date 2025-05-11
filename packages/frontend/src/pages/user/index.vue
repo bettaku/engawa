@@ -31,7 +31,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 import { ref, watch, computed, defineProps, defineAsyncComponent } from 'vue';
 import * as Misskey from 'cherrypick-js';
 import * as os from '@/os.js';
-import MkHorizontalSwipe from '@/components/MkHorizontalSwipe.vue';
 import { acct as getAcct } from '@/filters/user.js';
 import { misskeyApi } from '@/utility/misskey-api.js';
 import { definePage } from '@/page.js';

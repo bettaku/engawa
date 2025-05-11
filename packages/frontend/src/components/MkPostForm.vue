@@ -123,6 +123,7 @@ import type { PostFormProps } from '@/types/post-form.js';
 import type { MenuItem } from '@/types/menu.js';
 import type { PollEditorModelValue } from '@/components/MkPollEditor.vue';
 import type { DeleteScheduleEditorModelValue } from '@/components/MkScheduledNoteDelete.vue';
+import MkMfmCheatSheetDialog from '@/components/MkMfmCheatSheetDialog.vue';
 import MkEventEditor from '@/components/MkEventEditor.vue';
 import MkNotePreview from '@/components/MkNotePreview.vue';
 import MkNoteSimple from '@/components/MkNoteSimple.vue';
