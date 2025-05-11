@@ -131,7 +131,7 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 	}
 
 	@bindThis
-	public async remoteUserUpdate(user: MiUser) {
+	public async remoteUserUpdate(user: MiUser): Promise<void | string> {
 		const userHost = user.host ?? '';
 		const instance = await this.instancesRepository.findOneBy({ host: userHost });
 		const userHostUrl = `https://${user.host}`;
