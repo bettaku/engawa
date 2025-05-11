@@ -74,8 +74,7 @@ const themeColorStyle = computed<CSSProperties>(() => {
 	const themeColor = (props.host == null ? localInstance.themeColor : props.instance?.themeColor) ?? '#777777';
 	const colors = getTickerColors(themeColor);
 	return {
-		background: `linear-gradient(90deg, ${colors.bg}, ${colors.bg}00)`,
-		color: colors.fg,
+		background: `${themeColor}`,
 	};
 });
 </script>
@@ -89,7 +88,10 @@ $height: 2ex;
 	align-items: center;
 	height: $height;
 	border-radius: .5rem;
-	overflow: clip;
+	overflow: hidden;
+	padding-right: 6px;
+	padding-top: 1px;
+	padding-bottom: 1px;
 
 	// text-shadowは重いから使うな
 
@@ -115,6 +117,9 @@ $height: 2ex;
   overflow-wrap: anywhere;
   max-width: 300px;
   text-overflow: ellipsis;
+	-webkit-text-stroke: #fff 3px;
+	paint-order: stroke;
+	color:black;
 
   &::-webkit-scrollbar {
     display: none;
