@@ -183,8 +183,22 @@ function getWeatherIcon(code: number): string {
 		56: 'ti ti-droplets',
 		57: 'ti ti-droplets',
 		61: 'ti ti-umbrella',
+		63: 'ti ti-umbrella',
+		65: 'ti ti-umbrella',
+		66: 'ti ti-cloud-rain',
+		67: 'ti ti-cloud-rain',
 		71: 'ti ti-snowflake',
+		73: 'ti ti-snowflake',
+		75: 'ti ti-snowflake',
+		77: 'ti ti-grain',
+		80: 'ti ti-umbrella-2',
+		81: 'ti ti-umbrella-2',
+		82: 'ti ti-umbrella-2',
+		85: 'ti ti-snowman',
+		86: 'ti ti-snowman',
 		95: 'ti ti-bolt',
+		96: 'ti ti-bolt',
+		99: 'ti ti-bolt',
 	};
 	return icons[code] || 'ti ti-question-mark';
 }
