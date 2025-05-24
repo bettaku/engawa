@@ -133,6 +133,7 @@ defineExpose({
 	background: color(from var(--MI_THEME-bg) srgb r g b / 0.5);
 	border-top: solid 0.5px var(--MI_THEME-divider);
 	display: flex;
+	padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .button {
