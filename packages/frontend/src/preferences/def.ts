@@ -661,7 +661,7 @@ export const PREF_DEF = {
 
 	// - Settings/Accessibility
 	showingAnimatedImages: {
-		default: /mobile|iphone|android/.test(navigator.userAgent.toLowerCase()) ? 'inactive' : 'always' as 'always' | 'interaction' | 'inactive',
+		default: /mobile|ipad|iphone|android/.test(navigator.userAgent.toLowerCase()) ? 'inactive' : 'always' as 'always' | 'interaction' | 'inactive',
 	},
 
 	// - Settings/Drive

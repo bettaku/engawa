@@ -372,15 +372,15 @@ import { getAppearNote } from '@/utility/get-appear-note.js';
 import { prefer } from '@/preferences.js';
 import { getPluginHandlers } from '@/plugin.js';
 import { DI } from '@/di.js';
-import { globalEvents } from '@/events.js';
 import { mainRouter } from '@/router.js';
 import { useRouter } from '@/router.js';
 import { miLocalStorage } from '@/local-storage.js';
 import { vibrate } from '@/utility/vibrate.js';
 import { store } from '@/store.js';
+import { scrollToVisibility } from '@/utility/scroll-to-visibility.js';
 import detectLanguage from '@/utility/detect-language.js';
 
-const showEl = ref(false);
+const { showEl } = scrollToVisibility();
 
 const props = withDefaults(defineProps<{
 	note: Misskey.entities.Note;
@@ -582,10 +582,6 @@ provide(DI.mfmEmojiReactCallback, (reaction) => {
 		noteId: appearNote.value.id,
 		reaction: reaction,
 	});
-});
-
-onMounted(() => {
-	globalEvents.on('showEl', (value) => showEl.value = value);
 });
 
 if (props.mock) {
