@@ -208,7 +208,8 @@ export class ActivityPubServerService {
 	@bindThis
 	private async inbox(request: FastifyRequest, reply: FastifyReply) {
 		if (await this.shouldReject(request, reply)) {
-			return;
+			reply.code(403);
+			return reply.send({ error: 'Forbidden' });
 		}
 		let signature;
 
@@ -384,7 +385,8 @@ export class ActivityPubServerService {
 		reply: FastifyReply,
 	) {
 		if (await this.shouldReject(request, reply)) {
-			return;
+			reply.code(403);
+			return reply.send({ error: 'Forbidden' });
 		}
 
 		const userId = request.params.user;
@@ -477,7 +479,8 @@ export class ActivityPubServerService {
 	@bindThis
 	private async featured(request: FastifyRequest<{ Params: { user: string; }; }>, reply: FastifyReply) {
 		if (await this.shouldReject(request, reply)) {
-			return;
+			reply.code(403);
+			return reply.send({ error: 'Forbidden' });
 		}
 
 		const userId = request.params.user;
@@ -525,7 +528,8 @@ export class ActivityPubServerService {
 		reply: FastifyReply,
 	) {
 		if (await this.shouldReject(request, reply)) {
-			return;
+			reply.code(403);
+			return reply.send({ error: 'Forbidden' });
 		}
 
 		const userId = request.params.user;
@@ -641,7 +645,8 @@ export class ActivityPubServerService {
 	@bindThis
 	private async userInfo(request: FastifyRequest, reply: FastifyReply, user: MiUser | null) {
 		if (await this.shouldReject(request, reply)) {
-			return;
+			reply.code(403);
+			return reply.send({ error: 'Forbidden' });
 		}
 
 		if (user == null) {
@@ -727,7 +732,8 @@ export class ActivityPubServerService {
 			vary(reply.raw, 'Accept');
 
 			if (await this.shouldReject(request, reply)) {
-				return;
+				reply.code(403);
+				return reply.send({ error: 'Forbidden' });
 			}
 
 			const note = await this.notesRepository.findOneBy({
@@ -751,7 +757,7 @@ export class ActivityPubServerService {
 				return;
 			}
 
-			reply.header('Cache-Control', 'public, max-age=180');
+			reply.header('Cache-Control', 'private, max-age=0, must-revalidate');
 			this.setResponseType(request, reply);
 			return this.apRendererService.addContext(await this.apRendererService.renderNote(note, false));
 		});
@@ -761,7 +767,8 @@ export class ActivityPubServerService {
 			vary(reply.raw, 'Accept');
 
 			if (await this.shouldReject(request, reply)) {
-				return;
+				reply.code(403);
+				return reply.send({ error: 'Forbidden' });
 			};
 
 			const note = await this.notesRepository.findOneBy({
@@ -776,7 +783,7 @@ export class ActivityPubServerService {
 				return;
 			}
 
-			reply.header('Cache-Control', 'public, max-age=180');
+			reply.header('Cache-Control', 'private, max-age=0, must-revalidate');
 			this.setResponseType(request, reply);
 			return (this.apRendererService.addContext(await this.packActivity(note)));
 		});
@@ -805,7 +812,8 @@ export class ActivityPubServerService {
 		// publickey
 		fastify.get<{ Params: { user: string; } }>('/users/:user/publickey', async (request, reply) => {
 			if (await this.shouldReject(request, reply)) {
-				return;
+				reply.code(403);
+				return reply.send({ error: 'Forbidden' });
 			}
 
 			const userId = request.params.user;
@@ -836,7 +844,8 @@ export class ActivityPubServerService {
 			vary(reply.raw, 'Accept');
 
 			if (await this.shouldReject(request, reply)) {
-				return;
+				reply.code(403);
+				return reply.send({ error: 'Forbidden' });
 			}
 
 			const userId = request.params.user;
@@ -871,7 +880,8 @@ export class ActivityPubServerService {
 		// emoji
 		fastify.get<{ Params: { emoji: string; } }>('/emojis/:emoji', async (request, reply) => {
 			if (await this.shouldReject(request, reply)) {
-				return;
+				reply.code(403);
+				return reply.send({ error: 'Forbidden' });
 			}
 
 			const emoji = await this.emojisRepository.findOneBy({
@@ -892,7 +902,8 @@ export class ActivityPubServerService {
 		// like
 		fastify.get<{ Params: { like: string; } }>('/likes/:like', async (request, reply) => {
 			if (await this.shouldReject(request, reply)) {
-				return;
+				reply.code(403);
+				return reply.send({ error: 'Forbidden' });
 			}
 
 			const reaction = await this.noteReactionsRepository.findOneBy({ id: request.params.like });
@@ -917,7 +928,8 @@ export class ActivityPubServerService {
 		// follow
 		fastify.get<{ Params: { follower: string; followee: string; } }>('/follows/:follower/:followee', async (request, reply) => {
 			if (await this.shouldReject(request, reply)) {
-				return;
+				reply.code(403);
+				return reply.send({ error: 'Forbidden' });
 			}
 
 			// This may be used before the follow is completed, so we do not
@@ -947,7 +959,8 @@ export class ActivityPubServerService {
 		// follow
 		fastify.get<{ Params: { followRequestId: string; } }>('/follows/:followRequestId', async (request, reply) => {
 			if (await this.shouldReject(request, reply)) {
-				return;
+				reply.code(403);
+				return reply.send({ error: 'Forbidden' });
 			}
 
 			// This may be used before the follow is completed, so we do not
