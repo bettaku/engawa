@@ -17,11 +17,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<MkA v-tooltip.noDelay.right="i18n.ts.timeline" :class="$style.item" :activeClass="$style.active" to="/" exact>
 				<i :class="$style.itemIcon" class="ti ti-home ti-fw" style="viewTransitionName: navbar-homeIcon;"></i><span :class="$style.itemText">{{ i18n.ts.timeline }}</span>
 			</MkA>
-			<template v-for="item in prefer.r.menu.value">
-				<div v-if="item === '-'" :class="$style.divider"></div>
+			<template v-for="(item, index) in prefer.r.menu.value">
+				<div v-if="item === '-'" :key="`divider-${index}`" :class="$style.divider"></div>
 				<component
 					:is="navbarItemDef[item].to ? 'MkA' : 'button'"
 					v-else-if="navbarItemDef[item] && (navbarItemDef[item].show !== false)"
+					:key="item"
 					v-vibrate="prefer.s['vibrate.on.system'] ? 5 : []"
 					v-tooltip.noDelay.right="navbarItemDef[item].title"
 					class="_button"
@@ -227,7 +228,7 @@ function openProfile() {
 	height: 100%;
 	box-sizing: border-box;
 	overflow: auto;
-	overflow-x: clip;
+	overflow-x: hidden;
 	overscroll-behavior: contain;
 	background: var(--MI_THEME-navBg);
 	contain: strict;

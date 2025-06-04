@@ -134,13 +134,19 @@ onMounted(() => {
 
 		> .right,
 		> .left {
+			display: flex;
+			flex-wrap: nowrap;
+			align-items: center;
 
 			> .item {
 				position: relative;
 				font-size: 0.9em;
-				display: inline-block;
-				padding: 0 12px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 0 min(12px, 1.5vw);
 				line-height: $height;
+				flex-shrink: 1;
 
 				> i,
 				> .avatar {
@@ -226,6 +232,13 @@ onMounted(() => {
 
 		> .right {
 			margin-left: auto;
+			flex-shrink: 0;
+		}
+
+		> .left {
+			flex-shrink: 1;
+			min-width: 0;
+			overflow: hidden;
 		}
 	}
 }
