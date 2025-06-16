@@ -15,7 +15,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	<template #header>{{ name }}</template>
 
 	<div style="display: flex; flex-direction: column; min-height: 100%;">
-		<MkSpacer :marginMin="20" :marginMax="28" style="flex-grow: 1;">
+		<div style="flex-grow: 1; margin: 28px;">
 			<div class="_gaps_m">
 				<div v-if="url != ''" :class="$style.preview">
 					<div :class="[$style.previewItem, $style.light]">
@@ -26,7 +26,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					</div>
 				</div>
 				<MkKeyValue>
-					<template #key>{{ i18n.ts.id }}</template>
+					<template #key>{{ i18n.ts.name }}</template>
 					<template #value>{{ name }}</template>
 				</MkKeyValue>
 				<MkKeyValue>
@@ -34,7 +34,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<template #value>{{ description }}</template>
 				</MkKeyValue>
 			</div>
-		</MkSpacer>
+		</div>
 	</div>
 </MkWindow>
 </template>
