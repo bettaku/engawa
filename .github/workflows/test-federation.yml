@@ -36,8 +36,8 @@ jobs:
             echo "Attempt $i: Installing FFmpeg..."
             curl -s -L https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz -o ffmpeg.tar.xz && \
             tar -xf ffmpeg.tar.xz && \
-            mv ffmpeg-*-static/ffmpeg /usr/local/bin/ && \
-            mv ffmpeg-*-static/ffprobe /usr/local/bin/ && \
+            sudo mv ffmpeg-*-static/ffmpeg /usr/local/bin/ && \
+            sudo mv ffmpeg-*-static/ffprobe /usr/local/bin/ && \
             rm -rf ffmpeg.tar.xz ffmpeg-*-static/ && \
             break || sleep 10
             if [ $i -eq 3 ]; then
