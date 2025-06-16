@@ -3,8 +3,11 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import JSON5 from 'json5';
 import { v4 as uuid } from 'uuid';
+import defaultDarkTheme from '@@/themes/d-cherrypick.json5';
 import type { DeckProfile } from '@/deck.js';
+import { getBuiltinThemesRef } from '@/theme.js';
 import { ColdDeviceStorage, store } from '@/store.js';
 import { prefer } from '@/preferences.js';
 import { misskeyApi } from '@/utility/misskey-api.js';
@@ -12,13 +15,24 @@ import { deckStore } from '@/ui/deck/deck-store.js';
 import { unisonReload } from '@/utility/unison-reload.js';
 import * as os from '@/os.js';
 import { i18n } from '@/i18n.js';
+import { instance } from '@/instance.js';
+
+const instanceDarkTheme = instance.defaultDarkTheme ? JSON5.parse(instance.defaultDarkTheme) : defaultDarkTheme;
 
 // TODO: そのうち消す
 export function migrateOldSettings() {
 	os.waiting(i18n.ts.settingsMigrating);
 
 	store.loaded.then(async () => {
-		misskeyApi('i/registry/get', { scope: ['client'], key: 'themes' }).catch(() => []).then((themes: any) => {
+		misskeyApi('i/registry/get', { scope: ['client'], key: 'themes' }).catch((err) => [
+			console.error('Failed to get themes from registry:', err),
+			console.log(instanceDarkTheme),
+			misskeyApi('i/registry/set', {
+				scope: ['client'],
+				key: 'themes',
+				value: [instanceDarkTheme],
+			}),
+		]).then((themes: any) => {
 			if (themes.length > 0) {
 				prefer.commit('themes', themes);
 			}
@@ -200,7 +214,14 @@ export function migrateOldSettings() {
 		prefer.commit('enableChannelTimeline', store.s.enableChannelTimeline);
 
 		// - Settings/Sounds & Vibrations
-		prefer.commit('vibrate', store.s.vibrate);
+		// prefer.commit('vibrate', store.s.vibrate);
+		try {
+			prefer.commit('vibrate', store.s.vibrate);
+		} catch (err) {
+			if (_DEV_) console.error('Failed to migrate vibrate settings:', err);
+			if (_DEV_) console.log('vibrate value:', store.s.vibrate);
+			prefer.commit('vibrate', false);
+		}
 		prefer.commit('vibrate.on.note', store.s.vibrate_note);
 		prefer.commit('vibrate.on.notification', store.s.vibrate_notification);
 		prefer.commit('vibrate.on.system', store.s.vibrate_system);

@@ -140,6 +140,8 @@ export class PreferencesManager {
 
 	public commit<K extends keyof PREF>(key: K, value: ValueOf<K>) {
 		const v = JSON.parse(JSON.stringify(value)); // deep copy 兼 vueのプロキシ解除
+		if (_DEV_) console.log(key);
+		if (_DEV_) console.log(JSON.stringify(value));
 
 		if (deepEqual(this.s[key], v)) {
 			if (_DEV_) console.log('(skip) prefer:commit', key, v);
