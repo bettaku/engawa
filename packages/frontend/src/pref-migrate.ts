@@ -16,6 +16,7 @@ import { unisonReload } from '@/utility/unison-reload.js';
 import * as os from '@/os.js';
 import { i18n } from '@/i18n.js';
 import { instance } from '@/instance.js';
+import { miLocalStorage } from '@/local-storage.js';
 
 const instanceDarkTheme = instance.defaultDarkTheme ? JSON5.parse(instance.defaultDarkTheme) : defaultDarkTheme;
 
@@ -245,6 +246,8 @@ export function migrateOldSettings() {
 		prefer.commit('enableLongPressOpenAccountMenu', store.s.enableLongPressOpenAccountMenu);
 		prefer.commit('friendlyUiShowAvatarDecorationsInNavBtn', store.s.friendlyUiShowAvatarDecorationsInNavBtn);
 		// #endregion
+
+		miLocalStorage.setItem('lastVersion', instance.version);
 
 		window.setTimeout(() => {
 			unisonReload();
