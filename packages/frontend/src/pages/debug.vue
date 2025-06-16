@@ -42,6 +42,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<MkButton @click="os.alert({ type: 'success', title: 'Success', text: 'success' })">Success</MkButton>
 				<MkButton @click="os.alert({ type: 'question', title: 'Question', text: 'question' })">Question</MkButton>
 			</div>
+
+			<div class="_buttons">
+				<MkButton @click="migrateOldSettings">Migrate Old Settings</MkButton>
+			</div>
 		</div>
 	</div>
 </PageWithHeader>
@@ -57,6 +61,7 @@ import MkLink from '@/components/MkLink.vue';
 import MkSelect from '@/components/MkSelect.vue';
 import MkButton from '@/components/MkButton.vue';
 import * as os from '@/os.js';
+import { migrateOldSettings } from '@/pref-migrate.js';
 
 const resultType = ref('empty');
 const iconType = ref('info');
