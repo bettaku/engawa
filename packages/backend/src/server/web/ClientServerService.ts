@@ -466,6 +466,15 @@ export class ClientServerService {
 			return user && await this.feedService.packFeed(user);
 		};
 
+		const getClipFeed = async (clipId: string) => {
+			const clip = await this.clipsRepository.findOneBy({
+				id: clipId,
+				isPublic: true,
+			});
+
+			return clip && await this.feedService.packFeedClips(clip);
+		};
+
 		// Atom
 		fastify.get<{ Params: { user?: string; } }>('/@:user.atom', async (request, reply) => {
 			if (request.params.user == null) return await renderBase(reply);
@@ -474,6 +483,18 @@ export class ClientServerService {
 
 			if (feed) {
 				reply.header('Content-Type', 'application/atom+xml; charset=utf-8');
+				return feed.atom1();
+			} else {
+				reply.code(404);
+				return;
+			}
+		});
+
+		fastify.get<{ Params: { clip: string; } }>('/clips/:clip.atom', async (request, reply) => {
+			const feed = await getClipFeed(request.params.clip);
+
+			if (feed) {
+				reply.header('content-type', 'application/atom+xml; charset=utf-8');
 				return feed.atom1();
 			} else {
 				reply.code(404);
@@ -495,6 +516,9 @@ export class ClientServerService {
 				return;
 			}
 		});
+
+		// Clip RSS
+		fastify.get<{ Params: { clip: string; } }>('/clips/:clip.rss', async (request, reply) => {});
 
 		// JSON
 		fastify.get<{ Params: { user?: string; } }>('/@:user.json', async (request, reply) => {

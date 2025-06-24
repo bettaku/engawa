@@ -8,9 +8,11 @@ import { In, IsNull } from 'typeorm';
 import { Feed } from 'feed';
 import { parse as mfmParse } from 'mfc-js';
 import { DI } from '@/di-symbols.js';
-import type { DriveFilesRepository, NotesRepository, UserProfilesRepository } from '@/models/_.js';
+import type { DriveFilesRepository, NotesRepository, UserProfilesRepository, ClipNotesRepository } from '@/models/_.js';
 import type { Config } from '@/config.js';
 import type { MiUser } from '@/models/User.js';
+import type { MiClip } from '@/models/Clip.js';
+import type { MiClipNote } from '@/models/ClipNote.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
 import { bindThis } from '@/decorators.js';
@@ -31,6 +33,9 @@ export class FeedService {
 
 		@Inject(DI.driveFilesRepository)
 		private driveFilesRepository: DriveFilesRepository,
+
+		@Inject(DI.clipNotesRepository)
+		private clipNotesRepository: ClipNotesRepository,
 
 		private userEntityService: UserEntityService,
 		private driveFileEntityService: DriveFileEntityService,
@@ -87,6 +92,48 @@ export class FeedService {
 				date: this.idService.parse(note.id).date,
 				description: note.cw ?? undefined,
 				content: text ? this.mfmService.toHtml(mfmParse(text), JSON.parse(note.mentionedRemoteUsers)) ?? undefined : undefined,
+				image: file ? this.driveFileEntityService.getPublicUrl(file) : undefined,
+			});
+		}
+
+		return feed;
+	}
+
+	@bindThis
+	public async packFeedClips(clip: MiClip) {
+		const link = `${this.config.url}/clips/${clip.id}`;
+
+		const clipNotes = await this.clipNotesRepository.find({
+			where: {
+				clipId: clip.id,
+			},
+			order: { id: -1 },
+			take: 20,
+		});
+
+		const feed = new Feed({
+			id: link,
+			title: clip.name,
+			updated: clip.lastClippedAt ?? new Date(),
+			generator: 'CherryPick',
+			description: clip.description ?? '',
+			link: link,
+			copyright: clip.name,
+		});
+
+		for (const clipNote of clipNotes) {
+			const note = await this.notesRepository.findOneByOrFail({ id: clipNote.noteId });
+			const files = note.fileIds.length > 0 ? await this.driveFilesRepository.findBy({
+				id: In(note.fileIds),
+			}) : [];
+			const file = files.find(file => file.type.startsWith('image/'));
+
+			feed.addItem({
+				title: `New clipped note in ${clip.name}`,
+				link: `${this.config.url}/notes/${note.id}`,
+				date: this.idService.parse(note.id).date,
+				description: note.cw ?? undefined,
+				content: note.text ? this.mfmService.toHtml(mfmParse(note.text), JSON.parse(note.mentionedRemoteUsers)) ?? undefined : undefined,
 				image: file ? this.driveFileEntityService.getPublicUrl(file) : undefined,
 			});
 		}
