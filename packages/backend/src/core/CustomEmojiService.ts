@@ -690,11 +690,11 @@ export class CustomEmojiService implements OnApplicationShutdown {
 				const originalDriveFile = await this.driveFilesRepository.findOneBy({ url: originalSourceUrl });
 				if (originalDriveFile && originalDriveFile.id !== copyDriveFile.id) {
 					const referenceCount = await this.driveFilesRepository.count({
-						where: { url: originalSourceUrl, id: Not(originalDriveFile.id) },
+						where: { url: originalSourceUrl, id: originalDriveFile.id },
 					});
 					if (referenceCount === 0) {
 						await this.driveService.deleteFile(originalDriveFile);
-						this.logger.info('Deleted original emoji file as it\'s no longer referenced', {
+						this.logger.info('Deleted original emoji file as it\'s no longer referenced', { // ここが悪い
 							fileId: originalDriveFile.id,
 							url: originalSourceUrl,
 						});
