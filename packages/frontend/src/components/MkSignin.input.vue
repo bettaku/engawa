@@ -15,15 +15,23 @@ SPDX-License-Identifier: AGPL-3.0-only
 			{{ message }}
 		</MkInfo>
 
-		<!-- 外部サーバーへの転送 -->
+		<!-- ドメインを指定してリダイレクト -->
+		<div v-if="openOnRemote" class="_gaps_m">
+			<div class="_gaps_s">
+				<MkButton type="button" primary class="_button" :class="$style.instanceManualSelectButton" @click="specifyHostAndOpenRemote(openOnRemote)">
+					{{ i18n.ts.specifyServerHost }}
+				</MkButton>
+			</div>
+			<div :class="$style.orHr">
+				<p :class="$style.orMsg">{{ i18n.ts.or }}</p>
+			</div>
+		</div>
+		<!-- Misskey Hubへリダイレクト-->
 		<div v-if="openOnRemote" class="_gaps_m">
 			<div class="_gaps_s">
 				<MkButton type="button" rounded primary style="margin: 0 auto;" @click="openRemote(openOnRemote)">
-					{{ i18n.ts.continueOnRemote }} <i class="ti ti-external-link"></i>
+					{{ i18n.ts.chooseServerOnMisskeyHub }} <i class="ti ti-external-link"></i>
 				</MkButton>
-				<button type="button" class="_button" :class="$style.instanceManualSelectButton" @click="specifyHostAndOpenRemote(openOnRemote)">
-					{{ i18n.ts.specifyServerHost }}
-				</button>
 			</div>
 			<div :class="$style.orHr">
 				<p :class="$style.orMsg">{{ i18n.ts.or }}</p>
@@ -180,8 +188,7 @@ async function specifyHostAndOpenRemote(options: OpenOnRemoteOptions): Promise<v
 .instanceManualSelectButton {
 	display: block;
 	text-align: center;
-	opacity: .7;
-	font-size: .8em;
+	margin: 0 auto;
 
 	&:hover {
 		text-decoration: underline;
