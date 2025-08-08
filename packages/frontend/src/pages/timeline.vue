@@ -46,7 +46,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<MkTimeline
 			v-else
 			ref="tlComponent"
-			:key="src + withRenotes + withReplies + onlyFiles + withSensitive"
+			:key="src + withRenotes + withReplies + onlyFiles + withSensitive + onlyCats + withoutBots"
 			:class="$style.tl"
 			:src="src.split(':')[0]"
 			:list="src.split(':')[1]"
@@ -54,6 +54,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 			:withReplies="withReplies"
 			:withSensitive="withSensitive"
 			:onlyFiles="onlyFiles"
+			:onlyCats="onlyCats"
+			:withoutBots="withoutBots"
 			:sound="true"
 			@queue="queueUpdated"
 		/>
@@ -379,18 +381,18 @@ function saveTlFilter(key: keyof typeof store.s.tl.filter, newValue: boolean) {
 	}
 }
 
-async function timetravel(): Promise<void> {
-	const { canceled, result: date } = await os.inputDate({
-		title: i18n.ts.date,
-	});
-	if (canceled) return;
+// async function timetravel(): Promise<void> {
+//	const { canceled, result: date } = await os.inputDate({
+//		title: i18n.ts.date,
+//	});
+//	if (canceled) return;
+//
+//	tlComponent.value.timetravel(date);
+// }
 
-	tlComponent.value.timetravel(date);
-}
-
-function focus(): void {
-	tlComponent.value.focus();
-}
+// function focus(): void {
+//	tlComponent.value.focus();
+// }
 
 function closeTutorial(): void {
 	if (!isBasicTimeline(src.value)) return;
@@ -545,6 +547,10 @@ const headerActions = computed(() => {
 							type: 'switch',
 							text: i18n.ts.showCatOnly,
 							ref: onlyCats,
+						}, {
+							type: 'switch',
+							text: i18n.ts.antennaExcludeBots,
+							ref: withoutBots,
 						}, { type: 'divider' }, {
 							type: 'switch',
 							text: i18n.ts.forceCollapseAllRenotes,
