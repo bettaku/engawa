@@ -4,6 +4,7 @@
  */
 
 import { Entity, Column, Index, OneToOne, JoinColumn, PrimaryColumn } from 'typeorm';
+import { chatScopeEnum } from '@/types.js';
 import { id } from './util/id.js';
 import { MiDriveFile } from './DriveFile.js';
 
@@ -237,10 +238,11 @@ export class MiUser {
 	// following: フォローしているユーザーのみ
 	// mutual: 相互フォローのみ
 	// none: 誰からも受け付けない
-	@Column('varchar', {
-		length: 128, default: 'mutual',
+	@Column('enum', {
+		enum: chatScopeEnum,
+		default: 'mutual',
 	})
-	public chatScope: 'everyone' | 'followers' | 'following' | 'mutual' | 'none';
+	public chatScope: typeof chatScopeEnum[number];
 
 	@Index()
 	@Column('varchar', {
