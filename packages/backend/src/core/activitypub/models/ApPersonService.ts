@@ -473,6 +473,7 @@ export class ApPersonService implements OnModuleInit {
 					emojis,
 					setFederationAvatarShape: person.setFederationAvatarShape,
 					isSquareAvatars: person.isSquareAvatars,
+					chatScope: person.chatScope ?? 'none',
 				})) as MiRemoteUser;
 
 				let _description: string | null = null;
@@ -724,8 +725,9 @@ export class ApPersonService implements OnModuleInit {
 			isExplorable: person.discoverable,
 			setFederationAvatarShape: person.setFederationAvatarShape,
 			isSquareAvatars: person.isSquareAvatars,
+			chatScope: person.chatScope ?? 'none',
 			...(await this.resolveAvatarAndBanner(exist, person.icon, person.image).catch(() => ({}))),
-		} as Partial<MiRemoteUser> & Pick<MiRemoteUser, 'isBot' | 'isCat' | 'isLocked' | 'movedToUri' | 'alsoKnownAs' | 'isExplorable' | 'isIndexable'>;
+		} as Partial<MiRemoteUser> & Pick<MiRemoteUser, 'isBot' | 'isCat' | 'isLocked' | 'movedToUri' | 'alsoKnownAs' | 'isExplorable' | 'isIndexable' | 'chatScope'>;
 
 		const moving = ((): boolean => {
 			// 移行先がない→ある

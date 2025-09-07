@@ -636,6 +636,7 @@ export class ApRendererService {
 			attachment: attachment.length ? attachment : undefined,
 			setFederationAvatarShape: user.setFederationAvatarShape ?? undefined,
 			isSquareAvatars: user.isSquareAvatars ?? undefined,
+			chatScope: user.chatScope,
 		};
 
 		if (user.movedToUri) {

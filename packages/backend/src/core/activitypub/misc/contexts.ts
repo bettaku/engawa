@@ -582,6 +582,10 @@ const extension_context_definition = {
 	// kmyblue
 	kmyblue: 'http://kmy.blue/ns#',
 	limitedScope: 'kmyblue:limitedScope',
+	// engawa
+	engawa: 'https://c.koliosky.com/ns#',
+	chatScope: 'engawa:chatScope',
+	// TODO: チャットメッセージのコンテキストを追加
 } satisfies Context;
 
 export const CONTEXT: (string | Context)[] = [...context_iris, extension_context_definition];

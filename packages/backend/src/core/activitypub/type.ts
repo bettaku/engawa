@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import { chatScopeEnum } from '@/types.js';
+
 export type Obj = { [x: string]: any };
 export type ApObject = IObject | string | (IObject | string)[];
 
@@ -207,6 +209,7 @@ export interface IActor extends IObject {
 	indexable?: boolean;
 	setFederationAvatarShape?: boolean,
 	isSquareAvatars?: boolean,
+	chatScope?: typeof chatScopeEnum[number];
 }
 
 export const isCollection = (object: IObject): object is ICollection =>

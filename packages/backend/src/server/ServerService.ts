@@ -32,6 +32,7 @@ import { HealthServerService } from './HealthServerService.js';
 import { ClientServerService } from './web/ClientServerService.js';
 import { OpenApiServerService } from './api/openapi/OpenApiServerService.js';
 import { OAuth2ProviderService } from './oauth/OAuth2ProviderService.js';
+import { NamespaceServerService } from './NamespaceServerService.js';
 
 const _dirname = fileURLToPath(new URL('.', import.meta.url));
 
@@ -69,6 +70,7 @@ export class ServerService implements OnApplicationShutdown {
 		private globalEventService: GlobalEventService,
 		private loggerService: LoggerService,
 		private oauth2ProviderService: OAuth2ProviderService,
+		private namespaceServerService: NamespaceServerService,
 	) {
 		this.logger = this.loggerService.getLogger('server', 'gray');
 	}
@@ -150,6 +152,7 @@ export class ServerService implements OnApplicationShutdown {
 		fastify.register(this.oauth2ProviderService.createServer, { prefix: '/oauth' });
 		fastify.register(this.oauth2ProviderService.createTokenServer, { prefix: '/oauth/token' });
 		fastify.register(this.healthServerService.createServer, { prefix: '/healthz' });
+		fastify.register(this.namespaceServerService.createServer, { prefix: '/ns' });
 
 		fastify.get<{ Params: { path: string }; Querystring: { static?: any; badge?: any; }; }>('/emoji/:path(.*)', async (request, reply) => {
 			const path = request.params.path;
