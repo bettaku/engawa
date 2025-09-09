@@ -128,7 +128,7 @@ export class MfmService {
 				}
 
 				case 'h1': {
-					return ['\n\n', '**$[x2', appendChildren(node.childNodes), ' ]**'];
+					return ['\n\n', '**$[x2 ', appendChildren(node.childNodes), ' ]**'];
 				}
 
 				case 'h2':
