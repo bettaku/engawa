@@ -4,6 +4,7 @@
  */
 
 import { createPublicKey, randomUUID } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import { In } from 'typeorm';
 import * as mfm from 'mfc-js';
@@ -18,6 +19,7 @@ import type { MiNoteReaction } from '@/models/NoteReaction.js';
 import type { MiEmoji } from '@/models/Emoji.js';
 import type { MiPoll } from '@/models/Poll.js';
 import type { MiPollVote } from '@/models/PollVote.js';
+import type { MiChatMessage } from '@/models/ChatMessage.js';
 import { UserKeypairService } from '@/core/UserKeypairService.js';
 import { MfmService, type Appender } from '@/core/MfmService.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
@@ -31,7 +33,8 @@ import { UtilityService } from '@/core/UtilityService.js';
 import { JsonLdService } from './JsonLdService.js';
 import { ApMfmService } from './ApMfmService.js';
 import { CONTEXT } from './misc/contexts.js';
-import type { IAccept, IActivity, IAdd, IAnnounce, IApDocument, IApEmoji, IApHashtag, IApImage, IApMention, IBlock, ICreate, IDelete, IFlag, IFollow, IKey, ILike, IMove, IObject, IPost, IQuestion, IRead, IReject, IRemove, ITombstone, IUndo, IUpdate } from './type.js';
+import { ApDbResolverService } from './ApDbResolverService.js';
+import type { IAccept, IActivity, IAdd, IAnnounce, IApDocument, IApEmoji, IApHashtag, IApImage, IApMention, IBlock, ICreate, IDelete, IFlag, IFollow, IKey, ILike, IMove, IObject, IPost, IQuestion, IRead, IReject, IRemove, ITombstone, IUndo, IUpdate, IChatUtterance } from './type.js';
 
 @Injectable()
 export class ApRendererService {
@@ -69,6 +72,7 @@ export class ApRendererService {
 		private mfmService: MfmService,
 		private idService: IdService,
 		private utilityService: UtilityService,
+		private apDbResolverService: ApDbResolverService,
 	) {
 	}
 

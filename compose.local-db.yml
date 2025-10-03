@@ -2,7 +2,7 @@
 
 services:
   redis:
-    restart: always
+    restart: unless-stopped
     image: redis:7-alpine
     ports:
       - "6379:6379"
@@ -14,7 +14,7 @@ services:
       retries: 20
 
   db:
-    restart: always
+    restart: unless-stopped
     image: postgres:15-alpine
     ports:
       - "5432:5432"

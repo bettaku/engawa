@@ -67,6 +67,8 @@ export class NamespaceServerService {
 						'@type': 'ChatScopeValue',
 						'rdfs:comment': 'Do not accept chat messages from anyone. If chatScope is not set, this value is the default.',
 					},
+					'ChatUtterance': {
+					},
 				},
 			};
 

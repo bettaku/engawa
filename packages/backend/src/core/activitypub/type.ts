@@ -183,6 +183,12 @@ export const isActor = (object: IObject): object is IActor => {
 	return type != null && validActor.includes(type);
 };
 
+export interface IChatUtterance extends IObject {
+	type: 'ChatUtterance';
+	content: string | null;
+	reads: string[];
+}
+
 export interface IActor extends IObject {
 	type: 'Person' | 'Service' | 'Organization' | 'Group' | 'Application';
 	name?: string;

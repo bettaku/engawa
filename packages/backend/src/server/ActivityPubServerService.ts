@@ -996,6 +996,19 @@ export class ActivityPubServerService {
 			return (this.apRendererService.addContext(this.apRendererService.renderFollow(follower, followee)));
 		});
 
+		// chat 1 to 1
+		fastify.get<{ Params: { messageId: string } }>('/message/:messageId', async (request, reply) => {
+			if (await this.shouldReject(request, reply)) {
+				reply.code(403);
+				return reply.send({ error: 'Forbidden' });
+			}
+
+			const messageId = request.params.messageId;
+
+			const authHeader = request.headers.authorization;
+			if (authHeader == null || !authHeader.startsWith('Bearer ')) {}
+		});
+
 		done();
 	}
 }
