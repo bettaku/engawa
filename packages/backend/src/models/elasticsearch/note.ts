@@ -3,10 +3,9 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-// @ts-nocheck
-import { MappingTypeMapping, IndicesIndexSettings } from '@elastic/elasticsearch/lib/api/types.js';
+import { estypes } from '@elastic/elasticsearch';
 
-export const noteMapping: MappingTypeMapping = {
+export const noteMapping: estypes.MappingTypeMapping = {
 	properties: {
 		text: {
 			type: 'text',
@@ -34,7 +33,17 @@ export const noteMapping: MappingTypeMapping = {
 	},
 };
 
-export const noteSettings: IndicesIndexSettings = {
+interface AnalysisSudachiTokenizer extends estypes.AnalysisTokenizerBase {
+	type: 'sudachi_tokenizer';
+	split_mode?: 'A' | 'B' | 'C';
+	discard_punctuation?: boolean;
+	allow_empty_morpheme?: boolean;
+	settings_path?: string;
+	resources_path?: string;
+	additional_settings?: string;
+}
+
+export const noteSettings: estypes.IndicesIndexSettings = {
 	settings: {
 		index: {
 			analysis: {
