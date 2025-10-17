@@ -7,6 +7,7 @@ import * as fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import * as yaml from 'js-yaml';
+import type { TokenizerType } from '@/misc/elasticsearch.js';
 import type * as Sentry from '@sentry/node';
 import type * as SentryVue from '@sentry/vue';
 import type { RedisOptions } from 'ioredis';
@@ -73,6 +74,7 @@ type Source = {
 		scope?: 'local' | 'global' | string[];
 		pingTimeout?: number;
 		requestTimeout?: number;
+		tokenizerType?: TokenizerType | TokenizerType[];
 	};
 	sentryForBackend?: { options: Partial<Sentry.NodeOptions>; enableNodeProfiling: boolean; };
 	sentryForFrontend?: {
@@ -185,6 +187,7 @@ export type Config = {
 		scope?: 'local' | 'global' | string[];
 		pingTimeout?: number;
 		requestTimeout?: number;
+		tokenizerType?: TokenizerType | TokenizerType[];
 	} | undefined;
 	proxy: string | undefined;
 	proxySmtp: string | undefined;
