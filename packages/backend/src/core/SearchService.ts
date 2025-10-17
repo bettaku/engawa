@@ -5,7 +5,7 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { Brackets, In } from 'typeorm';
-import { Client as ElasticSearch } from '@elastic/elasticsearch';
+import { Client as ElasticSearch, estypes } from '@elastic/elasticsearch';
 import { DI } from '@/di-symbols.js';
 import { type Config, FulltextSearchProvider } from '@/config.js';
 import { bindThis } from '@/decorators.js';
@@ -144,17 +144,16 @@ export class SearchService {
 			});
 		} else if (elasticsearch) {
 			this.elasticsearchNoteIndex = `${config.elasticsearch!.index}---notes`;
-			const NoteIndex = this.elasticsearchNoteIndex;
 
 			this.elasticsearch?.indices.exists({
 				index: this.elasticsearchNoteIndex,
 			}).then((indexExists) => {
 				if (!indexExists) this.elasticsearch?.indices.create({
-					index: NoteIndex,
+					index: this.elasticsearchNoteIndex as string,
 					mappings: {
 						properties: noteMapping.properties,
 					},
-					settings: noteSettings.settings,
+					settings: noteSettings.settings as estypes.IndicesIndexSettings,
 				}).catch((e) => {
 					console.error(e);
 				});
@@ -305,7 +304,7 @@ export class SearchService {
 			mappings: {
 				properties: noteMapping.properties,
 			},
-			settings: noteSettings.settings,
+			settings: noteSettings.settings as estypes.IndicesIndexSettings,
 		});
 
 		await this.fullIndexNote().catch((e) => {
