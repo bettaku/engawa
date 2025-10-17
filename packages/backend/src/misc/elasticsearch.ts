@@ -1,7 +1,8 @@
 /*
- * SPDX-FileCopyrightText: esurio and bettaku
+ * SPDX-FileCopyrightText: esurio and team bettaku, noridev and cherrypick-project
  * SPDX-License-Identifier: AGPL-3.0-only
  */
+
 import { estypes } from '@elastic/elasticsearch';
 
 /**
