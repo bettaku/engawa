@@ -4,7 +4,8 @@
  */
 
 import { estypes } from '@elastic/elasticsearch';
-import { IndicesIndexSettings } from '@/misc/elasticsearch.js';
+import { IndicesIndexSettings, TokenizerType, AnalysisSudachiTokenizer, AnalysisPinyinTokenizer, AnalysisTokenizer, AnalysisSTConvertTokenizer, AnalysisIKTokenizer } from '@/misc/elasticsearch.js';
+import { Config } from '@/config.js';
 
 export const noteMapping: estypes.MappingTypeMapping = {
 	properties: {
@@ -60,3 +61,73 @@ export const noteSettings: IndicesIndexSettings = {
 		},
 	},
 };
+
+function getTokenizerConfig(tokenizer: TokenizerType, config: Config): AnalysisTokenizer {
+	switch (tokenizer) {
+		case 'sudachi_tokenizer':
+			return {
+				type: 'sudachi_tokenizer',
+				discard_punctuation: true,
+				additional_settings: config.elasticsearch?.extra?.sudachi_additional_settings || '{"systemDict": "system_full.dic"}',
+			} as AnalysisSudachiTokenizer;
+
+		case 'kuromoji_tokenizer':
+			return {
+				type: 'kuromoji_tokenizer',
+				mode: 'search',
+			} as estypes.AnalysisKuromojiTokenizer;
+
+		case 'nori_tokenizer': {
+			const baseNoriConfig = {
+				type: 'nori_tokenizer',
+				decompound_mode: 'mixed',
+			};
+
+			const noriConfig = config.elasticsearch?.extra?.nori_user_dict
+				? {
+					...baseNoriConfig,
+					user_dictionary: config.elasticsearch.extra.nori_user_dict,
+				} : baseNoriConfig;
+
+			return noriConfig as estypes.AnalysisNoriTokenizer;
+		}
+
+		case 'pinyin':
+			return {
+				type: 'pinyin',
+			} as AnalysisPinyinTokenizer;
+
+		case 'stconvert':
+			return {
+				type: 'stconvert',
+				delimiter: '#',
+				keep_both: true,
+				convert_type: config.elasticsearch?.extra?.stconvert_type || 's2t',
+			} as AnalysisSTConvertTokenizer;
+
+		case 'ik_max_word':
+			return {
+				type: 'ik_max_word',
+			} as AnalysisIKTokenizer;
+
+		case 'ik_smart':
+			return {
+				type: 'ik_smart',
+			} as AnalysisIKTokenizer;
+
+		case 'icu_tokenizer':
+			return {
+				type: 'icu_tokenizer',
+				rule_files: config.elasticsearch?.extra?.icu_rule_files || '',
+			} as estypes.AnalysisIcuTokenizer;
+
+		case 'ngram':
+		default:
+			return {
+				type: 'ngram',
+				max_gram: 20,
+				min_gram: 1,
+				token_chars: ['whitespace', 'punctuation']
+			} as estypes.AnalysisNGramTokenizer;
+	}
+}

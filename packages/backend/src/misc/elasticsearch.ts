@@ -56,7 +56,11 @@ export interface AnalysisSTConvertTokenizer extends estypes.AnalysisTokenizerBas
 	convert_type?: 's2t' | 't2s';
 }
 
-export type AnalysisTokenizerDefinition = estypes.AnalysisCharGroupTokenizer | estypes.AnalysisEdgeNGramTokenizer | estypes.AnalysisKeywordTokenizer | estypes.AnalysisLetterTokenizer | estypes.AnalysisLowercaseTokenizer | estypes.AnalysisNGramTokenizer | estypes.AnalysisNoriTokenizer | estypes.AnalysisPathHierarchyTokenizer | estypes.AnalysisStandardTokenizer | estypes.AnalysisUaxEmailUrlTokenizer | estypes.AnalysisWhitespaceTokenizer | estypes.AnalysisKuromojiTokenizer | estypes.AnalysisPatternTokenizer | estypes.AnalysisIcuTokenizer | AnalysisSudachiTokenizer | AnalysisPinyinTokenizer | AnalysisSTConvertTokenizer;
+export interface AnalysisIKTokenizer extends estypes.AnalysisTokenizerBase {
+	type: 'ik_smart' | 'ik_max_word';
+}
+
+export type AnalysisTokenizerDefinition = estypes.AnalysisCharGroupTokenizer | estypes.AnalysisEdgeNGramTokenizer | estypes.AnalysisKeywordTokenizer | estypes.AnalysisLetterTokenizer | estypes.AnalysisLowercaseTokenizer | estypes.AnalysisNGramTokenizer | estypes.AnalysisNoriTokenizer | estypes.AnalysisPathHierarchyTokenizer | estypes.AnalysisStandardTokenizer | estypes.AnalysisUaxEmailUrlTokenizer | estypes.AnalysisWhitespaceTokenizer | estypes.AnalysisKuromojiTokenizer | estypes.AnalysisPatternTokenizer | estypes.AnalysisIcuTokenizer | AnalysisSudachiTokenizer | AnalysisPinyinTokenizer | AnalysisSTConvertTokenizer | AnalysisIKTokenizer;
 
 export type AnalysisTokenizer = string | AnalysisTokenizerDefinition;
 
@@ -131,6 +135,6 @@ export type IndicesIndexSettings = IndicesIndexSettingsKeys & {
 	[property: string]: any;
 };
 
-export const tokenizerTypes = ['char_group', 'edge_ngram', 'keyword', 'letter', 'lowercase', 'ngram', 'nori_tokenizer', 'path_hierarchy', 'standard', 'uax_url_email', 'whitespace', 'kuromoji_tokenizer', 'pattern', 'icu_tokenizer', 'sudachi_tokenizer', 'pinyin', 'stconvert'] as const;
+export const tokenizerTypes = ['char_group', 'edge_ngram', 'keyword', 'letter', 'lowercase', 'ngram', 'nori_tokenizer', 'path_hierarchy', 'standard', 'uax_url_email', 'whitespace', 'kuromoji_tokenizer', 'pattern', 'icu_tokenizer', 'sudachi_tokenizer', 'pinyin', 'stconvert', 'ik_max_word', 'ik_smart'] as const;
 
 export type TokenizerType = typeof tokenizerTypes[number];

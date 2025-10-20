@@ -237,19 +237,9 @@ fulltextSearch:
 # You can set scope to local (default value) or global (include notes from remote).
 # Also, you can set tokenizer type with string or array. Default is "ngram" only.
 # Available tokenizer values are:
-# - char_group
-# - edge_ngram
-# - keyword
-# - letter
-# - lowercase
 # - ngram
 # - nori_tokenizer
-# - path_hierarchy
-# - standard
-# - uax_url_email
-# - whitespace
 # - kuromoji_tokenizer
-# - pattern
 # - icu_tokenizer
 # - sudachi_tokenizer
 # - pinyin
