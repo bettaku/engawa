@@ -75,6 +75,14 @@ type Source = {
 		pingTimeout?: number;
 		requestTimeout?: number;
 		tokenizerType?: TokenizerType | TokenizerType[];
+		extra?: {
+			icu_rule_files?: string;
+			nori_user_dict?: string;
+			kuromoji_user_dict?: string;
+			stconvert_type?: 's2t' | 't2s';
+			sudachi_additional_settings?: string;
+			pattern_regular_expression?: string;
+		}
 	};
 	sentryForBackend?: { options: Partial<Sentry.NodeOptions>; enableNodeProfiling: boolean; };
 	sentryForFrontend?: {
@@ -188,6 +196,14 @@ export type Config = {
 		pingTimeout?: number;
 		requestTimeout?: number;
 		tokenizerType?: TokenizerType | TokenizerType[];
+		extra?: {
+			icu_rule_files?: string;
+			nori_user_dict?: string;
+			kuromoji_user_dict?: string;
+			stconvert_type?: 's2t' | 't2s';
+			sudachi_additional_settings?: string;
+			pattern_regular_expression?: string;
+		};
 	} | undefined;
 	proxy: string | undefined;
 	proxySmtp: string | undefined;
