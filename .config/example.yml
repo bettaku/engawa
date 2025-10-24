@@ -244,6 +244,7 @@ fulltextSearch:
 # - sudachi_tokenizer
 # - pinyin
 # - stconvert
+# Default value is "ngram".
 
 #elasticsearch:
 #  host: elasticsearch

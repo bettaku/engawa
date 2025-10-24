@@ -131,3 +131,58 @@ function getTokenizerConfig(tokenizer: TokenizerType, config: Config): AnalysisT
 			} as estypes.AnalysisNGramTokenizer;
 	}
 }
+
+function getAnalyzerConfig(tokenizer: TokenizerType | TokenizerType[], config: Config): estypes.AnalysisAnalyzer {
+	switch (tokenizer) {
+		case 'sudachi_tokenizer':
+			return {
+				type: 'custom',
+				tokenizer: 'sudachi_tokenizer',
+				filter: ['sudachi_baseform', 'sudachi_normalizedform', 'sudachi_readingform'],
+			} as estypes.AnalysisCustomAnalyzer;
+
+		case 'kuromoji_tokenizer': {
+			if (Array.isArray(tokenizer) && tokenizer.includes('icu_tokenizer')) {
+				return {
+					type: 'custom',
+					tokenizer: 'kuromoji_tokenizer',
+					char_filter: ['icu_normalizer'],
+					filter: ['kuromoji_baseform', 'kuromoji_part_of_speech', 'cjk_width', 'lowercase', 'ja_stop'],
+				} as estypes.AnalysisCustomAnalyzer;
+			} else {
+				return {
+					type: 'custom',
+					tokenizer: 'kuromoji_tokenizer',
+					filter: ['kuromoji_baseform', 'kuromoji_part_of_speech', 'cjk_width', 'lowercase', 'ja_stop'],
+				} as estypes.AnalysisCustomAnalyzer;
+			}
+		}
+
+		case 'nori_tokenizer':
+			return {
+				type: 'custom',
+				tokenizer: 'nori_tokenizer',
+				filter: ['nori_readingform', 'cjk_width', 'lowercase'],
+			} as estypes.AnalysisCustomAnalyzer;
+
+		case 'pinyin':
+			return {
+				type: 'custom',
+				tokenizer: 'pinyin',
+			} as estypes.AnalysisCustomAnalyzer;
+
+		case 'stconvert':
+			return {
+				type: 'custom',
+				tokenizer: 'stconvert',
+
+			} as estypes.AnalysisCustomAnalyzer;
+
+		default:
+			return {
+				type: 'custom',
+				tokenizer: 'ngram',
+				filter: ['cjk_bigram', 'cjk_width', 'lowercase', 'asciifolding'],
+			} as estypes.AnalysisCustomAnalyzer;
+	}
+}
