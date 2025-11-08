@@ -1,9 +1,13 @@
 // Server Configuration module
 
+use std::{fs, path::Path, sync::RwLock};
+
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+static CONFIG: once_cell::sync::OnceCell<RwLock<BackendConfig>> = once_cell::sync::OnceCell::new();
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BackendConfig {
 	pub url: String,
@@ -89,3 +93,40 @@ pub enum SearchProvider {
 	Meilisearch,
 	Elasticsearch
 }
+
+#[derive(Debug, Error)]
+pub enum ConfigError {
+	#[error("File not found: {path}")]
+	ConfigFileNotFound { path: String },
+
+	#[error("Failed to read config file: {0}")]
+	IoError(#[from] std::io::Error),
+
+	#[error("Failed to parse config: {0}")]
+	ParseError(#[from] toml::de::Error),
+
+	#[error("Initialization error")]
+	ConfigInitError,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Config;
+
+impl Config {
+	pub fn init() -> Result<(), ConfigError> {
+		dotenvy::from_filename(".env.production").ok();
+		dotenvy::dotenv().ok();
+		let path = std::env::var("CONFIG_PATH").unwrap();
+		let config = Self::load_from_toml(path)?;
+		CONFIG
+			.set(RwLock::new(config))
+			.map_err(|_| ConfigError::ConfigInitError)
+	}
+
+	fn load_from_toml<P: AsRef<Path>>(path: P) -> Result<BackendConfig, ConfigError> {
+		let content = std::fs::read_to_string(path)?;
+		let config = toml::from_str(&content)?;
+		Ok(config)
+	}
+}
+

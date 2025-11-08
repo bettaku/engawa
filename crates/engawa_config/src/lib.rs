@@ -1,2 +1,2 @@
-// ! Configuration module for Engawa
+//! Configuration module for Engawa
 pub mod server;
