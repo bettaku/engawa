@@ -793,6 +793,7 @@ dependencies = [
 name = "engawa_backend"
 version = "4.16.0"
 dependencies = [
+ "sea-orm",
  "tokio",
 ]
 
@@ -801,6 +802,8 @@ name = "engawa_cli"
 version = "4.16.0"
 dependencies = [
  "clap",
+ "engawa_config",
+ "engawa_model",
 ]
 
 [[package]]
@@ -832,6 +835,10 @@ dependencies = [
  "serde",
  "tokio",
 ]
+
+[[package]]
+name = "engawa_util"
+version = "4.16.0"
 
 [[package]]
 name = "equivalent"
