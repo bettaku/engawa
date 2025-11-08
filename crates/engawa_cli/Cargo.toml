@@ -4,4 +4,8 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-clap ={ workspace = true }
+clap = { workspace = true }
+
+engawa_config ={ path = "../engawa_config"}
+engawa_model = { path = "../engawa_model" }
+
