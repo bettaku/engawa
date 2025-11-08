@@ -1,0 +1,25 @@
+[workspace]
+resolver = "2"
+members = [
+	"crates/*",
+]
+
+[workspace.package]
+version = "4.16.0"
+edition = "2024"
+authors = ["esurio"]
+license = "AGPL-3.0"
+rust-version = "1.91.0"
+
+[workspace.dependencies]
+async-std = { version = "1", features = ["attributes", "tokio1"] }
+clap = { version = "4.5.51", features = ["derive", "env"] }
+chrono = "0.4.42"
+tokio ={ version = "1.48.0", features = ["full"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+serde_yml = "0.0.12"
+sea-orm = { version = "1.1.17", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros", "with-chrono", "with-json", "with-time", "seaography"] }
+seaography = { version = "1.1.4", features = ["default"] }
+thiserror = "2.0.17"
+once_cell = "1.21.3"

@@ -1,0 +1,8 @@
+[package]
+name = "engawa_backend"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+tokio = { workspace = true }
+

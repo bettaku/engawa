@@ -1,0 +1,11 @@
+[package]
+name = "engawa_config"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+clap = { workspace = true }
+serde = { workspace = true }
+serde_yml = { workspace = true }
+thiserror = { workspace = true }
+once_cell = { workspace = true }

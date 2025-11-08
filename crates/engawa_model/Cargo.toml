@@ -1,0 +1,11 @@
+[package]
+name = "engawa_model"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+chrono = { workspace = true }
+tokio = { workspace = true }
+sea-orm = { workspace = true }
+seaography = { workspace = true }
+serde = { workspace = true }
