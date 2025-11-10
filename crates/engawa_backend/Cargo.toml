@@ -6,3 +6,7 @@ edition.workspace = true
 [dependencies]
 tokio = { workspace = true }
 sea-orm = { workspace = true }
+image = { workspace = true }
+rayon = { workspace = true }
+
+engawa_config = { path = "../engawa_config" }
