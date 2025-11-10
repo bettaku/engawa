@@ -1,6 +1,6 @@
 //! radix encoding for id
 
-pub fn radix_encode(mut num: i64, radix: u32) -> String {
+pub fn encode(mut num: i64, radix: u32) -> String {
 	if num == 0 {
 		return "0".to_string();
 	}
