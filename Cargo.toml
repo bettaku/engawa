@@ -34,3 +34,5 @@ apalis = { version = "0.7.3", features = ["tracing", "retry", "timeout", "limit"
 apalis-redis = { version = "0.7.3", features = ["tokio-comp"] }
 axum = { version = "0.8.6", features = ["form", "http1", "http2", "json", "macros" ,"matched-path", "multipart", "original-uri", "query", "tokio", "tower-log", "tracing", "ws"] }
 rayon = "1.11.0"
+moka = { version = "0.12.11", features = ["future", "sync"] }
+redis = { version = "0.32.7", features = ["tokio-comp", "r2d2"] }
