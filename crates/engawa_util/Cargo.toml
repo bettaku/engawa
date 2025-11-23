@@ -8,3 +8,5 @@ regex = { workspace = true }
 serde = { workspace = true }
 moka = { workspace = true }
 redis = { workspace = true }
+sysinfo = { workspace = true }
+tracing = { workspace = true }

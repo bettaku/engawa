@@ -1,0 +1,6 @@
+[package]
+name = "engawa_mfe"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]

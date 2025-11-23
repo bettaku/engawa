@@ -36,3 +36,4 @@ axum = { version = "0.8.6", features = ["form", "http1", "http2", "json", "macro
 rayon = "1.11.0"
 moka = { version = "0.12.11", features = ["future", "sync"] }
 redis = { version = "0.32.7", features = ["tokio-comp", "r2d2"] }
+sysinfo = "0.37.2"

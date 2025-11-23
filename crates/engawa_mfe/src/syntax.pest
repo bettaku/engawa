@@ -1,0 +1,150 @@
+//! Syntax definition
+
+// ================================
+// Block constructs
+// ================================
+
+block = _{
+    quote
+  | search
+  | code_block
+  | math_block
+  | unorderd_list
+  | orderd_list
+  | url
+}
+
+/// quote
+quote         = { quote_line+ }
+quote_line    = { ">" ~ " "? ~ quote_content }
+quote_content = { (!NEWLINE ~ ANY)* ~ NEWLINE? }
+
+/// search
+search         = { search_query ~ " "* ~ "[" ~ search_query ~ "]" }
+search_query   = { (!(("[" ~ search_keyword ~ "]") | NEWLINE) ~ ANY)+ }
+search_keyword = { ^"search" | ^"検索" | ^"검색" | ^"搜索" }
+
+/// code block
+code_block   =  { "```" ~ code_lang? ~ NEWLINE ~ code_content ~ "```" }
+code_lang    = @{ (!NEWLINE ~ !"```" ~ ASCII_ALPHA_LOWER)+ }
+code_content = @{ (!"```" ~ ANY)* }
+
+/// math block
+math_block         =  { "\\[" ~ NEWLINE? ~ math_block_formula ~ NEWLINE? ~ "\\]" }
+math_block_formula = @{ (!"\\]" ~ ANY)* }
+
+/// List
+list_indent       = { " " | "\t" }
+list_item_content = { (!NEWLINE ~ ANY)+ }
+
+/// Unorderd list
+unorderd_list      = { unorderd_list_item+ }
+unorderd_list_item = { list_indent* ~ ("-" | "*" | "+") ~ " "+ ~ list_item_content ~ NEWLINE? }
+
+/// orderd list
+orderd_list      = { orderd_list_item+ }
+orderd_list_item = { list_indent* ~ ASCII_DIGIT+ ~ "." ~ " "+ ~ list_item_content ~ NEWLINE? }
+
+// ================================
+// Inline constructs
+// ================================
+
+inline = _{
+    big
+  | bold
+  | small
+  | italic
+  | strike
+  | inline_code
+  | inline_math
+  | mention
+  | hashtag
+}
+
+/// big (deprecated)
+big         = { "***" ~ big_content ~ "***" }
+big_content = { (!"***" ~ ANY)+ }
+
+/// Bold
+bold = { bold_star | bold_underscore | bold_tag }
+// **Bold**
+bold_star         = { "**" ~ bold_star_content ~ "**" }
+bold_star_content = { (!"**" ~ ANY)+ }
+
+// __bold__
+bold_underscore         = { "__" ~ bold_underscore_content ~ "__" }
+bold_underscore_content = { (!"__" ~ ANY)+ }
+
+// <b>bold</b>
+bold_tag         = { "<b>" ~ bold_tag_content ~ "</b>" }
+bold_tag_content = { (!"</b>" ~ ANY)+ }
+
+/// small
+small         = { "<small>" ~ small_content ~ "</small>" }
+small_content = { (!"</small>" ~ ANY)+ }
+
+/// italic
+italic                    = { italic_tag | italic_star | italic_underscore }
+italic_restricted_content = { (ASCII_ALPHANUMERIC | WHITE_SPACE | "'" | "-" | '\u{00c0}'..'\u{00FF}' | "\"")+ }
+
+// <i>italic</i>
+italic_tag         = { "<i>" ~ italic_tag_content ~ "</i>" }
+italic_tag_content = { (!"</i>" ~ ANY)+ }
+
+// *italic*
+italic_star = { !bold_star ~ !big ~ "*" ~ italic_restricted_content ~ "*" }
+
+// _italic_
+italic_underscore = { !bold_underscore ~ "_" ~ italic_restricted_content ~ "_" }
+
+/// strike
+strike = { strike_tag | strike_tilde }
+
+// ~~strike~~
+strike_tilde         = { "~~" ~ strike_tilde_content ~ "~~" }
+strike_tilde_content = { (!"~~" ~ !NEWLINE ~ !"~" ~ ANY) ~ (!"~~" ~ !NEWLINE ~ ANY)* }
+
+// <s>strike</s>
+strike_tag         = { "<s>" ~ strike_tag_content ~ "</s>" }
+strike_tag_content = { (!"</s>" ~ !NEWLINE ~ ANY)+ }
+
+/// Inline code
+inline_code         =  { "`" ~ inline_code_content ~ "`" }
+inline_code_content = @{ (!("`" | NEWLINE | "´") ~ ANY)+ }
+
+/// Inline math
+inline_math         = { "\\(" ~ inline_math_formula ~ "\\)" }
+inline_math_formula = { (!"\\)" ~ !NEWLINE ~ ANY)+ }
+
+/// mention
+mention       = { mention_full | mention_local }
+mention_full  = { "@" ~ username ~ "@" ~ hostname }
+mention_local = { "@" ~ username }
+
+// username
+username = @{ (ASCII_ALPHANUMERIC | "_") ~ (ASCII_ALPHANUMERIC | "_" | "-" | ".")* ~ (ASCII_ALPHANUMERIC | "_") | ASCII_ALPHANUMERIC }
+
+// hostname
+hostname = @{ (ASCII_ALPHANUMERIC | "_") ~ (ASCII_ALPHANUMERIC | "_" | "-" | ".")* ~ (ASCII_ALPHANUMERIC | "_") | ASCII_ALPHANUMERIC }
+
+/// hashtag
+hashtag         =  { "#" ~ hashtag_content }
+hashtag_content = @{ !(ASCII_DIGIT+) ~ (!(WHITE_SPACE | NEWLINE | "\t" | "." | "," | "!" | "?" | "'" | "\"" | "#" | ":" | "/" | "【" | "】" | "<" | ">" | "【" | "】" | "(" | ")" | "「 " | "」" | "（" | "）") ~ ANY)+ }
+
+/// URL
+url          =  { url_simple | url_bracketed }
+url_protocol = @{ ("https" | "http") ~ "://" }
+
+// Simple URL: https://example.com
+url_simple         =  { url_protocol ~ url_simple_content }
+url_simple_content = @{ (ASCII_ALPHANUMERIC | "." | "," | "_" | "/" | ":" | "%" | "#" | "@" | "$" | "&" | "?" | "!" | "~" | "=" | "+" | "-" | "(" | ")" | "[" | "]")+ }
+
+// Bracketed URL: <https://example.com>
+url_bracketed         =  { "<" ~ url_protocol ~ url_bracketed_content ~ ">" }
+url_bracketed_content = @{ (!(NEWLINE | " " | ">") ~ ANY)+ }
+
+/// unicode emoji
+unicode_emoji = @{ ANY* ~ EMOJI }
+
+/// Text (fallback)
+text = @{ (!NEWLINE ~ ANY)+ }

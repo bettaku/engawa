@@ -39,6 +39,78 @@ RUN git submodule update --init
 RUN pnpm build
 RUN rm -rf .git/
 
+# build ffmpeg from source
+FROM --platform=$TARGETPLATFORM node:${NODE_VERSION}-slim AS ffmpeg-builder
+
+ARG FFMPEG_VERSION="8.0"
+
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends \
+  autoconf \
+  automake \
+  build-essential \
+	ca-certificates \
+  cmake \
+	git \
+  git-core \
+	libaom-dev \
+  libass-dev \
+  libfreetype6-dev \
+  libgnutls28-dev \
+  libmp3lame-dev \
+  libsdl2-dev \
+  libtool \
+  libva-dev \
+  libvdpau-dev \
+  libvorbis-dev \
+	libx264-dev \
+	libx265-dev \
+	libnuma-dev \
+	libvpx-dev \
+  libxcb1-dev \
+  libxcb-shm0-dev \
+  libxcb-xfixes0-dev \
+	libopus-dev \
+	libdav1d-dev \
+  meson \
+	nasm \
+  ninja-build \
+  pkg-config \
+  texinfo \
+	tar \
+  wget \
+  yasm \
+  zlib1g-dev \
+	nettle-dev \
+	libunistring-dev
+
+WORKDIR /tmp
+
+RUN echo $(uname -m)
+
+RUN wget -O ffmpeg-${FFMPEG_VERSION}.tar.bz2 https://www.ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.bz2 && \
+	tar xjvf ffmpeg-${FFMPEG_VERSION}.tar.bz2 && \
+	cd ffmpeg-${FFMPEG_VERSION} && \
+	PKG_CONFIG_PATH="/usr/lib/$(uname -m)-linux-gnu/pkgconfig:/usr/lib/pkgconfig:/usr/share/pkgconfig" ./configure \
+	--prefix="/usr/local" \
+	--pkg-config-flags="--static" \
+	--extra-libs="-lpthread -lm" \
+	--enable-gpl \
+	--enable-gnutls \
+	--enable-libaom \
+	--enable-libass \
+	--enable-libfreetype \
+	--enable-libmp3lame \
+	--enable-libopus \
+	--enable-libdav1d \
+	--enable-libvorbis \
+	--enable-libvpx \
+	--enable-libx264 \
+	--enable-libx265 && \
+	make -j$(nproc) && \
+	make install && \
+	rm -rf /tmp/*
+
 # build native dependencies for target platform
 
 FROM --platform=$TARGETPLATFORM node:${NODE_VERSION} AS target-builder
@@ -67,9 +139,12 @@ FROM --platform=$TARGETPLATFORM node:${NODE_VERSION}-slim AS runner
 ARG UID="991"
 ARG GID="991"
 
+COPY --from=ffmpeg-builder /usr/local/bin/ffmpeg /usr/local/bin/ffmpeg
+COPY --from=ffmpeg-builder /usr/local/bin/ffprobe /usr/local/bin/ffprobe
+
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends \
-	ffmpeg tini curl libjemalloc-dev libjemalloc2 \
+	tini curl libjemalloc-dev libjemalloc2 \
 	&& ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so \
 	&& groupadd -g "${GID}" cherrypick \
 	&& useradd -l -u "${UID}" -g "${GID}" -m -d /cherrypick cherrypick \

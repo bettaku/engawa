@@ -8,5 +8,7 @@ tokio = { workspace = true }
 sea-orm = { workspace = true }
 image = { workspace = true }
 rayon = { workspace = true }
+serde = { workspace = true }
+moka = { workspace = true }
 
 engawa_config = { path = "../engawa_config" }
