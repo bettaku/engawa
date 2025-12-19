@@ -23,7 +23,6 @@ import { reloadChannel } from '@/utility/unison-reload.js';
 import { getUrlWithoutLoginId } from '@/utility/login-id.js';
 import { getAccountFromId } from '@/utility/get-account-from-id.js';
 import { deckStore } from '@/ui/deck/deck-store.js';
-import { analytics, initAnalytics } from '@/analytics.js';
 import { miLocalStorage } from '@/local-storage.js';
 import { fetchCustomEmojis } from '@/custom-emojis.js';
 import { prefer } from '@/preferences.js';
@@ -262,19 +261,6 @@ export async function common(createVue: () => Promise<App<Element>>) {
 	try {
 		await fetchCustomEmojis();
 	} catch (err) { /* empty */ }
-
-	// analytics
-	fetchInstanceMetaPromise.then(async () => {
-		await initAnalytics(instance);
-
-		if ($i) {
-			analytics.identify($i.id);
-		}
-
-		analytics.page({
-			path: window.location.pathname,
-		});
-	});
 
 	const app = await createVue();
 

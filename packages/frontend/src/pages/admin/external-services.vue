@@ -9,18 +9,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<FormSuspense :p="init">
 			<div class="_gaps_m">
 				<MkFolder>
-					<template #label>Google Analytics<span class="_beta" style="vertical-align: middle;">{{ i18n.ts.beta }}</span></template>
-
-					<div class="_gaps_m">
-						<MkInput v-model="googleAnalyticsMeasurementId">
-							<template #prefix><i class="ti ti-key"></i></template>
-							<template #label>Measurement ID</template>
-						</MkInput>
-						<MkButton primary @click="save_googleAnalytics">Save</MkButton>
-					</div>
-				</MkFolder>
-
-				<MkFolder>
 					<template #label>Translation</template>
 					<div class="_gaps_m">
 						<!--
@@ -123,8 +111,6 @@ const ctav3Glossary = ref<string>('');
 const libreTranslateEndPoint = ref<string>('');
 const libreTranslateApiKey = ref<string>('');
 
-const googleAnalyticsMeasurementId = ref<string>('');
-
 async function init() {
 	const meta = await misskeyApi('admin/meta');
 	provider.value = meta.translatorType;
@@ -137,7 +123,6 @@ async function init() {
 	ctav3Glossary.value = meta.ctav3Glossary ?? '';
 	libreTranslateEndPoint.value = meta.libreTranslateEndPoint ?? '';
 	libreTranslateApiKey.value = meta.libreTranslateApiKey ?? '';
-	googleAnalyticsMeasurementId.value = meta.googleAnalyticsMeasurementId ?? '';
 }
 
 function save_deepl() {
@@ -152,14 +137,6 @@ function save_deepl() {
 		ctav3Glossary: ctav3Glossary.value,
 		libreTranslateEndPoint: libreTranslateEndPoint.value,
 		libreTranslateApiKey: libreTranslateApiKey.value,
-	}).then(() => {
-		fetchInstance(true);
-	});
-}
-
-function save_googleAnalytics() {
-	os.apiWithDialog('admin/update-meta', {
-		googleAnalyticsMeasurementId: googleAnalyticsMeasurementId.value,
 	}).then(() => {
 		fetchInstance(true);
 	});
