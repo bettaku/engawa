@@ -18,7 +18,6 @@ import {
 	MiAuthSession,
 	MiAvatarDecoration,
 	MiBlocking,
-	MiBubbleGameRecord,
 	MiChannel,
 	MiChannelFavorite,
 	MiChannelFollowing,
@@ -554,12 +553,6 @@ const $chatApprovalsRepository: Provider = {
 	inject: [DI.db],
 };
 
-const $bubbleGameRecordsRepository: Provider = {
-	provide: DI.bubbleGameRecordsRepository,
-	useFactory: (db: DataSource) => db.getRepository(MiBubbleGameRecord).extend(miRepository as MiRepository<MiBubbleGameRecord>),
-	inject: [DI.db],
-};
-
 const $abuseReportResolversRepository: Provider = {
 	provide: DI.abuseReportResolversRepository,
 	useFactory: (db: DataSource) => db.getRepository(MiAbuseReportResolver).extend(miRepository as MiRepository<MiAbuseReportResolver>),
@@ -652,7 +645,6 @@ const $noteScheduleRepository: Provider = {
 		$chatRoomMembershipsRepository,
 		$chatRoomInvitationsRepository,
 		$chatApprovalsRepository,
-		$bubbleGameRecordsRepository,
 		$abuseReportResolversRepository,
 		$noteScheduleRepository,
 	],
@@ -734,7 +726,6 @@ const $noteScheduleRepository: Provider = {
 		$chatRoomMembershipsRepository,
 		$chatRoomInvitationsRepository,
 		$chatApprovalsRepository,
-		$bubbleGameRecordsRepository,
 		$abuseReportResolversRepository,
 		$noteScheduleRepository,
 	],

@@ -140,8 +140,6 @@ export * as 'auth/session/userkey' from './endpoints/auth/session/userkey.js';
 export * as 'blocking/create' from './endpoints/blocking/create.js';
 export * as 'blocking/delete' from './endpoints/blocking/delete.js';
 export * as 'blocking/list' from './endpoints/blocking/list.js';
-export * as 'bubble-game/ranking' from './endpoints/bubble-game/ranking.js';
-export * as 'bubble-game/register' from './endpoints/bubble-game/register.js';
 export * as 'charts/active-users' from './endpoints/charts/active-users.js';
 export * as 'charts/ap-request' from './endpoints/charts/ap-request.js';
 export * as 'charts/drive' from './endpoints/charts/drive.js';

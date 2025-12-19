@@ -82,8 +82,3 @@ execa('pnpm', ['--filter', 'cherrypick-js', 'watch', '--no-clean'], {
 	stderr: process.stderr,
 });
 
-execa('pnpm', ['--filter', 'misskey-bubble-game', 'watch', '--no-clean'], {
-	cwd: _dirname + '/../',
-	stdout: process.stdout,
-	stderr: process.stderr,
-});

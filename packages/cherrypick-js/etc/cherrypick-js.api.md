@@ -637,15 +637,6 @@ type BlockingListRequest = operations['blocking___list']['requestBody']['content
 type BlockingListResponse = operations['blocking___list']['responses']['200']['content']['application/json'];
 
 // @public (undocumented)
-type BubbleGameRankingRequest = operations['bubble-game___ranking']['requestBody']['content']['application/json'];
-
-// @public (undocumented)
-type BubbleGameRankingResponse = operations['bubble-game___ranking']['responses']['200']['content']['application/json'];
-
-// @public (undocumented)
-type BubbleGameRegisterRequest = operations['bubble-game___register']['requestBody']['content']['application/json'];
-
-// @public (undocumented)
 type Channel = components['schemas']['Channel'];
 
 // Warning: (ae-forgotten-export) The symbol "AnyOf" needs to be exported by the entry point index.d.ts
@@ -1593,9 +1584,6 @@ declare namespace entities {
         BlockingDeleteResponse,
         BlockingListRequest,
         BlockingListResponse,
-        BubbleGameRankingRequest,
-        BubbleGameRankingResponse,
-        BubbleGameRegisterRequest,
         ChartsActiveUsersRequest,
         ChartsActiveUsersResponse,
         ChartsApRequestRequest,

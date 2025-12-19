@@ -6,7 +6,6 @@ packages:
   - packages/sw
   - packages/cherrypick-js
   - packages/cherrypick-js/generator
-  - packages/misskey-bubble-game
 onlyBuiltDependencies:
   - '@biomejs/biome'
   - '@nestjs/core'

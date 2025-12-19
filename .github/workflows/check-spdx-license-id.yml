@@ -58,7 +58,6 @@ jobs:
             "packages/frontend/test"
             "packages/frontend-embed/@types"
             "packages/frontend-embed/src"
-            "packages/misskey-bubble-game/src"
             "packages/sw/src"
             "scripts"
           )

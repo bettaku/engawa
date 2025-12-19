@@ -14,8 +14,7 @@
 		"packages/frontend-embed",
 		"packages/backend",
 		"packages/sw",
-		"packages/cherrypick-js",
-		"packages/misskey-bubble-game"
+		"packages/cherrypick-js"
 	],
 	"private": true,
 	"scripts": {

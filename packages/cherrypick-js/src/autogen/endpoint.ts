@@ -182,9 +182,6 @@ import type {
 	BlockingDeleteResponse,
 	BlockingListRequest,
 	BlockingListResponse,
-	BubbleGameRankingRequest,
-	BubbleGameRankingResponse,
-	BubbleGameRegisterRequest,
 	ChartsActiveUsersRequest,
 	ChartsActiveUsersResponse,
 	ChartsApRequestRequest,
@@ -792,8 +789,6 @@ export type Endpoints = {
 	'blocking/create': { req: BlockingCreateRequest; res: BlockingCreateResponse };
 	'blocking/delete': { req: BlockingDeleteRequest; res: BlockingDeleteResponse };
 	'blocking/list': { req: BlockingListRequest; res: BlockingListResponse };
-	'bubble-game/ranking': { req: BubbleGameRankingRequest; res: BubbleGameRankingResponse };
-	'bubble-game/register': { req: BubbleGameRegisterRequest; res: EmptyResponse };
 	'charts/active-users': { req: ChartsActiveUsersRequest; res: ChartsActiveUsersResponse };
 	'charts/ap-request': { req: ChartsApRequestRequest; res: ChartsApRequestResponse };
 	'charts/drive': { req: ChartsDriveRequest; res: ChartsDriveResponse };

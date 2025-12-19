@@ -61,7 +61,6 @@
 		"magic-string": "0.30.17",
 		"matter-js": "0.20.0",
 		"mfc-js": "0.24.0-cherrypick.9",
-		"misskey-bubble-game": "workspace:*",
 		"openmeteo": "1.1.4",
 		"photoswipe": "5.4.4",
 		"prismjs": "1.29.0",

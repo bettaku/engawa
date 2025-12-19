@@ -29,7 +29,6 @@ import { MiApp } from '@/models/App.js';
 import { MiAuthSession } from '@/models/AuthSession.js';
 import { MiAvatarDecoration } from '@/models/AvatarDecoration.js';
 import { MiBlocking } from '@/models/Blocking.js';
-import { MiBubbleGameRecord } from '@/models/BubbleGameRecord.js';
 import { MiChannel } from '@/models/Channel.js';
 import { MiChannelFavorite } from '@/models/ChannelFavorite.js';
 import { MiChannelFollowing } from '@/models/ChannelFollowing.js';
@@ -243,7 +242,6 @@ export {
 	MiChatRoomMembership,
 	MiChatRoomInvitation,
 	MiChatApproval,
-	MiBubbleGameRecord,
 };
 
 export type AbuseReportResolversRepository = Repository<MiAbuseReportResolver> & MiRepository<MiAbuseReportResolver>;
@@ -326,5 +324,4 @@ export type ChatRoomsRepository = Repository<MiChatRoom> & MiRepository<MiChatRo
 export type ChatRoomMembershipsRepository = Repository<MiChatRoomMembership> & MiRepository<MiChatRoomMembership>;
 export type ChatRoomInvitationsRepository = Repository<MiChatRoomInvitation> & MiRepository<MiChatRoomInvitation>;
 export type ChatApprovalsRepository = Repository<MiChatApproval> & MiRepository<MiChatApproval>;
-export type BubbleGameRecordsRepository = Repository<MiBubbleGameRecord> & MiRepository<MiBubbleGameRecord>;
 export type NoteScheduleRepository = Repository<MiNoteSchedule>;

@@ -1455,28 +1455,6 @@ declare module '../api.js' {
      * 
      * **Credential required**: *No*
      */
-    request<E extends 'bubble-game/ranking', P extends Endpoints[E]['req']>(
-      endpoint: E,
-      params: P,
-      credential?: string | null,
-    ): Promise<SwitchCaseResponseType<E, P>>;
-
-    /**
-     * No description provided.
-     * 
-     * **Credential required**: *Yes* / **Permission**: *write:account*
-     */
-    request<E extends 'bubble-game/register', P extends Endpoints[E]['req']>(
-      endpoint: E,
-      params: P,
-      credential?: string | null,
-    ): Promise<SwitchCaseResponseType<E, P>>;
-
-    /**
-     * No description provided.
-     * 
-     * **Credential required**: *No*
-     */
     request<E extends 'charts/active-users', P extends Endpoints[E]['req']>(
       endpoint: E,
       params: P,

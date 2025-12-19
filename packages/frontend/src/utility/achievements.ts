@@ -85,8 +85,6 @@ export const ACHIEVEMENT_TYPES = [
 	'brainDiver',
 	'smashTestNotificationButton',
 	'tutorialCompleted',
-	'bubbleGameExplodingHead',
-	'bubbleGameDoubleExplodingHead',
 	'ohayoujo1',
 	'ohayoujo7',
 	'ohayoujo30',
@@ -483,16 +481,6 @@ export const ACHIEVEMENT_BADGES = {
 		img: '/fluent-emoji/1f393.png',
 		bg: 'linear-gradient(0deg, rgb(220 223 225), rgb(172 192 207))',
 		frame: 'bronze',
-	},
-	'bubbleGameExplodingHead': {
-		img: '/fluent-emoji/1f92f.png',
-		bg: 'linear-gradient(0deg, rgb(255 77 77), rgb(247 155 214))',
-		frame: 'bronze',
-	},
-	'bubbleGameDoubleExplodingHead': {
-		img: '/fluent-emoji/1f92f.png',
-		bg: 'linear-gradient(0deg, rgb(255 77 77), rgb(247 155 214))',
-		frame: 'silver',
 	},
 	'ohayoujo1': {
 		img: '/fluent-emoji/1f331.png',
