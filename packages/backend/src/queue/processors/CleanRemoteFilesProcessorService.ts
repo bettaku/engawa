@@ -41,7 +41,7 @@ export class CleanRemoteFilesProcessorService {
 					isLink: false,
 					...(cursor ? { id: MoreThan(cursor) } : {}),
 				},
-				take: 8,
+				take: 100,
 				order: {
 					id: 1,
 				},
@@ -54,16 +54,19 @@ export class CleanRemoteFilesProcessorService {
 
 			cursor = files.at(-1)?.id ?? null;
 
-			await Promise.all(files.map(file => this.driveService.deleteFileSync(file, true, true)));
+			const results = await Promise.allSettled(files.map(file => this.driveService.deleteFileSync(file, true, true)));
 
-			deletedCount += 8;
-
-			const total = await this.driveFilesRepository.countBy({
-				userHost: Not(IsNull()),
-				isLink: false,
+			results.forEach((res, i) => {
+				if (res.status === 'rejected') {
+					this.logger.error(`Failed to delete file: ${files[i].id}`, res.reason);
+				}
 			});
 
-			job.updateProgress(100 / total * deletedCount);
+			deletedCount += files.length;
+
+			if (deletedCount % 1000 === 0) {
+				this.logger.info(`Deleted ${deletedCount} cached remote files so far...`);
+			}
 		}
 
 		this.logger.succ('All cached remote files has been deleted.');
