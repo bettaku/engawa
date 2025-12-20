@@ -18,6 +18,7 @@ import * as blurhash from 'blurhash';
 import { LoggerService } from '@/core/LoggerService.js';
 import type Logger from '@/logger.js';
 import { bindThis } from '@/decorators.js';
+import { isMimeImage } from '@/misc/is-mime-image.js';
 
 export type FileInfo = {
 	size: number;
@@ -66,6 +67,26 @@ export class FileInfoService {
 		const md5 = await this.calcHash(path);
 
 		let type = await this.detectType(path);
+
+		if (type.mime === TYPE_OCTET_STREAM.mime && opts.fileName != null) {
+			const ext = opts.fileName.split('.').pop();
+			if (ext === 'txt') {
+				type = {
+					mime: 'text/plain',
+					ext: 'txt',
+				};
+			} else if (ext === 'csv') {
+				type = {
+					mime: 'text/csv',
+					ext: 'csv',
+				};
+			} else if (ext === 'json') {
+				type = {
+					mime: 'application/json',
+					ext: 'json',
+				};
+			}
+		}
 
 		// image dimensions
 		let width: number | undefined;
@@ -187,7 +208,7 @@ export class FileInfoService {
 	}
 
 	@bindThis
-	public fixMime(mime: string | fileType.MimeType): string {
+	public fixMime(mime: string): string {
 		// see https://github.com/misskey-dev/misskey/pull/10686
 		if (mime === 'audio/x-flac') {
 			return 'audio/flac';

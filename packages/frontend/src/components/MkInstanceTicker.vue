@@ -113,6 +113,13 @@ $height: 2ex;
 	font-size: 0.9em;
 	font-weight: bold;
 	white-space: nowrap;
+	//overflow: visible;
+
+	// text-shadowは重いから使うな
+	//color: var(--MI_THEME-fg);
+	//-webkit-text-stroke: var(--MI_THEME-panel) .225em;
+	paint-order: stroke fill;
+
 	overflow: hidden;
   overflow-wrap: anywhere;
   max-width: 300px;

@@ -360,11 +360,9 @@ export class SearchService {
 
 		if (opts.host) {
 			if (opts.host === '.') {
-				query
-					.andWhere('user.host IS NULL');
+				query.andWhere('note.userHost IS NULL');
 			} else {
-				query
-					.andWhere('user.host = :host', { host: opts.host });
+				query.andWhere('note.userHost = :host', { host: opts.host });
 			}
 		}
 
@@ -390,11 +388,30 @@ export class SearchService {
 			query.orWhere('LOWER(note.cw) LIKE :q', { q: `%${sqlLikeEscape(q.toLowerCase())}%` });
 		}
 
+		if (this.provider === 'sqlPgroonga') {
+			query.andWhere('note."text" &@~ :q', { q: q });
+		} else {
+			query.andWhere('LOWER(note."text") LIKE :q', { q: `%${ sqlLikeEscape(q.toLowerCase())}%` });
+		}
+
+		if (opts.excludeBot) {
+			query.innerJoin('note.user', 'user')
+				.andWhere('user.isIndexable = TRUE')
+				.andWhere('user.isBot = FALSE');
+		} else {
+			query.innerJoin('note.user', 'user')
+				.andWhere('user.isIndexable = TRUE');
+		}
+
+		if (opts.excludeNsfw) {
+			query.andWhere('note.cw IS NULL')
+				.andWhere('NOT EXISTS (SELECT 1 FROM drive_file df WHERE df.id = ANY(note.fileIds) AND df.isSensitive = TRUE)');
+		} else {
+			query.orWhere('LOWER(note.cw) LIKE :q', { q: `%${sqlLikeEscape(q.toLowerCase())}%` });
+		}
+
 		this.queryService.generateVisibilityQuery(query, me);
-		this.queryService.generateBlockedHostQueryForNote(query);
-		this.queryService.generateSuspendedUserQueryForNote(query);
-		if (me) this.queryService.generateMutedUserQueryForNotes(query, me);
-		if (me) this.queryService.generateBlockedUserQueryForNotes(query, me);
+		this.queryService.generateBaseNoteFilteringQuery(query, me);
 
 		return query.limit(pagination.limit).getMany();
 	}

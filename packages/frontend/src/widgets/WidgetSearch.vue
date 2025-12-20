@@ -15,27 +15,28 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { defineAsyncComponent, ref } from 'vue';
+import { defineAsyncComponent, markRaw, ref, shallowRef, useTemplateRef } from 'vue';
 import { useWidgetPropsManager } from './widget.js';
 import type { WidgetComponentEmits, WidgetComponentExpose, WidgetComponentProps } from './widget.js';
-import type { GetFormResultType } from '@/utility/form.js';
+import type { FormWithDefault, GetFormResultType } from '@/utility/form.js';
 import MkInput from '@/components/MkInput.vue';
 import MkContainer from '@/components/MkContainer.vue';
 import { i18n } from '@/i18n.js';
 import { misskeyApi } from '@/utility/misskey-api.js';
 import * as os from '@/os.js';
 import { useRouter } from '@/router.js';
+import { Paginator } from '@/utility/paginator.js';
 
 const name = 'search';
 
-const searchQueryEl = ref(null);
+const searchQueryEl = useTemplateRef('searchQueryEl');
 
 const widgetPropsDef = {
 	showHeader: {
-		type: 'boolean' as const,
+		type: 'boolean',
 		default: false,
 	},
-};
+} satisfies FormWithDefault;
 
 type WidgetProps = GetFormResultType<typeof widgetPropsDef>;
 
@@ -82,7 +83,7 @@ const router = useRouter();
 
 let key = ref(0);
 let searchQuery = ref('');
-let notePagination = ref();
+let notePaginator = shallowRef();
 let isLocalOnly = ref(false);
 let order = ref(true);
 let excludeNsfw = ref(false);
@@ -98,48 +99,47 @@ async function search() {
 			uri: query,
 		});
 
-		os.promiseDialog(promise, null, null, i18n.ts.fetchingAsApObject);
+		await os.promiseDialog(promise, null, null, i18n.ts.fetchingAsApObject);
 
 		const res = await promise;
 
 		if (res.type === 'User') {
-			router.push(`/@${res.object.username}@${res.object.host}`);
+			router.pushByPath(`/@${res.object.username}@${res.object.host}`);
 		} else if (res.type === 'Note') {
-			router.push(`/notes/${res.object.id}`);
+			router.pushByPath(`/notes/${res.object.id}`);
 		}
 
 		return;
 	}
 
 	if (query.match(/^@[a-z0-9_.-]+@[a-z0-9_.-]+$/i)) {
-		router.push(`/${query}`);
+		router.pushByPath(`/${query}`);
 		return;
 	}
 
 	if (query.startsWith('#')) {
-		router.push(`/tags/${encodeURIComponent(query.substring(1))}`);
+		router.pushByPath(`/tags/${encodeURIComponent(query.substring(1))}`);
 		return;
 	}
 
-	notePagination.value = {
-		endpoint: 'notes/search',
+	notePaginator.value = markRaw(new Paginator('notes/search', {
 		limit: 10,
 		params: {
-			query: searchQuery,
+			query: query,
 			userId: null,
 			order: order.value ? 'desc' : 'asc',
 			excludeNsfw: excludeNsfw.value,
 			excludeBots: excludeBots.value,
 		},
-	};
+	}));
 
-	if (isLocalOnly.value) notePagination.value.params.host = '.';
+	if (isLocalOnly.value) notePaginator.value.params.host = '.';
 
 	key.value++;
 
 	const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkSearchResultWindow.vue')), {
 		noteKey: key.value,
-		notePagination: notePagination.value,
+		notePaginator: notePaginator.value,
 	}, {
 		closed: () => dispose(),
 	});

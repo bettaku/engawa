@@ -59,7 +59,6 @@ import { MiNote } from '@/models/Note.js';
 import { MiNoteDraft } from '@/models/NoteDraft.js';
 import { MiNoteFavorite } from '@/models/NoteFavorite.js';
 import { MiNoteReaction } from '@/models/NoteReaction.js';
-import { MiNoteSchedule } from '@/models/NoteSchedule.js';
 import { MiNoteThreadMuting } from '@/models/NoteThreadMuting.js';
 import { MiPage } from '@/models/Page.js';
 import { MiPageLike } from '@/models/PageLike.js';
@@ -96,6 +95,7 @@ import { MiUserProfile } from '@/models/UserProfile.js';
 import { MiUserPublickey } from '@/models/UserPublickey.js';
 import { MiUserSecurityKey } from '@/models/UserSecurityKey.js';
 import { MiWebhook } from '@/models/Webhook.js';
+import { NoteHistory } from '@/models/NoteHistory.js';
 import type { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity.js';
 
 export interface MiRepository<T extends ObjectLiteral> {
@@ -198,7 +198,6 @@ export {
 	MiNoteDraft,
 	MiNoteFavorite,
 	MiNoteReaction,
-	MiNoteSchedule,
 	MiNoteThreadMuting,
 	MiPage,
 	MiPageLike,
@@ -324,4 +323,5 @@ export type ChatRoomsRepository = Repository<MiChatRoom> & MiRepository<MiChatRo
 export type ChatRoomMembershipsRepository = Repository<MiChatRoomMembership> & MiRepository<MiChatRoomMembership>;
 export type ChatRoomInvitationsRepository = Repository<MiChatRoomInvitation> & MiRepository<MiChatRoomInvitation>;
 export type ChatApprovalsRepository = Repository<MiChatApproval> & MiRepository<MiChatApproval>;
-export type NoteScheduleRepository = Repository<MiNoteSchedule>;
+export type NoteHistoryRepository = Repository<NoteHistory> & MiRepository<NoteHistory>;
+

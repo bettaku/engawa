@@ -4,10 +4,9 @@
  */
 
 import JSON5 from 'json5';
-import { v4 as uuid } from 'uuid';
 import defaultDarkTheme from '@@/themes/d-cherrypick.json5';
 import type { DeckProfile } from '@/deck.js';
-import { getBuiltinThemesRef } from '@/theme.js';
+import { genId } from '@/utility/id.js';
 import { ColdDeviceStorage, store } from '@/store.js';
 import { prefer } from '@/preferences.js';
 import { misskeyApi } from '@/utility/misskey-api.js';
@@ -22,7 +21,7 @@ const instanceDarkTheme = instance.defaultDarkTheme ? JSON5.parse(instance.defau
 
 // TODO: そのうち消す
 export function migrateOldSettings() {
-	os.waiting(i18n.ts.settingsMigrating);
+	os.waiting({ text: i18n.ts.settingsMigrating });
 
 	store.loaded.then(async () => {
 		misskeyApi('i/registry/get', { scope: ['client'], key: 'themes' }).catch((err) => [
@@ -40,11 +39,14 @@ export function migrateOldSettings() {
 		});
 
 		const plugins = ColdDeviceStorage.get('plugins');
-		prefer.commit('plugins', plugins.map(p => ({
-			...p,
-			installId: (p as any).id,
-			id: undefined,
-		})));
+		prefer.commit('plugins', plugins.map(p => {
+			const { id, ...rest } = p;
+			return {
+				...rest,
+				config: rest.config ?? {},
+				installId: id,
+			};
+		}));
 
 		prefer.commit('deck.profile', deckStore.s.profile);
 		misskeyApi('i/registry/keys', {
@@ -57,7 +59,7 @@ export function migrateOldSettings() {
 					key: key,
 				});
 				profiles.push({
-					id: uuid(),
+					id: genId(),
 					name: key,
 					columns: deck.columns,
 					layout: deck.layout,
@@ -130,9 +132,14 @@ export function migrateOldSettings() {
 		prefer.commit('notificationStackAxis', store.s.notificationStackAxis);
 		prefer.commit('enableCondensedLine', store.s.enableCondensedLine);
 		prefer.commit('keepScreenOn', store.s.keepScreenOn);
-		prefer.commit('disableStreamingTimeline', store.s.disableStreamingTimeline);
 		prefer.commit('useGroupedNotifications', store.s.useGroupedNotifications);
-		prefer.commit('dataSaver', store.s.dataSaver);
+		prefer.commit('dataSaver', {
+			...prefer.s.dataSaver,
+			media: store.s.dataSaver.media,
+			avatar: store.s.dataSaver.avatar,
+			urlPreviewThumbnail: store.s.dataSaver.urlPreview,
+			code: store.s.dataSaver.code,
+		});
 		prefer.commit('enableSeasonalScreenEffect', store.s.enableSeasonalScreenEffect);
 		prefer.commit('enableHorizontalSwipe', store.s.enableHorizontalSwipe);
 		prefer.commit('useNativeUiForVideoAudioPlayer', store.s.useNativeUIForVideoAudioPlayer);
@@ -155,10 +162,15 @@ export function migrateOldSettings() {
 		prefer.commit('sound.on.reaction', store.s.sound_reaction as any);
 		prefer.commit('defaultNoteVisibility', store.s.defaultNoteVisibility);
 		prefer.commit('defaultNoteLocalOnly', store.s.defaultNoteLocalOnly);
-		prefer.commit('showPreview', store.s.showPreview);
 
 		// #region CherryPick
-		// - Settings/Preferences
+		// - Settings/Appearance
+		prefer.commit('fontSize', store.s.fontSize);
+		prefer.commit('showUnreadNotificationsCount', store.s.showUnreadNotificationsCount);
+		prefer.commit('setFederationAvatarShape', store.s.setFederationAvatarShape);
+		prefer.commit('filesGridLayoutInUserPage', store.s.filesGridLayoutInUserPage);
+
+		// - Settings/Timeline and Note
 		prefer.commit('forceCollapseAllRenotes', store.s.forceCollapseAllRenotes);
 		prefer.commit('collapseReplies', store.s.collapseReplies);
 		prefer.commit('collapseLongNoteContent', store.s.collapseLongNoteContent);
@@ -181,6 +193,29 @@ export function migrateOldSettings() {
 		prefer.commit('showFixedPostFormInReplies', store.s.showFixedPostFormInReplies);
 		prefer.commit('showNoAltTextWarning', store.s.showNoAltTextWarning);
 		prefer.commit('alwaysShowCw', store.s.alwaysShowCw);
+		prefer.commit('hideAvatarsInNote', store.s.hideAvatarsInNote);
+		prefer.commit('enableAbsoluteTime', store.s.enableAbsoluteTime);
+		prefer.commit('enableMarkByDate', store.s.enableMarkByDate);
+		prefer.commit('showReplyTargetNote', store.s.showReplyTargetNote);
+		prefer.commit('showReplyTargetNoteInSemiTransparent', store.s.showReplyTargetNoteInSemiTransparent);
+		prefer.commit('nsfwOpenBehavior', store.s.nsfwOpenBehavior);
+
+		// - Settings/Posting form
+		prefer.commit('showPreview', store.s.showPreview);
+		prefer.commit('showProfilePreview', store.s.showProfilePreview);
+
+		// - Settings/Navigate to an external site warning
+		prefer.commit('externalNavigationWarning', store.s.externalNavigationWarning);
+		prefer.commit('trustedDomains', store.s.trustedDomains);
+
+		// - Settings/Accessibility
+		prefer.commit('showingAnimatedImages', store.s.showingAnimatedImages);
+
+		// - Settings/Performance
+		prefer.commit('removeModalBgColorForBlur', store.s.removeModalBgColorForBlur);
+		prefer.commit('smoothTransitionAnimations', store.s.smoothTransitionAnimations);
+
+		// - Settings/Other
 		prefer.commit('autoLoadMoreReplies', store.s.autoLoadMoreReplies);
 		prefer.commit('autoLoadMoreConversation', store.s.autoLoadMoreConversation);
 		prefer.commit('useAutoTranslate', store.s.useAutoTranslate);
@@ -188,18 +223,6 @@ export function migrateOldSettings() {
 		prefer.commit('disableNyaize', store.s.disableNyaize);
 		prefer.commit('requireRefreshBehavior', store.s.requireRefreshBehavior);
 		prefer.commit('newNoteReceivedNotificationBehavior', store.s.newNoteReceivedNotificationBehavior);
-		prefer.commit('showProfilePreview', store.s.showProfilePreview);
-
-		// - Settings/Appearance
-		prefer.commit('fontSize', store.s.fontSize);
-		prefer.commit('setFederationAvatarShape', store.s.setFederationAvatarShape);
-		prefer.commit('filesGridLayoutInUserPage', store.s.filesGridLayoutInUserPage);
-		prefer.commit('hideAvatarsInNote', store.s.hideAvatarsInNote);
-		prefer.commit('enableAbsoluteTime', store.s.enableAbsoluteTime);
-		prefer.commit('enableMarkByDate', store.s.enableMarkByDate);
-		prefer.commit('showReplyTargetNote', store.s.showReplyTargetNote);
-		prefer.commit('showReplyTargetNoteInSemiTransparent', store.s.showReplyTargetNoteInSemiTransparent);
-		prefer.commit('nsfwOpenBehavior', store.s.nsfwOpenBehavior);
 
 		// - Settings/Navigation bar
 		prefer.commit('bannerDisplay', store.s.bannerDisplay);
@@ -209,23 +232,11 @@ export function migrateOldSettings() {
 		prefer.commit('enableLocalTimeline', store.s.enableLocalTimeline);
 		prefer.commit('enableSocialTimeline', store.s.enableSocialTimeline);
 		prefer.commit('enableGlobalTimeline', store.s.enableGlobalTimeline);
+		prefer.commit('enableMediaTimeline', store.s.enableMediaTimeline);
 		prefer.commit('enableBubbleTimeline', store.s.enableBubbleTimeline);
 		prefer.commit('enableListTimeline', store.s.enableListTimeline);
 		prefer.commit('enableAntennaTimeline', store.s.enableAntennaTimeline);
 		prefer.commit('enableChannelTimeline', store.s.enableChannelTimeline);
-
-		// - Settings/Sounds & Vibrations
-		// prefer.commit('vibrate', store.s.vibrate);
-		try {
-			prefer.commit('vibrate', store.s.vibrate);
-		} catch (err) {
-			if (_DEV_) console.error('Failed to migrate vibrate settings:', err);
-			if (_DEV_) console.log('vibrate value:', store.s.vibrate);
-			prefer.commit('vibrate', false);
-		}
-		prefer.commit('vibrate.on.note', store.s.vibrate_note);
-		prefer.commit('vibrate.on.notification', store.s.vibrate_notification);
-		prefer.commit('vibrate.on.system', store.s.vibrate_system);
 
 		// - Settings/CherryPick
 		prefer.commit('nicknameEnabled', store.s.nicknameEnabled);

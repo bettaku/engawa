@@ -78,6 +78,8 @@ import { FanoutTimelineService } from './FanoutTimelineService.js';
 import { ChannelFollowingService } from './ChannelFollowingService.js';
 import { ChatService } from './ChatService.js';
 import { RegistryApiService } from './RegistryApiService.js';
+import { PageService } from './PageService.js';
+import { ActivityPubAccessControlService } from './ActivityPubAccessControlService.js';
 
 import { ChartLoggerService } from './chart/ChartLoggerService.js';
 import FederationChart from './chart/charts/federation.js';
@@ -155,6 +157,8 @@ import { ApEventService } from './activitypub/models/ApEventService.js';
 import { QueueModule } from './QueueModule.js';
 import { QueueService } from './QueueService.js';
 import { LoggerService } from './LoggerService.js';
+import { NoteHistorySerivce } from './NoteHistoryService.js';
+import { NoteHistoryEntityService } from './entities/NoteHistoryEntityService.js';
 import type { Provider } from '@nestjs/common';
 
 //#region 文字列ベースでのinjection用(循環参照対応のため)
@@ -229,6 +233,8 @@ const $FanoutTimelineEndpointService: Provider = { provide: 'FanoutTimelineEndpo
 const $ChannelFollowingService: Provider = { provide: 'ChannelFollowingService', useExisting: ChannelFollowingService };
 const $ChatService: Provider = { provide: 'ChatService', useExisting: ChatService };
 const $RegistryApiService: Provider = { provide: 'RegistryApiService', useExisting: RegistryApiService };
+const $PageService: Provider = { provide: 'PageService', useExisting: PageService };
+const $ActivityPubAccessControlService: Provider = { provide: 'ActivityPubAccessControlService', useExisting: ActivityPubAccessControlService };
 
 const $ChartLoggerService: Provider = { provide: 'ChartLoggerService', useExisting: ChartLoggerService };
 const $FederationChart: Provider = { provide: 'FederationChart', useExisting: FederationChart };
@@ -270,6 +276,7 @@ const $MutingEntityService: Provider = { provide: 'MutingEntityService', useExis
 const $RenoteMutingEntityService: Provider = { provide: 'RenoteMutingEntityService', useExisting: RenoteMutingEntityService };
 const $NoteEntityService: Provider = { provide: 'NoteEntityService', useExisting: NoteEntityService };
 const $NoteFavoriteEntityService: Provider = { provide: 'NoteFavoriteEntityService', useExisting: NoteFavoriteEntityService };
+const $NoteHistoryEntityService: Provider = { provide: 'NoteHistoryEntityService', useExisting: NoteHistoryEntityService };
 const $NoteReactionEntityService: Provider = { provide: 'NoteReactionEntityService', useExisting: NoteReactionEntityService };
 const $NoteDraftEntityService: Provider = { provide: 'NoteDraftEntityService', useExisting: NoteDraftEntityService };
 const $NotificationEntityService: Provider = { provide: 'NotificationEntityService', useExisting: NotificationEntityService };
@@ -383,6 +390,9 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		ChannelFollowingService,
 		ChatService,
 		RegistryApiService,
+		PageService,
+		NoteHistorySerivce,
+		ActivityPubAccessControlService,
 
 		ChartLoggerService,
 		FederationChart,
@@ -424,6 +434,7 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		RenoteMutingEntityService,
 		NoteEntityService,
 		NoteFavoriteEntityService,
+		NoteHistoryEntityService,
 		NoteReactionEntityService,
 		NoteDraftEntityService,
 		NotificationEntityService,
@@ -533,6 +544,8 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		$ChannelFollowingService,
 		$ChatService,
 		$RegistryApiService,
+		$PageService,
+		$ActivityPubAccessControlService,
 
 		$ChartLoggerService,
 		$FederationChart,
@@ -574,6 +587,7 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		$RenoteMutingEntityService,
 		$NoteEntityService,
 		$NoteFavoriteEntityService,
+		$NoteHistoryEntityService,
 		$NoteReactionEntityService,
 		$NoteDraftEntityService,
 		$NotificationEntityService,
@@ -684,6 +698,9 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		ChannelFollowingService,
 		ChatService,
 		RegistryApiService,
+		PageService,
+		NoteHistorySerivce,
+		ActivityPubAccessControlService,
 
 		FederationChart,
 		NotesChart,
@@ -724,6 +741,7 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		RenoteMutingEntityService,
 		NoteEntityService,
 		NoteFavoriteEntityService,
+		NoteHistoryEntityService,
 		NoteReactionEntityService,
 		NoteDraftEntityService,
 		NotificationEntityService,
@@ -832,6 +850,8 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		$ChannelFollowingService,
 		$ChatService,
 		$RegistryApiService,
+		$PageService,
+		$ActivityPubAccessControlService,
 
 		$FederationChart,
 		$NotesChart,
@@ -872,6 +892,7 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		$RenoteMutingEntityService,
 		$NoteEntityService,
 		$NoteFavoriteEntityService,
+		$NoteHistoryEntityService,
 		$NoteReactionEntityService,
 		$NoteDraftEntityService,
 		$NotificationEntityService,

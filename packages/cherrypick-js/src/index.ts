@@ -13,6 +13,8 @@ export const mutedNoteReasons = consts.mutedNoteReasons;
 export const followingVisibilities = consts.followingVisibilities;
 export const followersVisibilities = consts.followersVisibilities;
 export const moderationLogTypes = consts.moderationLogTypes;
+export const rolePolicies = consts.rolePolicies;
+export const queueTypes = consts.queueTypes;
 // api extractor not supported yet
 //export * as api from './api.js';
 //export * as entities from './entities.js';

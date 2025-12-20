@@ -28,7 +28,7 @@ jobs:
       wait_time: ${{ steps.get-wait-time.outputs.wait_time }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4.3.0
 
       - name: Check allowed users
         id: check-allowed-users
@@ -37,7 +37,7 @@ jobs:
           COMMENT_AUTHOR: ${{ github.event.comment.user.id }}
         run: |
           if ["$COMMENT_AUTHOR" = "$ALLOWED_USER"]; then
-            echo "is-allowed-user=true" >> $GITHUB_OUTPUT
+            echo "is-allowed-user=true" >>> $GITHUB_OUTPUT
           else
             echo "is-allowed-user=false" >> $GITHUB_OUTPUT
           fi
@@ -54,7 +54,7 @@ jobs:
           COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
           WAIT_TIME=$(echo "$COMMENT_BODY" | grep -oP '(?<=/preview\s)\d+' || echo "1800")
-          echo "wait_time=$WAIT_TIME" > $GITHUB_OUTPUT
+          echo "wait_time=$WAIT_TIME" >> $GITHUB_OUTPUT
 
   deploy-test-environment-pr-comment:
     needs: get-pr-ref

@@ -85,6 +85,5 @@ vite.config.local-dev.ts.timestamp-*
 # VSCode addon
 .favorites.json
 
-# Rust
-/cli/target
-/target
+# Serena
+.serena

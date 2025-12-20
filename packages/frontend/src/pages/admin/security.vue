@@ -6,87 +6,118 @@ SPDX-License-Identifier: AGPL-3.0-only
 <template>
 <PageWithHeader :actions="headerActions" :tabs="headerTabs">
 	<div class="_spacer" style="--MI_SPACER-w: 700px; --MI_SPACER-min: 16px; --MI_SPACER-max: 32px;">
-		<div class="_gaps_m">
-			<XBotProtection/>
+		<SearchMarker path="/admin/security" :label="i18n.ts.security" :keywords="['security']" icon="ti ti-lock" :inlining="['botProtection']">
+			<div class="_gaps_m">
+				<XBotProtection/>
+				<SearchMarker v-slot="slotProps" :keywords="['email', 'validation']">
+					<MkFolder :defaultOpen="slotProps.isParentOfTarget">
+						<template #label><SearchLabel>Active Email Validation</SearchLabel></template>
+						<template v-if="emailValidationForm.savedState.enableActiveEmailValidation" #suffix>Enabled</template>
+						<template v-else #suffix>Disabled</template>
+						<template v-if="emailValidationForm.modified.value" #footer>
+							<MkFormFooter :form="emailValidationForm"/>
+						</template>
 
-			<MkFolder>
-				<template #label>Active Email Validation</template>
-				<template v-if="emailValidationForm.savedState.enableActiveEmailValidation" #suffix>Enabled</template>
-				<template v-else #suffix>Disabled</template>
-				<template v-if="emailValidationForm.modified.value" #footer>
-					<MkFormFooter :form="emailValidationForm"/>
-				</template>
+						<div class="_gaps_m">
+							<div><SearchText>{{ i18n.ts.activeEmailValidationDescription }}</SearchText></div>
 
-				<div class="_gaps_m">
-					<span>{{ i18n.ts.activeEmailValidationDescription }}</span>
-					<MkSwitch v-model="emailValidationForm.state.enableActiveEmailValidation">
-						<template #label>Enable</template>
-					</MkSwitch>
-					<MkSwitch v-model="emailValidationForm.state.enableVerifymailApi">
-						<template #label>Use Verifymail.io API</template>
-					</MkSwitch>
-					<MkInput v-model="emailValidationForm.state.verifymailAuthKey">
-						<template #prefix><i class="ti ti-key"></i></template>
-						<template #label>Verifymail.io API Auth Key</template>
-					</MkInput>
-					<MkSwitch v-model="emailValidationForm.state.enableTruemailApi">
-						<template #label>Use TrueMail API</template>
-					</MkSwitch>
-					<MkInput v-model="emailValidationForm.state.truemailInstance">
-						<template #prefix><i class="ti ti-key"></i></template>
-						<template #label>TrueMail API Instance</template>
-					</MkInput>
-					<MkInput v-model="emailValidationForm.state.truemailAuthKey">
-						<template #prefix><i class="ti ti-key"></i></template>
-						<template #label>TrueMail API Auth Key</template>
-					</MkInput>
-				</div>
-			</MkFolder>
+							<SearchMarker>
+								<MkSwitch v-model="emailValidationForm.state.enableActiveEmailValidation">
+									<template #label><SearchLabel>Enable</SearchLabel></template>
+								</MkSwitch>
+							</SearchMarker>
 
-			<MkFolder>
-				<template #label>Banned Email Domains</template>
-				<template v-if="bannedEmailDomainsForm.modified.value" #footer>
-					<MkFormFooter :form="bannedEmailDomainsForm"/>
-				</template>
+							<SearchMarker>
+								<MkSwitch v-model="emailValidationForm.state.enableVerifymailApi">
+									<template #label><SearchLabel>Use Verifymail.io API</SearchLabel></template>
+								</MkSwitch>
+							</SearchMarker>
 
-				<div class="_gaps_m">
-					<MkTextarea v-model="bannedEmailDomainsForm.state.bannedEmailDomains">
-						<template #label>Banned Email Domains List</template>
-					</MkTextarea>
-				</div>
-			</MkFolder>
+							<SearchMarker>
+								<MkInput v-model="emailValidationForm.state.verifymailAuthKey">
+									<template #prefix><i class="ti ti-key"></i></template>
+									<template #label><SearchLabel>Verifymail.io API Auth Key</SearchLabel></template>
+								</MkInput>
+							</SearchMarker>
 
-			<MkFolder>
-				<template #label>Log IP address</template>
-				<template v-if="ipLoggingForm.savedState.enableIpLogging" #suffix>Enabled</template>
-				<template v-else #suffix>Disabled</template>
-				<template v-if="ipLoggingForm.modified.value" #footer>
-					<MkFormFooter :form="ipLoggingForm"/>
-				</template>
+							<SearchMarker>
+								<MkSwitch v-model="emailValidationForm.state.enableTruemailApi">
+									<template #label><SearchLabel>Use TrueMail API</SearchLabel></template>
+								</MkSwitch>
+							</SearchMarker>
 
-				<div class="_gaps_m">
-					<MkSwitch v-model="ipLoggingForm.state.enableIpLogging">
-						<template #label>Enable</template>
-					</MkSwitch>
-				</div>
-			</MkFolder>
+							<SearchMarker>
+								<MkInput v-model="emailValidationForm.state.truemailInstance">
+									<template #prefix><i class="ti ti-key"></i></template>
+									<template #label><SearchLabel>TrueMail API Instance</SearchLabel></template>
+								</MkInput>
+							</SearchMarker>
 
-			<MkFolder>
-				<template #label>{{ i18n.ts.secureMode }}</template>
-				<template v-if="secureModeForm.savedState.enableAuthorizedFetch" #suffix>Enabled</template>
-				<template v-else #suffix>Disabled</template>
-				<template #caption>{{ i18n.ts.secureModeDescription }}</template>
-				<template v-if="secureModeForm.modified.value" #footer>
-					<MkFormFooter :form="secureModeForm"/>
-				</template>
+							<SearchMarker>
+								<MkInput v-model="emailValidationForm.state.truemailAuthKey">
+									<template #prefix><i class="ti ti-key"></i></template>
+									<template #label><SearchLabel>TrueMail API Auth Key</SearchLabel></template>
+								</MkInput>
+							</SearchMarker>
+						</div>
+					</MkFolder>
+				</SearchMarker>
 
-				<div class="_gaps_m">
-					<MkSwitch v-model="secureModeForm.state.enableAuthorizedFetch">
-						<template #label>Enable Secure Mode</template>
-					</MkSwitch>
-				</div>
-			</MkFolder>
+				<SearchMarker v-slot="slotProps" :keywords="['banned', 'email', 'domains', 'blacklist']">
+					<MkFolder :defaultOpen="slotProps.isParentOfTarget">
+						<template #label><SearchLabel>Banned Email Domains</SearchLabel></template>
+						<template v-if="bannedEmailDomainsForm.modified.value" #footer>
+							<MkFormFooter :form="bannedEmailDomainsForm"/>
+						</template>
+
+						<div class="_gaps_m">
+							<SearchMarker>
+								<MkTextarea v-model="bannedEmailDomainsForm.state.bannedEmailDomains">
+									<template #label><SearchLabel>Banned Email Domains List</SearchLabel></template>
+								</MkTextarea>
+							</SearchMarker>
+						</div>
+					</MkFolder>
+				</SearchMarker>
+
+				<SearchMarker v-slot="slotProps" :keywords="['log', 'ipAddress']">
+					<MkFolder :defaultOpen="slotProps.isParentOfTarget">
+						<template #label><SearchLabel>Log IP address</SearchLabel></template>
+						<template v-if="ipLoggingForm.savedState.enableIpLogging" #suffix>Enabled</template>
+						<template v-else #suffix>Disabled</template>
+						<template v-if="ipLoggingForm.modified.value" #footer>
+							<MkFormFooter :form="ipLoggingForm"/>
+						</template>
+
+						<div class="_gaps_m">
+							<SearchMarker>
+								<MkSwitch v-model="ipLoggingForm.state.enableIpLogging">
+									<template #label><SearchLabel>Enable</SearchLabel></template>
+								</MkSwitch>
+							</SearchMarker>
+						</div>
+					</MkFolder>
+				</SearchMarker>
+
+				<SearchMarker v-slot="slotProps" :keywords="['authorized', 'fetch']">
+					<MkFolder>
+						<template #label>{{ i18n.ts.secureMode }}</template>
+						<template v-if="secureModeForm.savedState.enableAuthorizedFetch" #suffix>Enabled</template>
+						<template v-else #suffix>Disabled</template>
+						<template #caption>{{ i18n.ts.secureModeDescription }}</template>
+						<template v-if="secureModeForm.modified.value" #footer>
+							<MkFormFooter :form="secureModeForm"/>
+						</template>
+
+						<div class="_gaps_m">
+							<MkSwitch v-model="secureModeForm.state.enableAuthorizedFetch">
+								<template #label>Enable Secure Mode</template>
+							</MkSwitch>
+						</div>
+					</MkFolder>
+				</SearchMarker>
 		</div>
+		</SearchMarker>
 	</div>
 </PageWithHeader>
 </template>
@@ -105,7 +136,7 @@ import { misskeyApi } from '@/utility/misskey-api.js';
 import { fetchInstance } from '@/instance.js';
 import { i18n } from '@/i18n.js';
 import { definePage } from '@/page.js';
-import { useForm } from '@/use/use-form.js';
+import { useForm } from '@/composables/use-form.js';
 import MkFormFooter from '@/components/MkFormFooter.vue';
 
 const meta = await misskeyApi('admin/meta');

@@ -58,38 +58,26 @@ interface TabItem {
 
 const headerActions = computed(() => []);
 
-const headerTabs = computed<TabItem[]>(() => {
-	const items: TabItem[] = [];
-
-	items.push({
-		key: 'overview',
-		title: i18n.ts.overview,
-	}, {
-		key: 'emojis',
-		title: i18n.ts.customEmojis,
-		icon: 'ti ti-icons',
-	}, {
-		key: 'decoration',
-		title: i18n.ts.avatarDecorations,
-		icon: 'ti ti-mood-spark',
-	});
-
-	if (instance.federation !== 'none') {
-		items.push({
-			key: 'federation',
-			title: i18n.ts.federation,
-			icon: 'ti ti-world',
-		});
-	}
-
-	items.push({
-		key: 'charts',
-		title: i18n.ts.charts,
-		icon: 'ti ti-chart-line',
-	});
-
-	return items;
-});
+const headerTabs = computed(() => [{
+	key: 'overview',
+	title: i18n.ts.overview,
+}, {
+	key: 'emojis',
+	title: i18n.ts.customEmojis,
+	icon: 'ti ti-icons',
+}, {
+	key: 'decoration',
+	title: i18n.ts.avatarDecorations,
+	icon: 'ti ti-mood-spark',
+}, ...(instance.federation !== 'none' ? [{
+	key: 'federation',
+	title: i18n.ts.federation,
+	icon: 'ti ti-world',
+}] : []), {
+	key: 'charts',
+	title: i18n.ts.charts,
+	icon: 'ti ti-chart-line',
+}]);
 
 definePage(() => ({
 	title: i18n.ts.instanceInfo,

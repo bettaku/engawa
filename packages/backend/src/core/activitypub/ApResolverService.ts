@@ -104,7 +104,7 @@ export class Resolver {
 			this.logger.warn(`resolve: federation not allowed: ${host}`);
 		}
 
-		if (this.config.signToActivityPubGet && !this.user) {
+		if (this.meta.signToActivityPubGet && !this.user) {
 			this.user = await this.systemAccountService.fetch('actor');
 		}
 

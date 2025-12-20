@@ -167,10 +167,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			.andWhere('(SELECT "isSensitive" FROM "user" WHERE id = note."userId") = FALSE');
 
 		this.queryService.generateVisibilityQuery(query, me);
-		this.queryService.generateBlockedHostQueryForNote(query);
-		this.queryService.generateSuspendedUserQueryForNote(query);
-		if (me) this.queryService.generateMutedUserQueryForNotes(query, me);
-		if (me) this.queryService.generateBlockedUserQueryForNotes(query, me);
+		this.queryService.generateBaseNoteFilteringQuery(query, me);
 		if (me) this.queryService.generateMutedUserRenotesQueryForNotes(query, me);
 
 		if (ps.withFiles) {

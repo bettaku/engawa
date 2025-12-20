@@ -110,6 +110,18 @@ export type Channels = {
 		};
 		receives: null;
 	};
+	bubbleTimeline: {
+		params: {
+			withRenotes?: boolean;
+			withFiles?: boolean;
+			withCats?: boolean;
+			withoutBots?: boolean;
+		};
+		events: {
+			note: (payload: Note) => void;
+		};
+		receives: null;
+	};
 	userList: {
 		params: {
 			listId: string;
