@@ -4,7 +4,7 @@
  */
 
 import { Entity, Index, JoinColumn, Column, PrimaryColumn, ManyToOne } from 'typeorm';
-import { noteVisibilities, noteReactionAcceptances } from '@/types.js';
+import { noteVisibilities, noteReactionAcceptances, noteSearchableBy } from '@/types.js';
 import * as Event from '@/models/Event.js';
 import { id } from './util/id.js';
 import { MiUser } from './User.js';
@@ -212,12 +212,9 @@ export class MiNoteDraft {
 	})
 	public deleteAt: Date | null;
 
-	@Column('jsonb', {
-		nullable: true,
-		default: {},
+	@Column('enum', {
+		enum: noteSearchableBy,
+		default: 'public',
 	})
-	public deliveryTargets: {
-		mode: 'include' | 'exclude';
-		hosts: string[];
-	} | null;
+	public searchableBy: typeof noteSearchableBy[number];
 }

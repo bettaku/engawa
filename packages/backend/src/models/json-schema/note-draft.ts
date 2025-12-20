@@ -183,24 +183,5 @@ export const packedNoteDraftSchema = {
 			optional: true, nullable: true,
 			format: 'date-time',
 		},
-		deliveryTargets: {
-			type: 'object',
-			optional: true, nullable: true,
-			properties: {
-				mode: {
-					type: 'string',
-					optional: false, nullable: false,
-					enum: ['include', 'exclude'],
-				},
-				hosts: {
-					type: 'array',
-					optional: true, nullable: true,
-					items: {
-						type: 'string',
-						optional: false, nullable: false,
-					},
-				},
-			},
-		},
 	},
 } as const;

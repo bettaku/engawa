@@ -143,7 +143,6 @@ export class NoteDraftEntityService implements OnModuleInit {
 				end: noteDraft.eventEnd?.getTime(),
 				metadata: noteDraft.eventMetadata,
 			} : undefined,
-			deliveryTargets: noteDraft.deliveryTargets ?? undefined,
 
 			...(opts.detail ? {
 				reply: noteDraft.replyId ? nullIfEntityNotFound(this.noteEntityService.pack(noteDraft.replyId, me, {

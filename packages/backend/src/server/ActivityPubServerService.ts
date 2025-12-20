@@ -33,7 +33,6 @@ import { IActivity, ICreate, IAnnounce } from '@/core/activitypub/type.js';
 import { isQuote, isRenote } from '@/misc/is-renote.js';
 import * as Acct from '@/misc/acct.js';
 import { FanoutTimelineEndpointService } from '@/core/FanoutTimelineEndpointService.js';
-import { ActivityPubAccessControlService } from '@/core/ActivityPubAccessControlService.js';
 import type { FastifyInstance, FastifyRequest, FastifyReply, FastifyPluginOptions, FastifyBodyParser } from 'fastify';
 import type { FindOptionsWhere } from 'typeorm';
 
@@ -84,7 +83,6 @@ export class ActivityPubServerService {
 		private userKeypairService: UserKeypairService,
 		private queryService: QueryService,
 		private fanoutTimelineEndpointService: FanoutTimelineEndpointService,
-		private activityPubAccessControlService: ActivityPubAccessControlService,
 	) {
 		//this.createServer = this.createServer.bind(this);
 	}
@@ -289,27 +287,11 @@ export class ActivityPubServerService {
 	}
 
 	@bindThis
-	private async applyAccessControl(request: FastifyRequest, reply: FastifyReply, allowLimitedHosts = false): Promise<boolean> {
-		const accessControl = await this.activityPubAccessControlService.checkAccess(request, allowLimitedHosts);
-		if (accessControl) {
-			reply.code(403);
-			reply.header('Content-Type', 'text/plain; charset=utf-8');
-			reply.send(`Access denied: ${accessControl.reason}`);
-			return true;
-		}
-		return false;
-	}
-
-	@bindThis
 	private async followers(
 		request: FastifyRequest<{ Params: { user: string; }; Querystring: { cursor?: string; page?: string; }; }>,
 		reply: FastifyReply,
 	) {
 		if (await this.shouldReject(request, reply)) {
-			return;
-		}
-
-		if (await this.applyAccessControl(request, reply)) {
 			return;
 		}
 
@@ -603,7 +585,6 @@ export class ActivityPubServerService {
 				useDbFallback: true,
 				ignoreAuthorFromMute: true,
 				excludePureRenotes: false,
-				withCats: true,
 				noteFilter: (note) => {
 					if (note.visibility !== 'home' && note.visibility !== 'public') return false;
 					if (note.localOnly) return false;
@@ -780,11 +761,6 @@ export class ActivityPubServerService {
 			});
 
 			if (note == null) {
-				reply.code(404);
-				return;
-			}
-
-			if (!await this.activityPubAccessControlService.checkNoteAccess(note, request)) {
 				reply.code(404);
 				return;
 			}

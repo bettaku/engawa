@@ -481,22 +481,6 @@ export class NoteEntityService implements OnModuleInit {
 			hasPoll: note.hasPoll || undefined,
 			uri: note.uri ?? undefined,
 			url: note.url ?? undefined,
-			hasDeliveryTargets: note.deliveryTargets != null,
-			...((meId === note.userId || iAmModerator) ? {
-				deliveryTargets: note.deliveryTargets ? await (async () => {
-					const deliveryTargets = note.deliveryTargets!;
-					const instances = await this.instancesRepository.findBy({
-						host: In(deliveryTargets.hosts),
-					});
-					const instanceMap = new Map(instances.map(i => [i.host, i.name]));
-
-					return {
-						mode: deliveryTargets.mode,
-						hosts: deliveryTargets.hosts,
-						names: deliveryTargets.hosts.map(host => instanceMap.get(host) ?? null),
-					};
-				})() : undefined,
-			} : {}),
 
 			...(opts.detail ? {
 				clippedCount: note.clippedCount,

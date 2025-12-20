@@ -79,7 +79,6 @@ import { ChannelFollowingService } from './ChannelFollowingService.js';
 import { ChatService } from './ChatService.js';
 import { RegistryApiService } from './RegistryApiService.js';
 import { PageService } from './PageService.js';
-import { ActivityPubAccessControlService } from './ActivityPubAccessControlService.js';
 
 import { ChartLoggerService } from './chart/ChartLoggerService.js';
 import FederationChart from './chart/charts/federation.js';
@@ -234,7 +233,6 @@ const $ChannelFollowingService: Provider = { provide: 'ChannelFollowingService',
 const $ChatService: Provider = { provide: 'ChatService', useExisting: ChatService };
 const $RegistryApiService: Provider = { provide: 'RegistryApiService', useExisting: RegistryApiService };
 const $PageService: Provider = { provide: 'PageService', useExisting: PageService };
-const $ActivityPubAccessControlService: Provider = { provide: 'ActivityPubAccessControlService', useExisting: ActivityPubAccessControlService };
 
 const $ChartLoggerService: Provider = { provide: 'ChartLoggerService', useExisting: ChartLoggerService };
 const $FederationChart: Provider = { provide: 'FederationChart', useExisting: FederationChart };
@@ -392,7 +390,6 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		RegistryApiService,
 		PageService,
 		NoteHistorySerivce,
-		ActivityPubAccessControlService,
 
 		ChartLoggerService,
 		FederationChart,
@@ -545,7 +542,6 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		$ChatService,
 		$RegistryApiService,
 		$PageService,
-		$ActivityPubAccessControlService,
 
 		$ChartLoggerService,
 		$FederationChart,
@@ -700,7 +696,6 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		RegistryApiService,
 		PageService,
 		NoteHistorySerivce,
-		ActivityPubAccessControlService,
 
 		FederationChart,
 		NotesChart,
@@ -851,7 +846,6 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		$ChatService,
 		$RegistryApiService,
 		$PageService,
-		$ActivityPubAccessControlService,
 
 		$FederationChart,
 		$NotesChart,

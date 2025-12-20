@@ -29,19 +29,11 @@ interface IDirectRecipe extends IRecipe {
 	to: MiRemoteUser;
 }
 
-interface ISelectiveFollowersRecipe extends IRecipe {
-	type: 'SelectiveFollowers';
-	deliveryTargets?: { mode: 'include' | 'exclude'; hosts: string[] } | null;
-}
-
 const isFollowers = (recipe: IRecipe): recipe is IFollowersRecipe =>
 	recipe.type === 'Followers';
 
 const isDirect = (recipe: IRecipe): recipe is IDirectRecipe =>
 	recipe.type === 'Direct';
-
-const isSelectiveFollowers = (recipe: IRecipe): recipe is ISelectiveFollowersRecipe =>
-	recipe.type === 'SelectiveFollowers';
 
 class DeliverManager {
 	private actor: ThinUser;
@@ -105,19 +97,6 @@ class DeliverManager {
 	}
 
 	/**
-	 * Add recipe for selective followers deliver
-	 */
-	@bindThis
-	public addSelectiveFollowersRecipe(deliveryTargets?: { mode: 'include' | 'exclude'; hosts: string[] } | null): void {
-		const deliver: ISelectiveFollowersRecipe = {
-			type: 'SelectiveFollowers',
-			deliveryTargets,
-		};
-
-		this.addRecipe(deliver);
-	}
-
-	/**
 	 * Add recipe
 	 * @param recipe Recipe
 	 */
@@ -138,45 +117,7 @@ class DeliverManager {
 		// build inbox list
 		// Process follower recipes first to avoid duplication when processing direct recipes later.
 		// SelectiveFollowers takes priority over general Followers
-		if (this.recipes.some(r => isSelectiveFollowers(r))) {
-			const recipe = this.recipes.find(r => isSelectiveFollowers(r)) as ISelectiveFollowersRecipe;
-			const deliveryTargets = recipe.deliveryTargets;
-
-			const whereClause: any = {
-				followeeId: this.actor.id,
-				followerHost: Not(IsNull()),
-			};
-
-			if (deliveryTargets) {
-				if (deliveryTargets.mode === 'include') {
-					whereClause.followerHost = In(deliveryTargets.hosts);
-				} else if (deliveryTargets.mode === 'exclude') {
-					whereClause.followerHost = Not(In(deliveryTargets.hosts));
-				}
-			}
-
-			const followers = await this.followingsRepository.find({
-				where: whereClause,
-				select: {
-					followerSharedInbox: true,
-					followerInbox: true,
-				},
-			});
-
-			for (const following of followers) {
-				const inbox = following.followerSharedInbox ?? following.followerInbox;
-				//if (inbox === null) throw new Error('inbox is null');
-				if (inbox === null) {
-					this.logger.warn('inbox is null, skipping delivery', {
-						followerSharedInbox: following.followerSharedInbox,
-						followerInbox: following.followerInbox,
-						actorId: this.actor.id,
-					});
-					continue;
-				}
-				inboxes.set(inbox, following.followerSharedInbox != null);
-			}
-		} else if (this.recipes.some(r => isFollowers(r))) {
+		if (this.recipes.some(r => isFollowers(r))) {
 			// followers deliver
 			// TODO: SELECT DISTINCT ON ("followerSharedInbox") "followerSharedInbox" みたいな問い合わせにすればよりパフォーマンス向上できそう
 			// ただ、sharedInboxがnullなリモートユーザーも稀におり、その対応ができなさそう？
