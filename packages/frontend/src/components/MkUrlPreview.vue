@@ -117,6 +117,7 @@ import { store } from '@/store.js';
 import { prefer } from '@/preferences.js';
 import { warningExternalWebsite } from '@/utility/warning-external-website.js';
 import { misskeyApi } from '@/utility/misskey-api.js';
+import XNoteSimple from '@/components/MkNoteSimple.vue';
 
 type SummalyResult = Awaited<ReturnType<typeof summaly>>;
 

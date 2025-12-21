@@ -5,10 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <template>
 <a v-if="noteClick" ref="el" :href="to" :class="active ? activeClass : null" @click.prevent.stop="nav" @contextmenu.prevent.stop="onContextmenu">
-	<slot></slot>
+	<slot v-bind="{}"></slot>
 </a>
 <a v-else ref="el" :href="to" :class="active ? activeClass : null" @click.prevent="nav" @contextmenu.prevent.stop="onContextmenu">
-	<slot></slot>
+	<slot v-bind="{}"></slot>
 </a>
 </template>
 
