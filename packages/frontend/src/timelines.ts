@@ -13,7 +13,6 @@ export const basicTimelineTypes = [
 	'media',
 	'social',
 	'global',
-	'media',
 	'bubble',
 ] as const;
 

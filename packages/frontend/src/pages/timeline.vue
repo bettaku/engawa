@@ -444,14 +444,14 @@ const headerActions = computed(() => {
 						ref: enableSocialTimeline,
 					}, {
 						type: 'switch',
-						text: i18n.ts._timelines.global,
-						icon: 'ti ti-world',
-						ref: enableGlobalTimeline,
-					}, {
-						type: 'switch',
 						text: i18n.ts._timelines.media,
 						icon: 'ti ti-photo',
 						ref: enableMediaTimeline,
+					}, {
+						type: 'switch',
+						text: i18n.ts._timelines.global,
+						icon: 'ti ti-world',
+						ref: enableGlobalTimeline,
 					}, {
 						type: 'switch',
 						text: i18n.ts._timelines.bubble,
