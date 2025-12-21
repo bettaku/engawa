@@ -11827,10 +11827,6 @@ export interface Locale extends ILocale {
          */
         "local": string;
         /**
-         * メディア
-         */
-        "media": string;
-        /**
          * ソーシャル
          */
         "social": string;
@@ -14930,48 +14926,6 @@ export interface Locale extends ILocale {
          * 降水量
          */
         "precipitation": string;
-    };
-    "_deliveryTargetControl": {
-        /**
-         * 配送先制御
-         */
-        "deliveryTargetControl": string;
-        /**
-         * 選択したサーバーのみに配送
-         */
-        "deliveryTargetInclude": string;
-        /**
-         * 選択したサーバーを除外して配送
-         */
-        "deliveryTargetExclude": string;
-        /**
-         * リモートサーバーのフォロワーがいません
-         */
-        "noFollowersFromRemoteServers": string;
-        /**
-         * サーバー一覧の読み込みに失敗しました
-         */
-        "loadError": string;
-        /**
-         * {count}人のフォロワー
-         */
-        "followersCount": ParameterizedString<"count">;
-        /**
-         * {count}件見つかりました（全{total}件中）
-         */
-        "searchResults": ParameterizedString<"count" | "total">;
-        /**
-         * 一部のサーバーにのみ公開
-         */
-        "deliveryTargetsInclude": string;
-        /**
-         * 一部のサーバーに非公開
-         */
-        "deliveryTargetsExclude": string;
-        /**
-         * 配送先が選択されています
-         */
-        "hasDeliveryTargets": string;
     };
 }
 declare const locales: {

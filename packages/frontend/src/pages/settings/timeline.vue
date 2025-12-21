@@ -49,14 +49,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 					</MkPreferenceContainer>
 				</SearchMarker>
 
-				<SearchMarker :keywords="['enable', 'media']">
-					<MkPreferenceContainer k="enableMediaTimeline">
-						<MkSwitch v-model="enableMediaTimeline">
-							<template #label><i class="ti ti-photo"></i> <SearchLabel>{{ i18n.ts._timelines.media }}</SearchLabel></template>
-						</MkSwitch>
-					</MkPreferenceContainer>
-				</SearchMarker>
-
 				<SearchMarker :keywords="['enable', 'bubble']">
 					<MkPreferenceContainer k="enableBubbleTimeline">
 						<MkSwitch v-model="enableBubbleTimeline">
@@ -124,7 +116,6 @@ const enableBubbleTimeline = prefer.model('enableBubbleTimeline');
 const enableListTimeline = prefer.model('enableListTimeline');
 const enableAntennaTimeline = prefer.model('enableAntennaTimeline');
 const enableChannelTimeline = prefer.model('enableChannelTimeline');
-const enableMediaTimeline = prefer.model('enableMediaTimeline');
 
 const headerActions = computed(() => []);
 

@@ -159,7 +159,6 @@ const enableLocalTimeline = ref(prefer.s.enableLocalTimeline);
 const enableMediaTimeline = ref(prefer.s.enableMediaTimeline);
 const enableSocialTimeline = ref(prefer.s.enableSocialTimeline);
 const enableGlobalTimeline = ref(prefer.s.enableGlobalTimeline);
-const enableMediaTimeline = ref(prefer.s.enableMediaTimeline);
 const enableBubbleTimeline = ref(prefer.s.enableBubbleTimeline);
 const enableListTimeline = ref(prefer.s.enableListTimeline);
 const enableAntennaTimeline = ref(prefer.s.enableAntennaTimeline);
@@ -220,11 +219,6 @@ watch(enableListTimeline, (x) => {
 
 watch(enableAntennaTimeline, (x) => {
 	prefer.commit('enableAntennaTimeline', x);
-	suggestReload();
-});
-
-watch(enableMediaTimeline, (x) => {
-	prefer.commit('enableMediaTimeline', x);
 	suggestReload();
 });
 
@@ -473,11 +467,6 @@ const headerActions = computed(() => {
 						text: i18n.ts.antennas,
 						icon: 'ti ti-antenna',
 						ref: enableAntennaTimeline,
-					}, {
-						type: 'switch',
-						text: i18n.ts.channel,
-						icon: 'ti ti-device-tv',
-						ref: enableChannelTimeline,
 					});
 
 					return displayOfTimelineChildMenu;
@@ -524,10 +513,10 @@ const headerActions = computed(() => {
 						icon: 'ti ti-cat',
 						text: i18n.ts.showCatOnly,
 						ref: onlyCats,
-						}, {
-							type: 'switch',
-							text: i18n.ts.antennaExcludeBots,
-							ref: withoutBots,
+					}, {
+						type: 'switch',
+						text: i18n.ts.antennaExcludeBots,
+						ref: withoutBots,
 					}, { type: 'divider' }, {
 						type: 'switch',
 						text: i18n.ts.forceCollapseAllRenotes,

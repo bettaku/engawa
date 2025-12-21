@@ -186,11 +186,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 import { defineAsyncComponent, computed, onMounted, onUnmounted, onActivated, onDeactivated, nextTick, watch, ref, useTemplateRef } from 'vue';
 import * as Misskey from 'cherrypick-js';
 import { getScrollContainer } from '@@/js/scroll.js';
-import MkNote from '@/components/MkNote.vue';
 import MkFollowButton from '@/components/MkFollowButton.vue';
 import MkAccountMoved from '@/components/MkAccountMoved.vue';
 import MkButton from '@/components/MkButton.vue';
-import MkFollowButton from '@/components/MkFollowButton.vue';
 import MkFukidashi from '@/components/MkFukidashi.vue';
 import MkInfo from '@/components/MkInfo.vue';
 import MkNote from '@/components/MkNote.vue';

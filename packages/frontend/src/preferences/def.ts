@@ -708,9 +708,6 @@ export const PREF_DEF = definePreferences({
 	enableChannelTimeline: {
 		default: true,
 	},
-	enableMediaTimeline: {
-		default: true,
-	},
 
 	// - Settings/CherryPick
 	nicknameEnabled: {
