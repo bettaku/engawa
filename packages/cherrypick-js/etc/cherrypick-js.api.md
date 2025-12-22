@@ -814,15 +814,6 @@ export type Channels = {
         };
         receives: null;
     };
-    channel: {
-        params: {
-            channelId: string;
-        };
-        events: {
-            note: (payload: Note) => void;
-        };
-        receives: null;
-    };
     drive: {
         params: null;
         events: {

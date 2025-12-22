@@ -4582,19 +4582,6 @@ export type components = {
                 [key: string]: string;
             };
             event?: Record<string, never> | null;
-            /**
-             * Format: id
-             * @example xxxxxxxxxx
-             */
-            channelId?: string | null;
-            channel?: {
-                id: string;
-                name: string;
-                color: string;
-                isSensitive: boolean;
-                allowRenoteToExternal: boolean;
-                userId: string | null;
-            } | null;
             localOnly?: boolean;
             /** @enum {string|null} */
             reactionAcceptance: 'likeOnly' | 'likeOnlyForRemote' | 'nonSensitiveOnly' | 'nonSensitiveOnlyForLocalLikeOnlyForRemote' | null;
@@ -4650,16 +4637,6 @@ export type components = {
                 choices: string[];
             } | null;
             event?: Record<string, never> | null;
-            /** Format: id */
-            channelId: string | null;
-            channel?: {
-                id: string;
-                name: string;
-                color: string;
-                isSensitive: boolean;
-                allowRenoteToExternal: boolean;
-                userId: string | null;
-            } | null;
             localOnly: boolean;
             /** @enum {string|null} */
             reactionAcceptance: 'likeOnly' | 'likeOnlyForRemote' | 'nonSensitiveOnly' | 'nonSensitiveOnlyForLocalLikeOnlyForRemote' | null;
@@ -29690,8 +29667,6 @@ export interface operations {
                     replyId?: string | null;
                     /** Format: misskey:id */
                     renoteId?: string | null;
-                    /** Format: misskey:id */
-                    channelId?: string | null;
                     text?: string | null;
                     fileIds?: string[];
                     mediaIds?: string[];
@@ -29942,8 +29917,6 @@ export interface operations {
                     replyId?: string | null;
                     /** Format: misskey:id */
                     renoteId?: string | null;
-                    /** Format: misskey:id */
-                    channelId?: string | null;
                     text?: string | null;
                     fileIds?: string[];
                     poll?: {
@@ -30197,8 +30170,6 @@ export interface operations {
                     replyId?: string | null;
                     /** Format: misskey:id */
                     renoteId?: string | null;
-                    /** Format: misskey:id */
-                    channelId?: string | null;
                     text?: string | null;
                     fileIds?: string[];
                     poll?: {
@@ -30531,8 +30502,6 @@ export interface operations {
                     limit?: number;
                     /** Format: misskey:id */
                     untilId?: string;
-                    /** Format: misskey:id */
-                    channelId?: string | null;
                 };
             };
         };
@@ -31002,8 +30971,6 @@ export interface operations {
                     limit?: number;
                     /** @default 0 */
                     offset?: number;
-                    /** @default false */
-                    excludeChannels?: boolean;
                 };
             };
         };
@@ -31585,11 +31552,6 @@ export interface operations {
                      * @default null
                      */
                     userId?: string | null;
-                    /**
-                     * Format: misskey:id
-                     * @default null
-                     */
-                    channelId?: string | null;
                     /**
                      * @default combined
                      * @enum {string}
@@ -37088,8 +37050,6 @@ export interface operations {
                     withReplies?: boolean;
                     /** @default true */
                     withRenotes?: boolean;
-                    /** @default false */
-                    withChannelNotes?: boolean;
                     /** @default false */
                     withoutBots?: boolean;
                     /** @default 10 */
