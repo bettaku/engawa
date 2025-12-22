@@ -83,9 +83,6 @@ class UserListChannel extends Channel {
 	private async onNote(note: Packed<'Note'>) {
 		const isMe = this.user!.id === note.userId;
 
-		// チャンネル投稿は無視する
-		if (note.channelId) return;
-
 		if (this.withFiles && (note.fileIds == null || note.fileIds.length === 0)) return;
 
 		if (!Object.hasOwn(this.membershipsMap, note.userId)) return;

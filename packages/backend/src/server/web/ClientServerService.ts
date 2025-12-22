@@ -26,10 +26,9 @@ import { PageEntityService } from '@/core/entities/PageEntityService.js';
 import { MetaEntityService } from '@/core/entities/MetaEntityService.js';
 import { GalleryPostEntityService } from '@/core/entities/GalleryPostEntityService.js';
 import { ClipEntityService } from '@/core/entities/ClipEntityService.js';
-import { ChannelEntityService } from '@/core/entities/ChannelEntityService.js';
+
 import type {
 	AnnouncementsRepository,
-	ChannelsRepository,
 	ClipsRepository,
 	FlashsRepository,
 	GalleryPostsRepository,
@@ -84,9 +83,6 @@ export class ClientServerService {
 		@Inject(DI.galleryPostsRepository)
 		private galleryPostsRepository: GalleryPostsRepository,
 
-		@Inject(DI.channelsRepository)
-		private channelsRepository: ChannelsRepository,
-
 		@Inject(DI.clipsRepository)
 		private clipsRepository: ClipsRepository,
 
@@ -106,7 +102,6 @@ export class ClientServerService {
 		private metaEntityService: MetaEntityService,
 		private galleryPostEntityService: GalleryPostEntityService,
 		private clipEntityService: ClipEntityService,
-		private channelEntityService: ChannelEntityService,
 		private announcementEntityService: AnnouncementEntityService,
 		private urlPreviewService: UrlPreviewService,
 		private feedService: FeedService,

@@ -10,7 +10,7 @@ import { DI } from '@/di-symbols.js';
 import type { Packed } from '@/misc/json-schema.js';
 import { awaitAll } from '@/misc/prelude/await-all.js';
 import type { MiUser, MiNote, MiNoteDraft } from '@/models/_.js';
-import type { NoteDraftsRepository, ChannelsRepository } from '@/models/_.js';
+import type { NoteDraftsRepository } from '@/models/_.js';
 import { bindThis } from '@/decorators.js';
 import { DebounceLoader } from '@/misc/loader.js';
 import { IdService } from '@/core/IdService.js';
@@ -32,9 +32,6 @@ export class NoteDraftEntityService implements OnModuleInit {
 
 		@Inject(DI.noteDraftsRepository)
 		private noteDraftsRepository: NoteDraftsRepository,
-
-		@Inject(DI.channelsRepository)
-		private channelsRepository: ChannelsRepository,
 	) {
 	}
 
@@ -82,12 +79,6 @@ export class NoteDraftEntityService implements OnModuleInit {
 
 		const text = noteDraft.text;
 
-		const channel = noteDraft.channelId
-			? noteDraft.channel
-				? noteDraft.channel
-				: await this.channelsRepository.findOneBy({ id: noteDraft.channelId })
-			: null;
-
 		const packedFiles = options?._hint_?.packedFiles;
 		const packedUsers = options?._hint_?.packedUsers;
 
@@ -122,15 +113,6 @@ export class NoteDraftEntityService implements OnModuleInit {
 			files: packedFiles != null ? this.packAttachedFiles(noteDraft.fileIds, packedFiles) : this.driveFileEntityService.packManyByIds(noteDraft.fileIds),
 			replyId: noteDraft.replyId,
 			renoteId: noteDraft.renoteId,
-			channelId: noteDraft.channelId,
-			channel: channel ? {
-				id: channel.id,
-				name: channel.name,
-				color: channel.color,
-				isSensitive: channel.isSensitive,
-				allowRenoteToExternal: channel.allowRenoteToExternal,
-				userId: channel.userId,
-			} : undefined,
 			poll: noteDraft.hasPoll ? {
 				choices: noteDraft.pollChoices,
 				multiple: noteDraft.pollMultiple,

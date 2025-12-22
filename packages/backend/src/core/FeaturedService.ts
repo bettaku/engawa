@@ -99,11 +99,6 @@ export class FeaturedService {
 	}
 
 	@bindThis
-	public updateInChannelNotesRanking(channelId: MiNote['channelId'], noteId: MiNote['id'], score = 1): Promise<void> {
-		return this.updateRankingOf(`featuredInChannelNotesRanking:${channelId}`, GLOBAL_NOTES_RANKING_WINDOW, noteId, score);
-	}
-
-	@bindThis
 	public updatePerUserNotesRanking(userId: MiUser['id'], noteId: MiNote['id'], score = 1): Promise<void> {
 		return this.updateRankingOf(`featuredPerUserNotesRanking:${userId}`, PER_USER_NOTES_RANKING_WINDOW, noteId, score);
 	}
@@ -121,11 +116,6 @@ export class FeaturedService {
 	@bindThis
 	public getGalleryPostsRanking(threshold: number): Promise<MiGalleryPost['id'][]> {
 		return this.getRankingOf('featuredGalleryPostsRanking', GALLERY_POSTS_RANKING_WINDOW, threshold);
-	}
-
-	@bindThis
-	public getInChannelNotesRanking(channelId: MiNote['channelId'], threshold: number): Promise<MiNote['id'][]> {
-		return this.getRankingOf(`featuredInChannelNotesRanking:${channelId}`, GLOBAL_NOTES_RANKING_WINDOW, threshold);
 	}
 
 	@bindThis

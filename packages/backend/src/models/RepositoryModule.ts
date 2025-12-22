@@ -18,9 +18,6 @@ import {
 	MiAuthSession,
 	MiAvatarDecoration,
 	MiBlocking,
-	MiChannel,
-	MiChannelFavorite,
-	MiChannelFollowing,
 	MiClip,
 	MiClipFavorite,
 	MiClipNote,
@@ -439,24 +436,6 @@ const $relaysRepository: Provider = {
 	inject: [DI.db],
 };
 
-const $channelsRepository: Provider = {
-	provide: DI.channelsRepository,
-	useFactory: (db: DataSource) => db.getRepository(MiChannel).extend(miRepository as MiRepository<MiChannel>),
-	inject: [DI.db],
-};
-
-const $channelFollowingsRepository: Provider = {
-	provide: DI.channelFollowingsRepository,
-	useFactory: (db: DataSource) => db.getRepository(MiChannelFollowing).extend(miRepository as MiRepository<MiChannelFollowing>),
-	inject: [DI.db],
-};
-
-const $channelFavoritesRepository: Provider = {
-	provide: DI.channelFavoritesRepository,
-	useFactory: (db: DataSource) => db.getRepository(MiChannelFavorite).extend(miRepository as MiRepository<MiChannelFavorite>),
-	inject: [DI.db],
-};
-
 const $registryItemsRepository: Provider = {
 	provide: DI.registryItemsRepository,
 	useFactory: (db: DataSource) => db.getRepository(MiRegistryItem).extend(miRepository as MiRepository<MiRegistryItem>),
@@ -626,9 +605,6 @@ const $noteHistoryRepository: Provider = {
 		$promoNotesRepository,
 		$promoReadsRepository,
 		$relaysRepository,
-		$channelsRepository,
-		$channelFollowingsRepository,
-		$channelFavoritesRepository,
 		$registryItemsRepository,
 		$webhooksRepository,
 		$systemWebhooksRepository,
@@ -707,9 +683,6 @@ const $noteHistoryRepository: Provider = {
 		$promoNotesRepository,
 		$promoReadsRepository,
 		$relaysRepository,
-		$channelsRepository,
-		$channelFollowingsRepository,
-		$channelFavoritesRepository,
 		$registryItemsRepository,
 		$webhooksRepository,
 		$systemWebhooksRepository,

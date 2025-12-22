@@ -33,7 +33,6 @@ import { OAuth2ProviderService } from './oauth/OAuth2ProviderService.js';
 import { MainChannelService } from './api/stream/channels/main.js';
 import { AdminChannelService } from './api/stream/channels/admin.js';
 import { AntennaChannelService } from './api/stream/channels/antenna.js';
-import { ChannelChannelService } from './api/stream/channels/channel.js';
 import { DriveChannelService } from './api/stream/channels/drive.js';
 import { GlobalTimelineChannelService } from './api/stream/channels/global-timeline.js';
 import { HashtagChannelService } from './api/stream/channels/hashtag.js';
@@ -80,7 +79,6 @@ import { BubbleTimelineChannelService } from './api/stream/channels/bubble-timel
 		MainChannelService,
 		AdminChannelService,
 		AntennaChannelService,
-		ChannelChannelService,
 		DriveChannelService,
 		GlobalTimelineChannelService,
 		HashtagChannelService,

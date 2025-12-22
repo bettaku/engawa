@@ -117,8 +117,6 @@ export class CacheService implements OnApplicationShutdown {
 			fromRedisConverter: (value) => JSON.parse(value),
 		});
 
-		// NOTE: チャンネルのフォロー状況キャッシュはChannelFollowingServiceで行っている
-
 		this.flashAccessTokensCache = new RedisKVCache<FlashToken | null>(this.redisClient, 'flashAccessTokens', {
 			lifetime: 1000 * 60 * 30, // 30m
 			memoryCacheLifetime: 1000 * 60, // 1m

@@ -7,7 +7,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { In } from 'typeorm';
 import type { noteVisibilities, noteReactionAcceptances } from '@/types.js';
 import { DI } from '@/di-symbols.js';
-import type { MiNoteDraft, NoteDraftsRepository, MiNote, MiDriveFile, MiChannel, UsersRepository, DriveFilesRepository, NotesRepository, BlockingsRepository, ChannelsRepository } from '@/models/_.js';
+import type { MiNoteDraft, NoteDraftsRepository, MiNote, MiDriveFile, UsersRepository, DriveFilesRepository, NotesRepository, BlockingsRepository } from '@/models/_.js';
 import { bindThis } from '@/decorators.js';
 import { RoleService } from '@/core/RoleService.js';
 import { IdService } from '@/core/IdService.js';
@@ -19,7 +19,7 @@ import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
 import { QueueService } from '@/core/QueueService.js';
 import type { IEvent } from '@/models/Event.js';
 
-export type NoteDraftOptions = Omit<MiNoteDraft, 'id' | 'userId' | 'user' | 'reply' | 'renote' | 'channel'>;
+export type NoteDraftOptions = Omit<MiNoteDraft, 'id' | 'userId' | 'user' | 'reply' | 'renote'>;
 
 @Injectable()
 export class NoteDraftService {
@@ -38,9 +38,6 @@ export class NoteDraftService {
 
 		@Inject(DI.driveFilesRepository)
 		private driveFilesRepository: DriveFilesRepository,
-
-		@Inject(DI.channelsRepository)
-		private channelsRepository: ChannelsRepository,
 
 		private roleService: RoleService,
 		private idService: IdService,
@@ -248,19 +245,6 @@ export class NoteDraftService {
 				// specified / direct noteはreject
 				throw new IdentifiableError('81eb8188-aea1-4e35-9a8f-3334a3be9855', 'Cannot Renote Due to Visibility');
 			}
-
-			if (renote.channelId && renote.channelId !== data.channelId) {
-				// チャンネルのノートに対しリノート要求がきたとき、チャンネル外へのリノート可否をチェック
-				// リノートのユースケースのうち、チャンネル内→チャンネル外は少数だと考えられるため、JOINはせず必要な時に都度取得する
-				const renoteChannel = await this.channelsRepository.findOneBy({ id: renote.channelId });
-				if (renoteChannel == null) {
-					// リノートしたいノートが書き込まれているチャンネルがない
-					throw new IdentifiableError('6815399a-6f13-4069-b60d-ed5156249d12', 'No such channel');
-				} else if (!renoteChannel.allowRenoteToExternal) {
-					// リノート作成のリクエストだが、対象チャンネルがリノート禁止だった場合
-					throw new IdentifiableError('ed1952ac-2d26-4957-8b30-2deda76bedf7', 'Cannot Renote to External');
-				}
-			}
 		}
 		//#endregion
 
@@ -291,17 +275,6 @@ export class NoteDraftService {
 				if (blockExist) {
 					throw new IdentifiableError('075ca298-e6e7-485a-b570-51a128bb5168', 'You have been blocked by the user');
 				}
-			}
-		}
-		//#endregion
-
-		//#region channel
-		let channel: MiChannel | null = null;
-		if (data.channelId != null) {
-			channel = await this.channelsRepository.findOneBy({ id: data.channelId, isArchived: false });
-
-			if (channel == null) {
-				throw new IdentifiableError('6815399a-6f13-4069-b60d-ed5156249d12', 'No such channel');
 			}
 		}
 		//#endregion

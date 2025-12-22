@@ -57,7 +57,6 @@ export const paramDef = {
 		userId: { type: 'string', format: 'misskey:id' },
 		withReplies: { type: 'boolean', default: false },
 		withRenotes: { type: 'boolean', default: true },
-		withChannelNotes: { type: 'boolean', default: false },
 		withoutBots: { type: 'boolean', default: false },
 		limit: { type: 'integer', minimum: 1, maximum: 100, default: 10 },
 		sinceId: { type: 'string', format: 'misskey:id' },
@@ -107,7 +106,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					sinceId,
 					limit: ps.limit,
 					userId: ps.userId,
-					withChannelNotes: ps.withChannelNotes,
 					withFiles: ps.withFiles,
 					withRenotes: ps.withRenotes,
 					withCats: ps.withCats,
@@ -120,7 +118,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			const redisTimelines: FanoutTimelineName[] = [ps.withFiles ? `userTimelineWithFiles:${ps.userId}` : `userTimeline:${ps.userId}`];
 
 			if (ps.withReplies) redisTimelines.push(`userTimelineWithReplies:${ps.userId}`);
-			if (ps.withChannelNotes) redisTimelines.push(`userTimelineWithChannel:${ps.userId}`);
 
 			const isFollowing = me && Object.hasOwn(await this.cacheService.userFollowingsCache.fetch(me.id), ps.userId);
 
@@ -135,13 +132,12 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				ignoreAuthorFromMute: true,
 				ignoreAuthorFromInstanceBlock: true,
 				ignoreAuthorFromUserSuspension: true,
-				excludeReplies: ps.withChannelNotes && !ps.withReplies, // userTimelineWithChannel may include replies
-				excludeNoFiles: ps.withChannelNotes && ps.withFiles, // userTimelineWithChannel may include notes without files
+				excludeReplies: !ps.withReplies, // userTimelineWithChannel may include replies
+				excludeNoFiles: ps.withFiles, // userTimelineWithChannel may include notes without files
 				excludePureRenotes: !ps.withRenotes,
 				withCats: ps.withCats,
 				withoutBots: ps.withoutBots,
 				noteFilter: note => {
-					if (note.channel?.isSensitive && !isSelf) return false;
 					if (note.visibility === 'specified' && (!me || (me.id !== note.userId && !note.visibleUserIds.some(v => v === me.id)))) return false;
 					if (note.visibility === 'followers' && !isFollowing && !isSelf) return false;
 
@@ -152,7 +148,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					sinceId,
 					limit,
 					userId: ps.userId,
-					withChannelNotes: ps.withChannelNotes,
 					withFiles: ps.withFiles,
 					withRenotes: ps.withRenotes,
 					withCats: ps.withCats,
@@ -169,7 +164,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		sinceId: string | null,
 		limit: number,
 		userId: string,
-		withChannelNotes: boolean,
 		withFiles: boolean,
 		withCats: boolean,
 		withRenotes: boolean,
@@ -182,18 +176,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			.innerJoinAndSelect('note.user', 'user')
 			.leftJoinAndSelect('note.reply', 'reply')
 			.leftJoinAndSelect('note.renote', 'renote')
-			.leftJoinAndSelect('note.channel', 'channel')
 			.leftJoinAndSelect('reply.user', 'replyUser')
 			.leftJoinAndSelect('renote.user', 'renoteUser');
-
-		if (ps.withChannelNotes) {
-			if (!isSelf) query.andWhere(new Brackets(qb => {
-				qb.orWhere('note.channelId IS NULL');
-				qb.orWhere('channel.isSensitive = false');
-			}));
-		} else {
-			query.andWhere('note.channelId IS NULL');
-		}
 
 		this.queryService.generateVisibilityQuery(query, me);
 		this.queryService.generateBaseNoteFilteringQuery(query, me, {

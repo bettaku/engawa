@@ -5,7 +5,6 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import * as Redis from 'ioredis';
-import type { MiChannel } from '@/models/Channel.js';
 import type { MiUser } from '@/models/User.js';
 import type { MiUserProfile } from '@/models/UserProfile.js';
 import type { MiNote } from '@/models/Note.js';
@@ -229,8 +228,6 @@ export interface InternalEventTypes {
 	avatarDecorationDeleted: MiAvatarDecoration;
 	avatarDecorationUpdated: MiAvatarDecoration;
 	metaUpdated: { before?: MiMeta; after: MiMeta; };
-	followChannel: { userId: MiUser['id']; channelId: MiChannel['id']; };
-	unfollowChannel: { userId: MiUser['id']; channelId: MiChannel['id']; };
 	updateUserProfile: MiUserProfile;
 	mute: { muterId: MiUser['id']; muteeId: MiUser['id']; };
 	unmute: { muterId: MiUser['id']; muteeId: MiUser['id']; };
@@ -261,10 +258,6 @@ export type GlobalEvents = {
 	note: {
 		name: `noteStream:${MiNote['id']}`;
 		payload: EventTypesToEventPayload<NoteStreamEventTypes>;
-	};
-	channel: {
-		name: `channelStream:${MiChannel['id']}`;
-		payload: EventUnionFromDictionary<SerializedAll<ChannelEventTypes>>;
 	};
 	userList: {
 		name: `userListStream:${MiUserList['id']}`;

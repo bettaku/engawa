@@ -54,7 +54,6 @@ export class PostScheduledNoteProcessorService {
 				disableRightClick: draft.disableRightClick,
 				visibility: draft.visibility,
 				visibleUserIds: draft.visibleUserIds,
-				channelId: draft.channelId,
 				event: draft.hasEvent && draft.eventTitle && draft.eventStart ? {
 					title: draft.eventTitle,
 					start: new Date(draft.eventStart),

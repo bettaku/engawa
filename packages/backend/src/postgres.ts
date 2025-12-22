@@ -24,8 +24,6 @@ import { MiApp } from '@/models/App.js';
 import { MiAvatarDecoration } from '@/models/AvatarDecoration.js';
 import { MiAuthSession } from '@/models/AuthSession.js';
 import { MiBlocking } from '@/models/Blocking.js';
-import { MiChannelFollowing } from '@/models/ChannelFollowing.js';
-import { MiChannelFavorite } from '@/models/ChannelFavorite.js';
 import { MiClip } from '@/models/Clip.js';
 import { MiClipNote } from '@/models/ClipNote.js';
 import { MiClipFavorite } from '@/models/ClipFavorite.js';
@@ -77,7 +75,6 @@ import { MiUserPublickey } from '@/models/UserPublickey.js';
 import { MiUserSecurityKey } from '@/models/UserSecurityKey.js';
 import { MiWebhook } from '@/models/Webhook.js';
 import { MiSystemWebhook } from '@/models/SystemWebhook.js';
-import { MiChannel } from '@/models/Channel.js';
 import { MiRetentionAggregation } from '@/models/RetentionAggregation.js';
 import { MiRole } from '@/models/Role.js';
 import { MiRoleAssignment } from '@/models/RoleAssignment.js';
@@ -245,9 +242,6 @@ export const entities = [
 	MiPromoNote,
 	MiPromoRead,
 	MiRelay,
-	MiChannel,
-	MiChannelFollowing,
-	MiChannelFavorite,
 	MiRegistryItem,
 	MiAd,
 	MiPasswordResetRequest,

@@ -14,7 +14,7 @@ import { HttpRequestService } from '@/core/HttpRequestService.js';
 import { GetterService } from '@/server/api/GetterService.js';
 import { createTemp } from '@/misc/create-temp.js';
 import { RoleService } from '@/core/RoleService.js';
-import { MiMeta } from '@/models/_.js';
+import { MiMeta, MiNote } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
 import { ApiError } from '../../error.js';
 
@@ -53,6 +53,11 @@ export const meta = {
 			message: 'Translate service is not available.',
 			code: 'NO_TRANSLATE_SERVICE',
 			id: 'bef6e895-c05d-4499-9815-035ed18b0e31',
+		},
+		temporaliyUnavailable: {
+			message: 'Translation service is temporarily unavailable.',
+			code: 'TEMPORARILY_UNAVAILABLE',
+			id: 'd3f3f3e1-5e4b-4f6a- ninth-8c5f9e6e2b7e',
 		},
 	},
 } as const;
@@ -120,13 +125,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				let targetLang = ps.targetLang;
 				if (targetLang.includes('-')) targetLang = targetLang.split('-')[0];
 
-				const { text, raw } = await translate((note.cw ? note.cw + '\n' : '') + note.text, { to: targetLang });
-
-				return {
-					sourceLang: raw.src,
-					text: text,
-					translator: this.serverSettings.translatorType, // 修正点: 配列ではなく単一の文字列
-				};
+				translationResult = await this.translateGoogleTranslateNoApi(note, targetLang);
 			} else if (this.serverSettings.translatorType === 'ctav3') {
 				if (this.serverSettings.ctav3SaKey == null) return Promise.resolve(204);
 				else if (this.serverSettings.ctav3ProjectId == null) return Promise.resolve(204);
@@ -179,6 +178,18 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		};
 	}
 
+	private async translateGoogleTranslateNoApi(note: MiNote, targetLang: string) {
+		const { text, raw } = await translate((note.cw ? note.cw + '\n' : '') + note.text, { to: targetLang }).catch(err => {
+			throw new ApiError(meta.errors.temporaliyUnavailable);
+		});
+
+		return {
+			sourceLang: raw.src,
+			text: text,
+			translator: 'google_no_api',
+		};
+	}
+
 	private async apiCloudTranslationAdvanced(text: string, targetLang: string, saKey: string, projectId: string, location: string, model: string | null, glossary: string | null, provider: string) {
 		const [path, cleanup] = await createTemp();
 		fs.writeFileSync(path, saKey);
@@ -226,6 +237,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			translator: provider,
 		};
 	}
+
 	private async translateLibretranslate(text: string, targetLang: string, endpoint: string, apiKey:string | null ) {
 		const res = await this.httpRequestService.send(endpoint + '/translate', {
 			method: 'POST',

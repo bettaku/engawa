@@ -37,8 +37,6 @@ const base: MiNote = {
 	emojis: [],
 	tags: [],
 	hasPoll: false,
-	channelId: null,
-	channel: null,
 	userHost: null,
 	replyUserId: null,
 	replyUserHost: null,

@@ -20,7 +20,6 @@ export const noteMapping: MappingTypeMapping = {
 		createdAt: { type: 'date' },
 		userId: { type: 'keyword' },
 		userHost: { type: 'keyword' },
-		channelId: { type: 'keyword' },
 		tags: {
 			type: 'text',
 			analyzer: 'sudachi_analyzer',

@@ -7,7 +7,6 @@ import { Entity, Index, JoinColumn, Column, PrimaryColumn, ManyToOne } from 'typ
 import { noteVisibilities, noteSearchableBy, noteReactionAcceptances } from '@/types.js';
 import { id } from './util/id.js';
 import { MiUser } from './User.js';
-import { MiChannel } from './Channel.js';
 import type { MiDriveFile } from './DriveFile.js';
 
 // Note: When you create a new index for existing column of this table,
@@ -226,20 +225,6 @@ export class MiNote {
 		default: false,
 	})
 	public hasPoll: boolean;
-
-	@Index()
-	@Column({
-		...id(),
-		nullable: true,
-		comment: 'The ID of source channel.',
-	})
-	public channelId: MiChannel['id'] | null;
-
-	@ManyToOne(type => MiChannel, {
-		onDelete: 'CASCADE',
-	})
-	@JoinColumn()
-	public channel: MiChannel | null;
 
 	//#region Denormalized fields
 	@Index()

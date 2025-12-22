@@ -8,7 +8,6 @@ import { noteVisibilities, noteReactionAcceptances, noteSearchableBy } from '@/t
 import * as Event from '@/models/Event.js';
 import { id } from './util/id.js';
 import { MiUser } from './User.js';
-import { MiChannel } from './Channel.js';
 import { MiNote } from './Note.js';
 import type { MiDriveFile } from './DriveFile.js';
 
@@ -120,22 +119,6 @@ export class MiNoteDraft {
 		length: 128, nullable: true,
 	})
 	public hashtag: string | null;
-
-	@Index('IDX_NOTE_DRAFT_CHANNEL_ID')
-	@Column({
-		...id(),
-		nullable: true,
-		comment: 'The ID of source channel.',
-	})
-	public channelId: MiChannel['id'] | null;
-
-	// There is a possibility that channelId is not null but channel is null when the channel is deleted.
-	// (deleting channel is not implemented so it's not happening now but may happen in the future)
-	@ManyToOne(type => MiChannel, {
-		createForeignKeyConstraints: false,
-	})
-	@JoinColumn()
-	public channel: MiChannel | null;
 
 	//#region 以下、Pollについて追加
 

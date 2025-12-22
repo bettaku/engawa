@@ -188,42 +188,6 @@ export const packedNoteSchema = {
 			type: 'object',
 			optional: true, nullable: true,
 		},
-		channelId: {
-			type: 'string',
-			optional: true, nullable: true,
-			format: 'id',
-			example: 'xxxxxxxxxx',
-		},
-		channel: {
-			type: 'object',
-			optional: true, nullable: true,
-			properties: {
-				id: {
-					type: 'string',
-					optional: false, nullable: false,
-				},
-				name: {
-					type: 'string',
-					optional: false, nullable: false,
-				},
-				color: {
-					type: 'string',
-					optional: false, nullable: false,
-				},
-				isSensitive: {
-					type: 'boolean',
-					optional: false, nullable: false,
-				},
-				allowRenoteToExternal: {
-					type: 'boolean',
-					optional: false, nullable: false,
-				},
-				userId: {
-					type: 'string',
-					optional: false, nullable: true,
-				},
-			},
-		},
 		localOnly: {
 			type: 'boolean',
 			optional: true, nullable: false,

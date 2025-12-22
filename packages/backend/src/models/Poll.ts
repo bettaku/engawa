@@ -5,7 +5,6 @@
 
 import { PrimaryColumn, Entity, Index, JoinColumn, Column, OneToOne } from 'typeorm';
 import { noteVisibilities } from '@/types.js';
-import type { MiChannel } from '@/models/Channel.js';
 import { id } from './util/id.js';
 import { MiNote } from './Note.js';
 import type { MiUser } from './User.js';
@@ -60,13 +59,6 @@ export class MiPoll {
 	})
 	public userHost: string | null;
 
-	@Index()
-	@Column({
-		...id(),
-		nullable: true,
-		comment: '[Denormalized]',
-	})
-	public channelId: MiChannel['id'] | null;
 	//#endregion
 
 	constructor(data: Partial<MiPoll>) {

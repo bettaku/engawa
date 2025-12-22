@@ -60,8 +60,6 @@ class BubbleTimelineChannel extends Channel {
 
 		if (!(note.user.host != null && this.instance.bubbleInstances.includes(note.user.host) && note.visibility === 'public' )) return;
 
-		if (note.channelId != null) return;
-
 		if (isRenotePacked(note) && !isQuotePacked(note) && !this.withRenotes) return;
 
 		if (!this.following[note.userId] && note.userId !== this.user!.id) return;
@@ -74,7 +72,7 @@ class BubbleTimelineChannel extends Channel {
 				note.renote.myReaction = myRenoteReaction;
 			}
 		}
-		
+
 		this.send('note', note);
 	}
 

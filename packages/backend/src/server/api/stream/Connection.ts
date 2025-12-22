@@ -12,7 +12,6 @@ import { bindThis } from '@/decorators.js';
 import { CacheService } from '@/core/CacheService.js';
 import { MiFollowing, MiUserProfile } from '@/models/_.js';
 import type { StreamEventEmitter, GlobalEvents } from '@/core/GlobalEventService.js';
-import { ChannelFollowingService } from '@/core/ChannelFollowingService.js';
 import { isJsonObject } from '@/misc/json-value.js';
 import type { JsonObject, JsonValue } from '@/misc/json-value.js';
 import type { ChannelsService } from './ChannelsService.js';
@@ -45,7 +44,6 @@ export default class Connection {
 		private channelsService: ChannelsService,
 		private notificationService: NotificationService,
 		private cacheService: CacheService,
-		private channelFollowingService: ChannelFollowingService,
 
 		user: MiUser | null | undefined,
 		token: MiAccessToken | null | undefined,
@@ -57,17 +55,15 @@ export default class Connection {
 	@bindThis
 	public async fetch() {
 		if (this.user == null) return;
-		const [userProfile, following, followingChannels, userIdsWhoMeMuting, userIdsWhoBlockingMe, userIdsWhoMeMutingRenotes] = await Promise.all([
+		const [userProfile, following, userIdsWhoMeMuting, userIdsWhoBlockingMe, userIdsWhoMeMutingRenotes] = await Promise.all([
 			this.cacheService.userProfileCache.fetch(this.user.id),
 			this.cacheService.userFollowingsCache.fetch(this.user.id),
-			this.channelFollowingService.userFollowingChannelsCache.fetch(this.user.id),
 			this.cacheService.userMutingsCache.fetch(this.user.id),
 			this.cacheService.userBlockedCache.fetch(this.user.id),
 			this.cacheService.renoteMutingsCache.fetch(this.user.id),
 		]);
 		this.userProfile = userProfile;
 		this.following = following;
-		this.followingChannels = followingChannels;
 		this.userIdsWhoMeMuting = userIdsWhoMeMuting;
 		this.userIdsWhoBlockingMe = userIdsWhoBlockingMe;
 		this.userIdsWhoMeMutingRenotes = userIdsWhoMeMutingRenotes;

@@ -36,7 +36,6 @@ export const paramDef = {
 	properties: {
 		limit: { type: 'integer', minimum: 1, maximum: 100, default: 10 },
 		untilId: { type: 'string', format: 'misskey:id' },
-		channelId: { type: 'string', nullable: true, format: 'misskey:id' },
 	},
 	required: [],
 } as const;
@@ -57,16 +56,12 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			let noteIds: string[];
-			if (ps.channelId) {
-				noteIds = await this.featuredService.getInChannelNotesRanking(ps.channelId, 50);
+			if (this.globalNotesRankingCacheLastFetchedAt !== 0 && (Date.now() - this.globalNotesRankingCacheLastFetchedAt < 1000 * 60 * 30)) {
+				noteIds = this.globalNotesRankingCache;
 			} else {
-				if (this.globalNotesRankingCacheLastFetchedAt !== 0 && (Date.now() - this.globalNotesRankingCacheLastFetchedAt < 1000 * 60 * 30)) {
-					noteIds = this.globalNotesRankingCache;
-				} else {
-					noteIds = await this.featuredService.getGlobalNotesRanking(100);
-					this.globalNotesRankingCache = noteIds;
-					this.globalNotesRankingCacheLastFetchedAt = Date.now();
-				}
+				noteIds = await this.featuredService.getGlobalNotesRanking(100);
+				this.globalNotesRankingCache = noteIds;
+				this.globalNotesRankingCacheLastFetchedAt = Date.now();
 			}
 
 			noteIds.sort((a, b) => a > b ? -1 : 1);
@@ -93,8 +88,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				.leftJoinAndSelect('note.reply', 'reply')
 				.leftJoinAndSelect('note.renote', 'renote')
 				.leftJoinAndSelect('reply.user', 'replyUser')
-				.leftJoinAndSelect('renote.user', 'renoteUser')
-				.leftJoinAndSelect('note.channel', 'channel');
+				.leftJoinAndSelect('renote.user', 'renoteUser');
 
 			this.queryService.generateBlockedHostQueryForNote(query);
 			this.queryService.generateSuspendedUserQueryForNote(query);

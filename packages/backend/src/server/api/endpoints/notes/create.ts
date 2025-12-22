@@ -154,7 +154,6 @@ export const paramDef = {
 		noExtractEmojis: { type: 'boolean', default: false },
 		replyId: { type: 'string', format: 'misskey:id', nullable: true },
 		renoteId: { type: 'string', format: 'misskey:id', nullable: true },
-		channelId: { type: 'string', format: 'misskey:id', nullable: true },
 
 		// anyOf内にバリデーションを書いても最初の一つしかチェックされない
 		// See https://github.com/misskey-dev/misskey/pull/10082
@@ -276,7 +275,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					disableRightClick: ps.disableRightClick,
 					visibility: ps.visibility,
 					visibleUserIds: ps.visibleUserIds ?? [],
-					channelId: ps.channelId ?? null,
 					apMentions: ps.noExtractMentions ? [] : undefined,
 					apHashtags: ps.noExtractHashtags ? [] : undefined,
 					apEmojis: ps.noExtractEmojis ? [] : undefined,

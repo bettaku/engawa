@@ -29,9 +29,6 @@ import { MiApp } from '@/models/App.js';
 import { MiAuthSession } from '@/models/AuthSession.js';
 import { MiAvatarDecoration } from '@/models/AvatarDecoration.js';
 import { MiBlocking } from '@/models/Blocking.js';
-import { MiChannel } from '@/models/Channel.js';
-import { MiChannelFavorite } from '@/models/ChannelFavorite.js';
-import { MiChannelFollowing } from '@/models/ChannelFollowing.js';
 import { MiChatApproval } from '@/models/ChatApproval.js';
 import { MiChatMessage } from '@/models/ChatMessage.js';
 import { MiChatRoom } from '@/models/ChatRoom.js';
@@ -175,8 +172,6 @@ export {
 	MiAvatarDecoration,
 	MiAuthSession,
 	MiBlocking,
-	MiChannelFollowing,
-	MiChannelFavorite,
 	MiClip,
 	MiClipNote,
 	MiClipFavorite,
@@ -229,7 +224,6 @@ export {
 	MiUserSecurityKey,
 	MiWebhook,
 	MiSystemWebhook,
-	MiChannel,
 	MiRetentionAggregation,
 	MiRole,
 	MiRoleAssignment,
@@ -257,8 +251,6 @@ export type AppsRepository = Repository<MiApp> & MiRepository<MiApp>;
 export type AvatarDecorationsRepository = Repository<MiAvatarDecoration> & MiRepository<MiAvatarDecoration>;
 export type AuthSessionsRepository = Repository<MiAuthSession> & MiRepository<MiAuthSession>;
 export type BlockingsRepository = Repository<MiBlocking> & MiRepository<MiBlocking>;
-export type ChannelFollowingsRepository = Repository<MiChannelFollowing> & MiRepository<MiChannelFollowing>;
-export type ChannelFavoritesRepository = Repository<MiChannelFavorite> & MiRepository<MiChannelFavorite>;
 export type ClipsRepository = Repository<MiClip> & MiRepository<MiClip>;
 export type ClipNotesRepository = Repository<MiClipNote> & MiRepository<MiClipNote>;
 export type ClipFavoritesRepository = Repository<MiClipFavorite> & MiRepository<MiClipFavorite>;
@@ -311,7 +303,6 @@ export type UserPublickeysRepository = Repository<MiUserPublickey> & MiRepositor
 export type UserSecurityKeysRepository = Repository<MiUserSecurityKey> & MiRepository<MiUserSecurityKey>;
 export type WebhooksRepository = Repository<MiWebhook> & MiRepository<MiWebhook>;
 export type SystemWebhooksRepository = Repository<MiSystemWebhook> & MiRepository<MiWebhook>;
-export type ChannelsRepository = Repository<MiChannel> & MiRepository<MiChannel>;
 export type RetentionAggregationsRepository = Repository<MiRetentionAggregation> & MiRepository<MiRetentionAggregation>;
 export type RolesRepository = Repository<MiRole> & MiRepository<MiRole>;
 export type RoleAssignmentsRepository = Repository<MiRoleAssignment> & MiRepository<MiRoleAssignment>;

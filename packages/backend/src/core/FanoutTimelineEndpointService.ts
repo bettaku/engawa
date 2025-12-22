@@ -218,8 +218,7 @@ export class FanoutTimelineEndpointService {
 			.leftJoinAndSelect('note.reply', 'reply')
 			.leftJoinAndSelect('note.renote', 'renote')
 			.leftJoinAndSelect('reply.user', 'replyUser')
-			.leftJoinAndSelect('renote.user', 'renoteUser')
-			.leftJoinAndSelect('note.channel', 'channel');
+			.leftJoinAndSelect('renote.user', 'renoteUser');
 
 		const notes = (await query.getMany()).filter(noteFilter);
 

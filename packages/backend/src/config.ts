@@ -232,7 +232,6 @@ export type Config = {
 	frontendEmbedEntry: { file: string | null };
 	frontendEmbedManifestExists: boolean;
 	mediaProxy: string;
-	remoteProxy?: string;
 	externalMediaProxyEnabled: boolean;
 	videoThumbnailGenerator: string | null;
 	redis: RedisOptions & RedisOptionsSource;
@@ -303,10 +302,6 @@ export function loadConfig(): Config {
 		: null;
 	const internalMediaProxy = `${scheme}://${host}/proxy`;
 
-	const remoteProxy = config.remoteProxy ?
-		config.remoteProxy.endsWith('/') ? config.remoteProxy.substring(0, config.remoteProxy.length - 1) : config.remoteProxy
-		: undefined;
-
 	const redis = convertRedisOptions(config.redis, host);
 
 	return {
@@ -361,7 +356,6 @@ export function loadConfig(): Config {
 		apFileBaseUrl: config.apFileBaseUrl,
 		mediaProxy: externalMediaProxy ?? internalMediaProxy,
 		externalMediaProxyEnabled: externalMediaProxy !== null && externalMediaProxy !== internalMediaProxy,
-		remoteProxy,
 		videoThumbnailGenerator: config.videoThumbnailGenerator ?
 			config.videoThumbnailGenerator.endsWith('/') ? config.videoThumbnailGenerator.substring(0, config.videoThumbnailGenerator.length - 1) : config.videoThumbnailGenerator
 			: null,

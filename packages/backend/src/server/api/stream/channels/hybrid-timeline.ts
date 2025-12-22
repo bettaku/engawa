@@ -64,10 +64,9 @@ class HybridTimelineChannel extends Channel {
 		// チャンネルの投稿ではなく、全体公開のローカルの投稿 または
 		// フォローしているチャンネルの投稿 の場合だけ
 		if (!(
-			(note.channelId == null && isMe) ||
-			(note.channelId == null && Object.hasOwn(this.following, note.userId)) ||
-			(note.channelId == null && (note.user.host == null && note.visibility === 'public')) ||
-			(note.channelId != null && this.followingChannels.has(note.channelId))
+			(isMe) ||
+			(Object.hasOwn(this.following, note.userId)) ||
+			(note.user.host == null && note.visibility === 'public')
 		)) return;
 
 		if (note.visibility === 'followers') {

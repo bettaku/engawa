@@ -17,7 +17,7 @@ import type { IMentionedRemoteUsers } from '@/models/Note.js';
 import { MiNote } from '@/models/Note.js';
 import { MiEvent } from '@/models/Event.js';
 import type { IEvent } from '@/models/Event.js';
-import type { BlockingsRepository, ChannelFollowingsRepository, ChannelsRepository, DriveFilesRepository, FollowingsRepository, InstancesRepository, MiFollowing, MiMeta, MutingsRepository, NotesRepository, NoteThreadMutingsRepository, UserListMembershipsRepository, UserProfilesRepository, UsersRepository } from '@/models/_.js';
+import type { BlockingsRepository, DriveFilesRepository, FollowingsRepository, InstancesRepository, MiFollowing, MiMeta, MutingsRepository, NotesRepository, NoteThreadMutingsRepository, UserListMembershipsRepository, UserProfilesRepository, UsersRepository } from '@/models/_.js';
 import type { MiDriveFile } from '@/models/DriveFile.js';
 import type { MiApp } from '@/models/App.js';
 import { concat } from '@/misc/prelude/array.js';
@@ -26,7 +26,6 @@ import type { MiUser, MiLocalUser, MiRemoteUser } from '@/models/User.js';
 import type { IPoll } from '@/models/Poll.js';
 import { MiPoll } from '@/models/Poll.js';
 import { isDuplicateKeyValueError } from '@/misc/is-duplicate-key-value-error.js';
-import type { MiChannel } from '@/models/Channel.js';
 import { normalizeForSearch } from '@/misc/normalize-for-search.js';
 import { RelayService } from '@/core/RelayService.js';
 import { FederatedInstanceService } from '@/core/FederatedInstanceService.js';
@@ -143,7 +142,6 @@ type Option = {
 	cw?: string | null;
 	visibility?: string;
 	visibleUsers?: MinimumUser[] | null;
-	channel?: MiChannel | null;
 	apMentions?: MinimumUser[] | null;
 	apHashtags?: string[] | null;
 	apEmojis?: string[] | null;
@@ -192,17 +190,11 @@ export class NoteCreateService implements OnApplicationShutdown {
 		@Inject(DI.userListMembershipsRepository)
 		private userListMembershipsRepository: UserListMembershipsRepository,
 
-		@Inject(DI.channelsRepository)
-		private channelsRepository: ChannelsRepository,
-
 		@Inject(DI.noteThreadMutingsRepository)
 		private noteThreadMutingsRepository: NoteThreadMutingsRepository,
 
 		@Inject(DI.followingsRepository)
 		private followingsRepository: FollowingsRepository,
-
-		@Inject(DI.channelFollowingsRepository)
-		private channelFollowingsRepository: ChannelFollowingsRepository,
 
 		@Inject(DI.blockingsRepository)
 		private blockingsRepository: BlockingsRepository,
@@ -246,6 +238,8 @@ export class NoteCreateService implements OnApplicationShutdown {
 		host: MiUser['host'];
 		isBot: MiUser['isBot'];
 		isCat: MiUser['isCat'];
+		isIndexable: MiUser['isIndexable'];
+		isSensitive: MiUser['isSensitive'];
 	}, data: {
 		createdAt: Date;
 		updatedAt?: Date | null;
@@ -256,7 +250,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 		cw: string | null;
 		visibility: string;
 		visibleUserIds: MiUser['id'][];
-		channelId: MiChannel['id'] | null;
 		localOnly: boolean;
 		reactionAcceptance: MiNote['reactionAcceptance'];
 		disableRightClick: boolean | null;
@@ -322,19 +315,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 				// specified / direct noteはreject
 				throw new IdentifiableError('48d7a997-da5c-4716-b3c3-92db3f37bf7d', 'Renote target visibility');
 			}
-
-			if (renote.channelId && renote.channelId !== data.channelId) {
-				// チャンネルのノートに対しリノート要求がきたとき、チャンネル外へのリノート可否をチェック
-				// リノートのユースケースのうち、チャンネル内→チャンネル外は少数だと考えられるため、JOINはせず必要な時に都度取得する
-				const renoteChannel = await this.channelsRepository.findOneBy({ id: renote.channelId });
-				if (renoteChannel == null) {
-					// リノートしたいノートが書き込まれているチャンネルが無い
-					throw new IdentifiableError('b060f9a6-8909-4080-9e0b-94d9fa6f6a77', 'No such channel');
-				} else if (!renoteChannel.allowRenoteToExternal) {
-					// リノート作成のリクエストだが、対象チャンネルがリノート禁止だった場合
-					throw new IdentifiableError('7e435f4a-780d-4cfc-a15a-42519bd6fb67', 'Channel does not allow renote to external');
-				}
-			}
 		}
 
 		let reply: MiNote | null = null;
@@ -385,15 +365,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 			}
 		}
 
-		let channel: MiChannel | null = null;
-		if (data.channelId != null) {
-			channel = await this.channelsRepository.findOneBy({ id: data.channelId, isArchived: false });
-
-			if (channel == null) {
-				throw new IdentifiableError('bfa3905b-25f5-4894-b430-da331a490e4b', 'No such channel');
-			}
-		}
-
 		return this.create(user, {
 			createdAt: data.createdAt,
 			updatedAt: data.updatedAt,
@@ -409,7 +380,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 			disableRightClick: data.disableRightClick,
 			visibility: data.visibility,
 			visibleUsers,
-			channel,
 			apMentions: data.apMentions,
 			apHashtags: data.apHashtags,
 			apEmojis: data.apEmojis,
@@ -427,31 +397,12 @@ export class NoteCreateService implements OnApplicationShutdown {
 		isIndexable: MiUser['isIndexable'];
 		isSensitive: MiUser['isSensitive'];
 	}, data: Option, silent = false): Promise<MiNote> {
-		// チャンネル外にリプライしたら対象のスコープに合わせる
-		// (クライアントサイドでやっても良い処理だと思うけどとりあえずサーバーサイドで)
-		if (data.reply && data.channel && data.reply.channelId !== data.channel.id) {
-			if (data.reply.channelId) {
-				data.channel = await this.channelsRepository.findOneBy({ id: data.reply.channelId });
-			} else {
-				data.channel = null;
-			}
-		}
-
-		// チャンネル内にリプライしたら対象のスコープに合わせる
-		// (クライアントサイドでやっても良い処理だと思うけどとりあえずサーバーサイドで)
-		if (data.reply && (data.channel == null) && data.reply.channelId) {
-			data.channel = await this.channelsRepository.findOneBy({ id: data.reply.channelId });
-		}
-
 		if (data.createdAt == null) data.createdAt = new Date();
 		if (data.visibility == null) data.visibility = 'public';
 		if (data.localOnly == null) data.localOnly = false;
 		if (data.disableRightClick == null) data.disableRightClick = false;
-		if (data.channel != null) data.visibility = 'public';
-		if (data.channel != null) data.visibleUsers = [];
-		if (data.channel != null) data.localOnly = true;
 
-		if (data.visibility === 'public' && data.channel == null) {
+		if (data.visibility === 'public') {
 			const sensitiveWords = this.meta.sensitiveWords;
 			if (this.utilityService.isKeyWordIncluded(data.cw ?? data.text ?? '', sensitiveWords)) {
 				data.visibility = 'home';
@@ -537,12 +488,12 @@ export class NoteCreateService implements OnApplicationShutdown {
 		}
 
 		// ローカルのみをRenoteしたらローカルのみにする
-		if (data.renote && data.renote.localOnly && data.channel == null) {
+		if (data.renote && data.renote.localOnly) {
 			data.localOnly = true;
 		}
 
 		// ローカルのみにリプライしたらローカルのみにする
-		if (data.reply && data.reply.localOnly && data.channel == null) {
+		if (data.reply && data.reply.localOnly) {
 			data.localOnly = true;
 		}
 
@@ -623,7 +574,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 			fileIds: data.files ? data.files.map(file => file.id) : [],
 			replyId: data.reply ? data.reply.id : null,
 			renoteId: data.renote ? data.renote.id : null,
-			channelId: data.channel ? data.channel.id : null,
 			threadId: data.reply
 				? data.reply.threadId
 					? data.reply.threadId
@@ -696,7 +646,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 							noteVisibility: insert.visibility,
 							userId: user.id,
 							userHost: user.host,
-							channelId: insert.channelId,
 						});
 
 						await transactionalEntityManager.insert(MiPoll, poll);
@@ -782,7 +731,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 		this.antennaService.addNoteToAntennas({
 			...note,
-			channel: data.channel ?? null,
 		}, user);
 
 		if (data.reply) {
@@ -936,24 +884,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 			//#endregion
 		}
 
-		if (data.channel) {
-			this.channelsRepository.increment({ id: data.channel.id }, 'notesCount', 1);
-			this.channelsRepository.update(data.channel.id, {
-				lastNotedAt: new Date(),
-			});
-
-			this.notesRepository.countBy({
-				userId: user.id,
-				channelId: data.channel.id,
-			}).then(count => {
-				// この処理が行われるのはノート作成後なので、ノートが一つしかなかったら最初の投稿だと判断できる
-				// TODO: とはいえノートを削除して何回も投稿すればその分だけインクリメントされる雑さもあるのでどうにかしたい
-				if (count === 1) {
-					this.channelsRepository.increment({ id: data.channel!.id }, 'usersCount', 1);
-				}
-			});
-		}
-
 		if (data.deleteAt) {
 			const delay = data.deleteAt.getTime() - Date.now();
 			this.queueService.scheduledNoteDeleteQueue.add(note.id, {
@@ -993,18 +923,9 @@ export class NoteCreateService implements OnApplicationShutdown {
 			.where('id = :id', { id: renote.id })
 			.execute();
 
-		// 30%の確率、3日以内に投稿されたノートの場合ハイライト用ランキング更新
-		if (Math.random() < 0.3 && (Date.now() - this.idService.parse(renote.id).date.getTime()) < 1000 * 60 * 60 * 24 * 3) {
-			if (renote.channelId != null) {
-				if (renote.replyId == null) {
-					this.featuredService.updateInChannelNotesRanking(renote.channelId, renote.id, 5);
-				}
-			} else {
-				if (renote.visibility === 'public' && renote.userHost == null && renote.replyId == null) {
-					this.featuredService.updateGlobalNotesRanking(renote.id, 5);
-					this.featuredService.updatePerUserNotesRanking(renote.userId, renote.id, 5);
-				}
-			}
+		if (renote.visibility === 'public' && renote.userHost == null) {
+			this.featuredService.updateGlobalNotesRanking(renote.id, 5);
+			this.featuredService.updatePerUserNotesRanking(renote.userId, renote.id, 5);
 		}
 	}
 
@@ -1091,123 +1012,103 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 		const r = this.redisForTimelines.pipeline();
 
-		if (note.channelId) {
-			this.fanoutTimelineService.push(`channelTimeline:${note.channelId}`, note.id, this.config.perChannelMaxNoteCacheCount, r);
-
-			this.fanoutTimelineService.push(`userTimelineWithChannel:${user.id}`, note.id, note.userHost == null ? this.meta.perLocalUserUserTimelineCacheMax : this.meta.perRemoteUserUserTimelineCacheMax, r);
-
-			const channelFollowings = await this.channelFollowingsRepository.find({
+		// TODO: キャッシュ？
+		// eslint-disable-next-line prefer-const
+		let [followings, userListMemberships] = await Promise.all([
+			this.followingsRepository.find({
 				where: {
-					followeeId: note.channelId,
+					followeeId: user.id,
+					followerHost: IsNull(),
+					isFollowerHibernated: false,
 				},
-				select: ['followerId'],
-			});
+				select: ['followerId', 'withReplies'],
+			}),
+			this.userListMembershipsRepository.find({
+				where: {
+					userId: user.id,
+				},
+				select: ['userListId', 'userListUserId', 'withReplies'],
+			}),
+		]);
 
-			for (const channelFollowing of channelFollowings) {
-				this.fanoutTimelineService.push(`homeTimeline:${channelFollowing.followerId}`, note.id, this.meta.perUserHomeTimelineCacheMax, r);
+		if (note.visibility === 'followers') {
+			// TODO: 重そうだから何とかしたい Set 使う？
+			userListMemberships = userListMemberships.filter(x => x.userListUserId === user.id || followings.some(f => f.followerId === x.userListUserId));
+		}
+
+		// TODO: あまりにも数が多いと redisPipeline.exec に失敗する(理由は不明)ため、3万件程度を目安に分割して実行するようにする
+		for (const following of followings) {
+			// 基本的にvisibleUserIdsには自身のidが含まれている前提であること
+			if (note.visibility === 'specified' && !note.visibleUserIds.some(v => v === following.followerId)) continue;
+
+			// 「自分自身への返信 or そのフォロワーへの返信」のどちらでもない場合
+			if (isReply(note, following.followerId)) {
+				if (!following.withReplies) continue;
+			}
+
+			this.fanoutTimelineService.push(`homeTimeline:${following.followerId}`, note.id, this.meta.perUserHomeTimelineCacheMax, r);
+			if (note.fileIds.length > 0) {
+				this.fanoutTimelineService.push(`homeTimelineWithFiles:${following.followerId}`, note.id, this.meta.perUserHomeTimelineCacheMax / 2, r);
+			}
+		}
+
+		for (const userListMembership of userListMemberships) {
+			// ダイレクトのとき、そのリストが対象外のユーザーの場合
+			if (
+				note.visibility === 'specified' &&
+					note.userId !== userListMembership.userListUserId &&
+					!note.visibleUserIds.some(v => v === userListMembership.userListUserId)
+			) continue;
+
+			// 「自分自身への返信 or そのリストの作成者への返信」のどちらでもない場合
+			if (isReply(note, userListMembership.userListUserId)) {
+				if (!userListMembership.withReplies) continue;
+			}
+
+			this.fanoutTimelineService.push(`userListTimeline:${userListMembership.userListId}`, note.id, this.meta.perUserListTimelineCacheMax, r);
+			if (note.fileIds.length > 0) {
+				this.fanoutTimelineService.push(`userListTimelineWithFiles:${userListMembership.userListId}`, note.id, this.meta.perUserListTimelineCacheMax / 2, r);
+			}
+		}
+
+		// 自分自身のHTL
+		if (note.userHost == null) {
+			if (note.visibility !== 'specified' || !note.visibleUserIds.some(v => v === user.id)) {
+				this.fanoutTimelineService.push(`homeTimeline:${user.id}`, note.id, this.meta.perUserHomeTimelineCacheMax, r);
 				if (note.fileIds.length > 0) {
-					this.fanoutTimelineService.push(`homeTimelineWithFiles:${channelFollowing.followerId}`, note.id, this.meta.perUserHomeTimelineCacheMax / 2, r);
+					this.fanoutTimelineService.push(`homeTimelineWithFiles:${user.id}`, note.id, this.meta.perUserHomeTimelineCacheMax / 2, r);
+				}
+			}
+		}
+
+		// 自分自身以外への返信
+		if (isReply(note)) {
+			this.fanoutTimelineService.push(`userTimelineWithReplies:${user.id}`, note.id, note.userHost == null ? this.meta.perLocalUserUserTimelineCacheMax : this.meta.perRemoteUserUserTimelineCacheMax, r);
+
+			if (note.visibility === 'public' && note.userHost == null) {
+				this.fanoutTimelineService.push('localTimelineWithReplies', note.id, 300, r);
+				if (note.replyUserHost == null) {
+					this.fanoutTimelineService.push(`localTimelineWithReplyTo:${note.replyUserId}`, note.id, 300 / 10, r);
 				}
 			}
 		} else {
-			// TODO: キャッシュ？
-			// eslint-disable-next-line prefer-const
-			let [followings, userListMemberships] = await Promise.all([
-				this.followingsRepository.find({
-					where: {
-						followeeId: user.id,
-						followerHost: IsNull(),
-						isFollowerHibernated: false,
-					},
-					select: ['followerId', 'withReplies'],
-				}),
-				this.userListMembershipsRepository.find({
-					where: {
-						userId: user.id,
-					},
-					select: ['userListId', 'userListUserId', 'withReplies'],
-				}),
-			]);
-
-			if (note.visibility === 'followers') {
-				// TODO: 重そうだから何とかしたい Set 使う？
-				userListMemberships = userListMemberships.filter(x => x.userListUserId === user.id || followings.some(f => f.followerId === x.userListUserId));
+			this.fanoutTimelineService.push(`userTimeline:${user.id}`, note.id, note.userHost == null ? this.meta.perLocalUserUserTimelineCacheMax : this.meta.perRemoteUserUserTimelineCacheMax, r);
+			if (note.fileIds.length > 0) {
+				this.fanoutTimelineService.push(`userTimelineWithFiles:${user.id}`, note.id, note.userHost == null ? this.meta.perLocalUserUserTimelineCacheMax / 2 : this.meta.perRemoteUserUserTimelineCacheMax / 2, r);
 			}
 
-			// TODO: あまりにも数が多いと redisPipeline.exec に失敗する(理由は不明)ため、3万件程度を目安に分割して実行するようにする
-			for (const following of followings) {
-				// 基本的にvisibleUserIdsには自身のidが含まれている前提であること
-				if (note.visibility === 'specified' && !note.visibleUserIds.some(v => v === following.followerId)) continue;
-
-				// 「自分自身への返信 or そのフォロワーへの返信」のどちらでもない場合
-				if (isReply(note, following.followerId)) {
-					if (!following.withReplies) continue;
-				}
-
-				this.fanoutTimelineService.push(`homeTimeline:${following.followerId}`, note.id, this.meta.perUserHomeTimelineCacheMax, r);
+			if (note.visibility === 'public' && note.userHost == null) {
+				this.fanoutTimelineService.push('localTimeline', note.id, 1000, r);
 				if (note.fileIds.length > 0) {
-					this.fanoutTimelineService.push(`homeTimelineWithFiles:${following.followerId}`, note.id, this.meta.perUserHomeTimelineCacheMax / 2, r);
+					this.fanoutTimelineService.push('localTimelineWithFiles', note.id, 500, r);
 				}
 			}
+		}
 
-			for (const userListMembership of userListMemberships) {
-				// ダイレクトのとき、そのリストが対象外のユーザーの場合
-				if (
-					note.visibility === 'specified' &&
-					note.userId !== userListMembership.userListUserId &&
-					!note.visibleUserIds.some(v => v === userListMembership.userListUserId)
-				) continue;
-
-				// 「自分自身への返信 or そのリストの作成者への返信」のどちらでもない場合
-				if (isReply(note, userListMembership.userListUserId)) {
-					if (!userListMembership.withReplies) continue;
-				}
-
-				this.fanoutTimelineService.push(`userListTimeline:${userListMembership.userListId}`, note.id, this.meta.perUserListTimelineCacheMax, r);
-				if (note.fileIds.length > 0) {
-					this.fanoutTimelineService.push(`userListTimelineWithFiles:${userListMembership.userListId}`, note.id, this.meta.perUserListTimelineCacheMax / 2, r);
-				}
-			}
-
-			// 自分自身のHTL
-			if (note.userHost == null) {
-				if (note.visibility !== 'specified' || !note.visibleUserIds.some(v => v === user.id)) {
-					this.fanoutTimelineService.push(`homeTimeline:${user.id}`, note.id, this.meta.perUserHomeTimelineCacheMax, r);
-					if (note.fileIds.length > 0) {
-						this.fanoutTimelineService.push(`homeTimelineWithFiles:${user.id}`, note.id, this.meta.perUserHomeTimelineCacheMax / 2, r);
-					}
-				}
-			}
-
-			// 自分自身以外への返信
-			if (isReply(note)) {
-				this.fanoutTimelineService.push(`userTimelineWithReplies:${user.id}`, note.id, note.userHost == null ? this.meta.perLocalUserUserTimelineCacheMax : this.meta.perRemoteUserUserTimelineCacheMax, r);
-
-				if (note.visibility === 'public' && note.userHost == null) {
-					this.fanoutTimelineService.push('localTimelineWithReplies', note.id, 300, r);
-					if (note.replyUserHost == null) {
-						this.fanoutTimelineService.push(`localTimelineWithReplyTo:${note.replyUserId}`, note.id, 300 / 10, r);
-					}
-				}
-			} else {
-				this.fanoutTimelineService.push(`userTimeline:${user.id}`, note.id, note.userHost == null ? this.meta.perLocalUserUserTimelineCacheMax : this.meta.perRemoteUserUserTimelineCacheMax, r);
-				if (note.fileIds.length > 0) {
-					this.fanoutTimelineService.push(`userTimelineWithFiles:${user.id}`, note.id, note.userHost == null ? this.meta.perLocalUserUserTimelineCacheMax / 2 : this.meta.perRemoteUserUserTimelineCacheMax / 2, r);
-				}
-
-				if (note.visibility === 'public' && note.userHost == null) {
-					this.fanoutTimelineService.push('localTimeline', note.id, 1000, r);
-					if (note.fileIds.length > 0) {
-						this.fanoutTimelineService.push('localTimelineWithFiles', note.id, 500, r);
-					}
-				}
-			}
-
-			if (Math.random() < 0.1) {
-				process.nextTick(() => {
-					this.checkHibernation(followings);
-				});
-			}
+		if (Math.random() < 0.1) {
+			process.nextTick(() => {
+				this.checkHibernation(followings);
+			});
 		}
 
 		r.exec();

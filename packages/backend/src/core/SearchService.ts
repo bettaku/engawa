@@ -39,7 +39,6 @@ type Q =
 
 export type SearchOpts = {
 	userId?: MiNote['userId'] | null;
-	channelId?: MiNote['channelId'] | null;
 	host?: string | null;
 	excludeBot?: boolean;
 	excludeNsfw?: boolean;
@@ -132,7 +131,6 @@ export class SearchService {
 					'createdAt',
 					'userId',
 					'userHost',
-					'channelId',
 					'tags',
 				],
 				typoTolerance: {
@@ -200,7 +198,6 @@ export class SearchService {
 				createdAt: this.idService.parse(note.id).date.getTime(),
 				userId: note.userId,
 				userHost: note.userHost,
-				channelId: note.channelId,
 				text: note.text,
 				cw: note.cw,
 				tags: note.tags,
@@ -327,7 +324,6 @@ export class SearchService {
 				return this.searchNoteByElasticSearch(q, me, opts, pagination);
 			}
 			default: {
-				// eslint-disable-next-line @typescript-eslint/no-unused-vars
 				const typeCheck: never = this.provider;
 				return [];
 			}
@@ -340,8 +336,6 @@ export class SearchService {
 
 		if (opts.userId) {
 			query.andWhere('note.userId = :userId', { userId: opts.userId });
-		} else if (opts.channelId) {
-			query.andWhere('note.channelId = :channelId', { channelId: opts.channelId });
 		}
 
 		query
@@ -443,11 +437,6 @@ export class SearchService {
 			op: '=',
 			k: 'userId',
 			v: opts.userId,
-		});
-		if (opts.channelId) filter.qs.push({
-			op: '=',
-			k: 'channelId',
-			v: opts.channelId,
 		});
 		if (opts.host) {
 			if (opts.host === '.') {

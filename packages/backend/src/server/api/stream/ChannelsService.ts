@@ -11,7 +11,6 @@ import { HomeTimelineChannelService } from './channels/home-timeline.js';
 import { GlobalTimelineChannelService } from './channels/global-timeline.js';
 import { BubbleTimelineChannelService } from './channels/bubble-timeline.js';
 import { MainChannelService } from './channels/main.js';
-import { ChannelChannelService } from './channels/channel.js';
 import { AdminChannelService } from './channels/admin.js';
 import { ServerStatsChannelService } from './channels/server-stats.js';
 import { QueueStatsChannelService } from './channels/queue-stats.js';
@@ -37,7 +36,6 @@ export class ChannelsService {
 		private hashtagChannelService: HashtagChannelService,
 		private roleTimelineChannelService: RoleTimelineChannelService,
 		private antennaChannelService: AntennaChannelService,
-		private channelChannelService: ChannelChannelService,
 		private driveChannelService: DriveChannelService,
 		private serverStatsChannelService: ServerStatsChannelService,
 		private queueStatsChannelService: QueueStatsChannelService,
@@ -61,7 +59,6 @@ export class ChannelsService {
 			case 'hashtag': return this.hashtagChannelService;
 			case 'roleTimeline': return this.roleTimelineChannelService;
 			case 'antenna': return this.antennaChannelService;
-			case 'channel': return this.channelChannelService;
 			case 'drive': return this.driveChannelService;
 			case 'serverStats': return this.serverStatsChannelService;
 			case 'queueStats': return this.queueStatsChannelService;

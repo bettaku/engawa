@@ -200,7 +200,6 @@ export const paramDef = {
 		reactionAcceptance: { type: 'string', nullable: true, enum: [null, 'likeOnly', 'likeOnlyForRemote', 'nonSensitiveOnly', 'nonSensitiveOnlyForLocalLikeOnlyForRemote'] },
 		replyId: { type: 'string', format: 'misskey:id', nullable: true },
 		renoteId: { type: 'string', format: 'misskey:id', nullable: true },
-		channelId: { type: 'string', format: 'misskey:id', nullable: true },
 
 		// anyOf内にバリデーションを書いても最初の一つしかチェックされない
 		// See https://github.com/misskey-dev/misskey/pull/10082
@@ -282,7 +281,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				disableRightClick: ps.disableRightClick,
 				visibility: ps.visibility,
 				visibleUserIds: ps.visibleUserIds,
-				channelId: ps.channelId,
 				scheduledAt: ps.scheduledAt ? new Date(ps.scheduledAt) : null,
 				isActuallyScheduled: ps.isActuallyScheduled,
 				eventStart: ps.event?.start ? new Date(ps.event.start) : null,
