@@ -4,15 +4,17 @@
  */
 
 import { Inject, Injectable, Scope } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
 import { DI } from '@/di-symbols.js';
-import type { AntennasRepository } from '@/models/_.js';
 import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
 import { bindThis } from '@/decorators.js';
 import type { GlobalEvents } from '@/core/GlobalEventService.js';
 import type { JsonObject } from '@/misc/json-value.js';
-import Channel, { type MiChannelService } from '../channel.js';
+import type { AntennasRepository } from '@/models/_.js';
+import Channel, { type ChannelRequest } from '../channel.js';
 
-class AntennaChannel extends Channel {
+@Injectable({ scope: Scope.TRANSIENT })
+export class AntennaChannel extends Channel {
 	public readonly chName = 'antenna';
 	public static shouldShare = false;
 	public static requireCredential = true as const;
@@ -24,14 +26,11 @@ class AntennaChannel extends Channel {
 		request: ChannelRequest,
 
 		@Inject(DI.antennasRepository)
-		private antennasReposiotry: AntennasRepository,
+		private antennasRepository: AntennasRepository,
 
 		private noteEntityService: NoteEntityService,
-
-		id: string,
-		connection: Channel['connection'],
 	) {
-		super(id, connection);
+		super(request);
 		//this.onEvent = this.onEvent.bind(this);
 	}
 
@@ -42,7 +41,7 @@ class AntennaChannel extends Channel {
 
 		this.antennaId = params.antennaId;
 
-		const antennaExists = await this.antennasReposiotry.exists({
+		const antennaExists = await this.antennasRepository.exists({
 			where: {
 				id: this.antennaId,
 				userId: this.user.id,
@@ -74,26 +73,5 @@ class AntennaChannel extends Channel {
 	public dispose() {
 		// Unsubscribe events
 		this.subscriber.off(`antennaStream:${this.antennaId}`, this.onEvent);
-	}
-}
-
-@Injectable()
-export class AntennaChannelService implements MiChannelService<true> {
-	public readonly shouldShare = AntennaChannel.shouldShare;
-	public readonly requireCredential = AntennaChannel.requireCredential;
-	public readonly kind = AntennaChannel.kind;
-
-	constructor(
-		private noteEntityService: NoteEntityService,
-	) {
-	}
-
-	@bindThis
-	public create(id: string, connection: Channel['connection']): AntennaChannel {
-		return new AntennaChannel(
-			this.noteEntityService,
-			id,
-			connection,
-		);
 	}
 }
