@@ -70,14 +70,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				throw new ApiError(meta.errors.contentRestrictedByUser);
 			}
 
-			if (this.serverSettings.ugcVisibilityForVisitor === 'none' && me == null) {
-				throw new ApiError(meta.errors.contentRestrictedByServer);
-			}
-
-			if (this.serverSettings.ugcVisibilityForVisitor === 'local' && note.userHost != null && me == null) {
-				throw new ApiError(meta.errors.contentRestrictedByServer);
-			}
-
 			return await this.noteEntityService.pack(note, me, {
 				detail: true,
 			});

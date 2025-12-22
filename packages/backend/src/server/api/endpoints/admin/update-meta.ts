@@ -221,10 +221,6 @@ export const paramDef = {
 			},
 		},
 		singleUserMode: { type: 'boolean' },
-		ugcVisibilityForVisitor: {
-			type: 'string',
-			enum: ['all', 'local', 'none'],
-		},
 		proxyRemoteFiles: { type: 'boolean' },
 		signToActivityPubGet: { type: 'boolean' },
 		allowExternalApRedirect: { type: 'boolean' },
@@ -841,10 +837,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			if (ps.singleUserMode !== undefined) {
 				set.singleUserMode = ps.singleUserMode;
-			}
-
-			if (ps.ugcVisibilityForVisitor !== undefined) {
-				set.ugcVisibilityForVisitor = ps.ugcVisibilityForVisitor;
 			}
 
 			if (ps.proxyRemoteFiles !== undefined) {

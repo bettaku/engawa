@@ -10365,8 +10365,6 @@ export interface operations {
                             versionRange: string;
                         }[];
                         singleUserMode: boolean;
-                        /** @enum {string} */
-                        ugcVisibilityForVisitor: 'all' | 'local' | 'none';
                         proxyRemoteFiles: boolean;
                         signToActivityPubGet: boolean;
                         allowExternalApRedirect: boolean;
@@ -13857,8 +13855,6 @@ export interface operations {
                         versionRange: string;
                     }[];
                     singleUserMode?: boolean;
-                    /** @enum {string} */
-                    ugcVisibilityForVisitor?: 'all' | 'local' | 'none';
                     proxyRemoteFiles?: boolean;
                     signToActivityPubGet?: boolean;
                     allowExternalApRedirect?: boolean;

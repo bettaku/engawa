@@ -634,11 +634,6 @@ export const meta = {
 				type: 'boolean',
 				optional: false, nullable: false,
 			},
-			ugcVisibilityForVisitor: {
-				type: 'string',
-				enum: ['all', 'local', 'none'],
-				optional: false, nullable: false,
-			},
 			proxyRemoteFiles: {
 				type: 'boolean',
 				optional: false, nullable: false,
@@ -909,7 +904,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				urlPreviewDirectSummalyProxy: instance.directSummalyProxy,
 				deliverSuspendedSoftware: instance.deliverSuspendedSoftware,
 				singleUserMode: instance.singleUserMode,
-				ugcVisibilityForVisitor: instance.ugcVisibilityForVisitor,
 				proxyRemoteFiles: instance.proxyRemoteFiles,
 				signToActivityPubGet: instance.signToActivityPubGet,
 				allowExternalApRedirect: instance.allowExternalApRedirect,

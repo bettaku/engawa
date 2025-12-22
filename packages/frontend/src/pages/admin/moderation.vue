@@ -47,16 +47,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 					</MkSwitch>
 				</SearchMarker>
 
-				<SearchMarker :keywords="['ugc', 'content', 'visibility', 'visitor', 'guest']">
-					<MkSelect v-model="ugcVisibilityForVisitor" :items="ugcVisibilityForVisitorDef" @update:modelValue="onChange_ugcVisibilityForVisitor">
-						<template #label><SearchLabel>{{ i18n.ts._serverSettings.userGeneratedContentsVisibilityForVisitor }}</SearchLabel></template>
-						<template #caption>
-							<div><SearchText>{{ i18n.ts._serverSettings.userGeneratedContentsVisibilityForVisitor_description }}</SearchText></div>
-							<div><i class="ti ti-alert-triangle" style="color: var(--MI_THEME-warn);"></i> <SearchText>{{ i18n.ts._serverSettings.userGeneratedContentsVisibilityForVisitor_description2 }}</SearchText></div>
-						</template>
-					</MkSelect>
-				</SearchMarker>
-
 				<XServerRules/>
 
 				<SearchMarker :keywords="['preserved', 'usernames']">
@@ -226,17 +216,6 @@ const meta = await misskeyApi('admin/meta');
 
 const enableRegistration = ref(!meta.disableRegistration);
 const emailRequiredForSignup = ref(meta.emailRequiredForSignup);
-const {
-	model: ugcVisibilityForVisitor,
-	def: ugcVisibilityForVisitorDef,
-} = useMkSelect({
-	items: [
-		{ label: i18n.ts._serverSettings._userGeneratedContentsVisibilityForVisitor.all, value: 'all' },
-		{ label: i18n.ts._serverSettings._userGeneratedContentsVisibilityForVisitor.localOnly, value: 'local' },
-		{ label: i18n.ts._serverSettings._userGeneratedContentsVisibilityForVisitor.none, value: 'none' },
-	],
-	initialValue: meta.ugcVisibilityForVisitor,
-});
 const disableRegistrationWhenInactive = ref(meta.disableRegistrationWhenInactive);
 const disablePublicNoteWhenInactive = ref(meta.disablePublicNoteWhenInactive);
 const moderatorInactivityLimitDays = ref(meta.moderatorInactivityLimitDays);
@@ -299,14 +278,6 @@ async function onChange_moderatorInactivityLimitDays() {
 function onChange_emailRequiredForSignup(value: boolean) {
 	os.apiWithDialog('admin/update-meta', {
 		emailRequiredForSignup: value,
-	}).then(() => {
-		fetchInstance(true);
-	});
-}
-
-function onChange_ugcVisibilityForVisitor(value: typeof ugcVisibilityForVisitor.value) {
-	os.apiWithDialog('admin/update-meta', {
-		ugcVisibilityForVisitor: value,
 	}).then(() => {
 		fetchInstance(true);
 	});
