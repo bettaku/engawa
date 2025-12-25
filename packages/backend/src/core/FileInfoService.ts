@@ -239,6 +239,7 @@ export class FileInfoService {
 						resolve(true);
 						return;
 					}
+					console.log(`Metadata: ${JSON.stringify(metadata.streams?.map(s => ({ codec_type: s.codec_type, codec_name: s.codec_name })))}`);
 					const hasVideo = metadata.streams && metadata.streams.length > 0 && metadata.streams.some((stream) => stream.codec_type === 'video');
 					resolve(hasVideo);
 				});
