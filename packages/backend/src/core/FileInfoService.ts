@@ -60,7 +60,7 @@ export class FileInfoService {
 	 * Get file information
 	 */
 	@bindThis
-	public async getFileInfo(path: string): Promise<FileInfo> {
+	public async getFileInfo(path: string, fileName?: string | null): Promise<FileInfo> {
 		const warnings = [] as string[];
 
 		const size = await this.getFileSize(path);
@@ -68,8 +68,8 @@ export class FileInfoService {
 
 		let type = await this.detectType(path);
 
-		if (type.mime === TYPE_OCTET_STREAM.mime && opts.fileName != null) {
-			const ext = opts.fileName.split('.').pop();
+		if (type.mime === TYPE_OCTET_STREAM.mime && fileName != null) {
+			const ext = fileName.split('.').pop();
 			if (ext === 'txt') {
 				type = {
 					mime: 'text/plain',
@@ -239,7 +239,8 @@ export class FileInfoService {
 						resolve(true);
 						return;
 					}
-					resolve(metadata.streams.some((stream) => stream.codec_type === 'video'));
+					const hasVideo = metadata.streams && metadata.streams.length > 0 && metadata.streams.some((stream) => stream.codec_type === 'video');
+					resolve(hasVideo);
 				});
 			} catch (err) {
 				sublogger.warn(`Could not check the video file. Returns true. File path: ${path}`, err as Error);
@@ -270,18 +271,22 @@ export class FileInfoService {
 				return TYPE_SVG;
 			}
 
-			if ((type.mime.startsWith('video') || type.mime === 'application/ogg') && !(await this.hasVideoTrackOnVideoFile(path))) {
-				const newMime = `audio/${type.mime.split('/')[1]}`;
-				if (newMime === 'audio/mp4') {
+			if ((type.mime.startsWith('video') || type.mime === 'application/ogg')) {
+				const hasVideo = await this.hasVideoTrackOnVideoFile(path);
+
+				if (!hasVideo) {
+					const newMime = `audio/${type.mime.split('/')[1]}`;
+					if (newMime === 'audio/mp4') {
+						return {
+							mime: 'audio/mp4',
+							ext: 'm4a',
+						};
+					}
 					return {
-						mime: 'audio/mp4',
-						ext: 'm4a',
+						mime: newMime,
+						ext: type.ext,
 					};
 				}
-				return {
-					mime: newMime,
-					ext: type.ext,
-				};
 			}
 
 			return {
