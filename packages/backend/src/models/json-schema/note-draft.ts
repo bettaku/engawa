@@ -148,5 +148,10 @@ export const packedNoteDraftSchema = {
 			optional: true, nullable: true,
 			format: 'date-time',
 		},
+		searchableBy: {
+			type: 'string',
+			optional: true, nullable: false,
+			enum: ['public', 'followers', 'reacted', 'limited'],
+		},
 	},
 } as const;

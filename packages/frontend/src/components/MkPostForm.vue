@@ -687,10 +687,10 @@ async function toggleSearchableBy() {
 	const select = await os.select({
 		title: i18n.ts._searchableBy.searchableBy,
 		items: [
-			{ value: 'public' as const, text: i18n.ts._searchableBy.public },
-			{ value: 'followers' as const, text: i18n.ts._searchableBy.followers },
-			{ value: 'reacted' as const, text: i18n.ts._searchableBy.reacted },
-			{ value: 'limited' as const, text: i18n.ts._searchableBy.limited },
+			{ value: 'public' as const, label: i18n.ts._searchableBy.public },
+			{ value: 'followers' as const, label: i18n.ts._searchableBy.followers },
+			{ value: 'reacted' as const, label: i18n.ts._searchableBy.reacted },
+			{ value: 'limited' as const, label: i18n.ts._searchableBy.limited },
 		],
 		default: searchableBy.value,
 	});
@@ -1022,7 +1022,6 @@ async function saveServerDraft(options: {
 		visibleUserIds: visibleUsers.value.map(x => x.id),
 		renoteId: renoteTargetNote.value ? renoteTargetNote.value.id : quoteId.value ? quoteId.value : null,
 		replyId: replyTargetNote.value ? replyTargetNote.value.id : null,
-		channelId: targetChannel.value ? targetChannel.value.id : null,
 		reactionAcceptance: reactionAcceptance.value,
 		scheduledAt: scheduledAt.value,
 		isActuallyScheduled: options.isActuallyScheduled ?? false,
@@ -1170,7 +1169,6 @@ async function post(ev?: MouseEvent) {
 		fileIds: files.value.length > 0 ? files.value.map(f => f.id) : undefined,
 		replyId: replyTargetNote.value ? replyTargetNote.value.id : undefined,
 		renoteId: renoteTargetNote.value ? renoteTargetNote.value.id : quoteId.value ? quoteId.value : undefined,
-		channelId: targetChannel.value ? targetChannel.value.id : undefined,
 		poll: poll.value,
 		event: event.value,
 		cw: useCw.value ? cw.value ?? '' : null,
@@ -1475,7 +1473,6 @@ async function openAccountMenu(ev: MouseEvent) {
 				reactionAcceptance.value = draft.reactionAcceptance;
 				scheduledAt.value = draft.scheduledAt ?? null;
 				searchableBy.value = draft.searchableBy ?? store.s.searchableBy;
-				if (draft.channel) targetChannel.value = draft.channel as unknown as Misskey.entities.Channel;
 
 				visibleUsers.value = [];
 				draft.visibleUserIds?.forEach(uid => {

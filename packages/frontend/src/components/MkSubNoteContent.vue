@@ -123,7 +123,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					v-tooltip="i18n.ts.renote"
 					:class="$style.footerButton"
 					class="_button"
-					@click.stop="prefer.s.renoteQuoteButtonSeparation && ((!prefer.s.renoteVisibilitySelection && !note.channel) || (note.channel && !note.channel.allowRenoteToExternal) || note.visibility === 'followers') ? renoteOnly() : renote()"
+					@click.stop="prefer.s.renoteQuoteButtonSeparation && (!prefer.s.renoteVisibilitySelection || note.visibility === 'followers') ? renoteOnly() : renote()"
 				>
 					<i class="ti ti-repeat"></i>
 					<p v-if="note.renoteCount > 0" :class="$style.footerButtonCount">{{ number(note.renoteCount) }}</p>
@@ -354,25 +354,11 @@ function quote(): void {
 	if (props.mock) {
 		return;
 	}
-	if (props.note.channel) {
-		if (props.note.channel.allowRenoteToExternal) {
-			const { menu } = getQuoteMenu({ note: note, mock: props.mock });
-			os.popupMenu(menu, quoteButton.value);
-		} else {
-			os.post({
-				renote: props.note,
-				channel: props.note.channel,
-			}).then(() => {
-				focus();
-			});
-		}
-	} else {
-		os.post({
-			renote: props.note,
-		}).then(() => {
-			focus();
-		});
-	}
+	os.post({
+		renote: props.note,
+	}).then(() => {
+		focus();
+	});
 }
 
 function reply(): void {
@@ -385,7 +371,6 @@ function reply(): void {
 	}
 	os.post({
 		reply: props.note,
-		channel: props.note.channel,
 	}).then(() => {
 		focus();
 	});

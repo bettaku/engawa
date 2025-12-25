@@ -34,7 +34,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<i v-else-if="note.reactionAcceptance === 'likeOnly'" v-tooltip="i18n.ts.likeOnly" class="ti ti-heart"></i>
 			</span>
 			<span v-if="note.localOnly" style="margin-left: 0.5em;"><i class="ti ti-rocket-off"></i></span>
-			<span v-if="note.channel" style="margin-left: 0.5em;" :title="note.channel.name"><i class="ti ti-device-tv"></i></span>
 			<EmA :class="$style.time" :to="notePage(note)">
 				<EmTime :time="note.createdAt" colored/>
 			</EmA>
@@ -54,6 +53,7 @@ import EmUserName from '@/components/EmUserName.vue';
 import EmAcct from '@/components/EmAcct.vue';
 import EmTime from '@/components/EmTime.vue';
 import EmInstanceTicker from '@/components/EmInstanceTicker.vue';
+import { i18n } from '@/i18n';
 
 defineProps<{
 	note: Misskey.entities.Note;

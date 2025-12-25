@@ -53,7 +53,7 @@ async function flushNotification() {
 
 	if (canceled) return;
 
-	os.apiWithDialog('notifications/flush');
+	os.apiWithDialog('notifications/flush', {});
 }
 
 const menu = [{

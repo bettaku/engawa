@@ -32,9 +32,14 @@ import EmNoteHeader from '@/components/EmNoteHeader.vue';
 import EmSubNoteContent from '@/components/EmSubNoteContent.vue';
 import EmMfm from '@/components/EmMfm.js';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
 	note: Misskey.entities.Note;
-}>();
+	enableNoteClick?: boolean;
+	expandOnNoteClick?: boolean;
+}>(), {
+	enableNoteClick: true,
+	expandOnNoteClick: false,
+});
 
 const showContent = ref(false);
 </script>

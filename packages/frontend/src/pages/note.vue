@@ -9,12 +9,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<Transition :name="prefer.s.animation ? 'fade' : ''" mode="out-in">
 			<div v-if="note">
 				<div v-if="showNext" class="_margin">
-					<MkNotesTimeline direction="up" :withControl="false" :pullToRefresh="false" class="" :paginator="showNext === 'channel' ? nextChannelPaginator : showNext === 'user'? nextUserPaginator : showNext === 'home' ? nextHomePaginator : nextLocalPaginator" :noGap="!prefer.s.showGapBetweenNotesInTimeline"/>
+					<MkNotesTimeline direction="up" :withControl="false" :pullToRefresh="false" class="" :paginator="showNext === 'user'? nextUserPaginator : showNext === 'home' ? nextHomePaginator : nextLocalPaginator" :noGap="!prefer.s.showGapBetweenNotesInTimeline"/>
 				</div>
 
 				<div class="_margin">
 					<div v-if="!showNext" class="_buttons" :class="$style.loadNext">
-						<MkButton v-if="note.channelId" rounded :class="$style.loadButton" @click="showNext = 'channel'"><i class="ti ti-chevron-up"></i> <i class="ti ti-device-tv"></i></MkButton>
 						<MkButton rounded :class="$style.loadButton" @click="showNext = 'user'"><i class="ti ti-chevron-up"></i> <i class="ti ti-user"></i></MkButton>
 						<MkButton v-if="isAvailableBasicTimeline('home')" rounded :class="$style.loadButton" @click="showNext = 'home'"><i class="ti ti-chevron-up"></i> <i class="ti ti-home"></i></MkButton>
 						<MkButton v-if="isAvailableBasicTimeline('local')" rounded :class="$style.loadButton" @click="showNext = 'local'"><i class="ti ti-chevron-up"></i> <i class="ti ti-planet"></i></MkButton>
@@ -30,7 +29,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 						</div>
 					</div>
 					<div v-if="!showPrev" class="_buttons" :class="$style.loadPrev">
-						<MkButton v-if="note.channelId" rounded :class="$style.loadButton" @click="showPrev = 'channel'"><i class="ti ti-chevron-down"></i> <i class="ti ti-device-tv"></i></MkButton>
 						<MkButton rounded :class="$style.loadButton" @click="showPrev = 'user'"><i class="ti ti-chevron-down"></i> <i class="ti ti-user"></i></MkButton>
 						<MkButton v-if="isAvailableBasicTimeline('home')" rounded :class="$style.loadButton" @click="showPrev = 'home'"><i class="ti ti-chevron-down"></i> <i class="ti ti-home"></i></MkButton>
 						<MkButton v-if="isAvailableBasicTimeline('local')" rounded :class="$style.loadButton" @click="showPrev = 'local'"><i class="ti ti-chevron-down"></i> <i class="ti ti-planet"></i></MkButton>
@@ -38,7 +36,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</div>
 
 				<div v-if="showPrev" class="_margin">
-					<MkNotesTimeline :withControl="false" :pullToRefresh="false" class="" :paginator="showPrev === 'channel' ? prevChannelPaginator : showNext === 'user'? prevUserPaginator : showNext === 'home' ? prevHomePaginator : prevLocalPaginator" :noGap="!prefer.s.showGapBetweenNotesInTimeline"/>
+					<MkNotesTimeline :withControl="false" :pullToRefresh="false" class="" :paginator="showNext === 'user'? prevUserPaginator : showNext === 'home' ? prevHomePaginator : prevLocalPaginator" :noGap="!prefer.s.showGapBetweenNotesInTimeline"/>
 				</div>
 			</div>
 			<MkError v-else-if="error" @retry="fetchNote()"/>
@@ -97,23 +95,6 @@ const nextUserPaginator = markRaw(new Paginator('users/notes', {
 	initialDirection: 'newer',
 	computedParams: computed(() => note.value ? ({
 		userId: note.value.userId,
-	}) : undefined),
-}));
-
-const prevChannelPaginator = markRaw(new Paginator('channels/timeline', {
-	limit: 10,
-	initialId: props.noteId,
-	computedParams: computed(() => note.value && note.value.channelId != null ? ({
-		channelId: note.value.channelId,
-	}) : undefined),
-}));
-
-const nextChannelPaginator = markRaw(new Paginator('channels/timeline', {
-	limit: 10,
-	initialId: props.noteId,
-	initialDirection: 'newer',
-	computedParams: computed(() => note.value && note.value.channelId != null ? ({
-		channelId: note.value.channelId,
 	}) : undefined),
 }));
 

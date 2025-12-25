@@ -125,10 +125,9 @@ window.addEventListener('resize', handleResize);
 const noGap = !prefer.s.showGapBetweenNotesInTimeline;
 
 const props = withDefaults(defineProps<{
-	src: BasicTimelineType | 'mentions' | 'directs' | 'list' | 'antenna' | 'channel' | 'role';
+	src: BasicTimelineType | 'mentions' | 'directs' | 'list' | 'antenna' | 'role';
 	list?: string;
 	antenna?: string;
-	channel?: string;
 	role?: string;
 	sound?: boolean;
 	customSound?: SoundStore | null;
@@ -149,7 +148,6 @@ const props = withDefaults(defineProps<{
 
 provide('inTimeline', true);
 provide('tl_withSensitive', computed(() => props.withSensitive));
-provide('inChannel', computed(() => props.src === 'channel'));
 
 let paginator: IPaginator<Misskey.entities.Note>;
 
@@ -235,13 +233,6 @@ if (props.src === 'antenna') {
 			withFiles: props.onlyFiles ? true : undefined,
 			withCats: props.onlyCats,
 			listId: props.list!,
-		})),
-		useShallowRef: true,
-	}));
-} else if (props.src === 'channel') {
-	paginator = markRaw(new Paginator('channels/timeline', {
-		computedParams: computed(() => ({
-			channelId: props.channel!,
 		})),
 		useShallowRef: true,
 	}));
@@ -384,7 +375,6 @@ const connections = {
 	bubbleTimeline: null as Misskey.IChannelConnection<Misskey.Channels['bubbleTimeline']> | null,
 	main: null as Misskey.IChannelConnection<Misskey.Channels['main']> | null,
 	userList: null as Misskey.IChannelConnection<Misskey.Channels['userList']> | null,
-	channel: null as Misskey.IChannelConnection<Misskey.Channels['channel']> | null,
 	roleTimeline: null as Misskey.IChannelConnection<Misskey.Channels['roleTimeline']> | null,
 };
 
@@ -462,12 +452,6 @@ function connectChannel() {
 			listId: props.list,
 		});
 		connections.userList.on('note', prepend);
-	} else if (props.src === 'channel') {
-		if (props.channel == null) return;
-		connections.channel = stream.useChannel('channel', {
-			channelId: props.channel,
-		});
-		connections.channel.on('note', prepend);
 	} else if (props.src === 'role') {
 		if (props.role == null) return;
 		connections.roleTimeline = stream.useChannel('roleTimeline', {
@@ -491,7 +475,7 @@ if (store.s.realtimeMode) {
 	connectChannel();
 }
 
-watch(() => [props.list, props.antenna, props.channel, props.role, props.withRenotes], () => {
+watch(() => [props.list, props.antenna, props.role, props.withRenotes], () => {
 	if (store.s.realtimeMode) {
 		disconnectChannel();
 		connectChannel();

@@ -14,7 +14,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 	<!--<div v-if="appearNote._prId_" class="tip"><i class="ti ti-speakerphone"></i> {{ i18n.ts.promotion }}<button class="_textButton hide" @click="readPromo()">{{ i18n.ts.hideThisNote }} <i class="ti ti-x"></i></button></div>-->
 	<!--<div v-if="appearNote._featuredId_" class="tip"><i class="ti ti-bolt"></i> {{ i18n.ts.featured }}</div>-->
 	<div v-if="isRenote" :class="$style.renote">
-		<div v-if="note.channel" :class="$style.colorBar" :style="{ background: note.channel.color }"></div>
 		<EmAvatar :class="$style.renoteAvatar" :user="note.user" link/>
 		<i class="ti ti-repeat" style="margin-right: 4px;"></i>
 		<I18n :src="i18n.ts.renotedBy" tag="span" :class="$style.renoteText">
@@ -37,7 +36,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<i v-else-if="note.reactionAcceptance === 'likeOnly'" v-tooltip="i18n.ts.likeOnly" class="ti ti-heart"></i>
 			</span>
 			<span v-if="note.localOnly" style="margin-left: 0.5em;" :title="i18n.ts._visibility['disableFederation']"><i class="ti ti-rocket-off"></i></span>
-			<span v-if="note.channel" style="margin-left: 0.5em;" :title="note.channel.name"><i class="ti ti-device-tv"></i></span>
 			<span :class="$style.renoteTime">
 				<button ref="renoteTime" class="_button">
 					<i class="ti ti-dots" :class="$style.renoteMenu"></i>
@@ -50,7 +48,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</div>
 	<EmNoteSub v-if="appearNote.reply" :note="appearNote.reply" :class="$style.replyTo"/>
 	<article :class="$style.article">
-		<div v-if="appearNote.channel" :class="$style.colorBar" :style="{ background: appearNote.channel.color }"></div>
 		<EmAvatar :class="$style.avatar" :user="appearNote.user" link/>
 		<div :class="$style.main">
 			<EmNoteHeader :note="appearNote" :mini="true"/>
@@ -89,7 +86,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<span :class="$style.showLessLabel">{{ i18n.ts.showLess }}</span>
 					</button>
 				</div>
-				<EmA v-if="appearNote.channel && !inChannel" :class="$style.channel" :to="`/channels/${appearNote.channel.id}`"><i class="ti ti-device-tv"></i> {{ appearNote.channel.name }}</EmA>
 			</div>
 			<EmReactionsViewer v-if="appearNote.reactionAcceptance !== 'likeOnly'" :note="appearNote" :maxNumber="16">
 				<template #more>
@@ -167,7 +163,7 @@ const isRenote = Misskey.note.isPureRenote(note.value);
 
 const rootEl = shallowRef<HTMLElement>();
 const renoteTime = shallowRef<HTMLElement>();
-const appearNote = computed(() => getAppearNote(note.value));
+const appearNote = computed(() => isRenote ? note.value.renote as Misskey.entities.Note : note.value);
 const showContent = ref(false);
 const parsed = computed(() => appearNote.value.text ? mfm.parse(appearNote.value.text) : null);
 const isLong = shouldCollapsed(appearNote.value, []);

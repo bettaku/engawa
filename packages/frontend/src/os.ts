@@ -64,7 +64,7 @@ export const apiWithDialog = (<E extends keyof Misskey.Endpoints>(
 				}],
 			});
 			if (result === 'copy') {
-				copyToClipboard(`Endpoint: ${endpoint}\nInfo: ${JSON.stringify(err.info)}\nDate: ${date}`);
+				copyToClipboard(`Endpoint: ${String(endpoint)}\nInfo: ${JSON.stringify(err.info)}\nDate: ${date}`);
 			}
 			return;
 		} else if (err.code === 'RATE_LIMIT_EXCEEDED') {

@@ -10,7 +10,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 <div v-else-if="!muted" :class="[$style.root, { [$style.children]: depth > 1 }]">
 	<div v-if="!prefer.s.hideAvatarsInNote && !hideLine" :class="$style.line"></div>
 	<div :class="$style.main">
-		<div v-if="note.channel" :class="$style.colorBar" :style="{ background: note.channel.color }"></div>
 		<MkAvatar v-if="!prefer.s.hideAvatarsInNote" :class="$style.avatar" :user="note.user" link preview/>
 		<div :class="$style.body" :style="{ cursor: expandOnNoteClick ? 'pointer' : '' }" @click.stop="noteClick" @dblclick.stop="noteDblClick">
 			<MkNoteHeader :class="$style.header" :note="note" :mini="true"/>

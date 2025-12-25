@@ -4644,6 +4644,8 @@ export type components = {
             isActuallyScheduled: boolean;
             /** Format: date-time */
             deleteAt?: string | null;
+            /** @enum {string} */
+            searchableBy?: 'public' | 'followers' | 'reacted' | 'limited';
         };
         NoteReaction: {
             /** Format: id */

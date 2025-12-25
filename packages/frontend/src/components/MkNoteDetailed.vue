@@ -194,7 +194,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</div>
 				<div v-if="appearNote.renote" :class="$style.quote"><MkNoteSimple :note="appearNote.renote" :class="$style.quoteNote"/></div>
 			</div>
-			<MkA v-if="appearNote.channel && !inChannel" :class="$style.channel" :to="`/channels/${appearNote.channel.id}`"><i class="ti ti-device-tv"></i> {{ appearNote.channel.name }}</MkA>
 		</div>
 		<footer>
 			<div :class="$style.noteFooterInfo">
@@ -240,7 +239,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					v-tooltip="i18n.ts.renote"
 					class="_button"
 					:class="$style.noteFooterButton"
-					@click.stop="prefer.s.renoteQuoteButtonSeparation && ((!prefer.s.renoteVisibilitySelection && !appearNote.channel) || (appearNote.channel && !appearNote.channel.allowRenoteToExternal) || appearNote.visibility === 'followers') ? renoteOnly() : renote()"
+					@click.stop="prefer.s.renoteQuoteButtonSeparation && (!prefer.s.renoteVisibilitySelection || appearNote.visibility === 'followers') ? renoteOnly() : renote()"
 				>
 					<i class="ti ti-repeat"></i>
 					<p v-if="appearNote.renoteCount > 0" :class="$style.noteFooterButtonCount">{{ number(appearNote.renoteCount) }}</p>
@@ -616,20 +615,12 @@ function quote(): void {
 
 	pleaseLogin({ openOnRemote: pleaseLoginContext.value });
 	if (!$i) return;
-	if (appearNote.channel) {
-		os.post({
-			renote: appearNote,
-			channel: appearNote.channel,
-		}).then(() => {
-			focus();
-		});
-	} else {
-		os.post({
-			renote: appearNote,
-		}).then(() => {
-			focus();
-		});
-	}
+
+	os.post({
+		renote: appearNote,
+	}).then(() => {
+		focus();
+	});
 }
 
 function reply(): void {
@@ -640,7 +631,6 @@ function reply(): void {
 	showMovedDialog();
 	os.post({
 		reply: appearNote,
-		channel: appearNote.channel,
 	}).then(() => {
 		focus();
 	});

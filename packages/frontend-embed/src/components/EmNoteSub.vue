@@ -7,7 +7,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 <div :class="[$style.root, { [$style.children]: depth > 1 }]">
 	<div v-if="!hideLine" :class="$style.line"></div>
 	<div :class="$style.main">
-		<div v-if="note.channel" :class="$style.colorBar" :style="{ background: note.channel.color }"></div>
 		<EmAvatar :class="$style.avatar" :user="note.user" link preview/>
 		<div :class="$style.body" :style="{ cursor: expandOnNoteClick ? 'pointer' : '' }">
 			<EmNoteHeader :class="$style.header" :note="note" :mini="true"/>
@@ -57,6 +56,7 @@ const props = withDefaults(defineProps<{
 
 const showContent = ref(false);
 const replies = ref<Misskey.entities.Note[]>([]);
+const expandOnNoteClick = false;
 
 if (props.detail) {
 	misskeyApi('notes/children', {

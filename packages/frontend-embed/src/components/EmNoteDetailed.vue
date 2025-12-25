@@ -115,7 +115,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<span :class="$style.showLessLabel">{{ i18n.ts.showLess }}</span>
 				</button>
 			</div>
-			<EmA v-if="appearNote.channel && !inChannel" :class="$style.channel" :to="`/channels/${appearNote.channel.id}`"><i class="ti ti-device-tv"></i> {{ appearNote.channel.name }}</EmA>
 		</div>
 		<footer>
 			<div :class="$style.noteFooterInfo">

@@ -13,7 +13,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 >
 	<div v-if="pinned" :class="$style.tip"><i class="ti ti-pin"></i> {{ i18n.ts.pinnedNote }}</div>
 	<div v-if="isRenote || (appearNote.reply && prefer.s.collapseReplies)" :class="$style.renote">
-		<div v-if="note.channel" :class="$style.colorBar" :style="{ background: note.channel.color }"></div>
 		<MkAvatar v-if="!prefer.s.hideAvatarsInNote" :class="$style.renoteAvatar" :user="note.user" link preview/>
 		<i :class="isRenote ? 'ti ti-repeat' : appearNote.reply ? 'ti ti-arrow-back-up' : ''" style="margin-right: 4px;"></i>
 		<I18n :src="isRenote ? i18n.ts.renotedBy : appearNote.reply ? i18n.ts.repliedBy : ''" tag="span" :class="$style.renoteText">
@@ -37,7 +36,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<i v-else-if="note.reactionAcceptance === 'likeOnly'" v-tooltip="i18n.ts.likeOnly" class="ti ti-heart"></i>
 			</span>
 			<span v-if="note.localOnly" style="margin-right: 0.5em;"><i v-tooltip="i18n.ts._visibility['disableFederation']" class="ti ti-rocket-off"></i></span>
-			<span v-if="note.channel" style="margin-right: 0.5em;"><i v-tooltip="note.channel.name" class="ti ti-device-tv"></i></span>
 			<span :class="$style.renoteTime">
 				<button ref="renoteTime" class="_button">
 					<i class="ti ti-dots" :class="$style.renoteMenu" @mousedown.prevent="showRenoteMenu()"></i>
@@ -56,7 +54,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</div>
 	<article v-else :class="$style.article" :style="{ cursor: expandOnNoteClick ? 'pointer' : '', paddingTop: prefer.s.showSubNoteFooterButton && appearNote.reply && (!renoteCollapsed && !replyCollapsed && ((!notification && (forceShowReplyTargetNote || prefer.s.showReplyTargetNote)) || (notification && prefer.s.showReplyInNotification))) ? '14px' : '' }" @click.stop="noteClick" @dblclick.stop="noteDblClick" @contextmenu.stop="onContextmenu">
 		<div :style="prefer.s.showGapBodyOfTheNote ? null : 'padding-bottom: 10px;'" style="display: flex;">
-			<div v-if="appearNote.channel" :class="$style.colorBar" :style="{ background: appearNote.channel.color }"></div>
 			<MkAvatar v-if="!prefer.s.hideAvatarsInNote" :class="[$style.avatar, prefer.s.useStickyIcons ? $style.useSticky : null, { [$style.avatarReplyTo]: appearNote.reply, [$style.showEl]: !appearNote.reply && (showEl && ['hideHeaderOnly', 'hideHeaderFloatBtn', 'hide'].includes(<string>prefer.s.displayHeaderNavBarWhenScroll)) && mainRouter.currentRoute.value.name === 'index', [$style.showElTab]: !appearNote.reply && (showEl && ['hideHeaderOnly', 'hideHeaderFloatBtn', 'hide'].includes(<string>prefer.s.displayHeaderNavBarWhenScroll)) && mainRouter.currentRoute.value.name !== 'index' }]" :user="appearNote.user" :link="!mock" :preview="!mock" noteClick/>
 			<div :class="$style.main">
 				<MkNoteHeader :note="appearNote" :mini="true"/>
@@ -168,7 +165,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<span :class="$style.showLessLabel">{{ i18n.ts.showLess }}</span>
 						</button>
 					</div>
-					<MkA v-if="appearNote.channel && !inChannel" :class="$style.channel" :to="`/channels/${appearNote.channel.id}`"><i class="ti ti-device-tv"></i> {{ appearNote.channel.name }}</MkA>
 				</div>
 			</div>
 		</div>
@@ -280,7 +276,6 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<span :class="$style.showLessLabel">{{ i18n.ts.showLess }}</span>
 				</button>
 			</div>
-			<MkA v-if="appearNote.channel && !inChannel" :class="$style.channel" :to="`/channels/${appearNote.channel.id}`"><i class="ti ti-device-tv"></i> {{ appearNote.channel.name }}</MkA>
 		</div>
 		<div v-if="appearNote.renoteId" :class="$style.quote"><MkNoteSimple :note="appearNote?.renote ?? null" :class="$style.quoteNote"/></div>
 		<div>
@@ -318,7 +313,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 						v-tooltip="i18n.ts.renote"
 						:class="$style.footerButton"
 						class="_button"
-						@click.stop="prefer.s.renoteQuoteButtonSeparation && ((!prefer.s.renoteVisibilitySelection && !appearNote.channel) || (appearNote.channel && !appearNote.channel.allowRenoteToExternal) || appearNote.visibility === 'followers') ? renoteOnly() : renote()"
+						@click.stop="prefer.s.renoteQuoteButtonSeparation && (!prefer.s.renoteVisibilitySelection || appearNote.visibility === 'followers') ? renoteOnly() : renote()"
 					>
 						<i class="ti ti-repeat"></i>
 						<p v-if="appearNote.renoteCount > 0" :class="$style.footerButtonCount">{{ number(appearNote.renoteCount) }}</p>
@@ -754,25 +749,11 @@ function quote(): void {
 	if (props.mock) {
 		return;
 	}
-	if (appearNote.channel) {
-		if (appearNote.channel.allowRenoteToExternal) {
-			const { menu } = getQuoteMenu({ note: note, mock: props.mock });
-			os.popupMenu(menu, quoteButton.value);
-		} else {
-			os.post({
-				renote: appearNote,
-				channel: appearNote.channel,
-			}).then(() => {
-				focus();
-			});
-		}
-	} else {
-		os.post({
-			renote: appearNote,
-		}).then(() => {
-			focus();
-		});
-	}
+	os.post({
+		renote: appearNote,
+	}).then(() => {
+		focus();
+	});
 }
 
 function reply(): void {
@@ -785,7 +766,6 @@ function reply(): void {
 	}
 	os.post({
 		reply: appearNote,
-		channel: appearNote.channel,
 	}).then(() => {
 		focus();
 	});
