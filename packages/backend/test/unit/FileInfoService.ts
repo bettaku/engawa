@@ -290,7 +290,7 @@ describe('FileInfoService', () => {
 				size: 9817,
 				md5: '74c9279a4abe98789565f1dc1a541a42',
 				type: {
-					mime: 'audio/m4a',
+					mime: 'audio/mp4',
 					ext: 'm4a',
 				},
 			});
