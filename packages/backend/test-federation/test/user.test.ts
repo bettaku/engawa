@@ -513,13 +513,9 @@ describe('User', () => {
 				);
 
 				// FIXME: resolving also fails
-				await rejects(
-					async () => await resolveRemoteUser('a.test', alice.id, bob),
-					(err: any) => {
-						strictEqual(err.code, 'INTERNAL_ERROR');
-						return true;
-					},
-				);
+				const resolvedAlice = await resolveRemoteUser('a.test', alice.id, bob);
+				assert(resolvedAlice.id != null);
+				assert(resolvedAlice.username === alice.username);
 			});
 
 			/**
@@ -547,14 +543,9 @@ describe('User', () => {
 				const aliceFollowers = await alice.client.request('users/followers', { userId: alice.id });
 				strictEqual(aliceFollowers.length, 1);
 
-				// FIXME: but resolving still fails ...
-				await rejects(
-					async () => await resolveRemoteUser('a.test', alice.id, bob),
-					(err: any) => {
-						strictEqual(err.code, 'INTERNAL_ERROR');
-						return true;
-					},
-				);
+				const resolvedAliceInB = await resolveRemoteUser('a.test', alice.id, bob);
+				assert(resolvedAliceInB.id != null);
+				assert(resolvedAliceInB.username === alice.username);
 			});
 		});
 	});
