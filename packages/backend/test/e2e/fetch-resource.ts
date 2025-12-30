@@ -6,6 +6,7 @@
 process.env.NODE_ENV = 'test';
 
 import * as assert from 'assert';
+import { JSDOM } from 'jsdom';
 import { api, clip, galleryPost, page, play, post, signup, simpleGet, uploadFile } from '../utils.js';
 import type { SimpleGetResponse } from '../utils.js';
 import type * as misskey from 'cherrypick-js';
@@ -72,7 +73,16 @@ describe('Webリソース', () => {
 	};
 
 	const metaTag = (res: SimpleGetResponse, key: string, superkey = 'name'): string => {
-		return res.body.window.document.querySelector('meta[' + superkey + '="' + key + '"]')?.content;
+		const jsdom = res.body as JSDOM;
+		if (!jsdom.window || !jsdom) {
+			console.error('JSDOM not found in response body');
+			return '';
+		}
+
+		const document = jsdom.window.document;
+		const selector = `meta[${superkey}="${key}"]`;
+		const meta = document.querySelector('meta[' + superkey + '="' + key + '"]');
+		return meta?.getAttribute('content') ?? '';
 	};
 
 	beforeAll(async () => {
