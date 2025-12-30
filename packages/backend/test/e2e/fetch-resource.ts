@@ -273,6 +273,8 @@ describe('Webリソース', () => {
 			const res = await ok({
 				path: path(alice.username, alicePage.name),
 			});
+			console.log(res);
+			console.log(metaTag(res, 'misskey:user-username'));
 			assert.strictEqual(metaTag(res, 'misskey:user-username'), alice.username);
 			assert.strictEqual(metaTag(res, 'misskey:user-id'), alice.id);
 			assert.strictEqual(metaTag(res, 'misskey:page-id'), alicePage.id);
