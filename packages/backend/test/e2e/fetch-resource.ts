@@ -81,6 +81,8 @@ describe('Webリソース', () => {
 
 		const document = jsdom.window.document;
 		const selector = `meta[${superkey}="${key}"]`;
+		console.log('Searching for meta tag with selector:', selector);
+		console.log('Document head innerHTML:', document.head.innerHTML);
 		const meta = document.querySelector('meta[' + superkey + '="' + key + '"]');
 		return meta?.getAttribute('content') ?? '';
 	};
