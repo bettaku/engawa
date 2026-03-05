@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 export class DropUgcVisibilities1766361703229 {
     name = 'DropUgcVisibilities1766361703229'
 

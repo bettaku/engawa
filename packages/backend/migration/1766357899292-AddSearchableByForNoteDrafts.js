@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 export class AddSearchableByForNoteDrafts1766357899292 {
     name = 'AddSearchableByForNoteDrafts1766357899292'
 

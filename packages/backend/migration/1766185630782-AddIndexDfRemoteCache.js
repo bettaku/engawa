@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: syuilo and misskey-project
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
 export class AddIndexDfRemoteCache1766185630782 {
     name = 'AddIndexDfRemoteCache1766185630782'
 
