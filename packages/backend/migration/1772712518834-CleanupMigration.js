@@ -14,7 +14,7 @@ export class CleanupMigration1772712518834 {
         await queryRunner.query(`ALTER TABLE "note" ALTER COLUMN "searchableBy" TYPE "public"."note_searchableby_enum" USING "searchableBy"::"text"::"public"."note_searchableby_enum"`);
         await queryRunner.query(`ALTER TABLE "note_draft" ALTER COLUMN "searchableBy" DROP DEFAULT`);
         await queryRunner.query(`ALTER TABLE "note_draft" ALTER COLUMN "searchableBy" TYPE "public"."note_searchableby_enum" USING "searchableBy"::"text"::"public"."note_searchableby_enum"`);
-        await queryRunner.query(`ALTER TABLE "note_draft" SET DEFAULT 'public'`);
+        await queryRunner.query(`ALTER TABLE "note_draft" ALTER COLUMN "searchableBy" SET DEFAULT 'public'`);
         await queryRunner.query(`DROP TYPE "public"."note_searchableby_enum_old"`);
     }
 
