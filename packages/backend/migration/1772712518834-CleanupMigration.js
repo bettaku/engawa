@@ -69,6 +69,10 @@ export class CleanupMigration1772712518834 {
         await queryRunner.query(`ALTER TABLE "user_publickey" DROP CONSTRAINT IF EXISTS "FK_10c146e4b39b443ede016f6736d"`);
         await queryRunner.query(`ALTER TABLE "user_publickey" DROP CONSTRAINT IF EXISTS "UQ_10c146e4b39b443ede016f6736d"`);
 
+        await queryRunner.query(`ALTER TABLE "abuse_report_notification_recipient" DROP CONSTRAINT IF EXISTS "FK_abuse_report_notification_recipient_userId2"`);
+        await queryRunner.query(`ALTER TABLE "user_profile" DROP CONSTRAINT IF EXISTS "FK_51cb79b5555effaf7d69ba1cff9"`);
+        await queryRunner.query(`ALTER TABLE "user_profile" DROP CONSTRAINT IF EXISTS "UQ_51cb79b5555effaf7d69ba1cff9"`);
+
         // === note_history visibility enum ===
         await queryRunner.query(`ALTER TYPE "public"."note_history_visibility_enum" RENAME TO "note_history_visibility_enum_old"`);
         await queryRunner.query(`CREATE TYPE "public"."note_history_visibility_enum" AS ENUM('public', 'home', 'followers', 'specified', 'private')`);
@@ -87,7 +91,7 @@ export class CleanupMigration1772712518834 {
         await queryRunner.query(`CREATE UNIQUE INDEX "IDX_0d801c609cec4e9eb4b6b4490c" ON "renote_muting" ("muterId", "muteeId")`);
 
         // === Recreate FK constraints ===
-        // await queryRunner.query(`ALTER TABLE "user_profile" ADD CONSTRAINT "FK_51cb79b5555effaf7d69ba1cff9" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "user_profile" ADD CONSTRAINT "FK_51cb79b5555effaf7d69ba1cff9" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "abuse_report_notification_recipient" ADD CONSTRAINT "FK_abuse_report_notification_recipient_userId2" FOREIGN KEY ("userId") REFERENCES "user_profile"("userId") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "poll" ADD CONSTRAINT "FK_da851e06d0dfe2ef397d8b1bf1b" FOREIGN KEY ("noteId") REFERENCES "note"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "promo_note" ADD CONSTRAINT "FK_e263909ca4fe5d57f8d4230dd5c" FOREIGN KEY ("noteId") REFERENCES "note"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
