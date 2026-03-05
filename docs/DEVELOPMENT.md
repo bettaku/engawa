@@ -26,7 +26,7 @@ Misskey/CherrypickではTypeORMを利用してDBマイグレーションを実�
 
 ```bash
 cd packages/backend
-pnpm dlx typeorm migration:generate -d ormconfig.js -o MigrationName
+pnpm dlx typeorm migration:generate -d ormconfig.js -o --esm  migration/MigrationName
 ```
 
 ## フォーマット
