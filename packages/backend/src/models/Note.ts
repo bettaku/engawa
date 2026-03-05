@@ -158,7 +158,9 @@ export class MiNote {
 	 * specified ... visibleUserIds で指定したユーザーのみ
 	 * private ... 投稿者のみ
 	 */
-	@Column('enum', { enum: noteVisibilities })
+	@Column('enum', {
+		enum: noteVisibilities,
+	})
 	public visibility: typeof noteVisibilities[number];
 
 	@Index({ unique: true })
@@ -263,6 +265,7 @@ export class MiNote {
 	@Column('enum', {
 		enum: noteSearchableBy,
 		nullable: true,
+		enumName: 'note_searchableby_enum',
 	})
 	public searchableBy: typeof noteSearchableBy[number];
 	//#endregion

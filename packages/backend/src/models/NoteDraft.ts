@@ -98,7 +98,9 @@ export class MiNoteDraft {
 	 * followers ... フォロワーのみ
 	 * specified ... visibleUserIds で指定したユーザーのみ
 	 */
-	@Column('enum', { enum: noteVisibilities })
+	@Column('enum', {
+		enum: noteVisibilities,
+	})
 	public visibility: typeof noteVisibilities[number];
 
 	@Index('IDX_NOTE_DRAFT_FILE_IDS', { synchronize: false })
@@ -198,6 +200,7 @@ export class MiNoteDraft {
 	@Column('enum', {
 		enum: noteSearchableBy,
 		default: 'public',
+		enumName: 'note_searchableby_enum',
 	})
 	public searchableBy: typeof noteSearchableBy[number];
 }
