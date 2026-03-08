@@ -46,6 +46,7 @@ import { UserListChannel } from './api/stream/channels/user-list.js';
 import { RoleTimelineChannel } from './api/stream/channels/role-timeline.js';
 import { ChatUserChannel } from './api/stream/channels/chat-user.js';
 import { ChatRoomChannel } from './api/stream/channels/chat-room.js';
+import { NoteStreamingHidingService } from './api/stream/NoteStreamingHidingService.js';
 import { SigninWithPasskeyApiService } from './api/SigninWithPasskeyApiService.js';
 import { BubbleTimelineChannelService } from './api/stream/channels/bubble-timeline.js';
 
@@ -93,9 +94,9 @@ import { BubbleTimelineChannelService } from './api/stream/channels/bubble-timel
 		QueueStatsChannel,
 		ServerStatsChannel,
 		UserListChannel,
+		NoteStreamingHidingService,
 		OpenApiServerService,
 		OAuth2ProviderService,
-		BubbleTimelineChannelService,
 	],
 	exports: [
 		ServerService,
