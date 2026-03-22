@@ -74,6 +74,11 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				throw new ApiError(meta.errors.btlDisabled);
 			}
 
+			const hosts = this.serverSettings.bubbleInstances;
+			if (hosts.length === 0) {
+				return [];
+			}
+
 			const [
 				followings,
 			] = me ? await Promise.all([
