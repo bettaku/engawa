@@ -74,9 +74,6 @@ export class NodeinfoServerService {
 
 			const basePolicies = { ...DEFAULT_POLICIES, ...meta.policies };
 
-			// JoinMisskey APIからのリクエストかどうかを判定
-			const isJoinMisskey = userAgent?.includes('JoinMisskey') ?? false;
-
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const document: any = {
 				software: {
@@ -88,7 +85,7 @@ export class NodeinfoServerService {
 					 * これにより、Misskey Hubのインスタンスリストに掲載されます。
 					 * それ以外のリクエストには"cherrypick"として応答します。
 					 */
-					name: isJoinMisskey ? 'misskey' : 'cherrypick',
+					name: 'cherrypick',
 					version: this.config.version,
 					basedMisskeyVersion: this.config.basedMisskeyVersion,
 					homepage: nodeinfo_homepage,
