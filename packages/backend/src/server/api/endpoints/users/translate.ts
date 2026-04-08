@@ -109,13 +109,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				let targetLang = ps.targetLang;
 				if (targetLang.includes('-')) targetLang = targetLang.split('-')[0];
 
-				const { text, raw } = await translate(target.description, { to: targetLang });
-
-				return {
-					sourceLang: raw.src,
-					text: text,
-					translator: this.serverSettings.translatorType, // 修正点: 配列ではなく単一の文字列
-				};
+				translationResult = await this.translateGoogleTranslateNoApi(target.description, targetLang);
 			} else if (this.serverSettings.translatorType === 'ctav3') {
 				if (this.serverSettings.ctav3SaKey == null) return Promise.resolve(204);
 				else if (this.serverSettings.ctav3ProjectId == null) return Promise.resolve(204);
@@ -165,6 +159,18 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			sourceLang: json.translations[0].detected_source_language,
 			text: json.translations[0].text,
 			translator: provider,
+		};
+	}
+
+	private async translateGoogleTranslateNoApi(profile: string, targetLang: string) {
+		const { text, raw } = await translate(profile, { to: targetLang }).catch(err => {
+			throw new ApiError(meta.errors.unavailable);
+		});
+
+		return {
+			sourceLang: raw.src,
+			text: text,
+			translator: 'google_no_api',
 		};
 	}
 
