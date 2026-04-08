@@ -189,6 +189,7 @@ export class MiNoteDraft {
 			'@type': 'Event',
 		},
 		comment: 'metadata object describing the event. Follows https://schema.org/Event',
+		nullable: true,
 	})
 	public eventMetadata: Event.EventSchema;
 
