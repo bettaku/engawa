@@ -2,7 +2,7 @@
 
 services:
   redis:
-    restart: always
+    restart: unless-stopped
     image: redis:7-alpine
     ports:
       - "6379:6379"
@@ -14,7 +14,7 @@ services:
       retries: 20
 
   db:
-    restart: always
+    restart: unless-stopped
     image: postgres:15-alpine
     ports:
       - "5432:5432"
@@ -28,7 +28,7 @@ services:
       retries: 20
 
 #  meilisearch:
-#    restart: always
+#    restart: unless-stopped
 #    image: getmeili/meilisearch:v1.3.4
 #    environment:
 #      - MEILI_NO_ANALYTICS=true
@@ -39,7 +39,7 @@ services:
 #      - ./meili_data:/meili_data
 
 #  translator:
-#    restart: always
+#    restart: unless-stopped
 #    image: libretranslate/libretranslate:latest
 #    healthcheck:
 #    test: ['CMD-SHELL', './venv/bin/python scripts/healthcheck.py']
