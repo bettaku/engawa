@@ -111,6 +111,9 @@ export class MfmService {
 						if (!href) {
 							return [txt];
 						}
+						if (href.value.startsWith('#') && !txt.trim()) {
+							return [''];
+						}
 						if (!txt || txt === href.value) {	// #6383: Missing text node
 							if (href.value.match(urlRegexFull)) {
 								return [href.value];
