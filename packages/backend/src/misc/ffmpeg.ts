@@ -41,12 +41,14 @@ export async function probe(path: string): Promise<FfprobeResult> {
 		format?: { duration?: string | number };
 	};
 
-	const duration = parsed.format?.duration;
+	// ffprobe may report non-numeric values like 'N/A' for live streams
+	const rawDuration = parsed.format?.duration;
+	const parsedDuration = rawDuration != null ? Number(rawDuration) : undefined;
 
 	return {
 		streams: Array.isArray(parsed.streams) ? parsed.streams : [],
 		format: {
-			duration: duration != null ? Number(duration) : undefined,
+			duration: parsedDuration != null && Number.isFinite(parsedDuration) ? parsedDuration : undefined,
 		},
 	};
 }
