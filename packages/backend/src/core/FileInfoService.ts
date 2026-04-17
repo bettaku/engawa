@@ -5,12 +5,9 @@
 
 import * as fs from 'node:fs';
 import * as crypto from 'node:crypto';
-import { join } from 'node:path';
 import * as stream from 'node:stream/promises';
 import { Injectable } from '@nestjs/common';
-import { FSWatcher } from 'chokidar';
 import * as fileType from 'file-type';
-import FFmpeg from 'fluent-ffmpeg';
 import isSvg from 'is-svg';
 import probeImageSize from 'probe-image-size';
 import { sharpBmp } from '@misskey-dev/sharp-read-bmp';
@@ -19,6 +16,7 @@ import { LoggerService } from '@/core/LoggerService.js';
 import type Logger from '@/logger.js';
 import { bindThis } from '@/decorators.js';
 import { isMimeImage } from '@/misc/is-mime-image.js';
+import { probe as ffprobe } from '@/misc/ffmpeg.js';
 
 export type FileInfo = {
 	size: number;
@@ -164,49 +162,6 @@ export class FileInfoService {
 		};
 	}
 
-	private async *asyncIterateFrames(cwd: string, command: FFmpeg.FfmpegCommand): AsyncGenerator<string, void> {
-		const watcher = new FSWatcher({
-			cwd,
-		});
-		let finished = false;
-		command.once('end', () => {
-			finished = true;
-			watcher.close();
-		});
-		command.run();
-		for (let i = 1; true; i++) { // eslint-disable-line @typescript-eslint/no-unnecessary-condition
-			const current = `${i}.png`;
-			const next = `${i + 1}.png`;
-			const framePath = join(cwd, current);
-			if (await this.exists(join(cwd, next))) {
-				yield framePath;
-			} else if (!finished) { // eslint-disable-line @typescript-eslint/no-unnecessary-condition
-				watcher.add(next);
-				await new Promise<void>((resolve, reject) => {
-					watcher.on('add', function onAdd(path) {
-						if (path === next) { // 次フレームの書き出しが始まっているなら、現在フレームの書き出しは終わっている
-							watcher.unwatch(current);
-							watcher.off('add', onAdd);
-							resolve();
-						}
-					});
-					command.once('end', resolve); // 全てのフレームを処理し終わったなら、最終フレームである現在フレームの書き出しは終わっている
-					command.once('error', reject);
-				});
-				yield framePath;
-			} else if (await this.exists(framePath)) {
-				yield framePath;
-			} else {
-				return;
-			}
-		}
-	}
-
-	@bindThis
-	private exists(path: string): Promise<boolean> {
-		return fs.promises.access(path).then(() => true, () => false);
-	}
-
 	@bindThis
 	public fixMime(mime: string): string {
 		// see https://github.com/misskey-dev/misskey/pull/10686
@@ -228,26 +183,17 @@ export class FileInfoService {
 	 * @returns ビデオトラックがあるかどうか（エラー発生時は常に`true`を返す）
 	 */
 	@bindThis
-	private hasVideoTrackOnVideoFile(path: string): Promise<boolean> {
+	private async hasVideoTrackOnVideoFile(path: string): Promise<boolean> {
 		const sublogger = this.logger.createSubLogger('ffprobe');
 		sublogger.info(`Checking the video file. File path: ${path}`);
-		return new Promise((resolve) => {
-			try {
-				FFmpeg.ffprobe(path, (err, metadata) => {
-					if (err) {
-						sublogger.warn(`Could not check the video file. Returns true. File path: ${path}`, err);
-						resolve(true);
-						return;
-					}
-					console.log(`Metadata: ${JSON.stringify(metadata.streams?.map(s => ({ codec_type: s.codec_type, codec_name: s.codec_name })))}`);
-					const hasVideo = metadata.streams && metadata.streams.length > 0 && metadata.streams.some((stream) => stream.codec_type === 'video');
-					resolve(hasVideo);
-				});
-			} catch (err) {
-				sublogger.warn(`Could not check the video file. Returns true. File path: ${path}`, err as Error);
-				resolve(true);
-			}
-		});
+		try {
+			const { streams } = await ffprobe(path);
+			console.log(`Metadata: ${JSON.stringify(streams.map(s => ({ codec_type: s.codec_type, codec_name: s.codec_name })))}`);
+			return streams.length > 0 && streams.some((s) => s.codec_type === 'video');
+		} catch (err) {
+			sublogger.warn(`Could not check the video file. Returns true. File path: ${path}`, err as Error);
+			return true;
+		}
 	}
 
 	/**

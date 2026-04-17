@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import { join } from 'node:path';
 import { Inject, Injectable } from '@nestjs/common';
-import FFmpeg from 'fluent-ffmpeg';
 import { DI } from '@/di-symbols.js';
 import type { Config } from '@/config.js';
 import { ImageProcessingService } from '@/core/ImageProcessingService.js';
@@ -12,6 +12,7 @@ import type { IImage } from '@/core/ImageProcessingService.js';
 import { createTempDir } from '@/misc/create-temp.js';
 import { bindThis } from '@/decorators.js';
 import { appendQuery, query } from '@/misc/prelude/url.js';
+import { probe as ffprobe, extractFrame } from '@/misc/ffmpeg.js';
 
 @Injectable()
 export class VideoProcessingService {
@@ -28,21 +29,20 @@ export class VideoProcessingService {
 		const [dir, cleanup] = await createTempDir();
 
 		try {
-			await new Promise((res, rej) => {
-				FFmpeg({
-					source,
-				})
-					.on('end', res)
-					.on('error', rej)
-					.screenshot({
-						folder: dir,
-						filename: 'out.png',	// must have .png extension
-						count: 1,
-						timestamps: ['5%'],
-					});
-			});
+			let timestampSec = 0;
+			try {
+				const { format } = await ffprobe(source);
+				if (format.duration != null && Number.isFinite(format.duration) && format.duration > 0) {
+					timestampSec = format.duration * 0.05;
+				}
+			} catch {
+				// fall through to timestampSec = 0 (first frame)
+			}
 
-			return await this.imageProcessingService.convertToWebp(`${dir}/out.png`, 498, 422);
+			const outPath = join(dir, 'out.png');
+			await extractFrame(source, timestampSec, outPath);
+
+			return await this.imageProcessingService.convertToWebp(outPath, 498, 422);
 		} finally {
 			cleanup();
 		}
