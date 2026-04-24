@@ -516,6 +516,39 @@ describe('ActivityPub', () => {
 			assert.ok(note != null, 'Note should be created');
 			assert.deepStrictEqual(note.visibility, 'public');
 		});
+
+		test('bear: URL string should invoke resolver and produce followers visibility', async () => {
+			const actor = await createRandomRemoteUser(resolver, personService);
+
+			const noteId = `${host}/notes/${secureRndstr(8)}`;
+			const bearUrl = `bear:?t=test-bearer-token&u=${encodeURIComponent(noteId)}`;
+
+			const noteIObject: IPost = {
+				id: noteId,
+				type: 'Note',
+				attributedTo: actor.uri,
+				content: 'circle post via bear: URL',
+				// circle/context URL in audience — not public or followers
+				to: [`${host}/circles/some-circle`],
+				cc: [],
+			};
+
+			// Register the bear: URL in MockResolver.
+			// In production this resolution is done by HttpRequestService.parseBearcaps(),
+			// which extracts the token and real URL then fetches with Authorization: Bearer <token>.
+			// MockResolver simulates that the resolution succeeded and returned the Note object.
+			resolver.register(bearUrl, noteIObject);
+
+			const note = await noteService.createNote(bearUrl, actor, resolver, true);
+
+			assert.ok(note != null, 'Note should be created');
+			// Verify the resolver was actually invoked with the bear: URL string
+			assert.ok(
+				resolver.remoteGetTrials().includes(bearUrl),
+				'Resolver should have been called with the bear: URL',
+			);
+			assert.deepStrictEqual(note.visibility, 'followers');
+		});
 	});
 
 	describe('JSON-LD', () => {

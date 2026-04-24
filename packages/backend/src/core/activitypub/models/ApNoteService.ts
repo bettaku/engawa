@@ -137,7 +137,10 @@ export class ApNoteService {
 
 		const object = await resolver.resolve(value);
 
-		const entryUri = getApId(value);
+		// bear: URLはスキームが非標準のためホスト検証に使えない。解決済みObjectのIDを使用する
+		const entryUri = (typeof value === 'string' && value.startsWith('bear:'))
+			? getApId(object)
+			: getApId(value);
 		const err = this.validateNote(object, entryUri, actor);
 		if (err) {
 			this.logger.error(err.message, {
@@ -224,11 +227,11 @@ export class ApNoteService {
 
 		// Audience (to, cc) が指定されてなかった場合
 		if (visibility === 'specified' && visibleUsers.length === 0) {
-			if (typeof value === 'string') {	// 入力がstringならばresolverでGETが発生している
+			if (typeof value === 'string' && !value.startsWith('bear:')) {
 				// こちらから匿名GET出来たものならばpublic
 				visibility = 'public';
 			} else {
-				// IObjectとして渡された（bear:等の認証付きフェッチを含む）限定投稿
+				// bear: URL経由（認証付きフェッチ）またはIObjectとして渡された限定投稿
 				// to/ccにサークルやコンテキストURLのみが含まれる場合はfollowersに準じる扱いをする
 				visibility = 'followers';
 			}
