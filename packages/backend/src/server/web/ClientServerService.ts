@@ -648,24 +648,6 @@ export class ClientServerService {
 			}
 		});
 
-		// Channel
-		fastify.get<{ Params: { channel: string; } }>('/channels/:channel', async (request, reply) => {
-			const channel = await this.channelsRepository.findOneBy({
-				id: request.params.channel,
-			});
-
-			if (channel) {
-				const _channel = await this.channelEntityService.pack(channel);
-				reply.header('Cache-Control', 'public, max-age=15');
-				return await reply.view('channel', {
-					channel: _channel,
-					...await this.generateCommonPugData(this.meta),
-				});
-			} else {
-				return await renderBase(reply);
-			}
-		});
-
 		// 個別お知らせページ
 		fastify.get<{ Params: { announcementId: string; } }>('/announcements/:announcementId', async (request, reply) => {
 			const announcement = await this.announcementsRepository.findOneBy({
