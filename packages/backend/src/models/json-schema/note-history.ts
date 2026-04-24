@@ -101,7 +101,7 @@ export const packedNoteHistorySchema = {
 		visibility: {
 			type: 'string',
 			optional: false, nullable: false,
-			enum: ['public', 'home', 'followers', 'specified'],
+			enum: ['public', 'home', 'followers', 'specified', 'private'],
 		},
 		visibleUserIds: {
 			type: 'array',
