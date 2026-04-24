@@ -5795,7 +5795,7 @@ export type components = {
             fileIds?: string[];
             files?: components['schemas']['DriveFile'][];
             /** @enum {string} */
-            visibility: 'public' | 'home' | 'followers' | 'specified';
+            visibility: 'public' | 'home' | 'followers' | 'specified' | 'private';
             visibleUserIds?: string[];
             emojis?: {
                 [key: string]: string;
