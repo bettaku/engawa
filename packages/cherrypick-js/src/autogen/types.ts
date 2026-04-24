@@ -4601,7 +4601,7 @@ export type components = {
             hasPoll?: boolean;
             myReaction?: string | null;
             /** @enum {string} */
-            searchableBy?: 'public' | 'followers' | 'reacted' | 'limited';
+            searchableBy?: 'public' | 'followers' | 'reacted' | 'limited' | 'circle';
         };
         NoteDraft: {
             /**
@@ -4645,7 +4645,7 @@ export type components = {
             /** Format: date-time */
             deleteAt?: string | null;
             /** @enum {string} */
-            searchableBy?: 'public' | 'followers' | 'reacted' | 'limited';
+            searchableBy?: 'public' | 'followers' | 'reacted' | 'limited' | 'circle';
         };
         NoteReaction: {
             /** Format: id */
@@ -29692,7 +29692,7 @@ export interface operations {
                      * @default public
                      * @enum {string}
                      */
-                    searchableBy?: 'public' | 'followers' | 'reacted' | 'limited';
+                    searchableBy?: 'public' | 'followers' | 'reacted' | 'limited' | 'circle';
                 };
             };
         };
@@ -29944,7 +29944,7 @@ export interface operations {
                      * @default public
                      * @enum {string}
                      */
-                    searchableBy?: 'public' | 'followers' | 'reacted' | 'limited';
+                    searchableBy?: 'public' | 'followers' | 'reacted' | 'limited' | 'circle';
                 };
             };
         };
@@ -30196,7 +30196,7 @@ export interface operations {
                      * @default public
                      * @enum {string}
                      */
-                    searchableBy?: 'public' | 'followers' | 'reacted' | 'limited';
+                    searchableBy?: 'public' | 'followers' | 'reacted' | 'limited' | 'circle';
                 };
             };
         };
@@ -32320,7 +32320,7 @@ export interface operations {
                      * @default public
                      * @enum {string}
                      */
-                    searchableBy?: 'public' | 'followers' | 'reacted' | 'limited';
+                    searchableBy?: 'public' | 'followers' | 'reacted' | 'limited' | 'circle';
                     scheduledDelete?: {
                         deleteAt?: number | null;
                         deleteAfter?: number | null;

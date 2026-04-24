@@ -14842,6 +14842,10 @@ export interface Locale extends ILocale {
          * 自分限定
          */
         "limited": string;
+        /**
+         * サークル限定
+         */
+        "circle": string;
     };
     "_isIndexable": {
         /**

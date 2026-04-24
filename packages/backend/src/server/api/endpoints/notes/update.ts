@@ -114,7 +114,7 @@ export const paramDef = {
 		},
 		cw: { type: 'string', nullable: true, maxLength: 100 },
 		disableRightClick: { type: 'boolean', default: false },
-		searchableBy: { type: 'string', enum: ['public', 'followers', 'reacted', 'limited'], default: 'public' },
+		searchableBy: { type: 'string', enum: ['public', 'followers', 'reacted', 'limited', 'circle'], default: 'public' },
 		scheduledDelete: {
 			type: 'object',
 			nullable: true,

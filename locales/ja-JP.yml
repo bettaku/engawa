@@ -3964,6 +3964,7 @@ _searchableBy:
   followers: "フォロワー限定"
   reacted: "リアクションしたユーザー"
   limited: "自分限定"
+  circle: "サークル限定"
 
 _isIndexable:
   title: "インデックス許可"

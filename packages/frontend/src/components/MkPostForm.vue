@@ -691,6 +691,7 @@ async function toggleSearchableBy() {
 			{ value: 'followers' as const, label: i18n.ts._searchableBy.followers },
 			{ value: 'reacted' as const, label: i18n.ts._searchableBy.reacted },
 			{ value: 'limited' as const, label: i18n.ts._searchableBy.limited },
+			{ value: 'circle' as const, label: i18n.ts._searchableBy.circle },
 		],
 		default: searchableBy.value,
 	});

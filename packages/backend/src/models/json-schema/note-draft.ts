@@ -151,7 +151,7 @@ export const packedNoteDraftSchema = {
 		searchableBy: {
 			type: 'string',
 			optional: true, nullable: false,
-			enum: ['public', 'followers', 'reacted', 'limited'],
+			enum: ['public', 'followers', 'reacted', 'limited', 'circle'],
 		},
 	},
 } as const;

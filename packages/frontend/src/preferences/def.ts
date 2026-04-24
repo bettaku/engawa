@@ -172,7 +172,7 @@ export const PREF_DEF = definePreferences({
 		default: false,
 	},
 	defaultNoteSearchableBy: {
-		default: 'public' as 'public' | 'followers' | 'reacted' | 'limited',
+		default: 'public' as 'public' | 'followers' | 'reacted' | 'limited' | 'circle',
 	},
 	keepCw: {
 		default: true,

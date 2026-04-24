@@ -453,6 +453,71 @@ describe('ActivityPub', () => {
 		});
 	});
 
+	describe('Bearcaps (bear: URL) note handling', () => {
+		test('Note IObject with circle-like audience (no public/followers) should get followers visibility', async () => {
+			const actor = await createRandomRemoteUser(resolver, personService);
+
+			const noteId = `${host}/notes/${secureRndstr(8)}`;
+			const noteIObject: IPost = {
+				id: noteId,
+				type: 'Note',
+				attributedTo: actor.uri,
+				content: 'circle post content',
+				// circle/context URL — not a standard public or followers URL
+				to: [`${host}/circles/some-circle`],
+				cc: [],
+			};
+
+			// Do NOT register the circle URL in the resolver.
+			// ApAudienceService will attempt to resolve it as an actor, fail silently, and return
+			// specified visibility with empty visibleUsers, triggering the followers fallback.
+			const note = await noteService.createNote(noteIObject, actor, resolver, true);
+
+			assert.ok(note != null, 'Note should be created');
+			assert.deepStrictEqual(note.visibility, 'followers');
+		});
+
+		test('Note IObject with empty to/cc should get followers visibility', async () => {
+			const actor = await createRandomRemoteUser(resolver, personService);
+
+			const noteId = `${host}/notes/${secureRndstr(8)}`;
+			const noteIObject: IPost = {
+				id: noteId,
+				type: 'Note',
+				attributedTo: actor.uri,
+				content: 'private circle post',
+				to: [],
+				cc: [],
+			};
+
+			const note = await noteService.createNote(noteIObject, actor, resolver, true);
+
+			assert.ok(note != null, 'Note should be created');
+			assert.deepStrictEqual(note.visibility, 'followers');
+		});
+
+		test('Note string URL with no audience should keep public visibility (existing behavior)', async () => {
+			const actor = createRandomActor();
+			resolver.register(actor.id, actor);
+
+			const noteId = `${host}/notes/${secureRndstr(8)}`;
+			const noteObject = {
+				'@context': 'https://www.w3.org/ns/activitystreams',
+				id: noteId,
+				type: 'Note',
+				attributedTo: actor.id,
+				content: 'string url public note',
+				// No to/cc — should default to public when fetched via string URL
+			};
+			resolver.register(noteId, noteObject);
+
+			const note = await noteService.createNote(noteId, undefined, resolver, true);
+
+			assert.ok(note != null, 'Note should be created');
+			assert.deepStrictEqual(note.visibility, 'public');
+		});
+	});
+
 	describe('JSON-LD', () => {
 		test('Compaction', async () => {
 			const jsonLd = jsonLdService.use();

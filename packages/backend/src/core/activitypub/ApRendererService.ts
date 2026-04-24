@@ -128,7 +128,7 @@ export class ApRendererService {
 			searchable = ['https://www.w3.org/ns/activitystreams#Public'];
 		} else if (note.searchableBy === 'followers') {
 			searchable = [`${attributedTo}/followers`];
-		} else if (note.searchableBy === 'limited') {
+		} else if (note.searchableBy === 'limited' || note.searchableBy === 'circle') {
 			searchable = ['as:Limited', 'kmyblue:Limited'];
 		} else if (note.searchableBy === 'reacted') {
 			searchable = [];
@@ -448,7 +448,7 @@ export class ApRendererService {
 			searchable = ['https://www.w3.org/ns/activitystreams#Public'];
 		} else if (note.searchableBy === 'followers') {
 			searchable = [`${attributedTo}/followers`];
-		} else if (note.searchableBy === 'limited') {
+		} else if (note.searchableBy === 'limited' || note.searchableBy === 'circle') {
 			searchable = ['as:Limited', 'kmyblue:Limited'];
 		} else if (note.searchableBy === 'reacted') {
 			searchable = [];

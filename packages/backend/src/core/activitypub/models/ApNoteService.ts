@@ -227,6 +227,10 @@ export class ApNoteService {
 			if (typeof value === 'string') {	// 入力がstringならばresolverでGETが発生している
 				// こちらから匿名GET出来たものならばpublic
 				visibility = 'public';
+			} else {
+				// IObjectとして渡された（bear:等の認証付きフェッチを含む）限定投稿
+				// to/ccにサークルやコンテキストURLのみが含まれる場合はfollowersに準じる扱いをする
+				visibility = 'followers';
 			}
 		}
 

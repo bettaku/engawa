@@ -60,7 +60,7 @@ export const groupedNotificationTypes = [
 export const obsoleteNotificationTypes = ['pollVote'/*, 'groupInvited'*/] as const;
 
 export const noteVisibilities = ['public', 'home', 'followers', 'specified', 'private'] as const;
-export const noteSearchableBy = ['public', 'followers', 'reacted', 'limited'] as const;
+export const noteSearchableBy = ['public', 'followers', 'reacted', 'limited', 'circle'] as const;
 
 export const noteReactionAcceptances = ['likeOnly', 'likeOnlyForRemote', 'nonSensitiveOnly', 'nonSensitiveOnlyForLocalLikeOnlyForRemote', null] as const;
 

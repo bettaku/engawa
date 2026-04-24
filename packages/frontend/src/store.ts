@@ -43,7 +43,7 @@ export const store = markRaw(new Pizzax('base', {
 	},
 	searchableBy: {
 		where: 'account',
-		default: 'public' as 'public' | 'followers' | 'reacted' | 'limited',
+		default: 'public' as 'public' | 'followers' | 'reacted' | 'limited' | 'circle',
 	},
 	visibility: {
 		where: 'deviceAccount',

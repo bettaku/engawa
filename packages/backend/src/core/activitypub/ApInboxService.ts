@@ -369,8 +369,6 @@ export class ApInboxService {
 		if (!this.utilityService.isFederationAllowedHost(uri)) return 'skip: federation not allowed';
 
 		if (!activity.object) return 'skip: activity has no object property';
-		const targetUri = getApId(activity.object);
-		if (targetUri.startsWith('bear:')) return 'skip: bearcaps url not supported.';
 
 		const target = await resolver.resolve(activity.object).catch(e => {
 			this.logger.error(`Resolution failed: ${e}`);
@@ -477,8 +475,6 @@ export class ApInboxService {
 		this.logger.info(`Create: ${uri}`);
 
 		if (!activity.object) return 'skip: activity has no object property';
-		const targetUri = getApId(activity.object);
-		if (targetUri.startsWith('bear:')) return 'skip: bearcaps url not supported.';
 
 		// copy audiences between activity <=> object.
 		if (typeof activity.object === 'object') {
