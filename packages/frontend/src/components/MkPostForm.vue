@@ -702,6 +702,7 @@ async function toggleSearchableBy() {
 //#region その他の設定メニューpopup
 function showOtherSettings() {
 	let reactionAcceptanceIcon = 'ti ti-icons';
+	let searchableByIcon = 'ti ti-eye-search';
 
 	if (reactionAcceptance.value === 'likeOnly') {
 		reactionAcceptanceIcon = 'ti ti-heart _love';
@@ -720,6 +721,12 @@ function showOtherSettings() {
 		text: i18n.ts.reactionAcceptance,
 		action: () => {
 			toggleReactionAcceptance();
+		},
+	}, { type: 'divider' }, {
+		icon: searchableByIcon,
+		text: i18n.ts._searchableBy.searchableBy,
+		action: () => {
+			toggleSearchableBy();
 		},
 	}, { type: 'divider' }, /*{
 		type: 'button',
