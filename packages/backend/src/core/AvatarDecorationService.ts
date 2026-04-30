@@ -297,7 +297,7 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 
 	// admin/avatar-decorations/list-remoteではこっち
 	@bindThis
-	public async getAllPagenatedByAdmin(limit: number, remoteOnly: boolean, sinceId?: string, untilId?: string, sinceDate?: number, untilDate?: number, host?: string): Promise<Packed<'AvatarDecorationAdmin'>[]> {
+	public async getAllPagenatedByAdmin(limit: number, remoteOnly: boolean, sinceId?: string, untilId?: string, sinceDate?: number, untilDate?: number, host?: string | null): Promise<Packed<'AvatarDecorationAdmin'>[]> {
 		const q = this.queryService.makePaginationQuery(this.avatarDecorationsRepository.createQueryBuilder('avatar_decoration'), sinceId, untilId, sinceDate, untilDate);
 
 		if (remoteOnly) {

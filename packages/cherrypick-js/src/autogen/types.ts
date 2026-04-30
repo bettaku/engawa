@@ -7711,7 +7711,11 @@ export interface operations {
                     sinceDate?: number;
                     /** Format: date-time */
                     untilDate?: number;
-                    host?: string;
+                    /**
+                     * @description Use `null` to represent the local host.
+                     * @default null
+                     */
+                    host?: string | null;
                 };
             };
         };

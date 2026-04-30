@@ -81,7 +81,7 @@ export const paramDef = {
 		untilId: { type: 'string', format: 'misskey:id' },
 		sinceDate: { type: 'integer', format: 'date-time' },
 		untilDate: { type: 'integer', format: 'date-time' },
-		host: { type: 'string' },
+		host: { type: 'string', nullable: true, default: null, description: 'Use `null` to represent the local host.' },
 	},
 	required: [],
 } as const;
