@@ -628,6 +628,15 @@ type AuthSessionUserkeyRequest = operations['auth___session___userkey']['request
 type AuthSessionUserkeyResponse = operations['auth___session___userkey']['responses']['200']['content']['application/json'];
 
 // @public (undocumented)
+type AvatarDecorationAdmin = components['schemas']['AvatarDecorationAdmin'];
+
+// @public (undocumented)
+type AvatarDecorationDetailed = components['schemas']['AvatarDecorationDetailed'];
+
+// @public (undocumented)
+type AvatarDecorationSimple = components['schemas']['AvatarDecorationSimple'];
+
+// @public (undocumented)
 type Blocking = components['schemas']['Blocking'];
 
 // @public (undocumented)
@@ -2181,7 +2190,10 @@ declare namespace entities {
         ChatRoom,
         ChatRoomInvitation,
         ChatRoomMembership,
-        NoteHistory
+        NoteHistory,
+        AvatarDecorationSimple,
+        AvatarDecorationDetailed,
+        AvatarDecorationAdmin
     }
 }
 export { entities }

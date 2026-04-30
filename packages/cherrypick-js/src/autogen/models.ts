@@ -68,3 +68,6 @@ export type ChatRoom = components['schemas']['ChatRoom'];
 export type ChatRoomInvitation = components['schemas']['ChatRoomInvitation'];
 export type ChatRoomMembership = components['schemas']['ChatRoomMembership'];
 export type NoteHistory = components['schemas']['NoteHistory'];
+export type AvatarDecorationSimple = components['schemas']['AvatarDecorationSimple'];
+export type AvatarDecorationDetailed = components['schemas']['AvatarDecorationDetailed'];
+export type AvatarDecorationAdmin = components['schemas']['AvatarDecorationAdmin'];

@@ -131,6 +131,7 @@ import { FlashEntityService } from './entities/FlashEntityService.js';
 import { FlashLikeEntityService } from './entities/FlashLikeEntityService.js';
 import { RoleEntityService } from './entities/RoleEntityService.js';
 import { MetaEntityService } from './entities/MetaEntityService.js';
+import { AvatarDecorationEntityService } from './entities/AvatarDecorationEntityService.js';
 
 import { ApAudienceService } from './activitypub/ApAudienceService.js';
 import { ApDbResolverService } from './activitypub/ApDbResolverService.js';
@@ -286,6 +287,7 @@ const $FlashLikeEntityService: Provider = { provide: 'FlashLikeEntityService', u
 const $RoleEntityService: Provider = { provide: 'RoleEntityService', useExisting: RoleEntityService };
 const $MetaEntityService: Provider = { provide: 'MetaEntityService', useExisting: MetaEntityService };
 const $SystemWebhookEntityService: Provider = { provide: 'SystemWebhookEntityService', useExisting: SystemWebhookEntityService };
+const $AvatarDecorationEntityService: Provider = { provide: 'AvatarDecorationEntityService', useExisting: AvatarDecorationEntityService };
 
 const $ApAudienceService: Provider = { provide: 'ApAudienceService', useExisting: ApAudienceService };
 const $ApDbResolverService: Provider = { provide: 'ApDbResolverService', useExisting: ApDbResolverService };
@@ -441,6 +443,7 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		RoleEntityService,
 		MetaEntityService,
 		SystemWebhookEntityService,
+		AvatarDecorationEntityService,
 
 		ApAudienceService,
 		ApDbResolverService,
@@ -591,6 +594,7 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		$RoleEntityService,
 		$MetaEntityService,
 		$SystemWebhookEntityService,
+		$AvatarDecorationEntityService,
 
 		$ApAudienceService,
 		$ApDbResolverService,
@@ -742,6 +746,7 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		RoleEntityService,
 		MetaEntityService,
 		SystemWebhookEntityService,
+		AvatarDecorationEntityService,
 
 		ApAudienceService,
 		ApDbResolverService,
@@ -890,6 +895,7 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		$RoleEntityService,
 		$MetaEntityService,
 		$SystemWebhookEntityService,
+		$AvatarDecorationEntityService,
 
 		$ApAudienceService,
 		$ApDbResolverService,
