@@ -7707,9 +7707,7 @@ export interface operations {
                     sinceId?: string;
                     /** Format: misskey:id */
                     untilId?: string;
-                    /** Format: date-time */
                     sinceDate?: number;
-                    /** Format: date-time */
                     untilDate?: number;
                     /**
                      * @description Use `null` to represent the local host.
