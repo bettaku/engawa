@@ -92,7 +92,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 		private avatarDecorationService: AvatarDecorationService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
-			const avatarDecorations = await this.avatarDecorationService.getAllPagenatedByAdmin(ps.limit, true, ps.sinceId, ps.untilId, ps.sinceDate, ps.untilDate, ps.host);
+			const avatarDecorations = await this.avatarDecorationService.getAllPaginatedByAdmin(ps.limit, true, ps.sinceId, ps.untilId, ps.sinceDate, ps.untilDate, ps.host);
 
 			return avatarDecorations;
 		});
