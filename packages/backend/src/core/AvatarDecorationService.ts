@@ -280,9 +280,11 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 		const q = this.queryService.makePaginationQuery(this.avatarDecorationsRepository.createQueryBuilder('avatar_decoration'), sinceId, untilId, sinceDate, untilDate);
 
 		if (remoteOnly) {
-			q.andWhere('avatar_decoration.host IS NOT NULL');
-		} else if (host) {
-			q.andWhere('avatar_decoration.host = :host', { host: this.utilityService.toPuny(host) });
+			if (host) {
+				q.andWhere('avatar_decoration.host = :host', { host: this.utilityService.toPuny(host) });
+			} else {
+				q.andWhere('avatar_decoration.host IS NOT NULL');
+			}
 		} else {
 			q.andWhere('avatar_decoration.host IS NULL');
 		}
@@ -301,9 +303,11 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 		const q = this.queryService.makePaginationQuery(this.avatarDecorationsRepository.createQueryBuilder('avatar_decoration'), sinceId, untilId, sinceDate, untilDate);
 
 		if (remoteOnly) {
-			q.andWhere('avatar_decoration.host IS NOT NULL');
-		} else if (host) {
-			q.andWhere('avatar_decoration.host = :host', { host: this.utilityService.toPuny(host) });
+			if (host) {
+				q.andWhere('avatar_decoration.host = :host', { host: this.utilityService.toPuny(host) });
+			} else {
+				q.andWhere('avatar_decoration.host IS NOT NULL');
+			}
 		} else {
 			q.andWhere('avatar_decoration.host IS NULL');
 		}
