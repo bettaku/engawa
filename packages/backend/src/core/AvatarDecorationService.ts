@@ -276,10 +276,10 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 	}
 
 	@bindThis
-	public async getAllPaginated(limit: number, remoteOnly: boolean, sinceId?: string, untilId?: string, sinceDate?: number, untilDate?: number, host?: string): Promise<Packed<'AvatarDecorationDetailed'>[]> {
+	public async getAllPaginated(limit: number, remoteOnly?: boolean, sinceId?: string, untilId?: string, sinceDate?: number, untilDate?: number, host?: string): Promise<Packed<'AvatarDecorationDetailed'>[]> {
 		const q = this.queryService.makePaginationQuery(this.avatarDecorationsRepository.createQueryBuilder('avatar_decoration'), sinceId, untilId, sinceDate, untilDate);
 
-		if (remoteOnly) {
+		if (remoteOnly === true) {
 			if (host) {
 				q.andWhere('avatar_decoration.host = :host', { host: this.utilityService.toPuny(host) });
 			} else {
@@ -299,10 +299,10 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 
 	// admin/avatar-decorations/list-remoteではこっち
 	@bindThis
-	public async getAllPaginatedByAdmin(limit: number, remoteOnly: boolean, sinceId?: string, untilId?: string, sinceDate?: number, untilDate?: number, host?: string | null): Promise<Packed<'AvatarDecorationAdmin'>[]> {
+	public async getAllPaginatedByAdmin(limit: number, remoteOnly?: boolean, sinceId?: string, untilId?: string, sinceDate?: number, untilDate?: number, host?: string | null): Promise<Packed<'AvatarDecorationAdmin'>[]> {
 		const q = this.queryService.makePaginationQuery(this.avatarDecorationsRepository.createQueryBuilder('avatar_decoration'), sinceId, untilId, sinceDate, untilDate);
 
-		if (remoteOnly) {
+		if (remoteOnly === true) {
 			if (host) {
 				q.andWhere('avatar_decoration.host = :host', { host: this.utilityService.toPuny(host) });
 			} else {
