@@ -3,10 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
-import { DI } from '@/di-symbols.js';
-import { IdService } from '@/core/IdService.js';
 import { AvatarDecorationService } from '@/core/AvatarDecorationService.js';
 
 export const meta = {
@@ -55,9 +53,19 @@ export const meta = {
 					type: 'array',
 					optional: false, nullable: false,
 					items: {
-						type: 'string',
+						type: 'object',
 						optional: false, nullable: false,
-						format: 'id',
+						properties: {
+							id: {
+								type: 'string',
+								optional: false, nullable: false,
+								format: 'id',
+							},
+							name: {
+								type: 'string',
+								optional: false, nullable: false,
+							},
+						},
 					},
 				},
 			},
@@ -71,7 +79,9 @@ export const paramDef = {
 		limit: { type: 'integer', minimum: 1, maximum: 100, default: 10 },
 		sinceId: { type: 'string', format: 'misskey:id' },
 		untilId: { type: 'string', format: 'misskey:id' },
-		userId: { type: 'string', format: 'misskey:id', nullable: true },
+		sinceDate: { type: 'integer' },
+		untilDate: { type: 'integer' },
+		host: { type: 'string', nullable: true, default: null, description: 'Use `null` to represent the local host.' },
 	},
 	required: [],
 } as const;
@@ -80,21 +90,11 @@ export const paramDef = {
 export default class extends Endpoint<typeof meta, typeof paramDef> {
 	constructor(
 		private avatarDecorationService: AvatarDecorationService,
-		private idService: IdService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
-			const avatarDecorations = await this.avatarDecorationService.getAll(true, false, true);
+			const avatarDecorations = await this.avatarDecorationService.getAllPaginatedByAdmin(ps.limit, true, ps.sinceId, ps.untilId, ps.sinceDate, ps.untilDate, ps.host);
 
-			return avatarDecorations.map(avatarDecorations => ({
-				id: avatarDecorations.id,
-				createdAt: this.idService.parse(avatarDecorations.id).date.toISOString(),
-				updatedAt: avatarDecorations.updatedAt?.toISOString() ?? null,
-				name: avatarDecorations.name,
-				description: avatarDecorations.description,
-				url: avatarDecorations.url,
-				roleIdsThatCanBeUsedThisDecoration: avatarDecorations.roleIdsThatCanBeUsedThisDecoration,
-				host: avatarDecorations.host,
-			}));
+			return avatarDecorations;
 		});
 	}
 }

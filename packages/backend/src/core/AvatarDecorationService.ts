@@ -9,6 +9,8 @@ import { IsNull, Not } from 'typeorm';
 import type { AvatarDecorationsRepository, InstancesRepository, UsersRepository, MiAvatarDecoration, MiUser } from '@/models/_.js';
 import { IdService } from '@/core/IdService.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
+import { QueryService } from '@/core/QueryService.js';
+import { UtilityService } from '@/core/UtilityService.js';
 import { DI } from '@/di-symbols.js';
 import { bindThis } from '@/decorators.js';
 import { MemorySingleCache } from '@/misc/cache.js';
@@ -17,6 +19,8 @@ import { ModerationLogService } from '@/core/ModerationLogService.js';
 import { HttpRequestService } from '@/core/HttpRequestService.js';
 import { appendQuery, query } from '@/misc/prelude/url.js';
 import type { Config } from '@/config.js';
+import { AvatarDecorationEntityService } from '@/core/entities/AvatarDecorationEntityService.js';
+import type { Packed } from '@/misc/json-schema.js';
 
 // TODO:
 // 1. checkDuplicateする => done
@@ -52,6 +56,9 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 		private moderationLogService: ModerationLogService,
 		private globalEventService: GlobalEventService,
 		private httpRequestService: HttpRequestService,
+		private queryService: QueryService,
+		private utilityService: UtilityService,
+		private avatarDecorationEntityService: AvatarDecorationEntityService,
 	) {
 		this.cache = new MemorySingleCache<MiAvatarDecoration[]>(1000 * 60 * 30); // 30s
 		this.cacheWithRemote = new MemorySingleCache<MiAvatarDecoration[]>(1000 * 60 * 30); // 30s
@@ -266,6 +273,51 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 				},
 			}));
 		}
+	}
+
+	@bindThis
+	public async getAllPaginated(limit: number, remoteOnly?: boolean, sinceId?: string, untilId?: string, sinceDate?: number, untilDate?: number, host?: string): Promise<Packed<'AvatarDecorationDetailed'>[]> {
+		const q = this.queryService.makePaginationQuery(this.avatarDecorationsRepository.createQueryBuilder('avatar_decoration'), sinceId, untilId, sinceDate, untilDate);
+
+		if (remoteOnly === true) {
+			if (host) {
+				q.andWhere('avatar_decoration.host = :host', { host: this.utilityService.toPuny(host) });
+			} else {
+				q.andWhere('avatar_decoration.host IS NOT NULL');
+			}
+		} else {
+			q.andWhere('avatar_decoration.host IS NULL');
+		}
+
+		const decorations = await q
+			.orderBy('avatar_decoration.id', 'DESC')
+			.limit(limit)
+			.getMany();
+
+		return this.avatarDecorationEntityService.packDetailedMany(decorations);
+	}
+
+	// admin/avatar-decorations/list-remoteではこっち
+	@bindThis
+	public async getAllPaginatedByAdmin(limit: number, remoteOnly?: boolean, sinceId?: string, untilId?: string, sinceDate?: number, untilDate?: number, host?: string | null): Promise<Packed<'AvatarDecorationAdmin'>[]> {
+		const q = this.queryService.makePaginationQuery(this.avatarDecorationsRepository.createQueryBuilder('avatar_decoration'), sinceId, untilId, sinceDate, untilDate);
+
+		if (remoteOnly === true) {
+			if (host) {
+				q.andWhere('avatar_decoration.host = :host', { host: this.utilityService.toPuny(host) });
+			} else {
+				q.andWhere('avatar_decoration.host IS NOT NULL');
+			}
+		} else {
+			q.andWhere('avatar_decoration.host IS NULL');
+		}
+
+		const decorations = await q
+			.orderBy('avatar_decoration.id', 'DESC')
+			.limit(limit)
+			.getMany();
+
+		return this.avatarDecorationEntityService.packAdminMany(decorations);
 	}
 
 	@bindThis

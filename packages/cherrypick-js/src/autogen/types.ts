@@ -5795,11 +5795,44 @@ export type components = {
             fileIds?: string[];
             files?: components['schemas']['DriveFile'][];
             /** @enum {string} */
-            visibility: 'public' | 'home' | 'followers' | 'specified';
+            visibility: 'public' | 'home' | 'followers' | 'specified' | 'private';
             visibleUserIds?: string[];
             emojis?: {
                 [key: string]: string;
             };
+        };
+        AvatarDecorationSimple: {
+            name: string;
+            url: string;
+            roleIdsThatCanBeUsedThisDecoration?: string[];
+        };
+        AvatarDecorationDetailed: {
+            /** Format: id */
+            id: string;
+            name: string;
+            description: string | null;
+            /** @description The local host is represented with `null`. */
+            host: string | null;
+            url: string;
+            roleIdsThatCanBeUsedThisDecoration?: string[];
+        };
+        AvatarDecorationAdmin: {
+            /** Format: id */
+            id: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string | null;
+            name: string;
+            description: string;
+            /** @description The local host is represented with `null`. */
+            host: string | null;
+            url: string;
+            roleIdsThatCanBeUsedThisDecoration: {
+                /** Format: id */
+                id: string;
+                name: string;
+            }[];
         };
     };
     responses: never;
@@ -7674,8 +7707,13 @@ export interface operations {
                     sinceId?: string;
                     /** Format: misskey:id */
                     untilId?: string;
-                    /** Format: misskey:id */
-                    userId?: string | null;
+                    sinceDate?: number;
+                    untilDate?: number;
+                    /**
+                     * @description Use `null` to represent the local host.
+                     * @default null
+                     */
+                    host?: string | null;
                 };
             };
         };
@@ -7699,7 +7737,11 @@ export interface operations {
                         name: string;
                         description: string;
                         url: string;
-                        roleIdsThatCanBeUsedThisDecoration: string[];
+                        roleIdsThatCanBeUsedThisDecoration: {
+                            /** Format: id */
+                            id: string;
+                            name: string;
+                        }[];
                     }[];
                 };
             };
