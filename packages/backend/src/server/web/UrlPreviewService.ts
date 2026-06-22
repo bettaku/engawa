@@ -20,6 +20,7 @@ import type { FastifyRequest, FastifyReply } from 'fastify';
 @Injectable()
 export class UrlPreviewService {
 	private logger: Logger;
+	private readonly summalyDefaultUserAgent: string;
 
 	constructor(
 		@Inject(DI.config)
@@ -32,6 +33,7 @@ export class UrlPreviewService {
 		private loggerService: LoggerService,
 	) {
 		this.logger = this.loggerService.getLogger('url-preview');
+		this.summalyDefaultUserAgent = `Engawa/${this.config.version} (${this.config.url})`;
 	}
 
 	@bindThis
@@ -113,19 +115,17 @@ export class UrlPreviewService {
 		}
 	}
 
-	private fetchSummary(url: string, meta: MiMeta, lang?: string): Promise<SummalyResult> {
-		const agent = this.config.proxy
-			? {
-				http: this.httpRequestService.httpAgent,
-				https: this.httpRequestService.httpsAgent,
-			}
-			: undefined;
+	private async fetchSummary(url: string, meta: MiMeta, lang?: string): Promise<SummalyResult> {
+		const { summaly } = await import('@misskey-dev/summaly');
 
 		return summaly(url, {
 			followRedirects: this.meta.urlPreviewAllowRedirect,
 			lang: lang ?? 'ja-JP',
-			agent: agent,
-			userAgent: meta.urlPreviewUserAgent ?? undefined,
+			agent: {
+				http: this.httpRequestService.httpAgent,
+				https: this.httpRequestService.httpsAgent,
+			},
+			userAgent: meta.urlPreviewUserAgent ?? this.summalyDefaultUserAgent,
 			operationTimeout: meta.urlPreviewTimeout,
 			contentLengthLimit: meta.urlPreviewMaximumContentLength,
 			contentLengthRequired: meta.urlPreviewRequireContentLength,
