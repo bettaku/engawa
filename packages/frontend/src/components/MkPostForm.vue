@@ -217,7 +217,7 @@ const otherSettingsButton = useTemplateRef('otherSettingsButton');
 const posting = ref(false);
 const posted = ref(false);
 const text = ref(props.initialText ?? '');
-const files = shallowRef(props.initialFiles ?? ([] as Misskey.entities.DriveFile[]));
+const files = ref(props.initialFiles ?? ([] as Misskey.entities.DriveFile[]));
 const poll = ref<PollEditorModelValue | null>(null);
 const event = ref<any>(null);
 const useCw = ref<boolean>(!!props.initialCw);
@@ -744,6 +744,12 @@ function showOtherSettings() {
 		text: i18n.ts.scheduledNoteDelete + '...',
 		action: () => {
 			toggleScheduledNoteDelete();
+		},
+	}, { type: 'divider' }, {
+		icon: 'ti ti-search',
+		text: i18n.ts._searchableBy.searchableBy,
+		action: () => {
+			toggleSearchableBy();
 		},
 	}, { type: 'divider' }, {
 		icon: 'ti ti-help-circle',
