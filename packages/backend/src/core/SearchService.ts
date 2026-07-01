@@ -388,15 +388,6 @@ export class SearchService {
 			query.andWhere('LOWER(note."text") LIKE :q', { q: `%${ sqlLikeEscape(q.toLowerCase())}%` });
 		}
 
-		if (opts.excludeBot) {
-			query.innerJoin('note.user', 'user')
-				.andWhere('user.isIndexable = TRUE')
-				.andWhere('user.isBot = FALSE');
-		} else {
-			query.innerJoin('note.user', 'user')
-				.andWhere('user.isIndexable = TRUE');
-		}
-
 		if (opts.excludeNsfw) {
 			query.andWhere('note.cw IS NULL')
 				.andWhere('NOT EXISTS (SELECT 1 FROM drive_file df WHERE df.id = ANY(note.fileIds) AND df.isSensitive = TRUE)');
