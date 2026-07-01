@@ -567,7 +567,7 @@ export function getNoteMenu(props: {
 				});
 
 				if (link) {
-					menuItems.push({
+					noteChildMenu.push({
 						icon: 'ti ti-link',
 						text: i18n.ts.copyRemoteLink,
 						action: () => {
@@ -583,7 +583,7 @@ export function getNoteMenu(props: {
 				} else {
 					const embedMenu = getNoteEmbedCodeMenu(appearNote, i18n.ts.embed);
 					if (embedMenu != null) {
-						menuItems.push(embedMenu);
+						noteChildMenu.push(embedMenu);
 					}
 				}
 

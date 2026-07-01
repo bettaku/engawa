@@ -9,6 +9,7 @@ import meta from '../../package.json';
 import packageInfo from './package.json' with { type: 'json' };
 import pluginJson5 from './vite.json5.js';
 import { pluginRemoveUnrefI18n } from '../frontend-builder/rollup-plugin-remove-unref-i18n';
+import { execaSync } from 'execa';
 
 const url = process.env.NODE_ENV === 'development' ? yaml.load(await fsp.readFile('../../.config/default.yml', 'utf-8')).url : null;
 const host = url ? (new URL(url)).hostname : undefined;
@@ -71,6 +72,18 @@ function toBase62(n: number): string {
 
 	return result;
 }
+
+function getGitHash(): string {
+	try {
+		const result = execaSync('git', ['rev-parse', 'HEAD'], { cwd: path.resolve(__dirname, '../..') });
+		return result.stdout.trim();
+	} catch (error) {
+		console.error('Failed to get git hash:', error);
+		return 'unknown';
+	}
+}
+
+const gitHash = getGitHash();
 
 export function getConfig(): UserConfig {
 	const localesHash = toBase62(hash(JSON.stringify(locales)));
@@ -135,6 +148,7 @@ export function getConfig(): UserConfig {
 			_LANGS_: JSON.stringify(Object.entries(locales).map(([k, v]) => [k, v._lang_])),
 			_ENV_: JSON.stringify(process.env.NODE_ENV),
 			_DEV_: process.env.NODE_ENV !== 'production',
+			_GIT_HASH_: JSON.stringify(gitHash),
 			_PERF_PREFIX_: JSON.stringify('CherryPick:'),
 			__VUE_OPTIONS_API__: false,
 			__VUE_PROD_DEVTOOLS__: false,
