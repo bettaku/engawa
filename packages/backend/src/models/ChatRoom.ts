@@ -38,4 +38,18 @@ export class MiChatRoom {
 		default: false,
 	})
 	public isArchived: boolean;
+
+	@Index({ unique: true })
+	@Column('varchar', {
+		length: 512, nullable: true,
+		comment: 'The federation URI of the room. it will be null when the room is local.',
+	})
+	public uri: string | null;
+
+	@Index()
+	@Column('varchar', {
+		length: 128, nullable: true,
+		comment: '[Denormalized] The host of the room. it will be null when the room is local.',
+	})
+	public host: string | null;
 }

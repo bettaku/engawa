@@ -354,7 +354,8 @@ export class ChatService {
 			if (remoteMembers.length > 0) {
 				const fullFromUser = await this.usersRepository.findOneByOrFail({ id: fromUser.id });
 				const allMembersForRendering = allMembers.filter(m => m != null) as MiUser[];
-				const chatMessageObject = await this.apRendererService.renderChatMessage(inserted, fullFromUser, allMembersForRendering, toRoom.id);
+				const roomUri = toRoom.uri ?? `${this.config.url}/chat/rooms/${toRoom.id}`;
+				const chatMessageObject = await this.apRendererService.renderChatMessage(inserted, fullFromUser, allMembersForRendering, roomUri);
 				const activity = {
 					type: 'Create',
 					actor: this.userEntityService.genLocalUserUri(fullFromUser.id),
@@ -857,7 +858,7 @@ export class ChatService {
 
 		// Send Add activity to other remote members (not the owner, as they got Accept)
 		if (remoteMembers.length > 0 && this.userEntityService.isLocalUser(owner)) {
-			const roomUri = `${this.config.url}/chat/rooms/${room.id}`;
+			const roomUri = room.uri ?? `${this.config.url}/chat/rooms/${room.id}`;
 			const joiningUserUri = this.userEntityService.isLocalUser(joiningUser)
 				? this.userEntityService.genLocalUserUri(joiningUser.id)
 				: joiningUser.uri;
@@ -894,7 +895,7 @@ export class ChatService {
 		const invitee = await this.usersRepository.findOneByOrFail({ id: userId });
 
 		if (this.userEntityService.isLocalUser(invitee) && this.userEntityService.isRemoteUser(inviter)) {
-			const roomUri = inviter.uri?.replace(/\/users\/.*$/, `/chat/rooms/${room.id}`) ?? `${this.config.url}/chat/rooms/${room.id}`;
+			const roomUri = room.uri ?? `${this.config.url}/chat/rooms/${room.id}`;
 
 			// Create a simplified invite object reference for the Reject activity
 			const inviteObject = {
@@ -993,10 +994,8 @@ export class ChatService {
 
 			// Send Remove activity to remote members and owner
 			if (remoteMembers.length > 0 || this.userEntityService.isRemoteUser(owner)) {
-				// Generate the correct room URI based on the owner's server
-				const roomUri = this.userEntityService.isLocalUser(owner)
-					? `${this.config.url}/chat/rooms/${room.id}`
-					: `${owner.uri?.replace(/\/users\/.*$/, '')}/chat/rooms/${room.id}`;
+				// Use the room's canonical federation URI (stored for remote rooms)
+				const roomUri = room.uri ?? `${this.config.url}/chat/rooms/${room.id}`;
 
 				console.log('[ChatService.leaveRoom] Generated roomUri:', roomUri);
 
