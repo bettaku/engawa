@@ -60,8 +60,8 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 		private utilityService: UtilityService,
 		private avatarDecorationEntityService: AvatarDecorationEntityService,
 	) {
-		this.cache = new MemorySingleCache<MiAvatarDecoration[]>(1000 * 60 * 30); // 30s
-		this.cacheWithRemote = new MemorySingleCache<MiAvatarDecoration[]>(1000 * 60 * 30); // 30s
+		this.cache = new MemorySingleCache<MiAvatarDecoration[]>(1000 * 60 * 30); // 30min
+		this.cacheWithRemote = new MemorySingleCache<MiAvatarDecoration[]>(1000 * 60 * 30); // 30min
 
 		this.redisForSub.on('message', this.onMessage);
 	}
