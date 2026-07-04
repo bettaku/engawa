@@ -3,9 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
-import { DI } from '@/di-symbols.js';
 import { IdService } from '@/core/IdService.js';
 import { AvatarDecorationService } from '@/core/AvatarDecorationService.js';
 
@@ -55,9 +54,19 @@ export const meta = {
 					type: 'array',
 					optional: false, nullable: false,
 					items: {
-						type: 'string',
+						type: 'object',
 						optional: false, nullable: false,
-						format: 'id',
+						properties: {
+							id: {
+								type: 'string',
+								optional: false, nullable: false,
+								format: 'id',
+							},
+							name: {
+								type: 'string',
+								optional: false, nullable: false,
+							},
+						},
 					},
 				},
 			},
@@ -73,7 +82,6 @@ export const paramDef = {
 		untilId: { type: 'string', format: 'misskey:id' },
 		sinceDate: { type: 'integer' },
 		untilDate: { type: 'integer' },
-		userId: { type: 'string', format: 'misskey:id', nullable: true },
 	},
 	required: [],
 } as const;
@@ -85,17 +93,9 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private idService: IdService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
-			const avatarDecorations = await this.avatarDecorationService.getAll(true);
+			const avatarDecorations = await this.avatarDecorationService.getAllPaginatedByAdmin(ps.limit, false, ps.sinceId, ps.untilId, ps.sinceDate, ps.untilDate);
 
-			return avatarDecorations.map(avatarDecoration => ({
-				id: avatarDecoration.id,
-				createdAt: this.idService.parse(avatarDecoration.id).date.toISOString(),
-				updatedAt: avatarDecoration.updatedAt?.toISOString() ?? null,
-				name: avatarDecoration.name,
-				description: avatarDecoration.description,
-				url: avatarDecoration.url,
-				roleIdsThatCanBeUsedThisDecoration: avatarDecoration.roleIdsThatCanBeUsedThisDecoration,
-			}));
+			return avatarDecorations;
 		});
 	}
 }

@@ -7,29 +7,31 @@ SPDX-License-Identifier: AGPL-3.0-only
 <PageWithHeader v-model:tab="tab" :actions="headerActions" :tabs="headerTabs">
 	<div class="_spacer" style="--MI_SPACER-w: 900px;">
 		<div class="_gaps">
-			<div v-if="tab === 'local'" :class="$style.decorations">
-				<div
-					v-for="avatarDecoration in avatarDecorations"
-					:key="avatarDecoration.id"
-					v-panel
-					:class="$style.decoration"
-					@click="edit(avatarDecoration)"
-				>
-					<div :class="$style.decorationName"><MkCondensedLine :minScale="0.5">{{ avatarDecoration.name }}</MkCondensedLine></div>
-					<MkAvatar style="width: 60px; height: 60px;" :user="$i" :decorations="[{ url: avatarDecoration.url }]" forceShowDecoration/>
-				</div>
+			<div v-if="tab === 'local'">
+				<MkPagination :paginator="paginator">
+					<template #empty><span>{{ i18n.ts.nothing }}</span></template>
+					<template #default="{items}">
+						<div :class="$style.decorations">
+							<div v-for="decoration in items" :key="decoration.id" v-panel :class="$style.decoration" @click="edit(decoration)">
+								<div :class="$style.decorationName"><MkCondensedLine :minScale="0.5">{{ decoration.name }}</MkCondensedLine></div>
+								<MkAvatar style="width: 60px; height: 60px;" :user="$i" :decorations="[{ url: decoration.url }]" forceShowDecoration/>
+							</div>
+						</div>
+					</template>
+				</MkPagination>
 			</div>
-			<div v-else-if="tab === 'remote'" :class="$style.decorations">
-				<div
-					v-for="remoteDecoration in remoteAvatarDecorations"
-					:key="remoteDecoration.id"
-					v-panel
-					:class="$style.decoration"
-					@click="remoteMenu(remoteDecoration, $event)"
-				>
-					<div :class="$style.decorationName"><MkCondensedLine :minScale="0.5">{{ remoteDecoration.name }}</MkCondensedLine></div>
-					<MkAvatar style="width: 60px; height: 60px;" :user="$i" :decorations="[{ url: remoteDecoration.url }]" forceShowDecoration/>
-				</div>
+			<div v-else-if="tab === 'remote'">
+				<MkPagination :paginator="remotePaginator">
+					<template #empty><span>{{ i18n.ts.nothing }}</span></template>
+					<template #default="{items}">
+						<div :class="$style.decorations">
+							<div v-for="decoration in items" :key="decoration.id" v-panel :class="$style.decoration">
+								<div :class="$style.decorationName"><MkCondensedLine :minScale="0.5">{{ decoration.name }}</MkCondensedLine></div>
+								<MkAvatar style="width: 60px; height: 60px;" :user="$i" :decorations="[{ url: decoration.url }]" forceShowDecoration/>
+							</div>
+						</div>
+					</template>
+				</MkPagination>
 			</div>
 		</div>
 	</div>
@@ -37,7 +39,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, defineAsyncComponent, watch } from 'vue';
+import { ref, computed, defineAsyncComponent, markRaw, watch } from 'vue';
 import * as Misskey from 'cherrypick-js';
 import { ensureSignin } from '@/i.js';
 import * as os from '@/os.js';
@@ -45,6 +47,8 @@ import { misskeyApi } from '@/utility/misskey-api.js';
 import { i18n } from '@/i18n.js';
 import { definePage } from '@/page.js';
 import MkRemoteAvatarDecorationEditDialog from '@/components/MkRemoteAvatarDecorationEditDialog.vue';
+import MkPagination from '@/components/MkPagination.vue';
+import { Paginator } from '@/utility/paginator.js';
 
 const $i = ensureSignin();
 
@@ -63,6 +67,20 @@ function remoteLoad() {
 		remoteAvatarDecorations.value = _avatarDecorations;
 	});
 }
+
+const paginator = markRaw(new Paginator('admin/avatar-decorations/list', {
+	limit: 30,
+	// computedParams: computed(() => ({
+	// todo: add query params
+	// })),
+}));
+
+const remotePaginator = markRaw(new Paginator('admin/avatar-decorations/list-remote', {
+	limit: 30,
+	// computedParams: computed(() => ({
+	// todo: add query params
+	// })),
+}));
 
 async function add(ev: MouseEvent) {
 	const { dispose } = await os.popupAsyncWithDialog(import('./avatar-decoration-edit-dialog.vue').then(x => x.default), {
@@ -163,6 +181,7 @@ definePage(() => ({
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
 	grid-gap: 12px;
+	margin: var(--MI-margin) 0;
 }
 
 .decoration {
