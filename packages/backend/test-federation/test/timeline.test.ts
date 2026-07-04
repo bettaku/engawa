@@ -55,12 +55,13 @@ describe('Timeline', () => {
 		strictEqual(streamingFired, expect);
 
 		const endpoint = timelineMap.get(timelineChannel)!;
-		const params: Misskey.Endpoints[typeof endpoint]['req'] =
+		const params = (
 			endpoint === 'antennas/notes' ? { antennaId: (channelParams as Misskey.Channels['antenna']['params']).antennaId } :
 			endpoint === 'notes/user-list-timeline' ? { listId: (channelParams as Misskey.Channels['userList']['params']).listId } :
 			endpoint === 'notes/search-by-tag' ? { query: (channelParams as Misskey.Channels['hashtag']['params']).q } :
 			endpoint === 'roles/notes' ? { roleId: (channelParams as Misskey.Channels['roleTimeline']['params']).roleId } :
-			{};
+			{}
+		) as Misskey.Endpoints[typeof endpoint]['req'];
 
 		await sleep();
 		const notes = await (bob.client.request as Request)(endpoint, params);
