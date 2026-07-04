@@ -44,6 +44,8 @@ const paginator = markRaw(new Paginator('notes/search-by-tag', {
 	})),
 }));
 
+const notes = ref<typeof MkNotesTimeline>();
+
 //#region ChannelConnection
 let connection: Misskey.ChannelConnection | null = null;
 
@@ -63,7 +65,7 @@ function disconnectChannel() {
 }
 
 function refreshChannel() {
-	if (!store.s.disableStreamingTimeline) {
+	if (!store.r.realtimeMode) {
 		disconnectChannel();
 		connectChannel();
 	}

@@ -54,6 +54,16 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</div>
 			</div>
 			<div class="diffs">
+				<div class="item2 _panel sub">
+					<div class="icon"><i class="ti ti-world-download"></i></div>
+					<div class="body">
+						<div class="value">
+							{{ number(federationSubActive) }}
+							<MkNumberDiff v-tooltip="i18n.ts.dayOverDayChanges" class="diff" :value="federationSubActiveDiff"></MkNumberDiff>
+						</div>
+						<div class="label">Sub</div>
+					</div>
+				</div>
 				<div class="item2 _panel pub">
 					<div class="icon"><i class="ti ti-world-upload"></i></div>
 					<div class="body">
@@ -71,7 +81,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
-import { onMounted, computed, useTemplateRef } from 'vue';
+import { onMounted, computed, ref, useTemplateRef } from 'vue';
 import { Chart } from 'chart.js';
 import type { MkSelectItem, ItemOption } from '@/components/MkSelect.vue';
 import type { ChartSrc } from '@/components/MkChart.vue';
@@ -89,6 +99,8 @@ import MkRetentionHeatmap from '@/components/MkRetentionHeatmap.vue';
 import MkRetentionLineChart from '@/components/MkRetentionLineChart.vue';
 import { initChart } from '@/utility/init-chart.js';
 import { useMkSelect } from '@/composables/use-mkselect.js';
+import number from '@/filters/number.js';
+import MkNumberDiff from '@/components/MkNumberDiff.vue';
 
 initChart();
 
@@ -181,6 +193,11 @@ const {
 const subDoughnutEl = useTemplateRef('subDoughnutEl');
 const pubDoughnutEl = useTemplateRef('pubDoughnutEl');
 const softwareDoughnutEl = useTemplateRef('softwareDoughnutEl');
+
+const federationPubActive = ref<number | null>(null);
+const federationPubActiveDiff = ref<number | null>(null);
+const federationSubActive = ref<number | null>(null);
+const federationSubActiveDiff = ref<number | null>(null);
 
 const { handler: externalTooltipHandler1 } = useChartTooltip({
 	position: 'middle',

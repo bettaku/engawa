@@ -6,7 +6,7 @@
 // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 const address = new URL(window.document.querySelector<HTMLMetaElement>('meta[property="instance_url"]')?.content || window.location.href);
 const siteName = window.document.querySelector<HTMLMetaElement>('meta[property="og:site_name"]')?.content;
-const applicationName = document.querySelector<HTMLMetaElement>('meta[name="application-name"]')?.content;
+const applicationName = window.document.querySelector<HTMLMetaElement>('meta[name="application-name"]')?.content;
 
 export const host = address.host;
 export const hostname = address.hostname;
