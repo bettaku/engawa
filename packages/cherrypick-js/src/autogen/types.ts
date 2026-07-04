@@ -7621,8 +7621,6 @@ export interface operations {
                     untilId?: string;
                     sinceDate?: number;
                     untilDate?: number;
-                    /** Format: misskey:id */
-                    userId?: string | null;
                 };
             };
         };
@@ -7646,7 +7644,11 @@ export interface operations {
                         name: string;
                         description: string;
                         url: string;
-                        roleIdsThatCanBeUsedThisDecoration: string[];
+                        roleIdsThatCanBeUsedThisDecoration: {
+                            /** Format: id */
+                            id: string;
+                            name: string;
+                        }[];
                     }[];
                 };
             };
