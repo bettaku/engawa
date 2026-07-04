@@ -499,7 +499,39 @@ export class ClientServerService {
 
 			vary(reply.raw, 'Accept');
 
-			return await renderBase(reply);
+			if (user != null) {
+				const profile = await this.userProfilesRepository.findOneByOrFail({ userId: user.id });
+				const me = profile.fields
+					? profile.fields
+						.filter(filed => filed.value != null && filed.value.match(/^https?:/))
+						.map(field => field.value)
+					: [];
+
+				reply.header('Cache-Control', 'public, max-age=15');
+				if (profile.preventAiLearning) {
+					reply.header('X-Robots-Tag', 'noimageai');
+					reply.header('X-Robots-Tag', 'noai');
+				}
+
+				const _user = await this.userEntityService.pack(user, null, {
+					schema: 'UserDetailed',
+					userProfile: profile,
+				});
+
+				return await reply.view('user', {
+					user, profile, me,
+					avatarUrl: _user.avatarUrl,
+					sub: request.params.sub,
+					...await this.generateCommonPugData(this.meta),
+					clientCtx: htmlSafeJsonStringify({
+						user: _user,
+					}),
+				});
+			} else {
+				// リモートユーザーなので
+				// モデレータがAPI経由で参照可能にするために404にはしない
+				return await renderBase(reply);
+			}
 		});
 
 		fastify.get<{ Params: { user: string; } }>('/users/:user', async (request, reply) => {
@@ -531,7 +563,28 @@ export class ClientServerService {
 				relations: ['user', 'reply', 'renote'],
 			});
 
-			return await renderBase(reply);
+			if (note && !note.user!.requireSigninToViewContents) {
+				const _note = await this.noteEntityService.pack(note);
+				const profile = await this.userProfilesRepository.findOneByOrFail({ userId: note.userId });
+				reply.header('Cache-Control', 'public, max-age=15');
+				if (profile.preventAiLearning) {
+					reply.header('X-Robots-Tag', 'noimageai');
+					reply.header('X-Robots-Tag', 'noai');
+				}
+				return await reply.view('note', {
+					note: _note,
+					profile,
+					avatarUrl: _note.user.avatarUrl,
+					// TODO: Let locale changeable by instance setting
+					summary: getNoteSummary(_note),
+					...await this.generateCommonPugData(this.meta),
+					clientCtx: htmlSafeJsonStringify({
+						note: _note,
+					}),
+				});
+			} else {
+				return await renderBase(reply);
+			}
 		});
 
 		// Page

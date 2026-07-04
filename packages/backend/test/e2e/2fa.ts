@@ -9,7 +9,7 @@ import * as assert from 'assert';
 import * as crypto from 'node:crypto';
 import cbor from 'cbor';
 import * as OTPAuth from 'otpauth';
-import { api, signup } from '../utils.js';
+import { api, sendEnvUpdateRequest, signup } from '../utils.js';
 import type {
 	AuthenticationResponseJSON,
 	AuthenticatorAssertionResponseJSON,
@@ -179,6 +179,10 @@ describe('2要素認証', () => {
 	beforeAll(async () => {
 		alice = await signup({ username, password });
 	}, 1000 * 60 * 2);
+
+	beforeEach(async () => {
+		await sendEnvUpdateRequest({ key: 'MISSKEY_TEST_CHECK_DUPLICATED_TOTP', value: '' });
+	});
 
 	test('が設定でき、OTPでログインできる。', async () => {
 		const registerResponse = await api('i/2fa/register', {
