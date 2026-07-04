@@ -25,7 +25,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<template #empty><span>{{ i18n.ts.nothing }}</span></template>
 					<template #default="{items}">
 						<div :class="$style.decorations">
-							<div v-for="decoration in items" :key="decoration.id" v-panel :class="$style.decoration">
+							<div v-for="decoration in items" :key="decoration.id" v-panel :class="$style.decoration" @click="remoteMenu(decoration, $event)">
 								<div :class="$style.decorationName"><MkCondensedLine :minScale="0.5">{{ decoration.name }}</MkCondensedLine></div>
 								<MkAvatar style="width: 60px; height: 60px;" :user="$i" :decorations="[{ url: decoration.url }]" forceShowDecoration/>
 							</div>
@@ -55,18 +55,6 @@ const $i = ensureSignin();
 const tab = ref('local');
 const avatarDecorations = ref<Misskey.entities.AdminAvatarDecorationsListResponse>([]);
 const remoteAvatarDecorations = ref<Misskey.entities.AdminAvatarDecorationsListRemoteResponse>([]);
-
-function load() {
-	misskeyApi('admin/avatar-decorations/list').then(_avatarDecorations => {
-		avatarDecorations.value = _avatarDecorations;
-	});
-}
-
-function remoteLoad() {
-	misskeyApi('admin/avatar-decorations/list-remote').then(_avatarDecorations => {
-		remoteAvatarDecorations.value = _avatarDecorations;
-	});
-}
 
 const paginator = markRaw(new Paginator('admin/avatar-decorations/list', {
 	limit: 30,
@@ -161,14 +149,6 @@ const headerTabs = computed(() => [{
 	key: 'remote',
 	title: i18n.ts.remote,
 }]);
-
-watch(tab, (newTab) => {
-	if (newTab === 'remote') {
-		remoteLoad();
-	} else if (newTab === 'local') {
-		load();
-	}
-}, { immediate: true });
 
 definePage(() => ({
 	title: i18n.ts.avatarDecorations,
