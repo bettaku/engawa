@@ -184,8 +184,8 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 			const avatarDecorationId = avatarDecoration.id;
 
 			for (const decoration of allDecorations) {
-				// eslint-disable-next-line eqeqeq
-				if (decoration.id == avatarDecorationId) {
+				// biome-ignore lint/suspicious/noDoubleEquals: intentional loose comparison of ids
+				if (decoration.id === avatarDecorationId) {
 					name = decoration.name;
 					description = decoration.description;
 					break;

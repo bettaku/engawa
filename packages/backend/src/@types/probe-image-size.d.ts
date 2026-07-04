@@ -26,6 +26,7 @@ declare module 'probe-image-size' {
 	function probeImageSize(src: string | ReadStream, callback: (err: Error | null, result?: ProbeResult) => void): void;
 	function probeImageSize(src: string | ReadStream, options: ProbeOptions, callback: (err: Error | null, result?: ProbeResult) => void): void;
 
+	// biome-ignore lint/style/noNamespace: required for the `export =` module typing hack
 	namespace probeImageSize {} // Hack
 
 	export = probeImageSize;

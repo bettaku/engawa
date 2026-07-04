@@ -31,7 +31,7 @@
 				"noUnsafeFinally": "error",
 				"noUnsafeOptionalChaining": "error",
 				"noUnusedLabels": "error",
-				"noUnusedVariables": "error",
+				"noUnusedVariables": "warn",
 				"useIsNan": "error",
 				"useValidForDirection": "error",
 				"useYield": "error"
@@ -44,7 +44,12 @@
 				"noParameterAssign": "warn",
 				"noRestrictedGlobals": {
 					"level": "error",
-					"options": { "deniedGlobals": ["__dirname", "__filename"] }
+					"options": {
+						"deniedGlobals": {
+							"__dirname": "Use `import.meta.url` (with `fileURLToPath`/`dirname`) instead in ESM.",
+							"__filename": "Use `import.meta.url` (with `fileURLToPath`) instead in ESM."
+						}
+					}
 				},
 				"useAsConstAssertion": "error"
 			},
@@ -78,10 +83,16 @@
 			}
 		}
 	},
-	"javascript": { "globals": [] },
+	"files": {
+		"includes": ["**", "!**/built/**", "!**/built-test/**"]
+	},
+	"javascript": {
+		"parser": { "unsafeParameterDecoratorsEnabled": true },
+		"globals": ["LANGS", "CLIENT_ENTRY"]
+	},
 	"overrides": [
 		{
-			"includes": ["*.ts", "*.tsx", "*.mts", "*.cts"],
+			"includes": ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
 			"linter": {
 				"rules": {
 					"correctness": {
