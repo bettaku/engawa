@@ -1,31 +1,9 @@
 services:
-  setup:
-    volumes:
-      - type: volume
-        source: node_modules
-        target: /cherrypick/node_modules
-      - type: volume
-        source: node_modules_backend
-        target: /cherrypick/packages/backend/node_modules
-      - type: volume
-        source: node_modules_cherrypick-js
-        target: /cherrypick/packages/cherrypick-js/node_modules
-
   tester:
     networks:
       external_network:
       internal_network:
         ipv4_address: 172.20.1.1
-    volumes:
-      - type: volume
-        source: node_modules_dev
-        target: /cherrypick/node_modules
-      - type: volume
-        source: node_modules_backend_dev
-        target: /cherrypick/packages/backend/node_modules
-      - type: volume
-        source: node_modules_cherrypick-js_dev
-        target: /cherrypick/packages/cherrypick-js/node_modules
 
   daemon:
     networks:
@@ -33,15 +11,14 @@ services:
       - internal_network_a
       - internal_network_b
       - internal_network_c
-    volumes:
-      - type: volume
-        source: node_modules_dev
-        target: /cherrypick/node_modules
-      - type: volume
-        source: node_modules_backend_dev
-        target: /cherrypick/packages/backend/node_modules
 
   redis.test:
+    networks:
+      - internal_network_a
+      - internal_network_b
+      - internal_network_c
+
+  db.test:
     networks:
       - internal_network_a
       - internal_network_b
@@ -55,16 +32,6 @@ services:
     networks:
       - external_network
       - internal_network
-    volumes:
-      - type: volume
-        source: node_modules
-        target: /cherrypick/node_modules
-      - type: volume
-        source: node_modules_backend
-        target: /cherrypick/packages/backend/node_modules
-      - type: volume
-        source: node_modules_cherrypick-js
-        target: /cherrypick/packages/cherrypick-js/node_modules
 
   b.test:
     networks:
@@ -74,16 +41,6 @@ services:
     networks:
       - external_network
       - internal_network
-    volumes:
-      - type: volume
-        source: node_modules
-        target: /cherrypick/node_modules
-      - type: volume
-        source: node_modules_backend
-        target: /cherrypick/packages/backend/node_modules
-      - type: volume
-        source: node_modules_cherrypick-js
-        target: /cherrypick/packages/cherrypick-js/node_modules
 
   c.test:
     networks:
@@ -93,16 +50,6 @@ services:
     networks:
       - external_network
       - internal_network
-    volumes:
-      - type: volume
-        source: node_modules
-        target: /cherrypick/node_modules
-      - type: volume
-        source: node_modules_backend
-        target: /cherrypick/packages/backend/node_modules
-      - type: volume
-        source: node_modules_cherrypick-js
-        target: /cherrypick/packages/cherrypick-js/node_modules
 
 networks:
   external_network:
@@ -118,11 +65,3 @@ networks:
       config:
         - subnet: 172.20.0.0/16
           ip_range: 172.20.0.0/24
-
-volumes:
-  node_modules:
-  node_modules_dev:
-  node_modules_backend:
-  node_modules_backend_dev:
-  node_modules_cherrypick-js:
-  node_modules_cherrypick-js_dev:

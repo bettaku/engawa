@@ -27,12 +27,10 @@ services:
       file: ./compose.tpl.yml
       service: cherrypick
     depends_on:
-      db.c.test:
+      db.test:
         condition: service_healthy
       redis.test:
         condition: service_healthy
-      setup:
-        condition: service_completed_successfully
     networks:
       - internal_network_c
     volumes:
@@ -40,19 +38,6 @@ services:
         source: ./.config/c.test.default.yml
         target: /cherrypick/.config/default.yml
         read_only: true
-
-  db.c.test:
-    extends:
-      file: ./compose.tpl.yml
-      service: db
-    networks:
-      - internal_network_c
-    volumes:
-      - type: bind
-        source: ./volumes/db.c
-        target: /var/lib/postgresql/data
-        bind:
-          create_host_path: true
 
 networks:
   internal_network_c:
