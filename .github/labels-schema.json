@@ -1,0 +1,33 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://github.com/bettaku/engawa/blob/main/.github/labels-schema.json",
+	"additionalProperties": false,
+	"definitions": {
+		"label": {
+			"type": "object",
+			"properties": {
+				"name": {
+					"type": "string",
+					"$comment": "The name of the issue label. This is the text that will be displayed on the label."
+				},
+				"color": {
+					"type": "string",
+					"$comment": "Color of its issue labels. This is a six-character hex code, without the leading #.",
+					"pattern": "^[0-9a-fA-F]{6}$"
+				},
+				"description": {
+					"type": "string",
+					"$comment": "A short description of the label. This will be shown as a tooltip when hovering over the label."
+				}
+			}
+		}
+	},
+	"properties": {
+		"labels": {
+			"type": "array",
+			"items": {
+				"$ref": "#/definitions/label"
+			}
+		}
+	}
+}

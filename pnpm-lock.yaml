@@ -91,6 +91,30 @@ importers:
         specifier: 4.22.0
         version: 4.22.0(encoding@0.1.13)
 
+  packages-internal/label-manager:
+    devDependencies:
+      '@biomejs/biome':
+        specifier: 2.3.1
+        version: 2.3.1
+      '@types/js-yaml':
+        specifier: 4.0.9
+        version: 4.0.9
+      '@types/node':
+        specifier: 24.9.1
+        version: 24.9.1
+      js-yaml:
+        specifier: 4.1.0
+        version: 4.1.0
+      octokit:
+        specifier: 5.0.5
+        version: 5.0.5
+      tsx:
+        specifier: 4.20.6
+        version: 4.20.6
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
   packages/backend:
     dependencies:
       '@aws-sdk/client-s3':
@@ -3314,6 +3338,125 @@ packages:
     engines: {node: ^14.18.0 || >=16.10.0, npm: '>=5.10.0'}
     hasBin: true
 
+  '@octokit/app@16.1.4':
+    resolution: {integrity: sha512-g70WONQyGoBgqIJtv4O0MUEfOF1iJpTfFt3qAW7HaiwiJ6k607xg/gBezCa4tuq6BpO6qXn7qvq8v9tjWtgGQg==}
+    engines: {node: '>= 20'}
+
+  '@octokit/auth-app@8.3.0':
+    resolution: {integrity: sha512-/UaKmJCsOc5XBZwhnFiGNdLH/FkDF8lYtBn1QlKxtX7IpgaRB/XOXjixFtERAknyUZHxp3oDuoiG0En4VptJSg==}
+    engines: {node: '>= 20'}
+
+  '@octokit/auth-oauth-app@9.0.4':
+    resolution: {integrity: sha512-Pe3du5LrC6dlv10b0RbarBlJtIT1Urq8BFoQklK8WmBw8YKnGgrANn7cQmHiA1v8AVihgi7YutV8MncP57I4og==}
+    engines: {node: '>= 20'}
+
+  '@octokit/auth-oauth-device@8.0.4':
+    resolution: {integrity: sha512-M/+34rmkxMvUnnTo/uqNeVRCXJoJ+5N34eNTbL1KMtIyJpedCTsu/iFL1cWdL+w5hQMlYt6xzXoyux2gn0OVnw==}
+    engines: {node: '>= 20'}
+
+  '@octokit/auth-oauth-user@6.0.3':
+    resolution: {integrity: sha512-t4OKUhrI5britmpRiSzPAz1TJPyUN/Hw1HEE3Hz/uElxcmnf/YCRSKtFRNc5gy4yJFTlXgk34H1lvxiotQJQvQ==}
+    engines: {node: '>= 20'}
+
+  '@octokit/auth-token@6.0.0':
+    resolution: {integrity: sha512-P4YJBPdPSpWTQ1NU4XYdvHvXJJDxM6YwpS0FZHRgP7YFkdVxsWcpWGy/NVqlAA7PcPCnMacXlRm1y2PFZRWL/w==}
+    engines: {node: '>= 20'}
+
+  '@octokit/auth-unauthenticated@7.0.4':
+    resolution: {integrity: sha512-j4zgVdP8C8C53PNsj4LLI+WFtoykaQARwwrIBILTdxwZ2Ljaa9YUxb1yQ7/seGVnmWPdC3OBefX3LLbh28gKtw==}
+    engines: {node: '>= 20'}
+
+  '@octokit/core@7.0.7':
+    resolution: {integrity: sha512-DcB0M3KFgr9ECI328lhBMVsyFT2DnmNucSBTqEN3exyNKUzkkpUSCHmTRcunF41Eou2TIQKW4seewri8ON9bSA==}
+    engines: {node: '>= 20'}
+
+  '@octokit/endpoint@11.0.4':
+    resolution: {integrity: sha512-f1cOWoHPmxryJFknxbtDdjODWfV8A9tc8Aae6ermXPNgHFZ/x91AtHIz4gicEjL8hkJiip+u21QHJORfBv/qiA==}
+    engines: {node: '>= 20'}
+
+  '@octokit/graphql@9.0.4':
+    resolution: {integrity: sha512-5s15CCiY8XXQ+FG+b1YQcl6Z2FA++nwAz/tg2VUrTmnMncP+2nnGUEYANImdnxsA2Fnq+Mbl7hDjUTw7cFAwcg==}
+    engines: {node: '>= 20'}
+
+  '@octokit/oauth-app@8.0.4':
+    resolution: {integrity: sha512-Ji5JpRwAJcbOJkO4ij0tW6+GrQ8efpICnAca3o5xI8/HUNjqJu3hhG4cCZdXAHMKaOaQTFX0Yl+cpu61Rsx94A==}
+    engines: {node: '>= 20'}
+
+  '@octokit/oauth-authorization-url@8.0.0':
+    resolution: {integrity: sha512-7QoLPRh/ssEA/HuHBHdVdSgF8xNLz/Bc5m9fZkArJE5bb6NmVkDm3anKxXPmN1zh6b5WKZPRr3697xKT/yM3qQ==}
+    engines: {node: '>= 20'}
+
+  '@octokit/oauth-methods@6.0.3':
+    resolution: {integrity: sha512-t7MBs34Ja16BBZlOSAFslFh4wBMuofD83wVLG9zIuuEGMv/U12XAJ8ESOifgEcC1ptjhNA3sorLA9BCtVfgPuw==}
+    engines: {node: '>= 20'}
+
+  '@octokit/openapi-types@27.0.0':
+    resolution: {integrity: sha512-whrdktVs1h6gtR+09+QsNk2+FO+49j6ga1c55YZudfEG+oKJVvJLQi3zkOm5JjiUXAagWK2tI2kTGKJ2Ys7MGA==}
+
+  '@octokit/openapi-types@28.0.0':
+    resolution: {integrity: sha512-0rFyLuyHvIj6uuZWuDslxkowFYdPXoNIkeAv4b27dzm2Tf4vGWXnPsMcxs7d65kLdMERgP3wc1AEPlqMz8e1cQ==}
+
+  '@octokit/openapi-webhooks-types@12.1.0':
+    resolution: {integrity: sha512-WiuzhOsiOvb7W3Pvmhf8d2C6qaLHXrWiLBP4nJ/4kydu+wpagV5Fkz9RfQwV2afYzv3PB+3xYgp4mAdNGjDprA==}
+
+  '@octokit/plugin-paginate-graphql@6.0.0':
+    resolution: {integrity: sha512-crfpnIoFiBtRkvPqOyLOsw12XsveYuY2ieP6uYDosoUegBJpSVxGwut9sxUgFFcll3VTOTqpUf8yGd8x1OmAkQ==}
+    engines: {node: '>= 20'}
+    peerDependencies:
+      '@octokit/core': '>=6'
+
+  '@octokit/plugin-paginate-rest@14.0.0':
+    resolution: {integrity: sha512-fNVRE7ufJiAA3XUrha2omTA39M6IXIc6GIZLvlbsm8QOQCYvpq/LkMNGyFlB1d8hTDzsAXa3OKtybdMAYsV/fw==}
+    engines: {node: '>= 20'}
+    peerDependencies:
+      '@octokit/core': '>=6'
+
+  '@octokit/plugin-paginate-rest@15.0.0':
+    resolution: {integrity: sha512-lw9A9YL5s4VPj+VEx8uMxaxQm2YTgrPDkrLEuZuu18R8TK3oPcXF4K6t52nx6xn1RcogZC9i188sAr/4XYJaQQ==}
+    engines: {node: '>= 20'}
+    peerDependencies:
+      '@octokit/core': '>=6'
+
+  '@octokit/plugin-rest-endpoint-methods@17.0.0':
+    resolution: {integrity: sha512-B5yCyIlOJFPqUUeiD0cnBJwWJO8lkJs5d8+ze9QDP6SvfiXSz1BF+91+0MeI1d2yxgOhU/O+CvtiZ9jSkHhFAw==}
+    engines: {node: '>= 20'}
+    peerDependencies:
+      '@octokit/core': '>=6'
+
+  '@octokit/plugin-retry@8.1.1':
+    resolution: {integrity: sha512-VCVvZ/R1+u3WuiBWpNavZ0mY4aaJNAsENrpBP9aLSR2QyOpQgd7DhM5j4AW7z4MQpnJYgwBPf0XqPQoNBRdQwg==}
+    engines: {node: '>= 20'}
+    peerDependencies:
+      '@octokit/core': '>=7'
+
+  '@octokit/plugin-throttling@11.0.5':
+    resolution: {integrity: sha512-LIdrkrUv+DWbKeg/49rGuFJ3SU0d3hUS+B4MhNZLepBoNUFXms8Ic9edJjrlx+zycqJHjrMRudVpVb/bAXM2Lw==}
+    engines: {node: '>= 20'}
+    peerDependencies:
+      '@octokit/core': ^7.0.0
+
+  '@octokit/request-error@7.1.1':
+    resolution: {integrity: sha512-+eaY7G2VVpSf2pc5Gn1+mph837V/d/TYTJAgWL9Tb0ogGYcpN3IlAVFgjL+Vv93F/sevrxkvsYCedtpLdcFLzA==}
+    engines: {node: '>= 20'}
+
+  '@octokit/request@10.0.13':
+    resolution: {integrity: sha512-v2269YxL9Yf+x3d+gRI63FP0vFQEiWgLyBzxe/Y+0yFDg2B/Tzf5dhh9VNfccVAQnfcfwQWyk/y6Bn7rUXXs7A==}
+    engines: {node: '>= 20'}
+
+  '@octokit/types@16.0.0':
+    resolution: {integrity: sha512-sKq+9r1Mm4efXW1FCk7hFSeJo4QKreL/tTbR0rz/qx/r1Oa2VV83LTA/H/MuCOX7uCIJmQVRKBcbmWoySjAnSg==}
+
+  '@octokit/types@17.0.0':
+    resolution: {integrity: sha512-ByP1v7YL5SMveFPP7+sj0/ZuWCOOg/Chs4NafOMpq6WNIM/hdGY0S7C0TCGDBWu1aGmOxmUIhMx3cO+IdwYZ1Q==}
+
+  '@octokit/webhooks-methods@6.0.0':
+    resolution: {integrity: sha512-MFlzzoDJVw/GcbfzVC1RLR36QqkTLUf79vLVO3D+xn7r0QgxnFoLZgtrzxiQErAjFUOdH6fas2KeQJ1yr/qaXQ==}
+    engines: {node: '>= 20'}
+
+  '@octokit/webhooks@14.2.0':
+    resolution: {integrity: sha512-da6KbdNCV5sr1/txD896V+6W0iamFWrvVl8cHkBSPT+YlvmT3DwXa4jxZnQc+gnuTEqSWbBeoSZYTayXH9wXcw==}
+    engines: {node: '>= 20'}
+
   '@one-ini/wasm@0.1.1':
     resolution: {integrity: sha512-XuySG1E38YScSJoMlqovLru4KTUNSjgVTIjyh7qMX6aNN5HY5Ct5LhRJdxO79JtTzKfzV/bnWpz+zquYrISsvw==}
 
@@ -5103,6 +5246,9 @@ packages:
   '@types/autosize@4.0.3':
     resolution: {integrity: sha512-o0ZyU3ePp3+KRbhHsY4ogjc+ZQWgVN5h6j8BHW5RII4cFKi6PEKK9QPAcphJVkD0dGpyFnD3VRR0WMvHVjCv9w==}
 
+  '@types/aws-lambda@8.10.162':
+    resolution: {integrity: sha512-Fn658grtLOci1oxi1391vvDWJRKNGWRSqfxRkmN/Iy3c0tQH1USMKEXcPYHLvope+ZgTFocx9FRQJx1muBL6qw==}
+
   '@types/babel__core@7.20.5':
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
 
@@ -6257,6 +6403,9 @@ packages:
   bcryptjs@2.4.3:
     resolution: {integrity: sha512-V/Hy/X9Vt7f3BbPJEi8BdVFMByHi+jNXrYkW3huaybV/kQ0KJg0Y6PkEMbn+zeT+i+SiKZ/HMqJGIIt4LZDqNQ==}
 
+  before-after-hook@4.0.0:
+    resolution: {integrity: sha512-q6tR3RPqIB1pMiTRMFcZwuG5T8vwp+vUvEG0vuI6B+Rikh5BfPp2fQ82c925FOs+b0lcFQ8CFrL+KbilfZFhOQ==}
+
   better-opn@3.0.2:
     resolution: {integrity: sha512-aVNobHnJqLiUelTaHat9DZ1qM2w0C0Eym4LPI/3JxOnSokGVdsl1T1kN7TFvsEAD8G47A6VKQ0TVHqbBnYMJlQ==}
     engines: {node: '>=12.0.0'}
@@ -6298,6 +6447,9 @@ packages:
 
   boolbase@1.0.0:
     resolution: {integrity: sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==}
+
+  bottleneck@2.19.5:
+    resolution: {integrity: sha512-VHiNCbI1lKdl44tGrhNfU3lup0Tj/ZBMJB5/2ZbNXRCPuRCO7ed2mgcK4r17y+KB2EfuYuRaVlwNbAeaWGSpbw==}
 
   bowser@2.14.1:
     resolution: {integrity: sha512-tzPjzCxygAKWFOJP011oxFHs57HzIhOEracIgAePE4pqB3LikALKnSzUyU4MGs9/iCEUuHlAJTjTc5M+u7YEGg==}
@@ -6768,6 +6920,7 @@ packages:
   cron-parser@4.9.0:
     resolution: {integrity: sha512-p0SaNjrHOnQeR8/VnfGbmg9te2kfyYSQ7Sc/j/6DtPL3JQvKxmjO9TSjNFpujqV3vEYYBvNNvXSxzyksBWAx1Q==}
     engines: {node: '>=12.0.0'}
+    deprecated: v4 is no longer maintained, upgrade to v5
 
   cropperjs@2.0.1:
     resolution: {integrity: sha512-hiJwk2SCPZqxMA7aR3byzLpYUqOrQo+ihMk8k/WRm/xe/LX8wNzAIzMwEB/NEGJYA6sbewxW9TUlrRUYi/2Ipg==}
@@ -8719,6 +8872,9 @@ packages:
   json-stringify-safe@5.0.1:
     resolution: {integrity: sha512-ZClg6AaYvamvYEE82d3Iyd3vSSIjQ+odgjaTzRuO3s7toCdFKczob2i0zCh7JE8kWn17yvAWhUVxvqGwUalsRA==}
 
+  json-with-bigint@3.5.10:
+    resolution: {integrity: sha512-Vcx+JVNEBts/xfcoCS69sKrOhOk/3TVlvlT+XzUOefVKnnrbYSCKpDCm10pohsJFtsJVYnwa/cXRZ4eElzaM6w==}
+
   json5@1.0.2:
     resolution: {integrity: sha512-g1MWMLBiz8FKi1e4w0UyVL3w+iJceWAFBAaBnnGKOpNa5f8TLktkbre1+s6oICydWAm+HRUGTmI+//xv2hvXYA==}
     hasBin: true
@@ -9631,6 +9787,10 @@ packages:
   obug@2.1.3:
     resolution: {integrity: sha512-9miFgM2OFba7hB+pRgvtV84pYTBaoTHohvmIgiRt6dRIzbwEOIaNaP+dIlGs2fNFoB0SeISs0Jz5WFVRid6Xyg==}
     engines: {node: '>=12.20.0'}
+
+  octokit@5.0.5:
+    resolution: {integrity: sha512-4+/OFSqOjoyULo7eN7EA97DE0Xydj/PW5aIckxqQIoFjFwqXKuFCvXUJObyJfBF9Khu4RL/jlDRI9FPaMGfPnw==}
+    engines: {node: '>= 20'}
 
   on-exit-leak-free@2.1.2:
     resolution: {integrity: sha512-0eJJY6hXLGf1udHwfNftBqH+g73EU4B504nZeKpz1sYRKafAghwxEJunB2O7rDZkL4PGfsMVnTXZ2EjibbqcsA==}
@@ -11882,6 +12042,12 @@ packages:
   unist-util-visit@5.1.0:
     resolution: {integrity: sha512-m+vIdyeCOpdr/QeQCu2EzxX/ohgS8KbnPDgFni4dQsfSCtpz8UqDyY5GjRru8PDKuYn7Fq19j1CQ+nJSsGKOzg==}
 
+  universal-github-app-jwt@2.2.2:
+    resolution: {integrity: sha512-dcmbeSrOdTnsjGjUfAlqNDJrhxXizjAz94ija9Qw8YkZ1uu0d+GoZzyH+Jb9tIIqvGsadUfwg+22k5aDqqwzbw==}
+
+  universal-user-agent@7.0.3:
+    resolution: {integrity: sha512-TmnEAEAsBJVZM/AADELsK76llnwcf9vMKuPz8JflO1frO8Lchitr0fNaN9d+Ap0BjKtqWqd/J17qeDnXh8CL2A==}
+
   universalify@0.1.2:
     resolution: {integrity: sha512-rBJeI5CXAlmy1pV+617WB9J63U6XcazHHF2f2dbJix4XzpUF0RS3Zbj0FGIOCAva5P/d/GBOYaACQ1w+0azUkg==}
     engines: {node: '>= 4.0.0'}
@@ -12252,8 +12418,8 @@ packages:
   vue-component-type-helpers@3.1.1:
     resolution: {integrity: sha512-B0kHv7qX6E7+kdc5nsaqjdGZ1KwNKSUQDWGy7XkTYT7wFsOpkEyaJ1Vq79TjwrrtuLRgizrTV7PPuC4rRQo+vw==}
 
-  vue-component-type-helpers@3.3.5:
-    resolution: {integrity: sha512-Fe1jyPJoUGpJOYKOri44jduR7My4yYINOMJISuMAbmrs+L5LbIDUc8NTWZYY3EJLK0yPLuCmcd5zoCsE4k2/KA==}
+  vue-component-type-helpers@3.3.9:
+    resolution: {integrity: sha512-3c/UfMe0SqyEfcGTyH7mfshHagJ9QTCbppCb0/uGpHZpFug7+If3GeGZN7I0YheKEExemx3xldQPoO7PQSOLQg==}
 
   vue-demi@0.14.10:
     resolution: {integrity: sha512-nMZBOwuzabUO0nLgIcc6rycZEebF6eeUfaiQx9+WSk8e29IbLvPU9feI6tqW4kTo3hvoYAJkMh8n8D0fuISphg==}
@@ -12566,7 +12732,7 @@ snapshots:
   '@apm-js-collab/tracing-hooks@0.3.1':
     dependencies:
       '@apm-js-collab/code-transformer': 0.8.2
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       module-details-from-path: 1.0.4
     transitivePeerDependencies:
       - supports-color
@@ -13228,7 +13394,7 @@ snapshots:
       '@babel/types': 7.29.7
       '@jridgewell/remapping': 2.3.5
       convert-source-map: 2.0.0
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       gensync: 1.0.0-beta.2
       json5: 2.2.3
       semver: 6.3.1
@@ -13391,7 +13557,7 @@ snapshots:
       '@babel/parser': 7.29.7
       '@babel/template': 7.29.7
       '@babel/types': 7.29.7
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
     transitivePeerDependencies:
       - supports-color
 
@@ -13594,7 +13760,7 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/core': 2.8.0(@opentelemetry/api@1.9.1)
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       hpagent: 1.2.0
       ms: 2.1.3
       secure-json-parse: 3.0.2
@@ -13809,7 +13975,7 @@ snapshots:
   '@eslint/config-array@0.21.2':
     dependencies:
       '@eslint/object-schema': 2.1.7
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       minimatch: 3.1.5
     transitivePeerDependencies:
       - supports-color
@@ -13833,7 +13999,7 @@ snapshots:
   '@eslint/eslintrc@3.3.5':
     dependencies:
       ajv: 6.15.0
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       espree: 10.4.0
       globals: 14.0.0
       ignore: 5.3.2
@@ -14751,7 +14917,7 @@ snapshots:
     dependencies:
       agent-base: 7.1.4
       http-proxy-agent: 7.0.2
-      https-proxy-agent: 7.0.6
+      https-proxy-agent: 7.0.6(supports-color@10.2.2)
       lru-cache: 10.4.3
       socks-proxy-agent: 8.0.5
     transitivePeerDependencies:
@@ -14764,6 +14930,165 @@ snapshots:
   '@nuxt/opencollective@0.4.1':
     dependencies:
       consola: 3.4.2
+
+  '@octokit/app@16.1.4':
+    dependencies:
+      '@octokit/auth-app': 8.3.0
+      '@octokit/auth-unauthenticated': 7.0.4
+      '@octokit/core': 7.0.7
+      '@octokit/oauth-app': 8.0.4
+      '@octokit/plugin-paginate-rest': 15.0.0(@octokit/core@7.0.7)
+      '@octokit/types': 17.0.0
+      '@octokit/webhooks': 14.2.0
+
+  '@octokit/auth-app@8.3.0':
+    dependencies:
+      '@octokit/auth-oauth-app': 9.0.4
+      '@octokit/auth-oauth-user': 6.0.3
+      '@octokit/request': 10.0.13
+      '@octokit/request-error': 7.1.1
+      '@octokit/types': 17.0.0
+      toad-cache: 3.7.1
+      universal-github-app-jwt: 2.2.2
+      universal-user-agent: 7.0.3
+
+  '@octokit/auth-oauth-app@9.0.4':
+    dependencies:
+      '@octokit/auth-oauth-device': 8.0.4
+      '@octokit/auth-oauth-user': 6.0.3
+      '@octokit/request': 10.0.13
+      '@octokit/types': 17.0.0
+      universal-user-agent: 7.0.3
+
+  '@octokit/auth-oauth-device@8.0.4':
+    dependencies:
+      '@octokit/oauth-methods': 6.0.3
+      '@octokit/request': 10.0.13
+      '@octokit/types': 17.0.0
+      universal-user-agent: 7.0.3
+
+  '@octokit/auth-oauth-user@6.0.3':
+    dependencies:
+      '@octokit/auth-oauth-device': 8.0.4
+      '@octokit/oauth-methods': 6.0.3
+      '@octokit/request': 10.0.13
+      '@octokit/types': 17.0.0
+      universal-user-agent: 7.0.3
+
+  '@octokit/auth-token@6.0.0': {}
+
+  '@octokit/auth-unauthenticated@7.0.4':
+    dependencies:
+      '@octokit/request-error': 7.1.1
+      '@octokit/types': 17.0.0
+
+  '@octokit/core@7.0.7':
+    dependencies:
+      '@octokit/auth-token': 6.0.0
+      '@octokit/graphql': 9.0.4
+      '@octokit/request': 10.0.13
+      '@octokit/request-error': 7.1.1
+      '@octokit/types': 17.0.0
+      before-after-hook: 4.0.0
+      universal-user-agent: 7.0.3
+
+  '@octokit/endpoint@11.0.4':
+    dependencies:
+      '@octokit/types': 17.0.0
+      universal-user-agent: 7.0.3
+
+  '@octokit/graphql@9.0.4':
+    dependencies:
+      '@octokit/request': 10.0.13
+      '@octokit/types': 17.0.0
+      universal-user-agent: 7.0.3
+
+  '@octokit/oauth-app@8.0.4':
+    dependencies:
+      '@octokit/auth-oauth-app': 9.0.4
+      '@octokit/auth-oauth-user': 6.0.3
+      '@octokit/auth-unauthenticated': 7.0.4
+      '@octokit/core': 7.0.7
+      '@octokit/oauth-authorization-url': 8.0.0
+      '@octokit/oauth-methods': 6.0.3
+      '@types/aws-lambda': 8.10.162
+      universal-user-agent: 7.0.3
+
+  '@octokit/oauth-authorization-url@8.0.0': {}
+
+  '@octokit/oauth-methods@6.0.3':
+    dependencies:
+      '@octokit/oauth-authorization-url': 8.0.0
+      '@octokit/request': 10.0.13
+      '@octokit/request-error': 7.1.1
+      '@octokit/types': 17.0.0
+
+  '@octokit/openapi-types@27.0.0': {}
+
+  '@octokit/openapi-types@28.0.0': {}
+
+  '@octokit/openapi-webhooks-types@12.1.0': {}
+
+  '@octokit/plugin-paginate-graphql@6.0.0(@octokit/core@7.0.7)':
+    dependencies:
+      '@octokit/core': 7.0.7
+
+  '@octokit/plugin-paginate-rest@14.0.0(@octokit/core@7.0.7)':
+    dependencies:
+      '@octokit/core': 7.0.7
+      '@octokit/types': 16.0.0
+
+  '@octokit/plugin-paginate-rest@15.0.0(@octokit/core@7.0.7)':
+    dependencies:
+      '@octokit/core': 7.0.7
+      '@octokit/types': 17.0.0
+
+  '@octokit/plugin-rest-endpoint-methods@17.0.0(@octokit/core@7.0.7)':
+    dependencies:
+      '@octokit/core': 7.0.7
+      '@octokit/types': 16.0.0
+
+  '@octokit/plugin-retry@8.1.1(@octokit/core@7.0.7)':
+    dependencies:
+      '@octokit/core': 7.0.7
+      '@octokit/request-error': 7.1.1
+      '@octokit/types': 17.0.0
+      bottleneck: 2.19.5
+
+  '@octokit/plugin-throttling@11.0.5(@octokit/core@7.0.7)':
+    dependencies:
+      '@octokit/core': 7.0.7
+      '@octokit/types': 17.0.0
+      bottleneck: 2.19.5
+
+  '@octokit/request-error@7.1.1':
+    dependencies:
+      '@octokit/types': 17.0.0
+
+  '@octokit/request@10.0.13':
+    dependencies:
+      '@octokit/endpoint': 11.0.4
+      '@octokit/request-error': 7.1.1
+      '@octokit/types': 17.0.0
+      content-type: 2.0.0
+      json-with-bigint: 3.5.10
+      universal-user-agent: 7.0.3
+
+  '@octokit/types@16.0.0':
+    dependencies:
+      '@octokit/openapi-types': 27.0.0
+
+  '@octokit/types@17.0.0':
+    dependencies:
+      '@octokit/openapi-types': 28.0.0
+
+  '@octokit/webhooks-methods@6.0.0': {}
+
+  '@octokit/webhooks@14.2.0':
+    dependencies:
+      '@octokit/openapi-webhooks-types': 12.1.0
+      '@octokit/request-error': 7.1.1
+      '@octokit/webhooks-methods': 6.0.0
 
   '@one-ini/wasm@0.1.1': {}
 
@@ -16284,7 +16609,7 @@ snapshots:
       storybook: 9.1.10(@testing-library/dom@10.4.0)(bufferutil@4.0.9)(msw@2.11.5(@types/node@24.9.1)(typescript@5.9.3))(prettier@3.6.2)(utf-8-validate@6.0.5)(vite@8.1.0(@types/node@24.9.1)(esbuild@0.25.10)(sass-embedded@1.98.0)(sass@1.93.2)(terser@5.44.0)(tsx@4.20.6))
       type-fest: 2.19.0
       vue: 3.5.22(typescript@5.9.3)
-      vue-component-type-helpers: 3.3.5
+      vue-component-type-helpers: 3.3.9
 
   '@stylistic/eslint-plugin@5.10.0(eslint@9.37.0)':
     dependencies:
@@ -16517,7 +16842,7 @@ snapshots:
 
   '@tokenizer/inflate@0.2.7':
     dependencies:
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       fflate: 0.8.3
       token-types: 6.1.2
     transitivePeerDependencies:
@@ -16551,6 +16876,8 @@ snapshots:
   '@types/aria-query@5.0.4': {}
 
   '@types/autosize@4.0.3': {}
+
+  '@types/aws-lambda@8.10.162': {}
 
   '@types/babel__core@7.20.5':
     dependencies:
@@ -16933,7 +17260,7 @@ snapshots:
       '@typescript-eslint/types': 8.46.1
       '@typescript-eslint/typescript-estree': 8.46.1(typescript@5.9.3)
       '@typescript-eslint/visitor-keys': 8.46.1
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       eslint: 9.37.0
       typescript: 5.9.3
     transitivePeerDependencies:
@@ -16945,7 +17272,7 @@ snapshots:
       '@typescript-eslint/types': 8.57.2
       '@typescript-eslint/typescript-estree': 8.57.2(typescript@5.9.3)
       '@typescript-eslint/visitor-keys': 8.57.2
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       eslint: 9.37.0
       typescript: 5.9.3
     transitivePeerDependencies:
@@ -16955,7 +17282,7 @@ snapshots:
     dependencies:
       '@typescript-eslint/tsconfig-utils': 8.46.1(typescript@5.9.3)
       '@typescript-eslint/types': 8.46.1
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
@@ -16964,7 +17291,7 @@ snapshots:
     dependencies:
       '@typescript-eslint/tsconfig-utils': 8.57.2(typescript@5.9.3)
       '@typescript-eslint/types': 8.57.2
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
@@ -16997,7 +17324,7 @@ snapshots:
       '@typescript-eslint/types': 8.46.1
       '@typescript-eslint/typescript-estree': 8.46.1(typescript@5.9.3)
       '@typescript-eslint/utils': 8.46.1(eslint@9.37.0)(typescript@5.9.3)
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       eslint: 9.37.0
       ts-api-utils: 2.5.0(typescript@5.9.3)
       typescript: 5.9.3
@@ -17009,7 +17336,7 @@ snapshots:
       '@typescript-eslint/types': 8.57.2
       '@typescript-eslint/typescript-estree': 8.57.2(typescript@5.9.3)
       '@typescript-eslint/utils': 8.57.2(eslint@9.37.0)(typescript@5.9.3)
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       eslint: 9.37.0
       ts-api-utils: 2.5.0(typescript@5.9.3)
       typescript: 5.9.3
@@ -17028,7 +17355,7 @@ snapshots:
     dependencies:
       '@typescript-eslint/types': 5.62.0
       '@typescript-eslint/visitor-keys': 5.62.0
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       globby: 11.1.0
       is-glob: 4.0.3
       semver: 7.7.3
@@ -17044,7 +17371,7 @@ snapshots:
       '@typescript-eslint/tsconfig-utils': 8.46.1(typescript@5.9.3)
       '@typescript-eslint/types': 8.46.1
       '@typescript-eslint/visitor-keys': 8.46.1
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       fast-glob: 3.3.3
       is-glob: 4.0.3
       minimatch: 9.0.9
@@ -17060,7 +17387,7 @@ snapshots:
       '@typescript-eslint/tsconfig-utils': 8.57.2(typescript@5.9.3)
       '@typescript-eslint/types': 8.57.2
       '@typescript-eslint/visitor-keys': 8.57.2
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       minimatch: 10.2.5
       semver: 7.7.3
       tinyglobby: 0.2.17
@@ -17148,7 +17475,7 @@ snapshots:
       '@ampproject/remapping': 2.3.0
       '@bcoe/v8-coverage': 1.0.2
       ast-v8-to-istanbul: 0.3.12
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       istanbul-lib-coverage: 3.2.2
       istanbul-lib-report: 3.0.1
       istanbul-lib-source-maps: 5.0.6
@@ -17628,7 +17955,7 @@ snapshots:
 
   agent-base@6.0.2:
     dependencies:
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
     transitivePeerDependencies:
       - supports-color
 
@@ -18041,6 +18368,8 @@ snapshots:
 
   bcryptjs@2.4.3: {}
 
+  before-after-hook@4.0.0: {}
+
   better-opn@3.0.2:
     dependencies:
       open: 8.4.2
@@ -18104,7 +18433,7 @@ snapshots:
     dependencies:
       bytes: 3.1.2
       content-type: 2.0.0
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       http-errors: 2.0.1
       iconv-lite: 0.7.2
       on-finished: 2.4.1
@@ -18115,6 +18444,8 @@ snapshots:
       - supports-color
 
   boolbase@1.0.0: {}
+
+  bottleneck@2.19.5: {}
 
   bowser@2.14.1: {}
 
@@ -19199,7 +19530,7 @@ snapshots:
 
   esbuild-register@3.6.0(esbuild@0.25.10):
     dependencies:
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       esbuild: 0.25.10
     transitivePeerDependencies:
       - supports-color
@@ -19452,7 +19783,7 @@ snapshots:
       ajv: 6.15.0
       chalk: 4.1.2
       cross-spawn: 7.0.6
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       escape-string-regexp: 4.0.0
       eslint-scope: 8.4.0
       eslint-visitor-keys: 4.2.1
@@ -19661,7 +19992,7 @@ snapshots:
       content-type: 1.0.5
       cookie: 0.7.2
       cookie-signature: 1.2.2
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       encodeurl: 2.0.0
       escape-html: 1.0.3
       etag: 1.8.1
@@ -19860,7 +20191,7 @@ snapshots:
 
   finalhandler@2.1.1:
     dependencies:
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       encodeurl: 2.0.0
       escape-html: 1.0.3
       on-finished: 2.4.1
@@ -19919,7 +20250,7 @@ snapshots:
 
   follow-redirects@1.16.0(debug@4.4.3):
     optionalDependencies:
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
 
   for-each@0.3.5:
     dependencies:
@@ -20022,7 +20353,7 @@ snapshots:
   gaxios@6.7.1(encoding@0.1.13):
     dependencies:
       extend: 3.0.2
-      https-proxy-agent: 7.0.6
+      https-proxy-agent: 7.0.6(supports-color@10.2.2)
       is-stream: 2.0.1
       node-fetch: 2.7.0(encoding@0.1.13)
       uuid: 9.0.1
@@ -20379,14 +20710,14 @@ snapshots:
     dependencies:
       '@tootallnate/once': 2.0.1
       agent-base: 6.0.2
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
     transitivePeerDependencies:
       - supports-color
 
   http-proxy-agent@7.0.2:
     dependencies:
       agent-base: 7.1.4
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
     transitivePeerDependencies:
       - supports-color
 
@@ -20406,14 +20737,7 @@ snapshots:
   https-proxy-agent@5.0.1:
     dependencies:
       agent-base: 6.0.2
-      debug: 4.4.3(supports-color@8.1.1)
-    transitivePeerDependencies:
-      - supports-color
-
-  https-proxy-agent@7.0.6:
-    dependencies:
-      agent-base: 7.1.4
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
     transitivePeerDependencies:
       - supports-color
 
@@ -20524,7 +20848,7 @@ snapshots:
     dependencies:
       '@ioredis/commands': 1.4.0
       cluster-key-slot: 1.1.2
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       denque: 2.1.0
       lodash.defaults: 4.2.0
       lodash.isarguments: 3.1.0
@@ -20776,7 +21100,7 @@ snapshots:
 
   istanbul-lib-source-maps@4.0.1:
     dependencies:
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       istanbul-lib-coverage: 3.2.2
       source-map: 0.6.1
     transitivePeerDependencies:
@@ -20785,7 +21109,7 @@ snapshots:
   istanbul-lib-source-maps@5.0.6:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       istanbul-lib-coverage: 3.2.2
     transitivePeerDependencies:
       - supports-color
@@ -21189,7 +21513,7 @@ snapshots:
       decimal.js: 10.6.0
       html-encoding-sniffer: 4.0.0
       http-proxy-agent: 7.0.2
-      https-proxy-agent: 7.0.6
+      https-proxy-agent: 7.0.6(supports-color@10.2.2)
       is-potential-custom-element-name: 1.0.1
       nwsapi: 2.2.24
       parse5: 7.3.0
@@ -21232,6 +21556,8 @@ snapshots:
   json-stable-stringify-without-jsonify@1.0.1: {}
 
   json-stringify-safe@5.0.1: {}
+
+  json-with-bigint@3.5.10: {}
 
   json5@1.0.2:
     dependencies:
@@ -21899,7 +22225,7 @@ snapshots:
   micromark@4.0.2:
     dependencies:
       '@types/debug': 4.1.13
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       decode-named-character-reference: 1.3.0
       devlop: 1.1.0
       micromark-core-commonmark: 2.0.3
@@ -22325,6 +22651,20 @@ snapshots:
   oblivious-set@1.4.0: {}
 
   obug@2.1.3: {}
+
+  octokit@5.0.5:
+    dependencies:
+      '@octokit/app': 16.1.4
+      '@octokit/core': 7.0.7
+      '@octokit/oauth-app': 8.0.4
+      '@octokit/plugin-paginate-graphql': 6.0.0(@octokit/core@7.0.7)
+      '@octokit/plugin-paginate-rest': 14.0.0(@octokit/core@7.0.7)
+      '@octokit/plugin-rest-endpoint-methods': 17.0.0(@octokit/core@7.0.7)
+      '@octokit/plugin-retry': 8.1.1(@octokit/core@7.0.7)
+      '@octokit/plugin-throttling': 11.0.5(@octokit/core@7.0.7)
+      '@octokit/request-error': 7.1.1
+      '@octokit/types': 16.0.0
+      '@octokit/webhooks': 14.2.0
 
   on-exit-leak-free@2.1.2: {}
 
@@ -23287,7 +23627,7 @@ snapshots:
 
   require-in-the-middle@7.5.2:
     dependencies:
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       module-details-from-path: 1.0.4
       resolve: 1.22.12
     transitivePeerDependencies:
@@ -23462,7 +23802,7 @@ snapshots:
 
   router@2.2.0:
     dependencies:
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       depd: 2.0.0
       is-promise: 4.0.0
       parseurl: 1.3.3
@@ -23685,7 +24025,7 @@ snapshots:
 
   send@1.2.1:
     dependencies:
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       encodeurl: 2.0.0
       escape-html: 1.0.3
       etag: 1.8.1
@@ -23836,7 +24176,7 @@ snapshots:
     dependencies:
       '@hapi/hoek': 11.0.7
       '@hapi/wreck': 18.1.2
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       joi: 17.13.4
     transitivePeerDependencies:
       - supports-color
@@ -23936,7 +24276,7 @@ snapshots:
   socks-proxy-agent@8.0.5:
     dependencies:
       agent-base: 7.1.4
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       socks: 2.8.9
     transitivePeerDependencies:
       - supports-color
@@ -24033,7 +24373,7 @@ snapshots:
       arg: 5.0.2
       bluebird: 3.7.2
       check-more-types: 2.24.0
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       execa: 5.1.1
       lazy-ass: 1.6.0
       ps-tree: 1.2.0
@@ -24244,7 +24584,7 @@ snapshots:
     dependencies:
       component-emitter: 1.3.1
       cookiejar: 2.1.4
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       fast-safe-stringify: 2.1.1
       form-data: 4.0.6
       formidable: 3.5.4
@@ -24634,7 +24974,7 @@ snapshots:
       app-root-path: 3.1.0
       buffer: 6.0.3
       dayjs: 1.11.21
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       dedent: 1.7.2
       dotenv: 16.6.1
       glob: 10.5.0
@@ -24736,6 +25076,10 @@ snapshots:
       unist-util-is: 6.0.1
       unist-util-visit-parents: 6.0.2
 
+  universal-github-app-jwt@2.2.2: {}
+
+  universal-user-agent@7.0.3: {}
+
   universalify@0.1.2: {}
 
   universalify@2.0.1: {}
@@ -24828,7 +25172,7 @@ snapshots:
   vite-node@3.2.4(@types/node@24.9.1)(lightningcss@1.32.0)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.44.0)(tsx@4.20.6):
     dependencies:
       cac: 6.7.14
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       es-module-lexer: 1.7.0
       pathe: 2.0.3
       vite: 7.3.6(@types/node@24.9.1)(lightningcss@1.32.0)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.44.0)(tsx@4.20.6)
@@ -24941,7 +25285,7 @@ snapshots:
       '@vitest/spy': 3.2.4
       '@vitest/utils': 3.2.4
       chai: 5.3.3
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       expect-type: 1.4.0
       magic-string: 0.30.21
       pathe: 2.0.3
@@ -25068,7 +25412,7 @@ snapshots:
 
   vue-component-type-helpers@3.1.1: {}
 
-  vue-component-type-helpers@3.3.5: {}
+  vue-component-type-helpers@3.3.9: {}
 
   vue-demi@0.14.10(vue@3.5.22(typescript@5.9.3)):
     dependencies:
@@ -25092,7 +25436,7 @@ snapshots:
 
   vue-eslint-parser@10.2.0(eslint@9.37.0):
     dependencies:
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       eslint: 9.37.0
       eslint-scope: 8.4.0
       eslint-visitor-keys: 4.2.1
@@ -25160,7 +25504,7 @@ snapshots:
     dependencies:
       asn1.js: 5.4.1
       http_ece: 1.2.0
-      https-proxy-agent: 7.0.6
+      https-proxy-agent: 7.0.6(supports-color@10.2.2)
       jws: 4.0.1
       minimist: 1.2.8
     transitivePeerDependencies:
