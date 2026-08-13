@@ -1,10 +1,13 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "https://github.com/bettaku/engawa/blob/main/.github/labels-schema.json",
+	"type": "object",
 	"additionalProperties": false,
 	"definitions": {
 		"label": {
 			"type": "object",
+			"required": ["name", "color"],
+			"additionalProperties": false,
 			"properties": {
 				"name": {
 					"type": "string",
@@ -22,6 +25,7 @@
 			}
 		}
 	},
+	"required": ["labels"],
 	"properties": {
 		"labels": {
 			"type": "array",
