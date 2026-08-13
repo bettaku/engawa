@@ -8,6 +8,16 @@ labelerではない。
 ### 事前準備
 - `.github/labels.yml`を用意しておくこと
 
+### `.github/labels.yml`のスキーマ
+参照: [`.github/labels-schema.json`](../../.github/labels-schema.json)
+
+```yaml
+labels: # required
+	- name: example # required. ラベル名
+		color: d73a4a # required. hexで6桁のカラーコード
+		description: This is an example label. # not required, ラベルの説明
+```
+
 ### GitHub Actionsから
 ```yaml
 on:
