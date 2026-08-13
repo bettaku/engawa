@@ -47,10 +47,10 @@ async function updateLabels() {
 		},
 	);
 
-	const existingLabelNames = existingLabels.map((label) => label.name);
+	const existingLabelNames = existingLabels.map((label) => label.name.toLowerCase());
 
 	for (const label of config.labels) {
-		if (!existingLabelNames.includes(label.name)) {
+		if (!existingLabelNames.includes(label.name.toLowerCase())) {
 			await github.rest.issues.createLabel({
 				owner,
 				repo,
@@ -59,13 +59,27 @@ async function updateLabels() {
 				description: label.description,
 			});
 		} else {
-			await github.rest.issues.updateLabel({
-				owner,
-				repo,
-				name: label.name,
-				color: label.color,
-				description: label.description,
-			});
+			try {
+				await github.rest.issues.updateLabel({
+					owner,
+					repo,
+					name: label.name,
+					color: label.color,
+					description: label.description,
+				});
+			} catch (error: any) {
+				if (error?.response?.data?.errors?.some((e: any) => e.code === "already_exists")) {
+					await github.rest.issues.updateLabel({
+						owner,
+						repo,
+						name: label.name,
+						color: label.color,
+						description: label.description,
+					});
+					continue;
+				}
+				throw error;
+			}
 		}
 	}
 }
