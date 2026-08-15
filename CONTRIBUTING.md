@@ -13,9 +13,11 @@ See [ROADMAP.md](./ROADMAP.md)
 ## Issues
 Before creating an issue, please check the following:
 - To avoid duplication, please search for similar issues before creating a new issue.
+- Use the Bug Report form for reproducible problems and the Feature Request form for user-facing improvements. The Development Task form is intended for maintainers to track internal engineering work.
 - Do not use Issues to ask questions or troubleshooting.
-	- Issues should only be used to feature requests, suggestions, and bug tracking.
+	- Issues should only be used for bug tracking, feature proposals, and maintainer development tasks.
 	- Please ask questions or troubleshooting in [GitHub Discussions](https://github.com/kokonect-link/cherrypick/discussions) or [Discord](https://discord.gg/V8qghB28Aj).
+- Do not report security vulnerabilities in a public Issue. Follow the private reporting instructions in our [Security Policy](./SECURITY.md).
 
 > [!WARNING]
 > Do not close issues that are about to be resolved. It should remain open until a commit that actually resolves it is merged.

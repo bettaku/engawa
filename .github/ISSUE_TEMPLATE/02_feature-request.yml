@@ -1,22 +1,64 @@
-name: ✨ Feature Request
-description: Suggest an idea for this project
+name: ✨ Feature request / 機能提案
+description: Propose an improvement or new capability / 改善案や新しい機能を提案する
 labels: ["Feature"]
 
 body:
-  - type: textarea
+  - type: markdown
     attributes:
-      label: Summary
-      description: Tell us what the suggestion is
-    validations:
-      required: true
-  - type: textarea
-    attributes:
-      label: Purpose
-      description: Describe the specific problem or need you think this feature will solve, and who it will help.
-    validations:
-      required: true
+      value: |
+        Thank you for suggesting an improvement. You may write the proposal in any language.
+        改善のご提案ありがとうございます。提案は任意の言語で記入できます。
+
+        Use this form for user-facing features and enhancements. For questions or troubleshooting, use [GitHub Discussions](https://github.com/kokonect-link/cherrypick/discussions) or [Discord](https://discord.gg/V8qghB28Aj).
+        このフォームは、利用者向けの機能や改善に使用してください。質問やトラブルシューティングは[GitHub Discussions](https://github.com/kokonect-link/cherrypick/discussions)または[Discord](https://discord.gg/V8qghB28Aj)を利用してください。
+
   - type: checkboxes
+    id: preflight
     attributes:
-      label: Do you want to implement this feature yourself?
+      label: Pre-flight checklist / 事前確認
       options:
-        - label: Yes, I will implement this by myself and send a pull request
+        - label: I searched for existing issues and discussions. / 既存のIssueとDiscussionを検索しました。
+          required: true
+        - label: This is a feature proposal, not a general support request. / 一般的なサポート依頼ではなく、機能提案です。
+          required: true
+        - label: I removed passwords, access tokens, email addresses, and other sensitive information. / パスワード、アクセストークン、メールアドレスなどの機密情報を除去しました。
+          required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and users affected / 解決したい問題と対象ユーザー
+      description: Describe the problem or need, who experiences it, and why it matters. / どのような問題やニーズがあり、誰が困っているか、なぜ解決する価値があるかを記載してください。
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-behavior
+    attributes:
+      label: Proposed behavior / 提案する動作
+      description: Describe how CherryPick should behave from the user's perspective. Technical implementation details are optional. / 利用者の視点から、CherryPickがどのように動作すべきかを記載してください。技術的な実装詳細は任意です。
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Current workarounds and alternatives / 現在の回避策と代替案
+      description: Describe any current workaround or alternative solution you considered. / 現在使っている回避策や、検討した代替案があれば記載してください。
+    validations:
+      required: false
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Examples and mockups / 具体例・モックアップ
+      description: Add examples, screenshots, mockups, or links that clarify the proposal. Remove sensitive information first. / 提案を明確にする具体例、スクリーンショット、モックアップ、リンクがあれば追加してください。事前に機密情報を除去してください。
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: implementation
+    attributes:
+      label: Implementation / 実装
+      options:
+        - label: I would like to implement this feature and submit a pull request. / この機能を実装し、Pull Requestを送信したいです。
