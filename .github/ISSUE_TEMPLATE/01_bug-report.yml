@@ -1,97 +1,150 @@
-name: 🐛 Bug Report
-description: Create a report to help us improve
-labels: ["bug"]
+name: 🐛 Bug report / バグ報告
+description: Report a reproducible problem in CherryPick / CherryPickで再現する問題を報告する
+labels: ["Bug"]
 
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting!
-        First, in order to avoid duplicate Issues, please search to see if the problem you found has already been reported.
-        Also, If you are NOT owner/admin of server, PLEASE DONT REPORT SERVER SPECIFIC ISSUES TO HERE! (e.g. feature XXX is not working in cherrypick.example) Please try with another CherryPick servers, and if your issue is only reproducible with specific server, contact your server's owner/admin first.
+        Thank you for reporting a bug. You may write the report in any language.
+        バグ報告ありがとうございます。報告は任意の言語で記入できます。
+
+        Before submitting, search for existing issues and confirm the problem on the latest stable release when possible. If you cannot test the latest stable release, explain why in the version field.
+        送信前に既存のIssueを検索し、可能であれば最新の安定版で再現することを確認してください。最新安定版で確認できない場合は、バージョン欄に理由を記載してください。
+
+        For questions or troubleshooting, use [GitHub Discussions](https://github.com/kokonect-link/cherrypick/discussions) or [Discord](https://discord.gg/V8qghB28Aj). Report security vulnerabilities according to the [Security Policy](https://github.com/kokonect-link/cherrypick/security/policy), not in a public issue.
+        質問やトラブルシューティングは[GitHub Discussions](https://github.com/kokonect-link/cherrypick/discussions)または[Discord](https://discord.gg/V8qghB28Aj)を利用してください。セキュリティ上の脆弱性は公開Issueに書かず、[Security Policy](https://github.com/kokonect-link/cherrypick/security/policy)に従って報告してください。
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-flight checklist / 事前確認
+      options:
+        - label: I searched for existing issues. / 既存のIssueを検索しました。
+          required: true
+        - label: This is not a general support request or a security vulnerability report. / 一般的なサポート依頼や脆弱性報告ではありません。
+          required: true
+        - label: I removed passwords, access tokens, email addresses, and other sensitive information. / パスワード、アクセストークン、メールアドレスなどの機密情報を除去しました。
+          required: true
+        - label: If the problem occurs only on a specific server and I am not its administrator, I contacted the server administrator first. / 特定サーバーのみで発生し、私がその管理者でない場合は、先にサーバー管理者へ連絡しました。
+          required: true
 
   - type: textarea
+    id: summary
     attributes:
-      label: 💡 Summary
-      description: Tell us what the bug is
+      label: Summary / 概要
+      description: Briefly describe the problem. / 発生している問題を簡潔に説明してください。
+    validations:
+      required: true
+
+  - type: dropdown
+    id: affected-area
+    attributes:
+      label: Affected area / 発生箇所
+      description: Select the area most closely related to the problem. / 問題と最も関係の深い箇所を選択してください。
+      options:
+        - Frontend / フロントエンド
+        - Backend or API / バックエンドまたはAPI
+        - Federation or ActivityPub / 連合またはActivityPub
+        - Installation or upgrade / インストールまたはアップグレード
+        - Other / その他
+    validations:
+      required: true
+
+  - type: input
+    id: cherrypick-version
+    attributes:
+      label: CherryPick version / CherryPickバージョン
+      description: Provide an exact version or commit hash; do not write "latest". If you cannot test the latest stable release, explain why. / 「latest」ではなく、正確なバージョンまたはコミットハッシュを記載してください。最新安定版で確認できない場合は理由も記載してください。
+      placeholder: "Example / 例: 4.x.x or abc1234"
     validations:
       required: true
 
   - type: textarea
+    id: reproduction-steps
     attributes:
-      label: 🥰 Expected Behavior
-      description: Tell us what should happen
-    validations:
-      required: true
-
-  - type: textarea
-    attributes:
-      label: 🤬 Actual Behavior
-      description: |
-        Tell us what happens instead of the expected behavior.
-        Please include errors from the developer console and/or server log files if you have access to them.
-    validations:
-      required: true
-
-  - type: textarea
-    attributes:
-      label: 📝 Steps to Reproduce
+      label: Steps to reproduce / 再現手順
+      description: Provide the smallest reliable sequence of steps. If the problem is intermittent, describe its frequency and conditions. / 可能な限り小さく確実な再現手順を記載してください。断続的な問題の場合は、頻度と条件を記載してください。
       placeholder: |
         1.
         2.
         3.
     validations:
-      required: false
+      required: true
 
   - type: textarea
+    id: expected-behavior
     attributes:
-      label: 💻 Frontend Environment
-      description: |
-        Tell us where on the platform it happens
-        DO NOT WRITE "latest". Please provide the specific version.
+      label: Expected behavior / 期待する動作
+      description: Describe what you expected to happen. / どのような動作を期待していたか記載してください。
+    validations:
+      required: true
 
-        Examples:
-          * Model and OS of the device(s): MacBook Pro (14inch, 2021), macOS Ventura 13.4
-          * Browser: Chrome 113.0.5672.126
-          * Server URL: cherrypick.example.com
-          * CherryPick: 4.x.x (Misskey: 2025.x.x)
-      value: |
-        * Model and OS of the device(s):
-        * Browser:
-        * Server URL:
-        * CherryPick:
-      render: markdown
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual behavior / 実際の動作
+      description: Describe what happened instead. / 実際に発生した動作を記載してください。
+    validations:
+      required: true
+
+  - type: dropdown
+    id: regression
+    attributes:
+      label: Regression / リグレッション
+      description: Did this work in an earlier CherryPick version? / 以前のCherryPickバージョンでは動作していましたか？
+      options:
+        - Yes / はい
+        - No / いいえ
+        - Unknown / 不明
+    validations:
+      required: false
+
+  - type: input
+    id: last-working-version
+    attributes:
+      label: Last working version / 最後に動作したバージョン
+      description: If this is a regression, provide the last known working version or commit. / リグレッションの場合、最後に動作したバージョンまたはコミットを記載してください。
     validations:
       required: false
 
   - type: textarea
+    id: frontend-environment
     attributes:
-      label: 🛰 Backend Environment (for server admin)
-      description: |
-        Tell us where on the platform it happens
-        DO NOT WRITE "latest". Please provide the specific version.
-        If you are using a managed service, put that after the version.
-
-        Examples:
-          * Installation Method or Hosting Service: docker compose, k8s/docker, systemd, "CherryPick install shell script", development environment
-          * CherryPick: 4.x.x (Misskey: 2025.x.x)
-          * Node: 20.x.x
-          * PostgreSQL: 15.x.x
-          * Redis: 7.x.x
-          * OS and Architecture: Ubuntu 24.04.2 LTS aarch64
+      label: Frontend environment / フロントエンド環境
+      description: Complete the relevant fields. The server URL is public; omit it if disclosure is inappropriate. / 関係する項目を記載してください。サーバーURLは公開されるため、開示が適切でない場合は省略してください。
       value: |
-        * Installation Method or Hosting Service:
-        * CherryPick:
-        * Node:
-        * PostgreSQL:
-        * Redis:
-        * OS and Architecture:
-      render: markdown
+        - Device and OS / 端末とOS:
+        - Browser / ブラウザ:
+        - Server URL / サーバーURL:
+    validations:
+      required: false
+
+  - type: textarea
+    id: backend-environment
+    attributes:
+      label: Backend environment / バックエンド環境
+      description: For server administrators. Provide exact versions where relevant. / サーバー管理者向けです。関係する正確なバージョンを記載してください。
+      value: |
+        - Installation method or hosting service / インストール方法またはホスティングサービス:
+        - Node.js:
+        - PostgreSQL:
+        - Redis:
+        - OS and architecture / OSとアーキテクチャ:
+    validations:
+      required: false
+
+  - type: textarea
+    id: supporting-material
+    attributes:
+      label: Logs and supporting material / ログ・参考資料
+      description: Add sanitized logs, screenshots, videos, or links to a minimal reproduction. Do not include passwords, access tokens, email addresses, or other sensitive information. / 機密情報を除去したログ、スクリーンショット、動画、最小再現へのリンクを追加してください。パスワード、アクセストークン、メールアドレスなどは含めないでください。
     validations:
       required: false
 
   - type: checkboxes
+    id: implementation
     attributes:
-      label: Do you want to address this bug yourself?
+      label: Implementation / 実装
       options:
-        - label: Yes, I will patch the bug myself and send a pull request
+        - label: I would like to patch this bug and submit a pull request. / このバグを修正し、Pull Requestを送信したいです。
