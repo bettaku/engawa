@@ -22,12 +22,12 @@ import { defaultIdlingRenderScheduler } from '@/utility/idle-render.js';
 const props = withDefaults(defineProps<{
 	showS?: boolean;
 	showMs?: boolean;
-	offset?: number;
+	tz?: string;
 	now?: () => Date;
 }>(), {
 	showS: true,
 	showMs: false,
-	offset: 0 - new Date().getTimezoneOffset(),
+	tz: 'UTC',
 	now: () => new Date(),
 });
 
@@ -48,12 +48,20 @@ watch(showColon, (v) => {
 
 const tick = (): void => {
 	const now = props.now();
-	now.setMinutes(now.getMinutes() + now.getTimezoneOffset() + props.offset);
-	hh.value = now.getHours().toString().padStart(2, '0');
-	mm.value = now.getMinutes().toString().padStart(2, '0');
-	ss.value = now.getSeconds().toString().padStart(2, '0');
-	ms.value = Math.floor(now.getMilliseconds() / 10).toString().padStart(2, '0');
-	if (now.getSeconds() !== prevSec) showColon.value = true;
+	const formatter = new Intl.DateTimeFormat('en-US', {
+		timeZone: props.tz,
+		hour: '2-digit',
+		minute: '2-digit',
+		second: props.showS ? '2-digit' : undefined,
+		hour12: false,
+	});
+	hh.value = formatter.formatToParts(now).find((part) => part.type === 'hour')?.value ?? '';
+	mm.value = formatter.formatToParts(now).find((part) => part.type === 'minute')?.value ?? '';
+	ss.value = props.showS ? formatter.formatToParts(now).find((part) => part.type === 'second')?.value ?? '' : '';
+	ms.value = props.showMs ? String(now.getMilliseconds()).padStart(3, '0') : '';
+	if (prevSec !== null && prevSec !== now.getSeconds()) {
+		showColon.value = true;
+	}
 	prevSec = now.getSeconds();
 };
 
