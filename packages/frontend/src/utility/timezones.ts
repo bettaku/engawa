@@ -3,52 +3,28 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-export const timezones = [{
-	name: 'UTC',
-	abbrev: 'UTC',
-	offset: 0,
-}, {
-	name: 'Europe/Berlin',
-	abbrev: 'CET',
-	offset: 60,
-}, {
-	name: 'Asia/Tokyo',
-	abbrev: 'JST',
-	offset: 540,
-}, {
-	name: 'Asia/Seoul',
-	abbrev: 'KST',
-	offset: 540,
-}, {
-	name: 'Asia/Shanghai',
-	abbrev: 'CST',
-	offset: 480,
-}, {
-	name: 'Australia/Sydney',
-	abbrev: 'AEST',
-	offset: 600,
-}, {
-	name: 'Australia/Darwin',
-	abbrev: 'ACST',
-	offset: 570,
-}, {
-	name: 'Australia/Perth',
-	abbrev: 'AWST',
-	offset: 480,
-}, {
-	name: 'America/New_York',
-	abbrev: 'EST',
-	offset: -300,
-}, {
-	name: 'America/Mexico_City',
-	abbrev: 'CST',
-	offset: -360,
-}, {
-	name: 'America/Phoenix',
-	abbrev: 'MST',
-	offset: -420,
-}, {
-	name: 'America/Los_Angeles',
-	abbrev: 'PST',
-	offset: -480,
-}];
+import { miLocalStorage } from '@/local-storage.js';
+
+export const timezones = () => {
+	const locale = miLocalStorage.getItem('lang') ?? navigator.language;
+	const formatter = new Intl.DateTimeFormat(locale, {
+		timeZoneName: 'short',
+	});
+
+	// debug
+	console.log('locale', locale);
+
+	const timezone = Intl.supportedValuesOf('timeZone').map((tz) => {
+		const date = new Date();
+		const parts = formatter.formatToParts(date);
+		const abbrev = parts.find((p) => p.type === 'timeZoneName')?.value ?? '';
+
+		console.log('tz', tz, 'abbrev', abbrev);
+
+		return {
+			name: tz,
+			abbrev,
+		};
+	});
+	return timezone.sort((a, b) => a.name.localeCompare(b.name));
+};
