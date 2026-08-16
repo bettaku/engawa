@@ -71,9 +71,6 @@ const timeZone = computed(() => (
 		: timezones.apply(null).find((tz) => tz.name.toLowerCase() === widgetProps.timezone)?.name ?? 'UTC'
 ));
 
-console.log('timeZone', timeZone.value);
-
-// PLAN:tzAbbrev から tzNameに改名
 const tzAbbrev = computed(() => (
 	widgetProps.timezone === null
 		? timeZone.value.toString()
@@ -82,24 +79,22 @@ const tzAbbrev = computed(() => (
 
 const tzOffset = computed(() => (
 	widgetProps.timezone === null
-		? new Intl.DateTimeFormat('en-US', { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, timeZoneName: 'short' })
+		? new Intl.DateTimeFormat('en-US', { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, timeZoneName: 'longOffset' })
 			.formatToParts(new Date())
 			.find((part) => part.type === 'timeZoneName')?.value
-			.replace(/UTC/i, '')
 			.trim() ?? 0
-		: new Intl.DateTimeFormat('en-US', { timeZone: timeZone.value, timeZoneName: 'short' })
+		: new Intl.DateTimeFormat('en-US', { timeZone: timeZone.value, timeZoneName: 'longOffset' })
 			.formatToParts(new Date())
 			.find((part) => part.type === 'timeZoneName')?.value
-			.replace(/UTC/i, '')
 			.trim() ?? 0
 ));
 
 console.log('tzOffset', tzOffset.value);
 
 const tzOffsetLabel = computed(() => {
-	const offset = tzOffset.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace(/\.00$/, '').replace(/GMT/, '');
+	const offset = tzOffset.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace(/\.00$/, '').replace(/^GMT/, 'UTC');
 	console.log('tzOffsetLabel', offset);
-	return offset.startsWith('+') || offset.startsWith('-') ? `UTC${offset}` : `UTC+${offset}`;
+	return `${offset}`;
 });
 
 defineExpose<WidgetComponentExpose>({
