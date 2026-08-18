@@ -7,6 +7,5 @@ CI用のpackage置き場
 | 名前 | 役割 |
 |-----|------|
 | [`label-manager`](./label-manager) | Issueのラベル管理 |
+| [`changelog-cheker`](./changelog-checker/) | CHANGELOG_ENGAWA.mdに変更があるか確認 |
  
-## GitHub Actionsからの呼び出し方
-

@@ -9,6 +9,7 @@ packages:
   - packages/cherrypick-js
   - packages/cherrypick-js/generator
   - packages-internal/label-manager
+  - packages-internal/changelog-checker
 onlyBuiltDependencies:
   - '@biomejs/biome'
   - '@nestjs/core'

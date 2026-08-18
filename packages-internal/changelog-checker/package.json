@@ -1,0 +1,14 @@
+{
+	"name": "changelog-checker",
+	"private": "true",
+	"type": "module",
+	"scripts": {
+		"lint": "biome lint",
+		"check": "tsx src/index.ts"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.3.1",
+		"@types/node": "24.9.1",
+		"tsx": "4.20.6"
+	}
+}

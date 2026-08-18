@@ -1,3 +1,12 @@
+# changelog-checker
+
+## What
+CHANGELOG_ENGAWA.mdに差分があるかチェックするpackage。
+
+## How to Use
+
+GitHub Actionsから。
+```yaml
 name: Check the description in CHANGELOG_ENGAWA.md
 
 on:
@@ -42,3 +51,8 @@ jobs:
         working-directory: packages-internal/changelog-checker
       - name: Run Checker
         run: pnpm --filter changelog-checker run check
+
+```
+
+## idea
+- 別リポジトリに分離してシングルバイナリにしたい
