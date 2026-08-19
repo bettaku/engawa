@@ -13,8 +13,8 @@ bakes in the dependencies and the build output, so you no longer need to run
 First, generate certificates and configs, then build the shared image and start the servers:
 ```sh
 bash ./setup.sh
-NODE_VERSION=22 docker compose build
-NODE_VERSION=22 docker compose up --scale tester=0
+NODE_VERSION=24 docker compose build
+NODE_VERSION=24 docker compose up --scale tester=0
 ```
 
 > [!NOTE]
@@ -23,10 +23,10 @@ NODE_VERSION=22 docker compose up --scale tester=0
 
 Then you can run all tests by a following command:
 ```sh
-NODE_VERSION=22 docker compose run --no-deps --rm tester
+NODE_VERSION=24 docker compose run --no-deps --rm tester
 ```
 
 For testing a specific file, run a following command:
 ```sh
-NODE_VERSION=22 docker compose run --no-deps --rm tester pnpm -F backend test:fed packages/backend/test-federation/test/user.test.ts
+NODE_VERSION=24 docker compose run --no-deps --rm tester pnpm -F backend test:fed packages/backend/test-federation/test/user.test.ts
 ```

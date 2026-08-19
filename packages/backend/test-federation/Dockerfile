@@ -11,7 +11,7 @@
 #
 # Build context must be the repository root.
 
-ARG NODE_VERSION=24.10.0-bookworm
+ARG NODE_VERSION=24.19.0-bookworm
 
 FROM node:${NODE_VERSION}
 

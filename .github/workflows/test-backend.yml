@@ -29,6 +29,7 @@ jobs:
         node-version-file:
           - .node-version
           - .github/min.node-version
+          - .github/max.node-version
 
     services:
       postgres:
@@ -81,6 +82,7 @@ jobs:
         node-version-file:
           - .node-version
           - .github/min.node-version
+          - .github/max.node-version
 
     services:
       postgres:
@@ -129,6 +131,7 @@ jobs:
         node-version-file:
           - .node-version
           #- .github/min.node-version
+          #- .github/max.node-version
 
     services:
       postgres:
