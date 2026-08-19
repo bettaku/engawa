@@ -4,7 +4,7 @@
 	"private": true,
 	"type": "module",
 	"engines": {
-		"node": "^24.10.0 || ^26.0.0"
+		"node": "^24.15.0 || ^26.0.0"
 	},
 	"scripts": {
 		"start": "node ./built/boot/entry.js",
