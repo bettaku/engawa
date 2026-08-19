@@ -4,7 +4,8 @@
 	"type": "module",
 	"scripts": {
 		"lint": "biome lint",
-		"check": "tsx src/index.ts"
+		"check": "tsx src/index.ts",
+		"test": "tsx --test test/*.test.ts"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.1",
