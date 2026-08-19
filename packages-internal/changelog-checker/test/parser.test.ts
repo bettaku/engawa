@@ -113,6 +113,114 @@ describe('parseChangeLog', () => {
 		assert.deepEqual(releases[0].categories[0].items, ['項目']);
 	});
 
+	it('開始フェンスより短い終了フェンスではフェンスを閉じない', () => {
+		const releases = parse([
+			'## 1.0.0',
+			'### General',
+			'````md',
+			'```',
+			'## 9.9.9',
+			'```',
+			'````',
+			'- 項目',
+		].join('\n'));
+
+		assert.equal(releases.length, 1);
+		assert.deepEqual(releases[0].categories[0].items, ['項目']);
+	});
+
+	it('開始フェンスより長い終了フェンスではフェンスを閉じる', () => {
+		const releases = parse([
+			'## 1.0.0',
+			'### General',
+			'```',
+			'## 9.9.9',
+			'````',
+			'- 項目',
+		].join('\n'));
+
+		assert.equal(releases.length, 1);
+		assert.deepEqual(releases[0].categories[0].items, ['項目']);
+	});
+
+	it('文字種の異なるフェンスではフェンスを閉じない', () => {
+		const releases = parse([
+			'## 1.0.0',
+			'### General',
+			'```',
+			'~~~',
+			'## 9.9.9',
+			'```',
+			'- 項目',
+		].join('\n'));
+
+		assert.equal(releases.length, 1);
+		assert.deepEqual(releases[0].categories[0].items, ['項目']);
+	});
+
+	it('後続に文字のあるフェンスではフェンスを閉じない', () => {
+		const releases = parse([
+			'## 1.0.0',
+			'### General',
+			'```',
+			'## 9.9.9',
+			'``` md',
+			'## 8.8.8',
+			'```',
+			'- 項目',
+		].join('\n'));
+
+		assert.equal(releases.length, 1);
+		assert.deepEqual(releases[0].categories[0].items, ['項目']);
+	});
+
+	it('HTMLコメント内のテンプレートは無視する', () => {
+		const releases = parse([
+			'<!--',
+			'## x.x.x (unreleased)',
+			'',
+			'### General',
+			'- ',
+			'-->',
+			'',
+			'## 1.0.0',
+			'### General',
+			'- 項目',
+		].join('\n'));
+
+		assert.equal(releases.length, 1);
+		assert.equal(releases[0].releaseName, '1.0.0');
+		assert.deepEqual(releases[0].categories[0].items, ['項目']);
+	});
+
+	it('行内で閉じるHTMLコメントだけを取り除く', () => {
+		const releases = parse([
+			'## 1.0.0 <!-- 補足 -->',
+			'### General <!-- 補足 -->',
+			'- 項目 <!-- 補足 -->',
+			'<!-- - コメントアウトされた項目 -->',
+		].join('\n'));
+
+		assert.equal(releases.length, 1);
+		assert.equal(releases[0].releaseName, '1.0.0');
+		assert.equal(releases[0].categories[0].categoryName, 'General');
+		assert.deepEqual(releases[0].categories[0].items, ['項目']);
+	});
+
+	it('コードフェンス内のHTMLコメント開始はコメントとして扱わない', () => {
+		const releases = parse([
+			'## 1.0.0',
+			'### General',
+			'```',
+			'<!--',
+			'```',
+			'- 項目',
+		].join('\n'));
+
+		assert.equal(releases.length, 1);
+		assert.deepEqual(releases[0].categories[0].items, ['項目']);
+	});
+
 	it('カテゴリの外にある項目は無視する', () => {
 		const releases = parse([
 			'- リリース見出しより前の項目',

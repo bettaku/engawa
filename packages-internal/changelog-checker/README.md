@@ -1,18 +1,18 @@
 # changelog-checker
 
 ## What
-CHANGELOG_ENGAWA.mdに差分があるかチェックするpackage。
+CHANGELOG_engawa.mdに差分があるかチェックするpackage。
 
 ## How to Use
 
 GitHub Actionsから。
 ```yaml
-name: Check the description in CHANGELOG_ENGAWA.md
+name: Check the description in CHANGELOG_engawa.md
 
 on:
   pull_request:
     branches:
-      - master
+      - main
       - develop
 
 jobs:
@@ -39,15 +39,15 @@ jobs:
           cp -r .git _base/.git
           cd _base
           git fetch --depth 1 origin ${{ github.base_ref }}
-          git checkout origin/${{ github.base_ref }} CHANGELOG_ENGAWA.md
+          git checkout origin/${{ github.base_ref }} CHANGELOG_engawa.md
 
-      - name: Copy to Checker directory for CHANGELOG_ENGAWA-base.md
-        run: cp _base/CHANGELOG_ENGAWA.md packages-internal/changelog-checker/CHANGELOG_ENGAWA-base.md
-      - name: Copy to Checker directory for CHANGELOG_ENGAWA-head.md
-        run: cp CHANGELOG_ENGAWA.md packages-internal/changelog-checker/CHANGELOG_ENGAWA-head.md
+      - name: Copy to Checker directory for CHANGELOG_engawa-base.md
+        run: cp _base/CHANGELOG_engawa.md packages-internal/changelog-checker/CHANGELOG_engawa-base.md
+      - name: Copy to Checker directory for CHANGELOG_engawa-head.md
+        run: cp CHANGELOG_engawa.md packages-internal/changelog-checker/CHANGELOG_engawa-head.md
       - name: diff
         continue-on-error: true
-        run: diff -u CHANGELOG_ENGAWA-base.md CHANGELOG_ENGAWA-head.md
+        run: diff -u CHANGELOG_engawa-base.md CHANGELOG_engawa-head.md
         working-directory: packages-internal/changelog-checker
       - name: Run Checker
         run: pnpm --filter changelog-checker run check

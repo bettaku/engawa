@@ -17,13 +17,13 @@ function abort(message?: string) {
 }
 
 function main() {
-	if (!fs.existsSync('./CHANGELOG_ENGAWA-base.md') || !fs.existsSync('./CHANGELOG_ENGAWA-head.md')) {
-		console.error('CHANGELOG_ENGAWA-base.md or CHANGELOG_ENGAWA-head.md is missing.');
+	if (!fs.existsSync('./CHANGELOG_engawa-base.md') || !fs.existsSync('./CHANGELOG_engawa-head.md')) {
+		console.error('CHANGELOG_engawa-base.md or CHANGELOG_engawa-head.md is missing.');
 		return;
 	}
 
-	const base = parseChangeLog('./CHANGELOG_ENGAWA-base.md');
-	const head = parseChangeLog('./CHANGELOG_ENGAWA-head.md');
+	const base = parseChangeLog('./CHANGELOG_engawa-base.md');
+	const head = parseChangeLog('./CHANGELOG_engawa-head.md');
 
 	const result = (base.length < head.length)
 		? checkNewRelease(base, head)

@@ -4,7 +4,7 @@
 	"type": "module",
 	"scripts": {
 		"lint": "biome lint",
-		"check": "tsx src/index.ts",
+		"check": "tsx src/main.ts",
 		"test": "tsx --test test/*.test.ts"
 	},
 	"devDependencies": {
