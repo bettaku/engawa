@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import * as process from 'process';
-import * as fs from 'fs';
-import { parseChangeLog } from './parser.js';
+import * as process from 'node:process';
+import * as fs from 'node:fs';
 import { checkNewRelease, checkNewTopic } from './checker.js';
+import { parseChangeLog } from './parser.js';
 
 function abort(message?: string) {
 	if (message) {
@@ -17,13 +17,13 @@ function abort(message?: string) {
 }
 
 function main() {
-	if (!fs.existsSync('./CHANGELOG_CHERRYPICK-base.md') || !fs.existsSync('./CHANGELOG_CHERRYPICK-head.md')) {
-		console.error('CHANGELOG_CHERRYPICK-base.md or CHANGELOG_CHERRYPICK-head.md is missing.');
+	if (!fs.existsSync('./CHANGELOG_engawa-base.md') || !fs.existsSync('./CHANGELOG_engawa-head.md')) {
+		console.error('CHANGELOG_engawa-base.md or CHANGELOG_engawa-head.md is missing.');
 		return;
 	}
 
-	const base = parseChangeLog('./CHANGELOG_CHERRYPICK-base.md');
-	const head = parseChangeLog('./CHANGELOG_CHERRYPICK-head.md');
+	const base = parseChangeLog('./CHANGELOG_engawa-base.md');
+	const head = parseChangeLog('./CHANGELOG_engawa-head.md');
 
 	const result = (base.length < head.length)
 		? checkNewRelease(base, head)

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { Release } from './parser.js';
+import type { Release } from './parser.js';
 
 export class Result {
 	public readonly success: boolean;
@@ -24,7 +24,7 @@ export class Result {
 }
 
 /**
- * develop -> masterまたはrelease -> masterを想定したパターン。
+ * develop -> mainまたはrelease -> mainを想定したパターン。
  * base側の先頭とhead側で追加された分のリリースより1つ前のバージョンが等価であるかチェックする。
  */
 export function checkNewRelease(base: Release[], head: Release[]): Result {
@@ -44,7 +44,7 @@ export function checkNewRelease(base: Release[], head: Release[]): Result {
 }
 
 /**
- * topic -> developまたはtopic -> masterを想定したパターン。
+ * topic -> developまたはtopic -> mainを想定したパターン。
  * head側の最新リリース配下に書き加えられているかをチェックする。
  */
 export function checkNewTopic(base: Release[], head: Release[]): Result {
