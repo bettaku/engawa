@@ -18,14 +18,14 @@ describe('Authorized Fetch', () => {
 			createAccount('c.test'),
 		]);
 
-		[aliceInB, aliceInC, bobInA, bobInC, charlieInA, charlieInB] = await Promise.all([
-			resolveRemoteUser('a.test', alice.id, bob),
-			resolveRemoteUser('a.test', alice.id, charlie),
-			resolveRemoteUser('b.test', bob.id, alice),
-			resolveRemoteUser('b.test', bob.id, charlie),
-			resolveRemoteUser('c.test', charlie.id, alice),
-			resolveRemoteUser('c.test', charlie.id, bob),
-		]);
+		// Each server lazily creates its ActivityPub signing accounts on the first
+		// remote fetch. Resolving all users concurrently can race that creation.
+		aliceInB = await resolveRemoteUser('a.test', alice.id, bob);
+		aliceInC = await resolveRemoteUser('a.test', alice.id, charlie);
+		bobInA = await resolveRemoteUser('b.test', bob.id, alice);
+		bobInC = await resolveRemoteUser('b.test', bob.id, charlie);
+		charlieInA = await resolveRemoteUser('c.test', charlie.id, alice);
+		charlieInB = await resolveRemoteUser('c.test', charlie.id, bob);
 	});
 
 	test('signed requests are required', async () => {
