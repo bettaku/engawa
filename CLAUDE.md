@@ -25,7 +25,7 @@ pnpm migrate          # TypeORMマイグレーション実行
 pnpm lint             # 全リンター実行（typecheck + ESLint）
 pnpm biome-lint       # typecheck + Biome lint
 pnpm test             # 全パッケージのテスト
-pnpm jest             # バックエンドユニットテストのみ
+pnpm vitest           # バックエンドユニットテストのみ
 pnpm typecheck        # TypeScript型チェック（emit なし）
 ```
 

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { describe, expect, test, beforeEach, afterEach, jest } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { shouldHideNoteByTime } from '@/misc/should-hide-note-by-time.js';
 
 describe('misc:should-hide-note-by-time', () => {
@@ -11,12 +11,12 @@ describe('misc:should-hide-note-by-time', () => {
 
 	beforeEach(() => {
 		now = Date.now();
-		jest.useFakeTimers();
-		jest.setSystemTime(now);
+		vi.useFakeTimers();
+		vi.setSystemTime(now);
 	});
 
 	afterEach(() => {
-		jest.useRealTimers();
+		vi.useRealTimers();
 	});
 
 	describe('hiddenBefore が null または undefined の場合', () => {

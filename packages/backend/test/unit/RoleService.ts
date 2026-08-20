@@ -6,12 +6,11 @@
 process.env.NODE_ENV = 'test';
 
 import { setTimeout } from 'node:timers/promises';
-import { jest } from '@jest/globals';
-import { ModuleMocker } from 'jest-mock';
+import { type Mocked, vi } from 'vitest';
+import { generateMock } from '../mocker.js';
 import { Test } from '@nestjs/testing';
 import * as lolex from '@sinonjs/fake-timers';
 import type { TestingModule } from '@nestjs/testing';
-import type { MockFunctionMetadata } from 'jest-mock';
 import { GlobalModule } from '@/GlobalModule.js';
 import { RoleService } from '@/core/RoleService.js';
 import {
@@ -34,16 +33,14 @@ import { NotificationService } from '@/core/NotificationService.js';
 import { RoleCondFormulaValue } from '@/models/Role.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 
-const moduleMocker = new ModuleMocker(global);
-
 describe('RoleService', () => {
 	let app: TestingModule;
 	let roleService: RoleService;
 	let usersRepository: UsersRepository;
 	let rolesRepository: RolesRepository;
 	let roleAssignmentsRepository: RoleAssignmentsRepository;
-	let meta: jest.Mocked<MiMeta>;
-	let notificationService: jest.Mocked<NotificationService>;
+	let meta: Mocked<MiMeta>;
+	let notificationService: Mocked<NotificationService>;
 	let clock: lolex.InstalledClock;
 
 	async function createUser(data: Partial<MiUser> = {}) {
@@ -121,7 +118,7 @@ describe('RoleService', () => {
 				{
 					provide: NotificationService,
 					useFactory: () => ({
-						createNotification: jest.fn(),
+						createNotification: vi.fn(),
 					}),
 				},
 				{
@@ -132,12 +129,10 @@ describe('RoleService', () => {
 		})
 			.useMocker((token) => {
 				if (token === MetaService) {
-					return { fetch: jest.fn() };
+					return { fetch: vi.fn() };
 				}
 				if (typeof token === 'function') {
-					const mockMetadata = moduleMocker.getMetadata(token) as MockFunctionMetadata<any, any>;
-					const Mock = moduleMocker.generateFromMetadata(mockMetadata);
-					return new Mock();
+					return generateMock(token as any);
 				}
 			})
 			.compile();
@@ -149,8 +144,8 @@ describe('RoleService', () => {
 		rolesRepository = app.get<RolesRepository>(DI.rolesRepository);
 		roleAssignmentsRepository = app.get<RoleAssignmentsRepository>(DI.roleAssignmentsRepository);
 
-		meta = app.get<MiMeta>(DI.meta) as jest.Mocked<MiMeta>;
-		notificationService = app.get<NotificationService>(NotificationService) as jest.Mocked<NotificationService>;
+		meta = app.get<MiMeta>(DI.meta) as Mocked<MiMeta>;
+		notificationService = app.get<NotificationService>(NotificationService) as Mocked<NotificationService>;
 
 		await roleService.onModuleInit();
 	});

@@ -6,7 +6,7 @@
 process.env.NODE_ENV = 'test';
 
 import * as assert from 'assert';
-import { jest } from '@jest/globals';
+import { type Mocked, vi } from 'vitest';
 import * as lolex from '@sinonjs/fake-timers';
 import { DataSource } from 'typeorm';
 import type { AppLockService } from '@/core/AppLockService.js';
@@ -25,7 +25,7 @@ describe('Chart', () => {
 	const config = loadConfig();
 	const appLockService = {
 		getChartInsertLock: () => () => Promise.resolve(() => {}),
-	} as unknown as jest.Mocked<AppLockService>;
+	} as unknown as Mocked<AppLockService>;
 
 	let db: DataSource | undefined;
 
