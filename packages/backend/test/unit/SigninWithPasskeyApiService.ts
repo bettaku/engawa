@@ -4,12 +4,12 @@
  */
 
 import { IncomingHttpHeaders } from 'node:http';
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
-import { generateMock } from '../mocker.js';
+import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { AuthenticationResponseJSON } from '@simplewebauthn/types';
 import { HttpHeader } from 'fastify/types/utils.js';
+import { generateMock } from '../mocker.js';
 import { MiUser } from '@/models/User.js';
 import { MiUserProfile, UserProfilesRepository, UsersRepository } from '@/models/_.js';
 import { IdService } from '@/core/IdService.js';
@@ -66,7 +66,7 @@ describe('SigninWithPasskeyApiService', () => {
 	let userProfilesRepository: UserProfilesRepository;
 	let webAuthnService: WebAuthnService;
 	let idService: IdService;
-	let FakeWebauthnVerify: ()=>Promise<string>;
+	let FakeWebauthnVerify: () => Promise<string>;
 
 	async function createUser(data: Partial<MiUser> = {}) {
 		const user = await usersRepository
