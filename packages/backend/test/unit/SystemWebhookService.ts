@@ -5,7 +5,7 @@
  */
 
 import { setTimeout } from 'node:timers/promises';
-import { afterEach, beforeEach, describe, expect, jest } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, type Mocked, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { randomString } from '../utils.js';
 import { MiUser } from '@/models/User.js';
@@ -29,7 +29,7 @@ describe('SystemWebhookService', () => {
 	let usersRepository: UsersRepository;
 	let systemWebhooksRepository: SystemWebhooksRepository;
 	let idService: IdService;
-	let queueService: jest.Mocked<QueueService>;
+	let queueService: Mocked<QueueService>;
 
 	// --------------------------------------------------------------------------------------
 
@@ -73,7 +73,7 @@ describe('SystemWebhookService', () => {
 					LoggerService,
 					GlobalEventService,
 					{
-						provide: QueueService, useFactory: () => ({ systemWebhookDeliver: jest.fn() }),
+						provide: QueueService, useFactory: () => ({ systemWebhookDeliver: vi.fn() }),
 					},
 					{
 						provide: ModerationLogService, useFactory: () => ({ log: () => Promise.resolve() }),
@@ -87,7 +87,7 @@ describe('SystemWebhookService', () => {
 
 		service = app.get(SystemWebhookService);
 		idService = app.get(IdService);
-		queueService = app.get(QueueService) as jest.Mocked<QueueService>;
+		queueService = app.get(QueueService) as Mocked<QueueService>;
 
 		app.enableShutdownHooks();
 	}

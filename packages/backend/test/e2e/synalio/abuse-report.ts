@@ -4,7 +4,7 @@
  */
 
 import { entities } from 'cherrypick-js';
-import { beforeEach, describe, test } from '@jest/globals';
+import { beforeEach, describe, test } from 'vitest';
 import {
 	api,
 	captureWebhook,

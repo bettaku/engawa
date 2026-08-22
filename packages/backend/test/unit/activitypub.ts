@@ -10,7 +10,7 @@ import * as fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
 import { Test } from '@nestjs/testing';
-import { jest } from '@jest/globals';
+import { vi } from 'vitest';
 
 import { MockResolver } from '../misc/mock-resolver.js';
 import type { IActor, IApDocument, ICollection, IObject, IPost } from '@/core/activitypub/type.js';
@@ -156,7 +156,7 @@ describe('ActivityPub', () => {
 
 		// Prevent ApPersonService from fetching instance, as it causes Jest import-after-test error
 		const federatedInstanceService = app.get<FederatedInstanceService>(FederatedInstanceService);
-		jest.spyOn(federatedInstanceService, 'fetch').mockImplementation(() => new Promise(() => { }));
+		vi.spyOn(federatedInstanceService, 'fetch').mockImplementation(() => new Promise(() => { }));
 	});
 
 	beforeEach(() => {

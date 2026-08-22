@@ -236,11 +236,12 @@ Instead, you can prepare an empty (data can be erased) DB and edit `.config/test
 pnpm --filter backend test     # unit tests
 pnpm --filter backend test:e2e # single-server E2E tests
 ```
-If you want to run a specific test, run as a following command:
+If you want to run a specific test, pass a path relative to `packages/backend`:
 ```sh
-pnpm --filter backend test -- packages/backend/test/unit/activitypub.ts
-pnpm --filter backend test:e2e -- packages/backend/test/e2e/nodeinfo.ts
+pnpm --filter backend test test/unit/activitypub.ts
+pnpm --filter backend test:e2e test/e2e/nodeinfo.ts
 ```
+You can also filter by test name with `-t`, or watch files with `pnpm --filter backend vitest-watch`.
 
 #### Running Multiple-server E2E Tests
 See [`/packages/backend/test-federation/README.md`](/packages/backend/test-federation/README.md).
@@ -447,7 +448,7 @@ describe('test', () => {
 				{ // mockする (mockは必須ではないかもしれない)
 					provide: BarService,
 					useFactory: () => ({
-						incredibleMethod: jest.fn(),
+						incredibleMethod: vi.fn(),
 					}),
 				},
 				{ // Provideにする
@@ -460,7 +461,7 @@ describe('test', () => {
 			.compile();
 
 		fooService = app.get<FooService>(FooService);
-		barService = app.get<BarService>(BarService) as jest.Mocked<BarService>;
+		barService = app.get<BarService>(BarService) as Mocked<BarService>;
 
 		// onModuleInitを実行する
 		await fooService.onModuleInit();
