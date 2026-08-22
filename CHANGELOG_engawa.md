@@ -39,4 +39,5 @@
 ### Misc
 - enhance(ci): Issueラベルの自動管理化
 - chore(docs): Improve Issue Template
+- refactor(backend): テスト基盤をJestからVitestに移行
 

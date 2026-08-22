@@ -29,12 +29,13 @@
 		},
 		"typeRoots": [
 			"../node_modules/@types",
+			"../node_modules",
 			"../src/@types"
 		],
 		"lib": [
 			"esnext"
 		],
-		"types": ["jest", "node"]
+		"types": ["node", "vitest/globals"]
 	},
 	"compileOnSave": false,
 	"include": [

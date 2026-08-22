@@ -6,7 +6,7 @@
 process.env.NODE_ENV = 'test';
 
 import * as assert from 'assert';
-import { jest } from '@jest/globals';
+import { vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import type { TestingModule } from '@nestjs/testing';
 import { GlobalModule } from '@/GlobalModule.js';
@@ -117,7 +117,7 @@ describe('ApInboxService (chat federation)', () => {
 
 		// invite() fires a fire-and-forget notification; stub it so tests have no side effects.
 		const notificationService = app.get<NotificationService>(NotificationService);
-		jest.spyOn(notificationService, 'createNotification').mockImplementation(async () => null as any);
+		vi.spyOn(notificationService, 'createNotification').mockImplementation(async () => null as any);
 	});
 
 	afterAll(async () => {
