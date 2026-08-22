@@ -6,6 +6,7 @@
 process.env.NODE_ENV = 'test';
 
 import * as assert from 'assert';
+import { setTimeout } from 'node:timers/promises';
 import { api, castAsError, post, signup } from '../utils.js';
 import type * as misskey from 'cherrypick-js';
 
@@ -73,6 +74,9 @@ describe('Block', () => {
 		const aliceNote = await post(alice, { text: 'hi' });
 		const bobNote = await post(bob, { text: 'hi' });
 		const carolNote = await post(carol, { text: 'hi' });
+
+		// ノートのタイムラインへの追加は非同期で行われる
+		await setTimeout(250);
 
 		const res = await api('notes/local-timeline', {}, bob);
 		const body = res.body as misskey.entities.Note[];
