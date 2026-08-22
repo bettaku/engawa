@@ -265,7 +265,6 @@ export class MiNote {
 	@Column('enum', {
 		enum: noteSearchableBy,
 		nullable: true,
-		enumName: 'note_searchableby_enum',
 	})
 	public searchableBy: typeof noteSearchableBy[number];
 	//#endregion
