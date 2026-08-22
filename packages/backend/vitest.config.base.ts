@@ -28,6 +28,7 @@ export const baseConfig = {
 		environment: 'node',
 
 		testTimeout: 60000,
+		hookTimeout: 60000,
 
 		// jest の restoreMocks 相当
 		restoreMocks: true,
@@ -36,7 +37,6 @@ export const baseConfig = {
 		// メモリ使用量が大きいため、テストファイルごとにプロセスを作り直す。
 		// (GitHub Actions のランナーは 2GB あたりで落ちる)
 		pool: 'forks',
-		minWorkers: 1,
 		maxWorkers: 1,
 		isolate: true,
 		maxConcurrency: 32,
