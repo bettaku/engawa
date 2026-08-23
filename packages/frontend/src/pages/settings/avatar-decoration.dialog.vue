@@ -110,7 +110,7 @@ const decorationsForPreview = computed(() => {
 		flipH: flipH.value,
 		offsetX: offsetX.value,
 		offsetY: offsetY.value,
-		blink: true,
+		isSelected: true,
 		scale: scale.value,
 		opacity: opacity.value,
 	};
