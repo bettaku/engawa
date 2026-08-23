@@ -26,7 +26,7 @@ concurrency:
 jobs:
   # Pull requests run only against the default Node version to keep them fast.
   # Pushes to master/develop, the nightly schedule and manual dispatches run the
-  # full matrix including the minimum supported Node version.
+  # full matrix including the minimum and the maximum supported Node versions.
   setup:
     name: Setup matrix
     runs-on: ubuntu-latest
@@ -38,7 +38,7 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo 'matrix={"node-version-file":[".node-version"]}' >> "$GITHUB_OUTPUT"
           else
-            echo 'matrix={"node-version-file":[".node-version",".github/min.node-version"]}' >> "$GITHUB_OUTPUT"
+            echo 'matrix={"node-version-file":[".node-version",".github/min.node-version",".github/max.node-version"]}' >> "$GITHUB_OUTPUT"
           fi
 
   test:

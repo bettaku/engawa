@@ -81,7 +81,7 @@ describe('AiScript common API', () => {
 
 	describe('readline', () => {
 		afterEach(() => {
-			vi.restoreAllMocks();
+			vi.resetAllMocks();
 		});
 
 		test.sequential('ok', async () => {
@@ -177,7 +177,7 @@ describe('AiScript common API', () => {
 
 	describe('dialog', () => {
 		afterEach(() => {
-			vi.restoreAllMocks();
+			vi.resetAllMocks();
 		});
 
 		test.sequential('ok', async () => {
@@ -216,7 +216,7 @@ describe('AiScript common API', () => {
 
 	describe('confirm', () => {
 		afterEach(() => {
-			vi.restoreAllMocks();
+			vi.resetAllMocks();
 		});
 
 		test.sequential('ok', async () => {
@@ -273,7 +273,7 @@ describe('AiScript common API', () => {
 
 	describe('api', () => {
 		afterEach(() => {
-			vi.restoreAllMocks();
+			vi.resetAllMocks();
 		});
 
 		test.sequential('successful', async () => {

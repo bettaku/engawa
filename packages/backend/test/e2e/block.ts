@@ -6,6 +6,7 @@
 process.env.NODE_ENV = 'test';
 
 import * as assert from 'assert';
+import { setTimeout } from 'node:timers/promises';
 import { api, castAsError, post, signup } from '../utils.js';
 import type * as misskey from 'cherrypick-js';
 
@@ -74,8 +75,21 @@ describe('Block', () => {
 		const bobNote = await post(bob, { text: 'hi' });
 		const carolNote = await post(carol, { text: 'hi' });
 
-		const res = await api('notes/local-timeline', {}, bob);
-		const body = res.body as misskey.entities.Note[];
+		// ノートのタイムラインへの追加は非同期で行われるため、反映されるまでポーリングする
+		const deadline = Date.now() + 1000 * 10;
+		let res = await api('notes/local-timeline', {}, bob);
+		let body = res.body as misskey.entities.Note[];
+
+		while (
+			Date.now() < deadline &&
+			!(res.status === 200 && Array.isArray(body) &&
+				body.some(note => note.id === bobNote.id) &&
+				body.some(note => note.id === carolNote.id))
+		) {
+			await setTimeout(100);
+			res = await api('notes/local-timeline', {}, bob);
+			body = res.body as misskey.entities.Note[];
+		}
 
 		assert.strictEqual(res.status, 200);
 		assert.strictEqual(Array.isArray(res.body), true);

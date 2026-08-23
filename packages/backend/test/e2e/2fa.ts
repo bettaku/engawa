@@ -57,19 +57,19 @@ describe('2要素認証', () => {
 			.digest();
 	};
 
-	const keyDoneParam = (param: {
+	const keyDoneParam = async (param: {
 		token: string,
 		keyName: string,
 		credentialId: Buffer,
 		creationOptions: PublicKeyCredentialCreationOptionsJSON,
-	}): {
+	}): Promise<{
 		token: string,
 		password: string,
 		name: string,
 		credential: RegistrationResponseJSON,
-	} => {
+	}> => {
 		// A COSE encoded public key
-		const credentialPublicKey = cbor.encode(new Map<number, unknown>([
+		const credentialPublicKey = await cbor.encodeAsync(new Map<number, unknown>([
 			[-1, coseEc2CrvP256],
 			[-2, Buffer.from(coseEc2X, 'hex')],
 			[-3, Buffer.from(coseEc2Y, 'hex')],
@@ -106,11 +106,11 @@ describe('2要素認証', () => {
 						origin: config.scheme + '://' + config.host,
 						androidPackageName: 'org.mozilla.firefox',
 					}), 'utf-8').toString('base64url'),
-					attestationObject: cbor.encode({
+					attestationObject: (await cbor.encodeAsync({
 						fmt: 'none',
 						attStmt: {},
 						authData,
-					}).toString('base64url'),
+					})).toString('base64url'),
 				},
 				clientExtensionResults: {},
 				type: 'public-key',
@@ -245,7 +245,7 @@ describe('2要素認証', () => {
 
 		const keyName = 'example-key';
 		const credentialId = crypto.randomBytes(0x41);
-		const keyDoneResponse = await api('i/2fa/key-done', keyDoneParam({
+		const keyDoneResponse = await api('i/2fa/key-done', await keyDoneParam({
 			token: otpToken(registerResponse.body.secret),
 			keyName,
 			credentialId,
@@ -300,7 +300,7 @@ describe('2要素認証', () => {
 
 		const keyName = 'example-key';
 		const credentialId = crypto.randomBytes(0x41);
-		const keyDoneResponse = await api('i/2fa/key-done', keyDoneParam({
+		const keyDoneResponse = await api('i/2fa/key-done', await keyDoneParam({
 			token: otpToken(registerResponse.body.secret),
 			keyName,
 			credentialId,
@@ -365,7 +365,7 @@ describe('2要素認証', () => {
 
 		const keyName = 'example-key';
 		const credentialId = crypto.randomBytes(0x41);
-		const keyDoneResponse = await api('i/2fa/key-done', keyDoneParam({
+		const keyDoneResponse = await api('i/2fa/key-done', await keyDoneParam({
 			token: otpToken(registerResponse.body.secret),
 			keyName,
 			credentialId,
@@ -415,7 +415,7 @@ describe('2要素認証', () => {
 
 		const keyName = 'example-key';
 		const credentialId = crypto.randomBytes(0x41);
-		const keyDoneResponse = await api('i/2fa/key-done', keyDoneParam({
+		const keyDoneResponse = await api('i/2fa/key-done', await keyDoneParam({
 			token: otpToken(registerResponse.body.secret),
 			keyName,
 			credentialId,
