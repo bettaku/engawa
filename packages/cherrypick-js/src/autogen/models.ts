@@ -30,7 +30,6 @@ export type Hashtag = components['schemas']['Hashtag'];
 export type InviteCode = components['schemas']['InviteCode'];
 export type Page = components['schemas']['Page'];
 export type PageBlock = components['schemas']['PageBlock'];
-export type Channel = components['schemas']['Channel'];
 export type QueueCount = components['schemas']['QueueCount'];
 export type QueueMetrics = components['schemas']['QueueMetrics'];
 export type QueueJob = components['schemas']['QueueJob'];

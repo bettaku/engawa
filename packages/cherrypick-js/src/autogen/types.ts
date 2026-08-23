@@ -5113,33 +5113,6 @@ export type components = {
             detailed: boolean;
             note: string | null;
         };
-        Channel: {
-            /**
-             * Format: id
-             * @example xxxxxxxxxx
-             */
-            id: string;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            lastNotedAt: string | null;
-            name: string;
-            description: string | null;
-            /** Format: id */
-            userId: string | null;
-            /** Format: url */
-            bannerUrl: string | null;
-            pinnedNoteIds: string[];
-            color: string;
-            isArchived: boolean;
-            usersCount: number;
-            notesCount: number;
-            isSensitive: boolean;
-            allowRenoteToExternal: boolean;
-            isFollowing?: boolean;
-            isFavorited?: boolean;
-            pinnedNotes?: components['schemas']['Note'][];
-        };
         QueueCount: {
             waiting: number;
             active: number;
