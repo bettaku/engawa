@@ -64,15 +64,15 @@
 		"postcss": "8.5.6",
 		"tar": "7.5.9",
 		"terser": "5.44.0",
-		"typescript": "5.9.3"
+		"typescript": "6.0.3"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.1",
 		"@misskey-dev/eslint-plugin": "2.1.0",
 		"@types/js-yaml": "4.0.9",
 		"@types/node": "24.9.1",
-		"@typescript-eslint/eslint-plugin": "8.46.1",
-		"@typescript-eslint/parser": "8.46.1",
+		"@typescript-eslint/eslint-plugin": "8.67.0",
+		"@typescript-eslint/parser": "8.67.0",
 		"cross-env": "10.1.0",
 		"cypress": "15.4.0",
 		"eslint": "9.37.0",
