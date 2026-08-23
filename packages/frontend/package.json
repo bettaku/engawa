@@ -19,7 +19,6 @@
 		"format:write": "pnpm biome format --write"
 	},
 	"dependencies": {
-		"@dice-roller/rpg-dice-roller": "^5.5.0",
 		"@discordapp/twemoji": "16.0.1",
 		"@github/webauthn-json": "2.1.1",
 		"@mcaptcha/vanilla-glue": "0.1.0-alpha-3",
