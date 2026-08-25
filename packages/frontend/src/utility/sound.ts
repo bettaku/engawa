@@ -5,7 +5,6 @@
 
 import type { SoundStore } from '@/preferences/def.js';
 import { prefer } from '@/preferences.js';
-import { PREF_DEF } from '@/preferences/def.js';
 import { getInitialPrefValue } from '@/preferences/manager.js';
 
 let ctx: AudioContext;
@@ -81,7 +80,6 @@ export const operationTypes = [
 	'notification',
 	'reaction',
 	'chatMessage',
-	'antenna',
 ] as const;
 
 /** サウンドの種類 */
