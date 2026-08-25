@@ -194,10 +194,10 @@ const subDoughnutEl = useTemplateRef('subDoughnutEl');
 const pubDoughnutEl = useTemplateRef('pubDoughnutEl');
 const softwareDoughnutEl = useTemplateRef('softwareDoughnutEl');
 
-const federationPubActive = ref<number | null>(null);
-const federationPubActiveDiff = ref<number | null>(null);
-const federationSubActive = ref<number | null>(null);
-const federationSubActiveDiff = ref<number | null>(null);
+const federationPubActive = ref(0);
+const federationPubActiveDiff = ref(0);
+const federationSubActive = ref(0);
+const federationSubActiveDiff = ref(0);
 
 const { handler: externalTooltipHandler1 } = useChartTooltip({
 	position: 'middle',
@@ -260,10 +260,10 @@ function createDoughnut(chartEl, tooltip, data) {
 
 onMounted(async () => {
 	const chart = await misskeyApiGet('charts/federation', { limit: 2, span: 'day' });
-	federationPubActive.value = chart.pubActive[0];
-	federationPubActiveDiff.value = chart.pubActive[0] - chart.pubActive[1];
-	federationSubActive.value = chart.subActive[0];
-	federationSubActiveDiff.value = chart.subActive[0] - chart.subActive[1];
+	federationPubActive.value = chart.pubActive[0] ?? 0;
+	federationPubActiveDiff.value = (chart.pubActive[0] ?? 0) - (chart.pubActive[1] ?? 0);
+	federationSubActive.value = chart.subActive[0] ?? 0;
+	federationSubActiveDiff.value = (chart.subActive[0] ?? 0) - (chart.subActive[1] ?? 0);
 });
 
 onMounted(() => {

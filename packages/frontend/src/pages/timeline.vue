@@ -15,7 +15,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</button>
 		</MkInfo>
 		<MkPostForm v-if="prefer.r.showFixedPostForm.value" :class="$style.postForm" class="_panel" fixed style="margin-bottom: var(--MI-margin);"/>
-		<div v-if="!isAvailableBasicTimeline(src) && !src.startsWith('list:')" :class="[$style.disabled, $style.tl]">
+		<div v-if="isUnavailableTimeline(src)" :class="[$style.disabled, $style.tl]">
 			<p :class="$style.disabledTitle">
 				<i class="ti ti-circle-minus"></i>
 				{{ i18n.ts._disabledTimeline.title }}
@@ -82,6 +82,10 @@ const schedulePostList = $i ? (await misskeyApi('notes/drafts/list', { scheduled
 const tlComponent = useTemplateRef('tlComponent');
 
 type TimelinePageSrc = BasicTimelineType | `list:${string}`;
+
+function isUnavailableTimeline(timeline: TimelinePageSrc): boolean {
+	return !timeline.startsWith('list:') && !isAvailableBasicTimeline(timeline as BasicTimelineType);
+}
 
 const srcWhenNotSignin = ref<'local' | 'global'>(isAvailableBasicTimeline('local') ? 'local' : 'global');
 const src = computed<TimelinePageSrc>({

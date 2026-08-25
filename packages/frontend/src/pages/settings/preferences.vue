@@ -770,13 +770,17 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 						<SearchMarker :keywords="['default', 'note', 'searchableby', 'search']">
 							<MkPreferenceContainer k="defaultNoteSearchableBy">
-								<MkSelect v-model="defaultNoteSearchableBy">
-									<template #label><SearchLabel>{{ i18n.ts._searchableBy.searchableBy }}</SearchLabel></template>
-									<option value="public">{{ i18n.ts._searchableBy.public }}</option>
-									<option value="followers">{{ i18n.ts._searchableBy.followers }}</option>
-									<option value="reacted">{{ i18n.ts._searchableBy.reacted }}</option>
-									<option value="limited">{{ i18n.ts._searchableBy.limited }}</option>
-								</MkSelect>
+									<MkSelect
+										v-model="defaultNoteSearchableBy"
+										:items="[
+											{ value: 'public', label: i18n.ts._searchableBy.public },
+											{ value: 'followers', label: i18n.ts._searchableBy.followers },
+											{ value: 'reacted', label: i18n.ts._searchableBy.reacted },
+											{ value: 'limited', label: i18n.ts._searchableBy.limited },
+										]"
+									>
+										<template #label><SearchLabel>{{ i18n.ts._searchableBy.searchableBy }}</SearchLabel></template>
+									</MkSelect>
 							</MkPreferenceContainer>
 						</SearchMarker>
 					</div>

@@ -102,7 +102,14 @@ import * as Misskey from 'cherrypick-js';
 import { i18n } from '@/i18n.js';
 
 const props = defineProps<{
-	note: Misskey.entities.Note | null;
+	note: {
+		event?: Misskey.entities.Note['event'] | {
+			title: string;
+			start: string;
+			end: string | null;
+			metadata: Record<string, unknown>;
+		} | null;
+	} | null;
 }>();
 
 const eventMetadata = computed(() => {

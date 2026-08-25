@@ -1239,7 +1239,9 @@ async function post(ev?: MouseEvent) {
 			clear();
 		}
 
-		globalEvents.emit('notePosted', res.createdNote);
+		if (res && typeof res === 'object' && 'createdNote' in res) {
+			globalEvents.emit('notePosted', res.createdNote as Misskey.entities.Note);
+		}
 
 		nextTick(() => {
 			deleteDraft();

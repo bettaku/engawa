@@ -83,6 +83,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 <script lang="ts" setup>
 import { computed, ref, markRaw } from 'vue';
+import * as Misskey from 'cherrypick-js';
 import * as os from '@/os.js';
 import MkSelect from '@/components/MkSelect.vue';
 import MkPagination from '@/components/MkPagination.vue';
@@ -133,7 +134,17 @@ const searchHost = ref('');
 
 const tab = ref('list');
 const editableResolver = ref<null | string>(null);
-const defaultResolver = {
+type ResolverExpiration = NonNullable<Misskey.Endpoints['admin/abuse-report-resolver/create']['req']['expiresAt']>;
+
+const defaultResolver: {
+	name: string;
+	targetUserPattern: string;
+	reporterPattern: string;
+	reportContentPattern: string;
+	expirationDate: string;
+	expiresAt: ResolverExpiration;
+	forward: boolean;
+} = {
 	name: '',
 	targetUserPattern: '',
 	reporterPattern: '',
@@ -149,7 +160,7 @@ const newResolver = ref<{
 	reporterPattern: string;
 	reportContentPattern: string;
 	expirationDate: string;
-	expiresAt: string;
+	expiresAt: ResolverExpiration;
 	forward: boolean;
 }>(defaultResolver);
 
@@ -158,7 +169,7 @@ const editingResolver = ref<{
 	targetUserPattern: string;
 	reporterPattern: string;
 	reportContentPattern: string;
-	expiresAt: string;
+	expiresAt: ResolverExpiration;
 	expirationDate: string;
 	forward: boolean;
 	previousExpiresAt?: string;
@@ -191,6 +202,7 @@ function edit(id: string) {
 }
 
 function save(): void {
+	if (editableResolver.value == null) return;
 	os.apiWithDialog('admin/abuse-report-resolver/update', {
 		resolverId: editableResolver.value,
 		name: editingResolver.value.name,

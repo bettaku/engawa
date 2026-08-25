@@ -175,7 +175,7 @@ export function getCopyNoteOriginalLinkMenu(note: Misskey.entities.Note, text: s
 		icon: 'ti ti-line',
 		text,
 		action: (): void => {
-			copyToClipboard(note.url ?? note.uri);
+			copyToClipboard(note.url ?? note.uri ?? null);
 			os.toast(i18n.ts.copiedLink, 'copied');
 		},
 	};

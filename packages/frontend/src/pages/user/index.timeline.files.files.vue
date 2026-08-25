@@ -86,7 +86,7 @@ import { i18n } from '@/i18n.js';
 import MkRippleEffect from '@/components/MkRippleEffect.vue';
 
 const props = defineProps<{
-	user: Misskey.entities.UserDetailed;
+	user: Misskey.entities.User;
 	note: Misskey.entities.Note & { files: Misskey.entities.DriveFile[] };
 }>();
 

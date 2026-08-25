@@ -1184,7 +1184,9 @@ async function post(ev?: MouseEvent) {
 			clear();
 		}
 
-		globalEvents.emit('notePosted', res.createdNote);
+		if (res && typeof res === 'object' && 'createdNote' in res) {
+			globalEvents.emit('notePosted', res.createdNote as Misskey.entities.Note);
+		}
 
 		nextTick(() => {
 			deleteDraft();
@@ -1416,7 +1418,8 @@ async function openAccountMenu(ev: MouseEvent) {
 				replyTargetNote.value = draft.reply;
 				reactionAcceptance.value = draft.reactionAcceptance;
 				scheduledAt.value = draft.scheduledAt ?? null;
-				if (draft.channel) targetChannel.value = draft.channel as unknown as Misskey.entities.Channel;
+				const draftChannel = (draft as Misskey.entities.NoteDraft & { channel?: PostFormProps['channel'] }).channel;
+				if (draftChannel) targetChannel.value = draftChannel;
 
 				visibleUsers.value = [];
 				draft.visibleUserIds?.forEach(uid => {

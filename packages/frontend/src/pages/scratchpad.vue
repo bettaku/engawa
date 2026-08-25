@@ -137,13 +137,18 @@ async function run() {
 				text: err.toString(),
 			});
 		},
-		log: (type, params) => {
-			switch (type) {
-				case 'end': logs.value.push({
-					id: Math.random(),
-					text: utils.valToString(params.val, true),
-					print: false,
-				}); break;
+			log: (type, params) => {
+				switch (type) {
+					case 'end': {
+					const value = params.val && 'isMutable' in params.val ? params.val.value : params.val;
+						if (value == null) break;
+						logs.value.push({
+							id: Math.random(),
+							text: utils.valToString(value, true),
+							print: false,
+						});
+						break;
+					}
 				default: break;
 			}
 		},

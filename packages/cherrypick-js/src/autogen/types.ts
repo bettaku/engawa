@@ -29919,7 +29919,7 @@ export interface operations {
                      * @default public
                      * @enum {string}
                      */
-                    visibility?: 'public' | 'home' | 'followers' | 'specified';
+                    visibility?: 'public' | 'home' | 'followers' | 'specified' | 'private';
                     visibleUserIds?: string[];
                     cw?: string | null;
                     hashtag?: string | null;
