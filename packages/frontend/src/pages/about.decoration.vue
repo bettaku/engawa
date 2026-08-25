@@ -44,7 +44,10 @@ const demoUser = {
 	avatarUrl: instance.iconUrl || '/favicon.ico',
 	avatarBlurhash: null,
 	avatarDecorations: [],
-} satisfies Partial<Misskey.entities.UserDetailed>;
+	isLocked: false,
+	emojis: {},
+	onlineStatus: 'unknown',
+} satisfies Misskey.entities.UserLite;
 
 function load() {
 	misskeyApi('get-avatar-decorations').then(_avatarDecorations => {
