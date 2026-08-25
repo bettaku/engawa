@@ -8,7 +8,7 @@
 import { markRaw, ref, defineAsyncComponent, nextTick, effectScope, isRef, shallowReactive, watch } from 'vue';
 import { EventEmitter } from 'eventemitter3';
 import * as Misskey from 'cherrypick-js';
-import type { Component, Ref, ShallowReactive } from 'vue';
+import type { Component, MaybeRef, ShallowReactive } from 'vue';
 import type { ComponentEmit, ComponentProps as CP } from 'vue-component-type-helpers';
 import type { Form, GetFormResultType } from '@/utility/form.js';
 import type { MenuItem } from '@/types/menu.js';
@@ -162,25 +162,6 @@ export function claimZIndex(priority: keyof typeof zIndexes = 'low'): number {
 type PropsWithRefs<P> = { [K in keyof P]: MaybeRef<P[K]> };
 type ComponentProps<T extends Component> = PropsWithRefs<CP<T>>;
 
-// 関数の引数が any[] (もっとも広義なもの) かどうかを判定し、any[] の場合は排除 (never) するヘルパー
-type FilterSpecificFunc<T> = T extends (...args: any[]) => void
-	? (any[] extends Parameters<T> ? never : T)
-	: T;
-
-// オブジェクトの各プロパティに対して再帰的、あるいは単純に適用する型関数
-type CleanFunctions<T> = {
-	[K in keyof T]: T[K] extends (...args: any[]) => any
-		? FilterSpecificFunc<T[K]>
-		: T[K];
-};
-
-// emitの関数群をオブジェクト型に変換する（InstanceType<Component>['$emit']はFunctionalComponent = ジェネリックコンポーネントでは使用できない）
-type ComponentEmitsObject<C extends Component, IE = OverloadToUnion<ComponentEmit<C>>> = CleanFunctions<{
-	[K in IE extends (evName: infer U, ...args: any[]) => any ? U & PropertyKey : never]: IE extends (evName: K, ...args: infer A) => infer R
-		? (...args: A) => R
-		: (...args: any[]) => void;
-}>;
-
 // ref をそのまま保持せず popup 側の reactive props に同期するようにして、スコープをまたいでリアクティビティが切れるのを防止する
 function normalizePopupProps<T extends Record<string, any>>(props: T): {
 	resolvedProps: ShallowReactive<T>;
@@ -207,8 +188,6 @@ function normalizePopupProps<T extends Record<string, any>>(props: T): {
 	};
 }
 
-// NOTE: ジェネリック型つきのコンポーネントでは、emitsの型推論がうまく働かない（型変数を取り出すことはできないため）
-// NOTE: emitsがOverloadToUnionで対応しているオーバーロードの数を超える場合は、OverloadToUnionの個数を増やせばOK
 export function popup<T extends Component>(
 	component: T,
 	props: ComponentProps<T>,
@@ -297,7 +276,10 @@ export function alert(props: {
 	caption?: string | null;
 }): Promise<void> {
 	return new Promise(resolve => {
-		const { dispose } = popup(MkDialog, props, {
+		const { dispose } = popup(MkDialog, {
+			...props,
+			caption: props.caption ?? undefined,
+		}, {
 			done: () => {
 				resolve();
 			},
@@ -317,6 +299,7 @@ export function confirm(props: {
 	return new Promise(resolve => {
 		const { dispose } = popup(MkDialog, {
 			...props,
+			caption: props.caption ?? undefined,
 			showCancelButton: true,
 		}, {
 			done: result => {
@@ -349,6 +332,7 @@ export function actions<T extends {
 	return new Promise(resolve => {
 		const { dispose } = popup(MkDialog, {
 			...props,
+			caption: props.caption ?? undefined,
 			actions: props.actions.map(a => ({
 				text: a.text,
 				primary: a.primary,
