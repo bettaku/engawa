@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { ADMIN_SETUP_PASSWORD, expect, test } from './fixtures.js';
+import { ADMIN_SETUP_PASSWORD, byE2e, expect, test } from './fixtures.js';
 import type { CreatedUser } from './fixtures.js';
 
 test.describe('Before setup instance', () => {
@@ -20,18 +20,18 @@ test.describe('Before setup instance', () => {
 
 		const signup = page.waitForResponse(res => res.url().includes('/api/admin/accounts/create') && res.request().method() === 'POST');
 
-		await page.locator('[data-cy-admin-initial-password] input').fill(ADMIN_SETUP_PASSWORD);
-		await page.locator('[data-cy-admin-username] input').fill('admin');
-		await page.locator('[data-cy-admin-password] input').fill('admin1234');
-		await page.locator('[data-cy-admin-ok]').click();
+		await byE2e(page, 'admin-initial-password').locator('input').fill(ADMIN_SETUP_PASSWORD);
+		await byE2e(page, 'admin-username').locator('input').fill('admin');
+		await byE2e(page, 'admin-password').locator('input').fill('admin1234');
+		await byE2e(page, 'admin-ok').click();
 
 		await signup;
 
 		const updateMeta = page.waitForResponse(res => res.url().includes('/api/admin/update-meta') && res.request().method() === 'POST');
 
-		await page.locator('[data-cy-next]').click();
-		await page.locator('[data-cy-server-name] input').fill('Testskey');
-		await page.locator('[data-cy-server-setup-wizard-apply]').click();
+		await byE2e(page, 'next').click();
+		await byE2e(page, 'server-name').locator('input').fill('Testskey');
+		await byE2e(page, 'server-setup-wizard-apply').click();
 
 		await updateMeta;
 	});
@@ -54,23 +54,23 @@ test.describe('After setup instance', () => {
 
 		const signup = page.waitForResponse(res => res.url().includes('/api/signup') && res.request().method() === 'POST');
 
-		await page.locator('[data-cy-signup]').click();
-		await expect(page.locator('[data-cy-signup-rules-continue]')).toBeDisabled();
-		await page.locator('[data-cy-signup-rules-notes-agree] [data-cy-switch-toggle]').click();
-		await page.locator('[data-cy-modal-dialog-ok]').click();
-		await expect(page.locator('[data-cy-signup-rules-continue]')).toBeEnabled();
-		await page.locator('[data-cy-signup-rules-continue]').click();
+		await byE2e(page, 'signup').click();
+		await expect(byE2e(page, 'signup-rules-continue')).toBeDisabled();
+		await byE2e(page, 'signup-rules-notes-agree', 'switch-toggle').click();
+		await byE2e(page, 'modal-dialog-ok').click();
+		await expect(byE2e(page, 'signup-rules-continue')).toBeEnabled();
+		await byE2e(page, 'signup-rules-continue').click();
 
-		await expect(page.locator('[data-cy-signup-submit]')).toBeDisabled();
-		await page.locator('[data-cy-signup-username] input').fill('alice');
-		await expect(page.locator('[data-cy-signup-submit]')).toBeDisabled();
-		await page.locator('[data-cy-signup-password] input').fill('alice1234');
-		await expect(page.locator('[data-cy-signup-submit]')).toBeDisabled();
-		await page.locator('[data-cy-signup-password-retype] input').fill('alice1234');
-		await expect(page.locator('[data-cy-signup-submit]')).toBeDisabled();
-		await page.locator('[data-cy-signup-invitation-code] input').fill('test-invitation-code');
-		await expect(page.locator('[data-cy-signup-submit]')).toBeEnabled();
-		await page.locator('[data-cy-signup-submit]').click();
+		await expect(byE2e(page, 'signup-submit')).toBeDisabled();
+		await byE2e(page, 'signup-username').locator('input').fill('alice');
+		await expect(byE2e(page, 'signup-submit')).toBeDisabled();
+		await byE2e(page, 'signup-password').locator('input').fill('alice1234');
+		await expect(byE2e(page, 'signup-submit')).toBeDisabled();
+		await byE2e(page, 'signup-password-retype').locator('input').fill('alice1234');
+		await expect(byE2e(page, 'signup-submit')).toBeDisabled();
+		await byE2e(page, 'signup-invitation-code').locator('input').fill('test-invitation-code');
+		await expect(byE2e(page, 'signup-submit')).toBeEnabled();
+		await byE2e(page, 'signup-submit').click();
 
 		await signup;
 	});
@@ -81,17 +81,17 @@ test.describe('After setup instance', () => {
 		await visitHome();
 
 		// ユーザー名が重複している場合の挙動確認
-		await page.locator('[data-cy-signup]').click();
-		await expect(page.locator('[data-cy-signup-rules-continue]')).toBeDisabled();
-		await page.locator('[data-cy-signup-rules-notes-agree] [data-cy-switch-toggle]').click();
-		await page.locator('[data-cy-modal-dialog-ok]').click();
-		await expect(page.locator('[data-cy-signup-rules-continue]')).toBeEnabled();
-		await page.locator('[data-cy-signup-rules-continue]').click();
+		await byE2e(page, 'signup').click();
+		await expect(byE2e(page, 'signup-rules-continue')).toBeDisabled();
+		await byE2e(page, 'signup-rules-notes-agree', 'switch-toggle').click();
+		await byE2e(page, 'modal-dialog-ok').click();
+		await expect(byE2e(page, 'signup-rules-continue')).toBeEnabled();
+		await byE2e(page, 'signup-rules-continue').click();
 
-		await page.locator('[data-cy-signup-username] input').fill('alice');
-		await page.locator('[data-cy-signup-password] input').fill('alice1234');
-		await page.locator('[data-cy-signup-password-retype] input').fill('alice1234');
-		await expect(page.locator('[data-cy-signup-submit]')).toBeDisabled();
+		await byE2e(page, 'signup-username').locator('input').fill('alice');
+		await byE2e(page, 'signup-password').locator('input').fill('alice1234');
+		await byE2e(page, 'signup-password-retype').locator('input').fill('alice1234');
+		await expect(byE2e(page, 'signup-submit')).toBeDisabled();
 	});
 });
 
@@ -128,11 +128,11 @@ test.describe('After user signup', () => {
 
 		await visitHome();
 
-		await page.locator('[data-cy-signin]').click();
+		await byE2e(page, 'signin').click();
 
-		await expect(page.locator('[data-cy-signin-page-input]')).toBeVisible();
-		await page.locator('[data-cy-signin-username] input').fill('alice');
-		await page.locator('[data-cy-signin-username] input').press('Enter');
+		await expect(byE2e(page, 'signin-page-input')).toBeVisible();
+		await byE2e(page, 'signin-username').locator('input').fill('alice');
+		await byE2e(page, 'signin-username').locator('input').press('Enter');
 
 		await expect(page.getByText(/アカウントが凍結されています|This account has been suspended due to/i).first()).toBeVisible();
 	});
@@ -153,18 +153,18 @@ test.describe('After user signed in', () => {
 
 	test('successfully loads', async ({ page }) => {
 		// 表示に時間がかかるのでデフォルト秒数だとタイムアウトする
-		await expect(page.locator('[data-cy-user-setup-continue]')).toBeVisible({ timeout: 30_000 });
+		await expect(byE2e(page, 'user-setup-continue')).toBeVisible({ timeout: 30_000 });
 	});
 
 	test('account setup wizard', async ({ page }) => {
-		const continueButton = page.locator('[data-cy-user-setup-continue]');
+		const continueButton = byE2e(page, 'user-setup-continue');
 
 		// 表示に時間がかかるのでデフォルト秒数だとタイムアウトする
 		await expect(continueButton).toBeVisible({ timeout: 30_000 });
 		await continueButton.click();
 
-		await page.locator('[data-cy-user-setup-user-name] input').fill('ありす');
-		await page.locator('[data-cy-user-setup-user-description] textarea').fill('ほげ');
+		await byE2e(page, 'user-setup-user-name').locator('input').fill('ありす');
+		await byE2e(page, 'user-setup-user-description').locator('textarea').fill('ほげ');
 		// TODO: アイコン設定テスト
 
 		await continueButton.click();
@@ -208,25 +208,28 @@ test.describe('After user setup', () => {
 	});
 
 	test('note', async ({ page }) => {
-		await expect(page.locator('[data-cy-open-post-form]')).toBeVisible();
-		await page.locator('[data-cy-open-post-form]').click();
-		await page.locator('[data-cy-post-form-text]').fill('Hello, CherryPick!');
-		await page.locator('[data-cy-open-post-form-submit]').click();
+		await expect(byE2e(page, 'open-post-form')).toBeVisible();
+		await byE2e(page, 'open-post-form').click();
+		await byE2e(page, 'post-form-text').fill('Hello, CherryPick!');
+		await byE2e(page, 'open-post-form-submit').click();
 
 		await expect(page.getByText('Hello, CherryPick!').first()).toBeVisible({ timeout: 15_000 });
 	});
 
 	test('open note form with hotkey', async ({ page }) => {
 		// Wait until the page loads
-		await expect(page.locator('[data-cy-open-post-form]')).toBeVisible();
+		await expect(byE2e(page, 'open-post-form')).toBeVisible();
 
-		// `code` を差し替えて発火させ、QWERTY以外のキーボードでもホットキーが効くことを確認する
-		await page.evaluate(() => {
-			document.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', code: 'KeyL', bubbles: true }));
-		});
+		// `code` を差し替えて発火させ、QWERTY以外のキーボードでもホットキーが効くことを確認する。
+		// ホットキーのハンドラー登録が終わる前に発火すると取りこぼすので、開くまで投げ直す
+		await expect(async () => {
+			await page.evaluate(() => {
+				document.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', code: 'KeyL', bubbles: true }));
+			});
 
-		// See if the form is opened
-		await expect(page.locator('[data-cy-post-form-text]')).toBeVisible();
+			// See if the form is opened
+			await expect(byE2e(page, 'post-form-text')).toBeVisible({ timeout: 1_000 });
+		}).toPass({ timeout: 30_000 });
 
 		// Close it
 		await page.evaluate(() => {
@@ -234,7 +237,7 @@ test.describe('After user setup', () => {
 		});
 
 		// See if the form is closed
-		await expect(page.locator('[data-cy-post-form-text]')).toBeHidden();
+		await expect(byE2e(page, 'post-form-text')).toBeHidden();
 	});
 });
 

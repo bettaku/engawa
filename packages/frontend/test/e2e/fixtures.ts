@@ -4,9 +4,24 @@
  */
 
 import { test as base, expect } from '@playwright/test';
-import type { APIRequestContext, Page } from '@playwright/test';
+import type { APIRequestContext, Locator, Page } from '@playwright/test';
 
 export const ADMIN_SETUP_PASSWORD = 'example_password_please_change_this_or_you_will_get_hacked';
+
+/**
+ * E2E用の `data-e2e-*` 属性で要素を引く。
+ *
+ * 属性名そのものが識別子で値を持たない(`<button data-e2e-signin>`)ので、
+ * Playwrightの `getByTestId` ではなく属性セレクターを使う。
+ * 名前を複数渡すと子孫を辿る: `byE2e(page, 'signup-rules-notes-agree', 'switch-toggle')`
+ */
+export function byE2e(scope: Page | Locator, ...names: [string, ...string[]]): Locator {
+	let locator = scope.locator(`[data-e2e-${names[0]}]`);
+	for (const name of names.slice(1)) {
+		locator = locator.locator(`[data-e2e-${name}]`);
+	}
+	return locator;
+}
 
 export type CreatedUser = {
 	id: string;
@@ -77,19 +92,19 @@ async function visitHomeImpl(page: Page): Promise<void> {
 async function loginImpl(page: Page, username: string, password: string): Promise<void> {
 	await visitHomeImpl(page);
 
-	await page.locator('[data-cy-signin]').click();
+	await byE2e(page, 'signin').click();
 
-	await expect(page.locator('[data-cy-signin-page-input]')).toBeVisible();
+	await expect(byE2e(page, 'signin-page-input')).toBeVisible();
 	// Enterキーで続行できるかの確認も兼ねる
-	await page.locator('[data-cy-signin-username] input').fill(username);
-	await page.locator('[data-cy-signin-username] input').press('Enter');
+	await byE2e(page, 'signin-username').locator('input').fill(username);
+	await byE2e(page, 'signin-username').locator('input').press('Enter');
 
-	await expect(page.locator('[data-cy-signin-page-password]')).toBeVisible({ timeout: 10_000 });
+	await expect(byE2e(page, 'signin-page-password')).toBeVisible({ timeout: 10_000 });
 
 	const signin = page.waitForResponse(res => res.url().includes('/api/signin-flow') && res.request().method() === 'POST');
 	// Enterキーで続行できるかの確認も兼ねる
-	await page.locator('[data-cy-signin-password] input').fill(password);
-	await page.locator('[data-cy-signin-password] input').press('Enter');
+	await byE2e(page, 'signin-password').locator('input').fill(password);
+	await byE2e(page, 'signin-password').locator('input').press('Enter');
 	await signin;
 
 	// サインイン直後はトークンの保存とリロードが走る。

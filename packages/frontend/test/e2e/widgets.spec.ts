@@ -4,7 +4,7 @@
  */
 
 import locales from '../../../../locales/index.js';
-import { expect, test } from './fixtures.js';
+import { byE2e, expect, test } from './fixtures.js';
 
 // `playwright.config.ts` で `locale: 'en-US'` を指定しているため、UIのラベルは英語になる
 const widgetLabels = locales['en-US']._widgets;
@@ -55,39 +55,40 @@ test.describe('After user signed in', () => {
 	});
 
 	test('widget edit toggle is visible', async ({ page }) => {
-		await expect(page.locator('[data-cy-widget-edit]')).toBeVisible();
+		await expect(byE2e(page, 'widget-edit')).toBeVisible();
 	});
 
 	test('widget select should be visible in edit mode', async ({ page }) => {
-		await page.locator('[data-cy-widget-edit]').click();
-		await expect(page.locator('[data-cy-widget-select]')).toBeVisible();
+		await byE2e(page, 'widget-edit').click();
+		await expect(byE2e(page, 'widget-select')).toBeVisible();
 	});
 
 	test('first widget should be removed', async ({ page }) => {
-		await page.locator('[data-cy-widget-edit]').click();
-		await expect(page.locator('[data-cy-customize-container]')).toHaveCount(DEFAULT_WIDGET_COUNT);
+		await byE2e(page, 'widget-edit').click();
+		await expect(byE2e(page, 'customize-container')).toHaveCount(DEFAULT_WIDGET_COUNT);
 
-		await page.locator('[data-cy-customize-container]').first().locator('[data-cy-customize-container-remove]._button').click();
-		await expect(page.locator('[data-cy-customize-container]')).toHaveCount(DEFAULT_WIDGET_COUNT - 1);
+		const firstWidget = byE2e(page, 'customize-container').first();
+		await byE2e(firstWidget, 'customize-container-remove').click();
+		await expect(byE2e(page, 'customize-container')).toHaveCount(DEFAULT_WIDGET_COUNT - 1);
 	});
 
 	for (const widgetName of WIDGETS) {
 		test(`${widgetName} widget should get added`, async ({ page }) => {
-			const widget = page.locator(`[data-cy-mkw-${widgetName}]`);
+			const widget = byE2e(page, `mkw-${widgetName}`);
 
-			await page.locator('[data-cy-widget-edit]').click();
+			await byE2e(page, 'widget-edit').click();
 
 			// デフォルトのウィジェットが出揃ってから数えないと、追加後の枚数がぶれる
-			await expect(page.locator('[data-cy-customize-container]')).toHaveCount(DEFAULT_WIDGET_COUNT);
+			await expect(byE2e(page, 'customize-container')).toHaveCount(DEFAULT_WIDGET_COUNT);
 			const before = await widget.count();
 
 			// MkSelectはネイティブの<select>ではなくポップアップメニューを開くので、項目をラベルで選ぶ
-			await page.locator('[data-cy-widget-select] [tabindex="0"]').click();
+			await byE2e(page, 'widget-select').locator('[tabindex="0"]').click();
 			const menu = page.getByRole('menu').last();
 			await expect(menu).toBeVisible();
 			await menu.getByRole('menuitem', { name: widgetLabels[widgetName], exact: true }).click();
 
-			await page.locator('[data-cy-widget-add]').click();
+			await byE2e(page, 'widget-add').click();
 
 			await expect(widget).toHaveCount(before + 1);
 		});
