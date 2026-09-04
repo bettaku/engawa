@@ -187,7 +187,9 @@ test.describe('After user signed in', () => {
 		// プッシュ通知設定はスキップ
 		await continueButton.click();
 
-		await continueButton.click();
+		// 完了ページ（チュートリアル開始ボタンとは別のセレクターで閉じる）
+		await expect(byE2e(page, 'user-setup-start-tutorial')).toBeVisible();
+		await byE2e(page, 'user-setup-complete').click();
 	});
 });
 
