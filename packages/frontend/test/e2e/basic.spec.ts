@@ -25,7 +25,7 @@ test.describe('Before setup instance', () => {
 		await byE2e(page, 'admin-password').locator('input').fill('admin1234');
 		await byE2e(page, 'admin-ok').click();
 
-		await signup;
+		expect((await signup).ok()).toBe(true);
 
 		const updateMeta = page.waitForResponse(res => res.url().includes('/api/admin/update-meta') && res.request().method() === 'POST');
 
@@ -33,7 +33,7 @@ test.describe('Before setup instance', () => {
 		await byE2e(page, 'server-name').locator('input').fill('Testskey');
 		await byE2e(page, 'server-setup-wizard-apply').click();
 
-		await updateMeta;
+		expect((await updateMeta).ok()).toBe(true);
 	});
 });
 
@@ -72,7 +72,7 @@ test.describe('After setup instance', () => {
 		await expect(byE2e(page, 'signup-submit')).toBeEnabled();
 		await byE2e(page, 'signup-submit').click();
 
-		await signup;
+		expect((await signup).ok()).toBe(true);
 	});
 
 	test('signup with duplicated username', async ({ page, registerUser, visitHome }) => {
