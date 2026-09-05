@@ -163,37 +163,53 @@ test.describe('After user signed in', () => {
 	test('account setup wizard', async ({ page }) => {
 		const continueButton = byE2e(page, 'user-setup-continue');
 
+		/**
+		 * 「続行」を押して次のページへ進む。
+		 *
+		 * ページ切り替えは `<Transition mode="out-in">` なので、クリック直後の約0.3秒は
+		 * 前のページの「続行」ボタンが退場アニメーション中のままDOMに残っている。
+		 * この間に次のクリックが走ると、アンマウント済みのMkButtonに当たって
+		 * `emit('click')` が握りつぶされ、ページが進まないことがある。
+		 * 押したボタンがDOMから消えるまで待つことで、次のクリックが必ず新しいページのボタンに当たるようにする。
+		 */
+		const goNext = async () => {
+			const clicked = await continueButton.elementHandle();
+			await continueButton.click();
+			await clicked?.waitForElementState('hidden');
+		};
+
 		// 表示に時間がかかるのでデフォルト秒数だとタイムアウトする
 		await expect(continueButton).toBeVisible({ timeout: 30_000 });
-		await continueButton.click();
+		await goNext();
 
+		// プロフィール設定
 		await byE2e(page, 'user-setup-user-name').locator('input').fill('ありす');
 		await byE2e(page, 'user-setup-user-description').locator('textarea').fill('ほげ');
 		// TODO: アイコン設定テスト
-
-		await continueButton.click();
+		await goNext();
 
 		// プライバシー設定
-		await continueButton.click();
+		await goNext();
 
 		// フォントサイズ設定
-		await continueButton.click();
+		await goNext();
 
 		// ぼかし効果設定
-		await continueButton.click();
+		await goNext();
 
 		// MFMとアニメーション画像設定
-		await continueButton.click();
+		await goNext();
 
 		// フォローはスキップ
-		await continueButton.click();
+		await goNext();
 
 		// プッシュ通知設定はスキップ
-		await continueButton.click();
+		await goNext();
 
 		// 完了ページ（チュートリアル開始ボタンとは別のセレクターで閉じる）
 		await expect(byE2e(page, 'user-setup-start-tutorial')).toBeVisible();
 		await byE2e(page, 'user-setup-complete').click();
+		await expect(byE2e(page, 'user-setup')).toBeHidden();
 	});
 });
 
