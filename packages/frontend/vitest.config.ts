@@ -8,7 +8,7 @@ export default mergeConfig(getConfig(), defineConfig({
 		setupFiles: ['./test/unit/setup.unit.ts'],
 		deps: {
 			optimizer: {
-				web: {
+				client: {
 					include: [
 						'browser-image-resizer',
 					],
