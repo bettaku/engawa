@@ -40,6 +40,10 @@ overrides:
   '@misskey-dev/summaly>fastify': 5.12.1
   'undici@^7': 7.29.0
   'protobufjs@^7': 7.6.6
+  # @tabler/icons-webfont の sharp はプレビュー生成用で未使用。脆弱な 0.33 系を排除
+  '@tabler/icons-webfont>sharp': '-'
+  'brace-expansion@^1': 1.1.18
+  '@redocly/openapi-core>js-yaml': 4.3.2
 minimumReleaseAge: 10080 # delay 7days to mitigate supply-chain attack
 minimumReleaseAgeExclude:
   - happy-dom # セキュリティ修正のため一時的に。そのうち消すこと
@@ -47,6 +51,7 @@ minimumReleaseAgeExclude:
   - '@rolldown/*' # 脆弱性対応。そのうち消す
   - vite # 脆弱性対応。そのうち消す
   - '@oxc-project/types'
+  - qs@6.16.0 # 脆弱性対応。そのうち消す
 engineStrict: true
 saveExact: true
 shellEmulator: true

@@ -32,6 +32,10 @@
 - fix(frontend): ドライブからファイルを添付した際に投稿フォームに何も表示されない問題
 - enhance(frontend): サイコロウィジェットで複数個振ったときに個々の出目を表示するように
 	- あわせて一度に振れるサイコロの数を999個までに制限しました
+- fix(frontend): 脆弱性が報告されていた依存パッケージを更新・排除
+	- `sanitize-html` 2.17.7（`javascript:` URI の検証不備）、`uuid` 14、`happy-dom` / `minimatch` / `vite` / `rollup` / `vitest` / Storybook 9.1.20 などの開発用依存を更新
+	- `@tabler/icons-webfont` が同梱する未使用の `sharp` 0.33 系を override で排除、`@misskey-dev/summaly` の更新で `private-ip` への依存を排除
+	- `cherrypick-js` のテスト基盤を vitest 4 に更新（vitest 3 系の任意ファイル読み取り脆弱性）
 
 ### Server
 - fix(backend): chat

@@ -50,12 +50,12 @@
 		"schema:sync": "cd packages/backend && pnpm typeorm schema:sync -d ormconfig.js"
 	},
 	"dependencies": {
-		"cssnano": "7.1.1",
+		"cssnano": "7.1.9",
 		"esbuild": "0.25.10",
 		"execa": "9.6.0",
 		"fast-glob": "3.3.3",
 		"glob": "13.0.6",
-		"ignore-walk": "8.0.0",
+		"ignore-walk": "9.0.0",
 		"js-yaml": "4.3.2",
 		"postcss": "8.5.26",
 		"tar": "7.5.22",
@@ -64,7 +64,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.1",
-		"@misskey-dev/eslint-plugin": "2.1.0",
+		"@misskey-dev/eslint-plugin": "2.2.1",
 		"@types/js-yaml": "4.0.9",
 		"@types/node": "24.9.1",
 		"@typescript-eslint/eslint-plugin": "8.67.0",
