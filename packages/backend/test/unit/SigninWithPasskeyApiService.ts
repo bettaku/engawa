@@ -7,7 +7,7 @@ import { IncomingHttpHeaders } from 'node:http';
 import { afterAll, beforeAll, beforeEach, describe, expect, vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { AuthenticationResponseJSON } from '@simplewebauthn/types';
+import { AuthenticationResponseJSON } from '@simplewebauthn/server';
 import { HttpHeader } from 'fastify/types/utils.js';
 import { generateMock } from '../mocker.js';
 import { MiUser } from '@/models/User.js';

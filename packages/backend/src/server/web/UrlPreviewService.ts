@@ -5,7 +5,7 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { summaly } from '@misskey-dev/summaly';
-import { SummalyResult } from '@misskey-dev/summaly/built/summary.js';
+import type { SummalyResult } from '@misskey-dev/summaly';
 import { DI } from '@/di-symbols.js';
 import type { Config } from '@/config.js';
 import { HttpRequestService } from '@/core/HttpRequestService.js';

@@ -37,6 +37,13 @@
 - fix(backend): chat
 	- チャットの連合機能に関する不具合の修正
 - fix(backend): Hacker's Pubなどのh2タグ内にハッシュタグから始まるidを持っているHTMLが来た場合、無視するように
+- fix(backend): 深刻な脆弱性が報告されていた依存パッケージを更新・置き換え
+	- `@fastify/express`（認証バイパス）、`@fastify/http-proxy`（ヘッダー除去）、`@fastify/static`（パストラバーサル）、`fastify`（バリデーションバイパス）、`nodemailer`（任意ファイル読み取り/SSRF）、`sharp`（libvips）、`systeminformation`（コマンドインジェクション）、`ws`/`nanoid`/`tmp`/`happy-dom` ほか
+	- `@aws-sdk/client-s3` の更新で `fast-xml-parser` の critical な脆弱性を解消
+	- `deep-email-validator` の更新で脆弱な `axios@0.24` への依存を排除、`@misskey-dev/summaly` の更新で修正版のない `private-ip` への依存を排除
+	- `ip-cidr`（脆弱な `ip-address@9` に依存）を削除し、既存依存の `ipaddr.js` でIPハッシュを計算するように置き換え（ハッシュ値は従来と互換）
+	- `@simplewebauthn/server` を v13 に更新（`@simplewebauthn/types` は同梱化されたため削除）
+	- `jsonld` を v9 に更新（`normalize` の既定アルゴリズムは RDFC-1.0 になりましたが URDNA2015 と同一の出力です）
 
 ### Misc
 - enhance(ci): Issueラベルの自動管理化
