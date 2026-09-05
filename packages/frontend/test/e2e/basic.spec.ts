@@ -91,6 +91,10 @@ test.describe('After setup instance', () => {
 		await byE2e(page, 'signup-username').locator('input').fill('alice');
 		await byE2e(page, 'signup-password').locator('input').fill('alice1234');
 		await byE2e(page, 'signup-password-retype').locator('input').fill('alice1234');
+		// 招待コードまで入力しておき、送信できない理由がユーザー名の重複だけになるようにする
+		await byE2e(page, 'signup-invitation-code').locator('input').fill('test-invitation-code');
+
+		await expect(byE2e(page, 'signup-username').getByText(/利用できません|Not available/i)).toBeVisible();
 		await expect(byE2e(page, 'signup-submit')).toBeDisabled();
 	});
 });
