@@ -8,51 +8,55 @@ SPDX-License-Identifier: AGPL-3.0-only
 	<MkButton v-if="$i && ($i.isModerator || $i.policies.canManageAvatarDecorations)" primary link to="/avatar-decorations">{{ i18n.ts.manageAvatarDecorations }}</MkButton>
 
 	<div :class="$style.decorations">
-		<div
-			v-for="avatarDecoration in avatarDecorations"
-			:key="avatarDecoration.id"
-			v-panel
-			:class="$style.decoration"
-			@click="menu(avatarDecoration, $event)"
-		>
-			<div :class="$style.decorationName"><MkCondensedLine :minScale="0.5">{{ avatarDecoration.name }}</MkCondensedLine></div>
-			<MkAvatar style="width: 60px; height: 60px;" :user="$i ?? demoUser" :decorations="[{ url: avatarDecoration.url }]" forceShowDecoration/>
-		</div>
+		<MkPagination :paginator="paginator">
+			<template #empty><span>{{ i18n.ts.nothing }}</span></template>
+			<template #default="{items}">
+				<div
+					v-for="decoration in items"
+					:key="decoration.id"
+					v-panel
+					:class="$style.decoration"
+					@click="menu(decoration, $event)"
+				>
+					<div :class="$style.decorationName"><MkCondensedLine :minScale="0.5">{{ decoration.name }}</MkCondensedLine></div>
+					<MkAvatar style="width: 60px; height: 60px;" :user="$i ?? demoUser" :decorations="[{ url: decoration.url }]" forceShowDecoration/>
+				</div>
+			</template>
+		</MkPagination>
 	</div>
 </div>
 </template>
 
 <script lang="ts" setup>
-import { defineAsyncComponent, ref } from 'vue';
+import { defineAsyncComponent, ref, markRaw } from 'vue';
 import * as Misskey from 'cherrypick-js';
 import type { MenuItem } from '@/types/menu';
 import { $i } from '@/i.js';
 import { i18n } from '@/i18n.js';
-import { misskeyApi } from '@/utility/misskey-api.js';
 import MkButton from '@/components/MkButton.vue';
 import { instance } from '@/instance.js';
 import * as os from '@/os.js';
 import MkAvatarDecorationDialog from '@/components/MkAvatarDecorationDialog.vue';
 import { copyToClipboard } from '@/utility/copy-to-clipboard.js';
+import { Paginator } from '@/utility/paginator.js';
+import MkPagination from '@/components/MkPagination.vue';
 
-const avatarDecorations = ref<Misskey.entities.GetAvatarDecorationsResponse>([]);
 const demoUser = {
 	id: 'instance.actor',
 	name: 'instance.actor',
 	username: 'instance.actor',
 	host: null,
-	avatarUrl: instance.iconUrl || '/favicon.ico',
+	avatarUrl: instance.iconUrl ?? '/favicon.ico',
 	avatarBlurhash: null,
 	avatarDecorations: [],
-} satisfies Partial<Misskey.entities.UserDetailed>;
+	isLocked: false,
+	emojis: {},
+	onlineStatus: 'unknown',
+} satisfies Misskey.entities.UserLite;
 
-function load() {
-	misskeyApi('get-avatar-decorations').then(_avatarDecorations => {
-		avatarDecorations.value = _avatarDecorations;
-	});
-}
-
-load();
+const paginator = markRaw(new Paginator('admin/avatar-decorations/list', {
+	limit: 30,
+}));
 
 const menu = (decoration, ev: MouseEvent) => {
 	const menuItems: MenuItem[] = [{

@@ -6,7 +6,7 @@
 import { nextTick, ref, defineAsyncComponent } from 'vue';
 import getCaretCoordinates from 'textarea-caret';
 import { toASCII } from 'punycode.js';
-import type { Ref } from 'vue';
+import type { Component, Ref } from 'vue';
 import type { CompleteInfo } from '@/components/MkAutocomplete.vue';
 import { popup } from '@/os.js';
 
@@ -222,9 +222,9 @@ export class Autocomplete {
 		} else {
 			const _x = ref(x);
 			const _y = ref(y);
-			const _q = ref(q);
+			const _q = ref(q) as Ref<any>;
 
-			const { dispose } = await popup(defineAsyncComponent(() => import('@/components/MkAutocomplete.vue')), {
+			const { dispose } = await popup(defineAsyncComponent(() => import('@/components/MkAutocomplete.vue')) as Component, {
 				textarea: this.textarea,
 				close: this.close,
 				type: type,

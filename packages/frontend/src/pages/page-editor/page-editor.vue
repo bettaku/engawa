@@ -75,7 +75,7 @@ import { definePage } from '@/page.js';
 import { $i } from '@/i.js';
 import { mainRouter } from '@/router.js';
 import { useMkSelect } from '@/composables/use-mkselect.js';
-import { getPageBlockList } from '@/pages/page-editor/common.js';
+import { createPageBlock, getPageBlockList } from '@/pages/page-editor/common.js';
 
 const props = defineProps<{
 	initPageId?: string;
@@ -216,7 +216,7 @@ async function add() {
 	if (canceled || type == null) return;
 
 	const id = genId();
-	content.value.push({ id, type });
+	content.value.push(createPageBlock(type, id));
 }
 
 function setEyeCatchingImage(img: Event) {
@@ -252,7 +252,7 @@ async function init() {
 		name.value = page.value.name;
 		currentName.value = page.value.name;
 		summary.value = page.value.summary;
-		font.value = page.value.font;
+		font.value = page.value.font === 'serif' ? 'serif' : 'sans-serif';
 		hideTitleWhenPinned.value = page.value.hideTitleWhenPinned;
 		alignCenter.value = page.value.alignCenter;
 		content.value = page.value.content;

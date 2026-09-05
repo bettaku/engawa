@@ -44,19 +44,17 @@ const paginator = markRaw(new Paginator('notes/search-by-tag', {
 	})),
 }));
 
-const notes = ref<typeof MkNotesTimeline>();
-
 //#region ChannelConnection
-let connection: Misskey.ChannelConnection | null = null;
-
 const stream = useStream();
+const createHashtagConnection = () => stream.useChannel('hashtag', {
+	q: [[props.tag]],
+});
+let connection: ReturnType<typeof createHashtagConnection> | null = null;
 
 function connectChannel() {
-	connection = stream.useChannel('hashtag', {
-		q: [[props.tag]],
-	});
+	connection = createHashtagConnection();
 	connection?.on('note', note => {
-		notes.value?.pagingComponent?.prepend(note);
+		paginator.prepend(note);
 	});
 }
 
@@ -82,13 +80,7 @@ onUnmounted(() => {
 refreshChannel();
 
 function reloadTimeline() {
-	return new Promise<void>((res) => {
-		if (notes.value == null) return;
-
-		notes.value.pagingComponent?.reload().then(() => {
-			res();
-		});
-	});
+	return paginator.reload();
 }
 //#endregion
 

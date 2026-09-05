@@ -5113,33 +5113,6 @@ export type components = {
             detailed: boolean;
             note: string | null;
         };
-        Channel: {
-            /**
-             * Format: id
-             * @example xxxxxxxxxx
-             */
-            id: string;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            lastNotedAt: string | null;
-            name: string;
-            description: string | null;
-            /** Format: id */
-            userId: string | null;
-            /** Format: url */
-            bannerUrl: string | null;
-            pinnedNoteIds: string[];
-            color: string;
-            isArchived: boolean;
-            usersCount: number;
-            notesCount: number;
-            isSensitive: boolean;
-            allowRenoteToExternal: boolean;
-            isFollowing?: boolean;
-            isFavorited?: boolean;
-            pinnedNotes?: components['schemas']['Note'][];
-        };
         QueueCount: {
             waiting: number;
             active: number;
@@ -29946,7 +29919,7 @@ export interface operations {
                      * @default public
                      * @enum {string}
                      */
-                    visibility?: 'public' | 'home' | 'followers' | 'specified';
+                    visibility?: 'public' | 'home' | 'followers' | 'specified' | 'private';
                     visibleUserIds?: string[];
                     cw?: string | null;
                     hashtag?: string | null;
@@ -38023,9 +37996,11 @@ export interface operations {
                     /** @default 10 */
                     limit?: number;
                     page?: number;
-                    /** @default [
+                    /**
+                     * @default [
                      *       "-id"
-                     *     ] */
+                     *     ]
+                     */
                     sortKeys?: ('+id' | '-id' | '+updatedAt' | '-updatedAt' | '+name' | '-name' | '+host' | '-host' | '+uri' | '-uri' | '+publicUrl' | '-publicUrl' | '+type' | '-type' | '+aliases' | '-aliases' | '+category' | '-category' | '+license' | '-license' | '+isSensitive' | '-isSensitive' | '+localOnly' | '-localOnly' | '+roleIdsThatCanBeUsedThisEmojiAsReaction' | '-roleIdsThatCanBeUsedThisEmojiAsReaction')[];
                 };
             };

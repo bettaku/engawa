@@ -57,27 +57,27 @@ function onInputKeydown(evt: KeyboardEvent) {
 	}
 }
 
-function onFilterClick(ev) {
-	os.popupMenu([{
-		type: 'parent',
-		text: i18n.ts.options,
-		icon: 'ti ti-filter',
-		children: [
-			{
-				type: 'switch',
-				icon: 'ti ti-eye-off',
-				text: i18n.ts._advancedSearch._searchOption.toggleCW,
-				ref: excludeNsfw,
-			},
-			{
-				type: 'switch',
-				icon: 'ti ti-ufo-off',
-				text: i18n.ts.antennaExcludeBots,
-				ref: excludeBots,
-			},
-		],
-	}], ev.currentTarget ?? ev.target);
-}
+// function onFilterClick(ev) {
+//	os.popupMenu([{
+//		type: 'parent',
+//		text: i18n.ts.options,
+//		icon: 'ti ti-filter',
+//		children: [
+//			{
+//				type: 'switch',
+//				icon: 'ti ti-eye-off',
+//				text: i18n.ts._advancedSearch._searchOption.toggleCW,
+//				ref: excludeNsfw,
+//			},
+//			{
+//				type: 'switch',
+//				icon: 'ti ti-ufo-off',
+//				text: i18n.ts.antennaExcludeBots,
+//				ref: excludeBots,
+//			},
+//		],
+//	}], ev.currentTarget ?? ev.target);
+// }
 
 const router = useRouter();
 
@@ -127,9 +127,8 @@ async function search() {
 		params: {
 			query: query,
 			userId: null,
-			order: order.value ? 'desc' : 'asc',
 			excludeNsfw: excludeNsfw.value,
-			excludeBots: excludeBots.value,
+			excludeBot: excludeBots.value,
 		},
 	}));
 
@@ -143,14 +142,14 @@ async function search() {
 	}, {
 		closed: () => dispose(),
 	});
-	}
+}
 
 defineExpose<WidgetComponentExpose>({
 	name,
 	configure,
 	id: props.widget ? props.widget.id : null,
 });
-	</script>
+</script>
 
 <style lang="scss" module>
 .skwSearch {

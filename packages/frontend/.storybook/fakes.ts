@@ -24,7 +24,7 @@ export function abuseUserReport() {
 	};
 }
 
-export function channel(id = 'somechannelid', name = 'Some Channel', bannerUrl: string | null = 'https://github.com/kokonect-link/cherrypick/blob/master/packages/frontend/assets/fedi.jpg?raw=true'): entities.Channel {
+export function channel(id = 'somechannelid', name = 'Some Channel', bannerUrl: string | null = 'https://github.com/kokonect-link/cherrypick/blob/master/packages/frontend/assets/fedi.jpg?raw=true') {
 	return {
 		id,
 		createdAt: '2016-12-28T22:49:51.000Z',
@@ -295,6 +295,7 @@ export function userDetailed(id = 'someuserid', username = 'cherrypikist', host:
 		isModerator: false,
 		isMuted: false,
 		isSilenced: false,
+		isSensitive: false,
 		isSuspended: false,
 		lang: 'en',
 		location: 'Fediverse',

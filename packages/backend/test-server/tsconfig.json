@@ -24,7 +24,6 @@
 		"resolveJsonModule": true,
 		"isolatedModules": true,
 		"rootDir": "../src",
-		"baseUrl": "./",
 		"paths": {
 			"@/*": ["../src/*"]
 		},

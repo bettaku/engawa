@@ -5,6 +5,7 @@
 
 import { misskeyApi } from '@/utility/misskey-api.js';
 import { $i } from '@/i.js';
+import type * as Misskey from 'cherrypick-js';
 
 export const ACHIEVEMENT_TYPES = [
 	'notes1',
@@ -525,7 +526,7 @@ export async function claimAchievement(type: typeof ACHIEVEMENT_TYPES[number]) {
 	window.setTimeout(() => {
 		claimingQueue.delete(type);
 	}, 500);
-	misskeyApi('i/claim-achievement', { name: type });
+	misskeyApi('i/claim-achievement', { name: type as Misskey.entities.AchievementName });
 }
 
 if (_DEV_) {

@@ -30,6 +30,8 @@
 - enhance(frontend): enable to display more timezone on clock widgets
 - fix(frontend): チャンネルに関する消し忘れを修正
 - fix(frontend): ドライブからファイルを添付した際に投稿フォームに何も表示されない問題
+- enhance(frontend): サイコロウィジェットで複数個振ったときに個々の出目を表示するように
+	- あわせて一度に振れるサイコロの数を999個までに制限しました
 
 ### Server
 - fix(backend): chat
@@ -40,4 +42,5 @@
 - enhance(ci): Issueラベルの自動管理化
 - chore(docs): Improve Issue Template
 - refactor(backend): テスト基盤をJestからVitestに移行
+- refactor(frontend): サイコロのロジックを自前実装にし、`@dice-roller/rpg-dice-roller` への依存を削除
 

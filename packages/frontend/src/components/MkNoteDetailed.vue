@@ -320,15 +320,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</div>
 			<MkSwitch v-if="historiesLoaded" v-model="history_raw" style="padding: 16px;">{{ i18n.ts.compareContent }}</MkSwitch>
 			<MkNoteHistory
-				v-for="(history, index) in histories"
+				v-for="(history, historyIndex) in histories"
 				:key="history.id"
-				:oldNote="histories[index+1] ? histories[index+1] : null"
+				:oldNote="getPreviousHistory(historyIndex)"
 				:newNote="history"
 				:originalNote="appearNote"
 				:class="$style.reply"
 				:detail="true"
 				:raw="history_raw"
-				:index="index"
+				:index="toHistoryIndex(historyIndex)"
 			/>
 			<div v-if="historiesLoaded && !history_list_end" style="padding: 16px">
 				<MkButton style="margin: 0 auto;" primary rounded @click="loadHistories">{{ i18n.ts.loadMore }}</MkButton>
@@ -467,6 +467,15 @@ const canRenote = computed(() => ['public', 'home'].includes(appearNote.visibili
 const viewTextSource = ref(false);
 const noNyaize = ref(false);
 const histories = ref<Misskey.entities.NoteHistory[]>([]);
+
+function toHistoryIndex(index: string | number): number {
+	return Number(index);
+}
+
+function getPreviousHistory(index: string | number): Misskey.entities.NoteHistory | null {
+	return histories.value[toHistoryIndex(index) + 1] ?? null;
+}
+
 const historiesLoaded = ref(false);
 const histories_untilId = ref<Misskey.entities.NoteHistory['id']>();
 const history_list_end = ref(false);

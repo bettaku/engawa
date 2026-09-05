@@ -90,9 +90,9 @@ const eventSortDef = computed(() => {
 });
 
 const searchQuery = ref('');
-const searchOrigin = ref('combined');
+const searchOrigin = ref<'remote' | 'local' | 'combined'>('combined');
 
-const eventSort = ref('startDate');
+const eventSort = ref<'createdAt' | 'startDate'>('startDate');
 const startDate = ref<any>(null);
 const endDate = ref<any>(null);
 
