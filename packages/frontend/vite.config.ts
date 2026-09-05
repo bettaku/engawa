@@ -251,21 +251,6 @@ export function getConfig(): UserConfig {
 		worker: {
 			format: 'es',
 		},
-
-		test: {
-			environment: 'happy-dom',
-			deps: {
-				optimizer: {
-					web: {
-						include: [
-							// XXX: misskey-dev/browser-image-resizer has no "type": "module"
-							'browser-image-resizer',
-						],
-					},
-				},
-			},
-			includeSource: ['src/**/*.ts'],
-		},
 	};
 }
 

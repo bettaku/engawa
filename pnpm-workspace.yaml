@@ -21,7 +21,6 @@ onlyBuiltDependencies:
   - bufferutil
   - canvas
   - core-js
-  - cypress
   - esbuild
   - msgpackr-extract
   - msw
