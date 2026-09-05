@@ -1,6 +1,8 @@
 # 開発ガイド
 開発をする上で役にたつメモ
 
+将来のバックエンドの置き換えについては、[バックエンドのRust移行計画](RUST_BACKEND_MIGRATION_PLAN.md)を参照してください。
+
 ## devcontainerの利用
 開発をする上でdevcontainerを利用すると、コンテナ上に開発環境を構築することができます。
 
