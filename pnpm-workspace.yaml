@@ -10,29 +10,28 @@ packages:
   - packages/cherrypick-js/generator
   - packages-internal/label-manager
   - packages-internal/changelog-checker
-onlyBuiltDependencies:
-  - '@biomejs/biome'
-  - '@nestjs/core'
-  - '@parcel/watcher'
-  - '@sentry/profiling-node'
-  - '@sentry/node-cpu-profiler'
-  - '@swc/core'
-  - '@tensorflow/tfjs-node'
-  - argon2
-  - bufferutil
-  - canvas
-  - core-js
-  - esbuild
-  - msgpackr-extract
-  - msw
-  - nice-napi
-  - protobufjs
-  - re2
-  - sharp
-  - utf-8-validate
-  - v-code-diff
-  - vue-demi
-ignorePatchFailures: false
+allowBuilds:
+  '@biomejs/biome': true
+  '@nestjs/core': true
+  '@parcel/watcher': true
+  '@sentry/profiling-node': true
+  '@sentry/node-cpu-profiler': true
+  '@swc/core': true
+  '@tensorflow/tfjs-node': true
+  argon2: true
+  bufferutil: true
+  canvas: true
+  core-js: true
+  esbuild: true
+  msgpackr-extract: true
+  msw: true
+  nice-napi: true
+  protobufjs: true
+  re2: true
+  sharp: true
+  utf-8-validate: true
+  v-code-diff: true
+  vue-demi: true
 overrides:
   chokidar: 4.0.3
   lodash: 4.18.1
@@ -48,3 +47,6 @@ minimumReleaseAgeExclude:
   - '@rolldown/*' # 脆弱性対応。そのうち消す
   - vite # 脆弱性対応。そのうち消す
   - '@oxc-project/types'
+engineStrict: true
+saveExact: true
+shellEmulator: true
