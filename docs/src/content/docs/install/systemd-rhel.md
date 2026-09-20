@@ -2,6 +2,8 @@
 title: systemdでインストールする（RHEL系）
 description: AlmaLinux・Rocky Linux・RHELに、systemdサービスとしてengawaを構築する手順
 lastUpdated: 2026-09-20
+sidebar:
+  order: 3
 ---
 
 AlmaLinux 9 / Rocky Linux 9 / RHEL 9 を想定した、engawaをゼロから構築する手順です。RHEL 10系でも、SELinuxとパッケージ名に注意すればほぼ同じ流れで進められます。

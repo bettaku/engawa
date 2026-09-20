@@ -2,6 +2,8 @@
 title: Install
 description: method for installation
 lastUpdated: 2026-09-20
+sidebar:
+  order: 1
 ---
 
 In this section, there will be documents using for installation of engawa.
@@ -13,5 +15,5 @@ In this section, there will be documents using for installation of engawa.
 
 ## Configuration
 
-- [Backend environment variables](/engawa/en/install/environment-variables/): precedence against the config file, boot options, and variables for development and testing.
 - [Options for db.extra](/engawa/en/install/db-extra/): what you can tune on the PostgreSQL connection, and where those values end up.
+- [Backend environment variables](/engawa/en/install/environment-variables/): precedence against the config file, boot options, and variables for development and testing.

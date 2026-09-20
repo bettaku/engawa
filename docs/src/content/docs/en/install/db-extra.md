@@ -2,6 +2,8 @@
 title: Options for db.extra
 description: What you can put in db.extra, and where those values end up
 lastUpdated: 2026-09-20
+sidebar:
+  order: 4
 ---
 
 This page lists the options you can write under `db.extra` in `default.yml`.

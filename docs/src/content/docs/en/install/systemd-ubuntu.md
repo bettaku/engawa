@@ -2,6 +2,8 @@
 title: Installing with systemd (Ubuntu / Debian)
 description: Setting up engawa as a systemd service on Ubuntu and Debian-based servers
 lastUpdated: 2026-09-20
+sidebar:
+  order: 2
 ---
 
 This page walks through building engawa from scratch on Ubuntu 24.04 LTS. Debian 12 uses the same package names, so the steps apply there almost unchanged.

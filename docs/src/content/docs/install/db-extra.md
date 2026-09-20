@@ -2,6 +2,8 @@
 title: db.extra で指定できる設定
 description: 設定ファイルの db.extra に書ける項目と、指定した値がどこに渡るか
 lastUpdated: 2026-09-20
+sidebar:
+  order: 4
 ---
 
 `default.yml`の `db.extra` に書ける項目をまとめています。

@@ -2,6 +2,8 @@
 title: systemdでインストールする（Ubuntu / Debian）
 description: Ubuntu・Debian系のサーバーに、systemdサービスとしてengawaを構築する手順
 lastUpdated: 2026-09-20
+sidebar:
+  order: 2
 ---
 
 Ubuntu 24.04 LTS を想定した、engawaをゼロから構築する手順です。Debian 12でも、パッケージ名が同じなのでほぼそのまま使えます。

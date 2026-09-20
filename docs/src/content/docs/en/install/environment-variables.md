@@ -2,6 +2,8 @@
 title: Backend environment variables
 description: What the backend reads from the environment, the defaults, and how it relates to the config file
 lastUpdated: 2026-09-20
+sidebar:
+  order: 5
 ---
 
 This page lists the environment variables the backend reads directly. Variables interpreted by dependencies or by Node.js itself, and those used only by the test runner or the frontend build, are out of scope.

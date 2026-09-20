@@ -2,6 +2,8 @@
 title: Installing with systemd (RHEL family)
 description: Setting up engawa as a systemd service on AlmaLinux, Rocky Linux and RHEL
 lastUpdated: 2026-09-20
+sidebar:
+  order: 3
 ---
 
 This page walks through building engawa from scratch on AlmaLinux 9, Rocky Linux 9 or RHEL 9. RHEL 10 follows the same flow, with some care around SELinux and package names.
