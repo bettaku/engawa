@@ -18,8 +18,6 @@ db.extra → TypeORM の extra → new pg.Pool(...)
 
 つまり `db.extra` に書けるのは、[node-postgres](https://node-postgres.com/) のプール・クライアントのオプションです。TypeORM側のオプション（`poolSize`、`synchronize` など）は書いても無視されます。
 
-実装は [config.ts](https://github.com/bettaku/engawa/blob/develop/packages/backend/src/config.ts) と [postgres.ts](https://github.com/bettaku/engawa/blob/develop/packages/backend/src/postgres.ts) にあります。
-
 書き方は、`db` の下に `extra` を作り、そこにキーを並べるだけです。
 
 ```yaml
@@ -42,14 +40,7 @@ db:
 
 engawaは既定で `statement_timeout` に10秒を設定しています。1つのクエリが10秒を超えると、PostgreSQL側で中断されます。
 
-```ts
-extra: {
-  statement_timeout: 1000 * 10,
-  ...config.db.extra,
-},
-```
-
-`db.extra` の内容は後から展開されるため、この既定値も上書きできます。重いAPIやチャート集計でタイムアウトが出る場合は、値を伸ばしてください。
+`db.extra` に書いた値はこの既定値より優先されるため、そのまま上書きできます。重いAPIやチャート集計でタイムアウトが出る場合は、値を伸ばしてください。
 
 ```yaml
 db:
@@ -66,7 +57,7 @@ SHOW statement_timeout;
 ```
 
 :::caution
-マイグレーション用の接続（[ormconfig.js](https://github.com/bettaku/engawa/blob/develop/packages/backend/ormconfig.js)）には、10秒という既定値は入りません。ただし `db.extra` に書いた `statement_timeout` は適用されます。短い値を設定していると、時間のかかるマイグレーションが中断される可能性があります。マイグレーションの前に、一時的に値を外すか大きくしてください。
+マイグレーション用の接続には、10秒という既定値は入りません。ただし `db.extra` に書いた `statement_timeout` は適用されます。短い値を設定していると、時間のかかるマイグレーションが中断される可能性があります。マイグレーションの前に、一時的に値を外すか大きくしてください。
 :::
 
 :::note
