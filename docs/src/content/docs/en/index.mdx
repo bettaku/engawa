@@ -1,23 +1,39 @@
 ---
 title: engawa
-description: engawa is a fork of Misskey/CherryPick that supports ActivityPub.
+description: engawa is a decentralized social platform built to be run comfortably by one person or a small group.
 template: splash
 hero:
-  tagline: ActivityPubに対応した、Misskey/CherryPickのフォーク
+  tagline: Easygoing, like a porch in the sun. A decentralized social platform for you and a few friends.
   actions:
-    - text: Install
-      link: install/
-      icon: desktop
-      variant: primary
     - text: What is engawa?
       link: intro/
       icon: right-arrow
+      variant: primary
+    - text: Install
+      link: install/
+      icon: desktop
       variant: secondary
     - text: GitHub
       link: https://github.com/bettaku/engawa
       icon: external
       variant: minimal
 ---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<CardGrid>
+	<Card title="Built small" icon="server">
+		engawa aims to be something one person, or a small group, can run comfortably.
+	</Card>
+	<Card title="Unhurried" icon="sun">
+		The name comes from the engawa, the porch of a Japanese house. We want a place as unhurried as sunbathing there with a cat.
+	</Card>
+	<Card title="Honest about limits" icon="warning">
+		engawa is not enterprise software. It has a single developer, and we cannot promise fault tolerance, stability, or hardened security.
+	</Card>
+</CardGrid>
+
+engawa is a fork of [CherryPick](https://github.com/kokonect-link/cherrypick), which is itself a fork of [Misskey](https://misskey-hub.net/). It speaks ActivityPub, so it federates with other decentralized social platforms.
 
 :::note
 This documentation is a work in progress.

@@ -21,6 +21,10 @@ export default defineConfig({
 			},
 			sidebar: [
 				{
+					label: 'engawaについて',
+					translations: { en: 'About engawa' },
+					items: [{ autogenerate: { directory: 'intro' } }],
+				}, {
 					label: '開発者向け',
 					translations: { en: 'Development' },
 					items: [{ autogenerate: { directory: 'development' } }],

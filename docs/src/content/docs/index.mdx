@@ -1,23 +1,39 @@
 ---
 title: engawa
-description: engawaはActivityPubに対応したMisskey/CherryPickのフォークです。
+description: engawaは、個人・少人数で気楽に運用することを目指した分散型SNSです。
 template: splash
 hero:
-  tagline: ActivityPubに対応した、Misskey/CherryPickのフォーク
+  tagline: 縁側のように、気楽に。個人・少人数のための分散型SNS
   actions:
-    - text: インストール
-      link: install/
-      icon: desktop
-      variant: primary
     - text: engawaについて
       link: intro/
       icon: right-arrow
+      variant: primary
+    - text: インストール
+      link: install/
+      icon: desktop
       variant: secondary
     - text: GitHub
       link: https://github.com/bettaku/engawa
       icon: external
       variant: minimal
 ---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<CardGrid>
+	<Card title="小さく建てる" icon="server">
+		個人や少人数で、気楽に運用できることを目指しています。
+	</Card>
+	<Card title="緩やかに過ごす" icon="sun">
+		名前は日本家屋の縁側から。日向ぼっこをしながら猫を撫でるような、急かされない場所を目指しています。
+	</Card>
+	<Card title="正直に伝える" icon="warning">
+		engawaはエンタープライズ向けではありません。開発者は1人で、耐障害性・安定性・セキュリティについて保証はできません。
+	</Card>
+</CardGrid>
+
+engawaは、[Misskey](https://misskey-hub.net/)のフォークである[CherryPick](https://github.com/kokonect-link/cherrypick)のフォークです。ActivityPubに対応しており、他の分散型SNSと相互に繋がります。
 
 :::note
 ドキュメントは現在準備中です。
