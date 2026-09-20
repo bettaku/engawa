@@ -141,33 +141,64 @@ If you get `corepack: command not found`, install pnpm directly with `sudo npm i
 
 ## 3. Install PostgreSQL
 
-engawa needs PostgreSQL 15 or newer, and the default stream on RHEL 9 can be older than that. Check first:
+engawa needs PostgreSQL 15 or newer, and what AppStream carries can be older than that, so use [PostgreSQL's official Yum repository](https://www.postgresql.org/download/linux/redhat/). This guide installs PostgreSQL 18.
+
+### Add the repository
 
 ```bash
-dnf module list postgresql
+sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 ```
 
-If the default stream is older than 15, enable 16:
+:::note[Adjust for your environment]
+`EL-9-x86_64` in the URL is your OS major version and CPU architecture — `EL-10-x86_64` on RHEL 10, `EL-9-aarch64` on Arm. The [official download page](https://www.postgresql.org/download/linux/redhat/) generates the exact commands once you pick your platform, architecture and version.
+:::
+
+On RHEL 8, you also have to disable the AppStream module. This is not needed on RHEL 9 and later.
 
 ```bash
-sudo dnf module reset postgresql -y
-sudo dnf module enable postgresql:16 -y
+sudo dnf -qy module disable postgresql
 ```
 
-Install it and initialize the data directory. Unlike Ubuntu, the RHEL family does not do this for you.
+### Install and initialize
 
 ```bash
-sudo dnf install -y postgresql-server postgresql-contrib
-sudo postgresql-setup --initdb
-sudo systemctl enable --now postgresql
+sudo dnf install -y postgresql18-server postgresql18-contrib
 ```
+
+Unlike Ubuntu, the RHEL family does not initialize the data directory for you. The official packages use a per-version setup command:
+
+```bash
+sudo /usr/pgsql-18/bin/postgresql-18-setup initdb
+sudo systemctl enable postgresql-18
+sudo systemctl start postgresql-18
+```
+
+:::caution[Version numbers appear in service names and paths]
+With the official packages the service is `postgresql-18`, not `postgresql`; the data directory is `/var/lib/pgsql/18/data`; and the commands live under `/usr/pgsql-18/bin/`. If you installed a version other than 18, substitute it for `18` everywhere below.
+:::
+
+### Put the commands on your PATH
+
+`psql` and friends land in `/usr/pgsql-18/bin/`, so typing `psql` alone will not find them. You can write the full path every time, but adding it to `PATH` is easier:
+
+```bash
+echo 'export PATH=/usr/pgsql-18/bin:$PATH' | sudo tee /etc/profile.d/pgsql.sh
+```
+
+Log out and back in to pick it up, or run:
+
+```bash
+source /etc/profile.d/pgsql.sh
+```
+
+This page uses full paths throughout, so the steps work either way.
 
 ### Enable password authentication
 
-By default, local connections here may be set to `ident`, which means engawa cannot log in. Change it:
+Out of the box, local connections use `ident` — no password — which means engawa cannot log in. Change it:
 
 ```bash
-sudo nano /var/lib/pgsql/data/pg_hba.conf
+sudo nano /var/lib/pgsql/18/data/pg_hba.conf
 ```
 
 Near the bottom, set the last column of the `127.0.0.1/32` and `::1/128` lines to `scram-sha-256`:
@@ -182,7 +213,7 @@ host    all             all             ::1/128                 scram-sha-256
 Save, then reload the configuration:
 
 ```bash
-sudo systemctl reload postgresql
+sudo systemctl reload postgresql-18
 ```
 
 ## 4. Install Redis
@@ -225,7 +256,7 @@ Type `exit` to return to your own user. **Each step below says which user to run
 Go back to your own user (the one with `sudo`) and run:
 
 ```bash
-sudo -u postgres psql
+sudo -u postgres /usr/pgsql-18/bin/psql
 ```
 
 At the `postgres=#` prompt, run these three lines. Replace `example-pass` with a password of your own and keep it — you will put it in the configuration file.
@@ -239,7 +270,7 @@ CREATE DATABASE engawa OWNER engawa;
 `\q` leaves the prompt. It is worth confirming that the new credentials actually work:
 
 ```bash
-psql -h 127.0.0.1 -U engawa -d engawa -c '\conninfo'
+/usr/pgsql-18/bin/psql -h 127.0.0.1 -U engawa -d engawa -c '\conninfo'
 ```
 
 If it prompts for the password and connects, the authentication change in step 3 took effect.
@@ -364,7 +395,7 @@ Paste this in and save:
 ```ini
 [Unit]
 Description=engawa daemon
-After=network-online.target postgresql.service redis.service
+After=network-online.target postgresql-18.service redis.service
 
 [Service]
 Type=simple
@@ -748,7 +779,7 @@ sudo systemctl start engawa
 Back up the database first. Migrations are hard to undo.
 
 ```bash
-sudo -u postgres pg_dump engawa > /tmp/engawa-backup-$(date +%Y%m%d).sql
+sudo -u postgres /usr/pgsql-18/bin/pg_dump engawa > /tmp/engawa-backup-$(date +%Y%m%d).sql
 ```
 :::
 
@@ -764,7 +795,7 @@ If the release notes describe extra steps, follow those instead.
 | nginx will not start: `module ... is already loaded` | The `load_module` line is duplicated between `nginx.conf` and `modules-enabled/`. Keep only one |
 | Every request appears to come from the same IP | `trustProxy` is missing from the configuration file |
 | The service keeps dying | Read the error with `sudo journalctl -u engawa -n 50`. A typo in the config file is the usual cause |
-| Cannot connect to the database | Check that `pg_hba.conf` says `scram-sha-256` and that you ran `sudo systemctl reload postgresql` |
+| Cannot connect to the database | Check that `/var/lib/pgsql/18/data/pg_hba.conf` says `scram-sha-256` and that you ran `sudo systemctl reload postgresql-18` |
 | The timeline does not update by itself | Check that the nginx WebSocket headers (`Upgrade` and `Connection`) are present |
 | The build stops half way | Out of memory. Add swap as described in step 9 |
 | Something is off and you are running Caddy | Read the log with `sudo journalctl -u caddy -n 50` |

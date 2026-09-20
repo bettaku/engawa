@@ -141,33 +141,64 @@ pnpm -v
 
 ## 3. PostgreSQL を入れる
 
-engawaにはPostgreSQL 15以上が必要です。RHEL 9の標準ストリームは古い場合があるので、先に確認します。
+engawaにはPostgreSQL 15以上が必要です。AppStreamに含まれるPostgreSQLはバージョンが古いことがあるため、[PostgreSQL公式のYumリポジトリ](https://www.postgresql.org/download/linux/redhat/) を使います。ここではPostgreSQL 18を入れます。
+
+### リポジトリを追加する
 
 ```bash
-dnf module list postgresql
+sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 ```
 
-既定のストリームが15より古ければ、16を有効にします。
+:::note[環境に合わせて読み替えてください]
+URLの `EL-9-x86_64` は、OSのメジャーバージョンとCPUアーキテクチャです。RHEL 10なら `EL-10-x86_64`、Arm環境なら `EL-9-aarch64` になります。自分の環境向けのコマンドは、[公式のダウンロードページ](https://www.postgresql.org/download/linux/redhat/) でプラットフォーム・アーキテクチャ・バージョンを選ぶと生成されます。
+:::
+
+RHEL 8系の場合は、AppStreamのモジュールを無効化する手順が追加で必要です。RHEL 9以降では不要です。
 
 ```bash
-sudo dnf module reset postgresql -y
-sudo dnf module enable postgresql:16 -y
+sudo dnf -qy module disable postgresql
 ```
 
-インストールして、データベースを初期化します。Ubuntuと違い、RHEL系では初期化が自動では行われません。
+### インストールして初期化する
 
 ```bash
-sudo dnf install -y postgresql-server postgresql-contrib
-sudo postgresql-setup --initdb
-sudo systemctl enable --now postgresql
+sudo dnf install -y postgresql18-server postgresql18-contrib
 ```
+
+Ubuntuと違い、RHEL系では初期化が自動では行われません。公式リポジトリ版では、バージョンごとの専用コマンドを使います。
+
+```bash
+sudo /usr/pgsql-18/bin/postgresql-18-setup initdb
+sudo systemctl enable postgresql-18
+sudo systemctl start postgresql-18
+```
+
+:::caution[サービス名・パスにバージョン番号が入ります]
+公式リポジトリ版では、サービス名が `postgresql` ではなく `postgresql-18`、データディレクトリが `/var/lib/pgsql/18/data`、コマンドが `/usr/pgsql-18/bin/` 以下になります。18以外を入れた場合は、以降に出てくる `18` をそのバージョンに読み替えてください。
+:::
+
+### コマンドにパスを通す
+
+`psql` などのコマンドは `/usr/pgsql-18/bin/` に入り、そのままでは `psql` と打っても見つかりません。毎回フルパスを書いてもよいのですが、パスを通しておくと楽です。
+
+```bash
+echo 'export PATH=/usr/pgsql-18/bin:$PATH' | sudo tee /etc/profile.d/pgsql.sh
+```
+
+設定を反映するには、いったんログインし直すか次を実行します。
+
+```bash
+source /etc/profile.d/pgsql.sh
+```
+
+このページでは、パスを通していなくても動くようにフルパスで書いています。
 
 ### パスワード認証を有効にする
 
-RHEL系の初期設定では、ローカル接続がパスワードなしの認証（`ident`）になっていることがあります。このままだとengawaからの接続に失敗するので、設定を変更します。
+初期設定では、ローカル接続がパスワードなしの認証（`ident`）になっています。このままだとengawaからの接続に失敗するので、設定を変更します。
 
 ```bash
-sudo nano /var/lib/pgsql/data/pg_hba.conf
+sudo nano /var/lib/pgsql/18/data/pg_hba.conf
 ```
 
 ファイルの下の方にある、`127.0.0.1/32` と `::1/128` の行の最後の列を `scram-sha-256` に書き換えます。
@@ -182,7 +213,7 @@ host    all             all             ::1/128                 scram-sha-256
 保存したら、設定を読み込ませます。
 
 ```bash
-sudo systemctl reload postgresql
+sudo systemctl reload postgresql-18
 ```
 
 ## 4. Redis を入れる
@@ -225,7 +256,7 @@ sudo -iu engawa
 元のユーザー（`sudo` が使えるユーザー）に戻ってから実行します。
 
 ```bash
-sudo -u postgres psql
+sudo -u postgres /usr/pgsql-18/bin/psql
 ```
 
 PostgreSQLのプロンプト（`postgres=#`）が出たら、次の3行を順に実行します。`example-pass` の部分は自分で決めたパスワードに置き換えてください。あとで設定ファイルに書くので、控えておきます。
@@ -239,7 +270,7 @@ CREATE DATABASE engawa OWNER engawa;
 `\q` でプロンプトを抜けます。接続できるか、engawaユーザーの資格情報で確認しておくと安心です。
 
 ```bash
-psql -h 127.0.0.1 -U engawa -d engawa -c '\conninfo'
+/usr/pgsql-18/bin/psql -h 127.0.0.1 -U engawa -d engawa -c '\conninfo'
 ```
 
 パスワードを聞かれて接続できれば、手順3の認証設定は正しく反映されています。
@@ -364,7 +395,7 @@ sudo nano /etc/systemd/system/engawa.service
 ```ini
 [Unit]
 Description=engawa daemon
-After=network-online.target postgresql.service redis.service
+After=network-online.target postgresql-18.service redis.service
 
 [Service]
 Type=simple
@@ -748,7 +779,7 @@ sudo systemctl start engawa
 アップデート前にデータベースのバックアップを取ってください。マイグレーションは元に戻すのが難しい操作です。
 
 ```bash
-sudo -u postgres pg_dump engawa > /tmp/engawa-backup-$(date +%Y%m%d).sql
+sudo -u postgres /usr/pgsql-18/bin/pg_dump engawa > /tmp/engawa-backup-$(date +%Y%m%d).sql
 ```
 :::
 
@@ -764,7 +795,7 @@ sudo -u postgres pg_dump engawa > /tmp/engawa-backup-$(date +%Y%m%d).sql
 | `module ... is already loaded` で起動しない | `load_module` の行が `nginx.conf` と `modules-enabled/` で重複しています。どちらか一方にしてください |
 | アクセス元IPがすべて同じになる | 設定ファイルの `trustProxy` が抜けています |
 | サービスがすぐ落ちる | `sudo journalctl -u engawa -n 50` でエラーを確認します。設定ファイルの書式ミスが多いです |
-| データベースに接続できない | `pg_hba.conf` が `scram-sha-256` になっているか、`sudo systemctl reload postgresql` を実行したか確認します |
+| データベースに接続できない | `/var/lib/pgsql/18/data/pg_hba.conf` が `scram-sha-256` になっているか、`sudo systemctl reload postgresql-18` を実行したか確認します |
 | タイムラインが自動更新されない | nginxのWebSocket設定（`Upgrade` と `Connection` のヘッダー）が抜けていないか確認します |
 | ビルドが途中で止まる | メモリ不足です。手順9のスワップ追加を試してください |
 | Caddyを使っていて様子がおかしい | `sudo journalctl -u caddy -n 50` でログを確認します |
