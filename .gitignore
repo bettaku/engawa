@@ -87,3 +87,5 @@ vite.config.local-dev.ts.timestamp-*
 
 # Serena
 .serena
+
+docs/design/
