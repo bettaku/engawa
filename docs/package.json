@@ -5,7 +5,8 @@
 	"scripts": {
 		"docs:dev": "astro dev",
 		"docs:build": "astro build",
-		"docs:preview": "astro preview"
+		"docs:preview": "astro preview",
+		"dev:stop": "astro dev stop"
 	},
 	"dependencies": {
 		"@astrojs/starlight": "0.42.0",

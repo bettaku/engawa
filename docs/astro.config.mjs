@@ -32,6 +32,10 @@ export default defineConfig({
 					label: 'インストール',
 					translations: { en: 'Install' },
 					items: [{ autogenerate: { directory: 'install' } }],
+				}, {
+					label: '他実装との差異',
+					translations: { en: 'Differences' },
+					items: [{ autogenerate: { directory: 'compare' } }],
 				},
 			],
 		}),
