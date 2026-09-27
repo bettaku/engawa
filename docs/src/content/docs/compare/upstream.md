@@ -48,7 +48,7 @@ CherryPick `4.17.0` に無く、engawaにあるものです。
 
 - **`isIndexable`の連合** — kmyblueが提案する、ユーザー単位の検索インデックス登録可否を表すプロパティに対応しています（`MiUser.isIndexable`）。
 - **検索許可の指定** — ノート単位で検索インデックスへの登録可否を指定できます（`searchableBy`）。
-- **Authorized Fetch** — 送信元の署名を検証してからActivityを受け取る設定です（`Meta.enableAuthorizedFetch`、`Meta.enableBotProtectionForAuthorizedFetch`）。
+- **Authorized Fetch** — ノートやユーザーなどのActivityPubオブジェクトを取得するリクエストに署名を要求し、送信元を検証できない取得を拒否する設定です。inboxへの配送にも同じ検証がかかります（`Meta.enableAuthorizedFetch`、`Meta.enableBotProtectionForAuthorizedFetch`）。
 
 ### 管理者向け
 

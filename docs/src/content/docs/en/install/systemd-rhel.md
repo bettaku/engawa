@@ -1,18 +1,18 @@
 ---
 title: Installing with systemd (RHEL family)
 description: Setting up engawa as a systemd service on AlmaLinux, Rocky Linux and RHEL
-lastUpdated: 2026-09-20
+lastUpdated: 2026-09-24
 sidebar:
   order: 3
 ---
 
-This page walks through building engawa from scratch on AlmaLinux 9, Rocky Linux 9 or RHEL 9. RHEL 10 follows the same flow, with some care around SELinux and package names.
+This page walks through building engawa from scratch on AlmaLinux 10, Rocky Linux 10 or RHEL 10. Version 9 and earlier are not supported.
 
 If you are on Ubuntu or Debian, see [Installing with systemd (Ubuntu / Debian)](/engawa/en/install/systemd-ubuntu/).
 
 :::note[What you end up with]
 - engawa itself, in `/home/engawa/engawa`
-- PostgreSQL and Redis on the same server
+- PostgreSQL and Valkey (Redis-compatible) on the same server
 - A systemd service named `engawa.service`
 - nginx (or Caddy) serving it over HTTPS
 :::
@@ -38,7 +38,7 @@ Once the server has started and talked to other servers, the domain in `url` is 
 
 ### The plan
 
-1. Install the required software (Node.js, PostgreSQL, Redis)
+1. Install the required software (Node.js, PostgreSQL, Valkey)
 2. Create a dedicated user and a database
 3. Fetch the source and build it
 4. Write the configuration file
@@ -53,20 +53,29 @@ Bring the system up to date and install the build tools.
 
 ```bash
 sudo dnf upgrade -y
-sudo dnf groupinstall -y "Development Tools"
+sudo dnf group install -y "Development Tools"
 sudo dnf install -y python3 curl git
 ```
 
 `Development Tools` and `python3` are needed to compile some of engawa's dependencies. Without them, `pnpm install` fails later on.
 
-:::note
-On RHEL 10 and other DNF 5 systems, `dnf groupinstall` became `dnf group install`. If the command errors, try `sudo dnf group install -y "Development Tools"`.
-:::
+Add the EPEL repository now as well, since it is needed later. EPEL packages can depend on the CRB repository, so enable CRB first.
 
-Add the EPEL repository now as well, since it is needed later.
+On AlmaLinux and Rocky Linux:
 
 ```bash
+sudo dnf install -y dnf-plugins-core
+sudo dnf config-manager --set-enabled crb
 sudo dnf install -y epel-release
+```
+
+`dnf config-manager` comes from `dnf-plugins-core`, which minimal installs may lack, so install it first.
+
+On RHEL itself (`epel-release` is not in its standard repositories, so install the RPM that EPEL publishes):
+
+```bash
+sudo subscription-manager repos --enable codeready-builder-for-rhel-10-$(arch)-rpms
+sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm
 ```
 
 ### Install ffmpeg
@@ -79,17 +88,12 @@ The easy route is `ffmpeg-free` from EPEL:
 sudo dnf install -y ffmpeg-free
 ```
 
-If you need the full build with patent-encumbered codecs, enable CRB and add RPM Fusion:
+If you need the full build with patent-encumbered codecs, add RPM Fusion:
 
 ```bash
-sudo dnf config-manager --set-enabled crb
-sudo dnf install -y https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm
+sudo dnf install -y https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-10.noarch.rpm
 sudo dnf install -y ffmpeg
 ```
-
-:::note
-On RHEL itself, the repository equivalent to CRB is named `codeready-builder-for-rhel-9-x86_64-rpms`. On AlmaLinux and Rocky Linux, `crb` works as written above.
-:::
 
 Either way the commands are called `ffmpeg` and `ffprobe`. Confirm they are there:
 
@@ -108,7 +112,7 @@ If you really cannot install it on the server, you can point `videoThumbnailGene
 
 ## 2. Install Node.js
 
-engawa needs Node.js 24 or newer. The version in the default repositories is too old, so add the NodeSource repository.
+engawa needs Node.js 24 or newer. The default repositories ship Node.js 24 as `nodejs24`, but it installs the command as `node-24` rather than `node`, which does not fit the rest of this guide. Add the NodeSource repository instead.
 
 ```bash
 curl -fsSL https://rpm.nodesource.com/setup_24.x | sudo bash -
@@ -122,10 +126,6 @@ node -v
 ```
 
 A version starting with `v24.` means you are good.
-
-:::note[If AppStream's Node.js is already installed]
-Check the enabled stream with `dnf module list nodejs`. If it conflicts, run `sudo dnf module reset nodejs` before installing the NodeSource package.
-:::
 
 Next, enable pnpm. engawa uses pnpm, not npm or yarn.
 
@@ -143,23 +143,17 @@ If you get `corepack: command not found`, install pnpm directly with `sudo npm i
 
 ## 3. Install PostgreSQL
 
-engawa needs PostgreSQL 15 or newer, and what AppStream carries can be older than that, so use [PostgreSQL's official Yum repository](https://www.postgresql.org/download/linux/redhat/). This guide installs PostgreSQL 18.
+engawa needs PostgreSQL 15 or newer. To get a recent version (18 here), this guide installs it from [PostgreSQL's official Yum repository](https://www.postgresql.org/download/linux/redhat/).
 
 ### Add the repository
 
 ```bash
-sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-10-$(uname -m)/pgdg-redhat-repo-latest.noarch.rpm
 ```
 
-:::note[Adjust for your environment]
-`EL-9-x86_64` in the URL is your OS major version and CPU architecture — `EL-10-x86_64` on RHEL 10, `EL-9-aarch64` on Arm. The [official download page](https://www.postgresql.org/download/linux/redhat/) generates the exact commands once you pick your platform, architecture and version.
+:::note
+`$(uname -m)` in the URL expands to your CPU architecture (`x86_64`, `aarch64`). The first package install from it in the next step asks to import the repository's signing key; `-y` accepts it.
 :::
-
-On RHEL 8, you also have to disable the AppStream module. This is not needed on RHEL 9 and later.
-
-```bash
-sudo dnf -qy module disable postgresql
-```
 
 ### Install and initialize
 
@@ -179,21 +173,7 @@ sudo systemctl start postgresql-18
 With the official packages the service is `postgresql-18`, not `postgresql`; the data directory is `/var/lib/pgsql/18/data`; and the commands live under `/usr/pgsql-18/bin/`. If you installed a version other than 18, substitute it for `18` everywhere below.
 :::
 
-### Put the commands on your PATH
-
-`psql` and friends land in `/usr/pgsql-18/bin/`, so typing `psql` alone will not find them. You can write the full path every time, but adding it to `PATH` is easier:
-
-```bash
-echo 'export PATH=/usr/pgsql-18/bin:$PATH' | sudo tee /etc/profile.d/pgsql.sh
-```
-
-Log out and back in to pick it up, or run:
-
-```bash
-source /etc/profile.d/pgsql.sh
-```
-
-This page uses full paths throughout, so the steps work either way.
+`psql` and the other commands are also linked into `/usr/bin`. This page writes full paths under `/usr/pgsql-18/bin/` anyway, so the matching version is used even if several are installed.
 
 ### Enable password authentication
 
@@ -218,23 +198,25 @@ Save, then reload the configuration:
 sudo systemctl reload postgresql-18
 ```
 
-## 4. Install Redis
+## 4. Install Valkey (Redis-compatible)
+
+The standard RHEL 10 repositories do not carry Redis; they ship Valkey, a compatible fork, instead. engawa connects to it just as it would to Redis.
 
 ```bash
-sudo dnf install -y redis
-sudo systemctl enable --now redis
+sudo dnf install -y valkey
+sudo systemctl enable --now valkey
 ```
 
 Verify it is running:
 
 ```bash
-redis-cli ping
+valkey-cli ping
 ```
 
 It should answer `PONG`.
 
-:::note[About the version]
-RHEL 9's AppStream ships Redis 6.2. It works, but engawa is developed against 7.x. To get 7.x, add a third-party repository such as [Remi](https://rpms.remirepo.net/), or use Valkey, the compatible fork (a standard package on RHEL 10, available from EPEL on RHEL 9). With Valkey the service is named `valkey` and the config lives in `/etc/valkey/valkey.conf`.
+:::note
+Valkey's config file is `/etc/valkey/valkey.conf` and the service is named `valkey`. In engawa's config file, point the `redis:` section at it as you would for Redis.
 :::
 
 ## 5. Create a user for engawa
@@ -380,7 +362,7 @@ pnpm start
 
 A line like `Now listening on port 3000` means it worked. Stop it with <kbd>Ctrl</kbd>+<kbd>C</kbd> and move on.
 
-If it errors out, re-check the database password and the Redis settings.
+If it errors out, re-check the database password and the Valkey settings.
 
 ## 10. Register it as a systemd service
 
@@ -397,7 +379,7 @@ Paste this in and save:
 ```ini
 [Unit]
 Description=engawa daemon
-After=network-online.target postgresql-18.service redis.service
+After=network-online.target postgresql-18.service valkey.service
 
 [Service]
 Type=simple
@@ -416,10 +398,6 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 ```
-
-:::note
-If you went with Valkey, change `redis.service` in the `After=` line to `valkey.service`.
-:::
 
 :::note[About ExecStart]
 Node.js is invoked directly rather than through `pnpm start` because systemd's minimal `PATH` often cannot find pnpm. `pnpm start` only checks the database connection and then runs the same file, so behaviour is the same.
@@ -781,8 +759,21 @@ sudo systemctl start engawa
 Back up the database first. Migrations are hard to undo.
 
 ```bash
-sudo -u postgres /usr/pgsql-18/bin/pg_dump engawa > /tmp/engawa-backup-$(date +%Y%m%d).sql
+(
+  umask 077
+  d=$(mktemp -d ~/engawa-backup-$(date +%Y%m%d-%H%M%S)-XXXXXX) || exit 1
+  if sudo -u postgres /usr/pgsql-18/bin/pg_dump engawa > "$d/engawa.sql.partial" \
+     && mv "$d/engawa.sql.partial" "$d/engawa.sql"; then
+    echo "$d/engawa.sql"
+  else
+    rm -rf -- "$d"; exit 1
+  fi
+)
 ```
+
+The dump contains the whole database. Each run creates a directory only you can read, saves the dump there, and prints its path on success. If no path is printed, the backup failed and its directory is removed automatically (if you interrupt the command, it may be left behind; delete it by hand). If you installed a PostgreSQL version other than 18, change the `18` in `/usr/pgsql-18`.
+
+The old instructions saved to `/tmp`. If `/tmp/engawa-backup-*.sql` is still there, first restrict it with `chmod 600 /tmp/engawa-backup-*.sql`. Move the ones you want to keep into a directory only you can read with `mkdir -m 700 ~/engawa-backup-old && mv -n /tmp/engawa-backup-*.sql ~/engawa-backup-old/`, and delete the rest.
 :::
 
 If the release notes describe extra steps, follow those instead.

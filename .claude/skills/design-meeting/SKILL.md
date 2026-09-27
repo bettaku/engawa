@@ -21,5 +21,5 @@ disable-model-invocation: true
 
 終了後、次を行う。
 - 設計書の末尾に「議事録」節を追記する（ラウンドごとの指摘と対応）。
-- git diff で、設計書以外のファイルが変更されていないことを確認する。
+- `git status --short --untracked-files=all` で、変更・新規ファイルが何も表示されないことを確認する（`docs/design/` は `.gitignore` 対象なので設計書は表示されない）。
 - 実装には進まず、「要判断」事項の一覧だけをユーザーに報告して止まる。

@@ -1,7 +1,7 @@
 ---
 title: Installing with systemd (Ubuntu / Debian)
 description: Setting up engawa as a systemd service on Ubuntu and Debian-based servers
-lastUpdated: 2026-09-20
+lastUpdated: 2026-09-24
 sidebar:
   order: 2
 ---
@@ -134,7 +134,7 @@ It should answer `PONG`.
 Running engawa as root is best avoided, so create a dedicated user.
 
 ```bash
-sudo adduser --disabled-password --disabled-login engawa
+sudo useradd -m -s /bin/bash engawa
 ```
 
 From here on, anything touching engawa itself is done as this user. Switch to it with:
@@ -632,8 +632,21 @@ sudo systemctl start engawa
 Back up the database first. Migrations are hard to undo.
 
 ```bash
-sudo -u postgres pg_dump engawa > ~/engawa-backup-$(date +%Y%m%d).sql
+(
+  umask 077
+  d=$(mktemp -d ~/engawa-backup-$(date +%Y%m%d-%H%M%S)-XXXXXX) || exit 1
+  if sudo -u postgres pg_dump engawa > "$d/engawa.sql.partial" \
+     && mv "$d/engawa.sql.partial" "$d/engawa.sql"; then
+    echo "$d/engawa.sql"
+  else
+    rm -rf -- "$d"; exit 1
+  fi
+)
 ```
+
+The dump contains the whole database. Each run creates a directory only you can read, saves the dump there, and prints its path on success. If no path is printed, the backup failed and its directory is removed automatically (if you interrupt the command, it may be left behind; delete it by hand).
+
+If you still have backups made with the old instructions (`~/engawa-backup-*.sql`), restrict them with `chmod 600 ~/engawa-backup-*.sql`.
 :::
 
 If the release notes describe extra steps, follow those instead.

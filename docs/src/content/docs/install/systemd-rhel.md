@@ -1,18 +1,18 @@
 ---
 title: systemdでインストールする（RHEL系）
 description: AlmaLinux・Rocky Linux・RHELに、systemdサービスとしてengawaを構築する手順
-lastUpdated: 2026-09-20
+lastUpdated: 2026-09-24
 sidebar:
   order: 3
 ---
 
-AlmaLinux 9 / Rocky Linux 9 / RHEL 9 を想定した、engawaをゼロから構築する手順です。RHEL 10系でも、SELinuxとパッケージ名に注意すればほぼ同じ流れで進められます。
+AlmaLinux 10 / Rocky Linux 10 / RHEL 10 を想定した、engawaをゼロから構築する手順です。9系以前には対応していません。
 
 Ubuntu・Debianをお使いの場合は [systemdでインストールする（Ubuntu / Debian）](/engawa/install/systemd-ubuntu/) を参照してください。
 
 :::note[この手順で作られるもの]
 - engawa本体（`/home/engawa/engawa`）
-- PostgreSQL と Redis（同じサーバー上）
+- PostgreSQL と Valkey（Redis互換。同じサーバー上）
 - `engawa.service` という名前のsystemdサービス
 - nginx（またはCaddy）によるHTTPS配信
 :::
@@ -38,7 +38,7 @@ RHEL系では **SELinux** と **firewalld** が既定で有効です。この2�
 
 ### 作業の流れ
 
-1. 必要なソフトウェアを入れる（Node.js・PostgreSQL・Redis）
+1. 必要なソフトウェアを入れる（Node.js・PostgreSQL・Valkey）
 2. engawa専用のユーザーとデータベースを作る
 3. ソースコードを取得してビルドする
 4. 設定ファイルを書く
@@ -53,20 +53,29 @@ RHEL系では **SELinux** と **firewalld** が既定で有効です。この2�
 
 ```bash
 sudo dnf upgrade -y
-sudo dnf groupinstall -y "Development Tools"
+sudo dnf group install -y "Development Tools"
 sudo dnf install -y python3 curl git
 ```
 
 `Development Tools` と `python3` は、engawaが使う一部のライブラリをビルドするために必要です。入れずに進むと、後の `pnpm install` で失敗します。
 
-:::note
-RHEL 10やDNF 5環境では `dnf groupinstall` が `dnf group install` に変わっています。エラーが出る場合は `sudo dnf group install -y "Development Tools"` を試してください。
-:::
+あとで使うEPELリポジトリも、この時点で追加しておきます。EPELのパッケージはCRBリポジトリに依存することがあるため、先にCRBを有効にします。
 
-あとで使うEPELリポジトリも、この時点で追加しておきます。
+AlmaLinux・Rocky Linuxの場合:
 
 ```bash
+sudo dnf install -y dnf-plugins-core
+sudo dnf config-manager --set-enabled crb
 sudo dnf install -y epel-release
+```
+
+`dnf config-manager` は `dnf-plugins-core` に含まれるコマンドです。最小構成の環境では入っていないことがあるため、先に入れておきます。
+
+RHEL本体の場合（`epel-release` が標準リポジトリにないため、EPELが配布するRPMを直接入れます）:
+
+```bash
+sudo subscription-manager repos --enable codeready-builder-for-rhel-10-$(arch)-rpms
+sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm
 ```
 
 ### ffmpeg を入れる
@@ -79,17 +88,12 @@ engawaは動画を扱うために `ffmpeg` と `ffprobe` のコマンドをそ�
 sudo dnf install -y ffmpeg-free
 ```
 
-特許で保護されたコーデックを含む完全版が必要な場合は、CRBリポジトリとRPM Fusionを追加します。
+特許で保護されたコーデックを含む完全版が必要な場合は、RPM Fusionを追加します。
 
 ```bash
-sudo dnf config-manager --set-enabled crb
-sudo dnf install -y https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm
+sudo dnf install -y https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-10.noarch.rpm
 sudo dnf install -y ffmpeg
 ```
-
-:::note
-RHEL本体では、CRBに相当するリポジトリの名前が `codeready-builder-for-rhel-9-x86_64-rpms` です。AlmaLinux・Rocky Linuxでは上記のとおり `crb` で有効にできます。
-:::
 
 どちらで入れた場合も、コマンド名は `ffmpeg` と `ffprobe` です。確認しておきます。
 
@@ -108,7 +112,7 @@ engawaの起動自体は成功しますが、動画に関する処理が次の�
 
 ## 2. Node.js を入れる
 
-engawaにはNode.js 24以上が必要です。標準リポジトリのNode.jsはバージョンが古いので、NodeSourceのリポジトリを追加します。
+engawaにはNode.js 24以上が必要です。標準リポジトリのNode.js 24（`nodejs24`）は `node` ではなく `node-24` というコマンド名で入り、以降の手順と合わないため、NodeSourceのリポジトリを追加します。
 
 ```bash
 curl -fsSL https://rpm.nodesource.com/setup_24.x | sudo bash -
@@ -122,10 +126,6 @@ node -v
 ```
 
 `v24.` から始まるバージョンが表示されればOKです。
-
-:::note[既にAppStreamのNode.jsが入っている場合]
-`dnf module list nodejs` で有効なストリームを確認し、競合するようなら `sudo dnf module reset nodejs` を実行してからNodeSourceのパッケージを入れてください。
-:::
 
 次に、パッケージマネージャーの pnpm を有効にします。engawaは npm や yarn ではなく pnpm を使います。
 
@@ -143,23 +143,17 @@ pnpm -v
 
 ## 3. PostgreSQL を入れる
 
-engawaにはPostgreSQL 15以上が必要です。AppStreamに含まれるPostgreSQLはバージョンが古いことがあるため、[PostgreSQL公式のYumリポジトリ](https://www.postgresql.org/download/linux/redhat/) を使います。ここではPostgreSQL 18を入れます。
+engawaにはPostgreSQL 15以上が必要です。この手順では、新しいバージョン（ここでは18）を使えるよう、[PostgreSQL公式のYumリポジトリ](https://www.postgresql.org/download/linux/redhat/) から入れます。
 
 ### リポジトリを追加する
 
 ```bash
-sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-10-$(uname -m)/pgdg-redhat-repo-latest.noarch.rpm
 ```
 
-:::note[環境に合わせて読み替えてください]
-URLの `EL-9-x86_64` は、OSのメジャーバージョンとCPUアーキテクチャです。RHEL 10なら `EL-10-x86_64`、Arm環境なら `EL-9-aarch64` になります。自分の環境向けのコマンドは、[公式のダウンロードページ](https://www.postgresql.org/download/linux/redhat/) でプラットフォーム・アーキテクチャ・バージョンを選ぶと生成されます。
+:::note
+URLの `$(uname -m)` は、CPUアーキテクチャ（`x86_64` や `aarch64`）に自動で置き換わります。次の手順で初めてパッケージを入れるときに、リポジトリの署名鍵を取り込む確認が出ますが、`-y` を付けているので自動で承認されます。
 :::
-
-RHEL 8系の場合は、AppStreamのモジュールを無効化する手順が追加で必要です。RHEL 9以降では不要です。
-
-```bash
-sudo dnf -qy module disable postgresql
-```
 
 ### インストールして初期化する
 
@@ -179,21 +173,7 @@ sudo systemctl start postgresql-18
 公式リポジトリ版では、サービス名が `postgresql` ではなく `postgresql-18`、データディレクトリが `/var/lib/pgsql/18/data`、コマンドが `/usr/pgsql-18/bin/` 以下になります。18以外を入れた場合は、以降に出てくる `18` をそのバージョンに読み替えてください。
 :::
 
-### コマンドにパスを通す
-
-`psql` などのコマンドは `/usr/pgsql-18/bin/` に入り、そのままでは `psql` と打っても見つかりません。毎回フルパスを書いてもよいのですが、パスを通しておくと楽です。
-
-```bash
-echo 'export PATH=/usr/pgsql-18/bin:$PATH' | sudo tee /etc/profile.d/pgsql.sh
-```
-
-設定を反映するには、いったんログインし直すか次を実行します。
-
-```bash
-source /etc/profile.d/pgsql.sh
-```
-
-このページでは、パスを通していなくても動くようにフルパスで書いています。
+`psql` などのコマンドは `/usr/bin` からも使えるようにリンクされます。このページでは、複数のバージョンが入っていても確実に同じ版を使うよう、`/usr/pgsql-18/bin/` からのフルパスで書いています。
 
 ### パスワード認証を有効にする
 
@@ -218,23 +198,25 @@ host    all             all             ::1/128                 scram-sha-256
 sudo systemctl reload postgresql-18
 ```
 
-## 4. Redis を入れる
+## 4. Valkey（Redis互換）を入れる
+
+RHEL 10系の標準リポジトリにはRedisがなく、互換実装のValkeyが入っています。engawaからはRedisとして接続できるので、これを使います。
 
 ```bash
-sudo dnf install -y redis
-sudo systemctl enable --now redis
+sudo dnf install -y valkey
+sudo systemctl enable --now valkey
 ```
 
 動いているか確認します。
 
 ```bash
-redis-cli ping
+valkey-cli ping
 ```
 
 `PONG` と返ってくればOKです。
 
-:::note[バージョンについて]
-RHEL 9のAppStreamに含まれるRedisは6.2系です。動作はしますが、engawaは7.x系での動作を前提に開発されています。7.x系を使いたい場合は、[Remi](https://rpms.remirepo.net/) などのサードパーティリポジトリを追加するか、互換実装のValkey（RHEL 10では標準パッケージ、RHEL 9ではEPEL）を使ってください。Valkeyを使う場合、サービス名は `valkey`、設定ファイルは `/etc/valkey/valkey.conf` になります。
+:::note
+Valkeyの設定ファイルは `/etc/valkey/valkey.conf`、サービス名は `valkey` です。engawaの設定ファイルでは、Redisと同じく `redis:` の項目に接続先を書きます。
 :::
 
 ## 5. engawa用のユーザーを作る
@@ -380,7 +362,7 @@ pnpm start
 
 `Now listening on port 3000` のような行が出れば成功です。<kbd>Ctrl</kbd>+<kbd>C</kbd> で止めて、次に進みます。
 
-エラーが出た場合は、データベースのパスワードやRedisの設定を見直してください。
+エラーが出た場合は、データベースのパスワードやValkeyの設定を見直してください。
 
 ## 10. systemdサービスとして登録する
 
@@ -397,7 +379,7 @@ sudo nano /etc/systemd/system/engawa.service
 ```ini
 [Unit]
 Description=engawa daemon
-After=network-online.target postgresql-18.service redis.service
+After=network-online.target postgresql-18.service valkey.service
 
 [Service]
 Type=simple
@@ -416,10 +398,6 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 ```
-
-:::note
-Valkeyを使っている場合は、`After=` の `redis.service` を `valkey.service` に置き換えてください。
-:::
 
 :::note[ExecStartについて]
 `pnpm start` ではなくNode.jsを直接呼んでいるのは、systemdから実行するときにpnpmのパスが解決できず失敗することがあるためです。`pnpm start` は内部でデータベースへの接続確認を行ってから同じファイルを実行しているだけなので、動作に違いはありません。
@@ -781,8 +759,21 @@ sudo systemctl start engawa
 アップデート前にデータベースのバックアップを取ってください。マイグレーションは元に戻すのが難しい操作です。
 
 ```bash
-sudo -u postgres /usr/pgsql-18/bin/pg_dump engawa > /tmp/engawa-backup-$(date +%Y%m%d).sql
+(
+  umask 077
+  d=$(mktemp -d ~/engawa-backup-$(date +%Y%m%d-%H%M%S)-XXXXXX) || exit 1
+  if sudo -u postgres /usr/pgsql-18/bin/pg_dump engawa > "$d/engawa.sql.partial" \
+     && mv "$d/engawa.sql.partial" "$d/engawa.sql"; then
+    echo "$d/engawa.sql"
+  else
+    rm -rf -- "$d"; exit 1
+  fi
+)
 ```
+
+バックアップにはデータベースの全内容が含まれます。上のコマンドは、実行のたびに本人だけが読めるディレクトリを作って保存し、成功すると保存先のパスを表示します。パスが表示されなければ失敗しており、そのときの作業ディレクトリは自動で削除されます（途中で中断した場合は残ることがあるので、手動で削除してください）。PostgreSQL 18以外を入れた場合は、`/usr/pgsql-18` の `18` を読み替えてください。
+
+以前の手順では `/tmp` に保存していました。`/tmp/engawa-backup-*.sql` が残っている場合は、まず `chmod 600 /tmp/engawa-backup-*.sql` で権限を絞ります。残しておきたいものは `mkdir -m 700 ~/engawa-backup-old && mv -n /tmp/engawa-backup-*.sql ~/engawa-backup-old/` で本人だけが読めるディレクトリに移し、不要なものは削除してください。
 :::
 
 リリースノートに個別の作業が書かれている場合は、そちらを優先してください。

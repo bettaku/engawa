@@ -48,7 +48,7 @@ These are in engawa but not in CherryPick `4.17.0`.
 
 - **Federating `isIndexable`** — supports the property proposed by kmyblue that states, per user, whether they may be added to search indexes (`MiUser.isIndexable`).
 - **Search permission** — lets you choose, per note, whether it may be added to search indexes (`searchableBy`).
-- **Authorized Fetch** — a setting that verifies the sender's signature before accepting an Activity (`Meta.enableAuthorizedFetch`, `Meta.enableBotProtectionForAuthorizedFetch`).
+- **Authorized Fetch** — a setting that requires signatures on requests fetching ActivityPub objects such as notes and users, and refuses fetches whose sender cannot be verified. Deliveries to the inbox go through the same check (`Meta.enableAuthorizedFetch`, `Meta.enableBotProtectionForAuthorizedFetch`).
 
 ### For administrators
 

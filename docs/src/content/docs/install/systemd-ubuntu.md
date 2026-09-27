@@ -1,7 +1,7 @@
 ---
 title: systemdでインストールする（Ubuntu / Debian）
 description: Ubuntu・Debian系のサーバーに、systemdサービスとしてengawaを構築する手順
-lastUpdated: 2026-09-20
+lastUpdated: 2026-09-24
 sidebar:
   order: 2
 ---
@@ -134,7 +134,7 @@ redis-cli ping
 engawaをrootで動かすのは避けたいので、専用のユーザーを作ります。
 
 ```bash
-sudo adduser --disabled-password --disabled-login engawa
+sudo useradd -m -s /bin/bash engawa
 ```
 
 以降、engawa本体に関する作業はこのユーザーで行います。切り替えは次のコマンドです。
@@ -632,8 +632,21 @@ sudo systemctl start engawa
 アップデート前にデータベースのバックアップを取ってください。マイグレーションは元に戻すのが難しい操作です。
 
 ```bash
-sudo -u postgres pg_dump engawa > ~/engawa-backup-$(date +%Y%m%d).sql
+(
+  umask 077
+  d=$(mktemp -d ~/engawa-backup-$(date +%Y%m%d-%H%M%S)-XXXXXX) || exit 1
+  if sudo -u postgres pg_dump engawa > "$d/engawa.sql.partial" \
+     && mv "$d/engawa.sql.partial" "$d/engawa.sql"; then
+    echo "$d/engawa.sql"
+  else
+    rm -rf -- "$d"; exit 1
+  fi
+)
 ```
+
+バックアップにはデータベースの全内容が含まれます。上のコマンドは、実行のたびに本人だけが読めるディレクトリを作って保存し、成功すると保存先のパスを表示します。パスが表示されなければ失敗しており、そのときの作業ディレクトリは自動で削除されます（途中で中断した場合は残ることがあるので、手動で削除してください）。
+
+以前の手順で作ったバックアップ（`~/engawa-backup-*.sql`）が残っている場合は、`chmod 600 ~/engawa-backup-*.sql` で権限を絞ってください。
 :::
 
 リリースノートに個別の作業が書かれている場合は、そちらを優先してください。
