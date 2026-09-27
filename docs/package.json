@@ -1,0 +1,16 @@
+{
+	"name": "docs",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"docs:dev": "astro dev",
+		"docs:build": "astro build",
+		"docs:preview": "astro preview",
+		"dev:stop": "astro dev stop"
+	},
+	"dependencies": {
+		"@astrojs/starlight": "0.42.0",
+		"astro": "7.2.10",
+		"sharp": "0.35.4"
+	}
+}

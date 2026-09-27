@@ -1,0 +1,28 @@
+# engawa: internet -> Caddy -> 127.0.0.1:3000 (see README.md).
+# Replace engawa.example.com and admin@example.com before starting.
+{
+	email admin@example.com
+}
+
+engawa.example.com {
+	# Caddy obtains/renews certificates and redirects HTTP to HTTPS.
+	# Persist Caddy's data directory, including its ACME account and keys.
+	# Access logging is intentionally disabled: streaming URLs can contain tokens.
+
+	# 250 MiB default maxFileSize plus multipart overhead (same as nginx).
+	request_body {
+		max_size 268435456
+	}
+
+	reverse_proxy 127.0.0.1:3000 {
+		# Caddy preserves Host/path and handles WebSocket upgrades itself.
+		# Its default X-Forwarded-* handling discards untrusted client values.
+		header_up X-Real-IP {remote_host}
+		header_up -Forwarded
+		# Allow existing streams to survive briefly during configuration reloads.
+		stream_close_delay 5m
+		transport http {
+			dial_timeout 5s
+		}
+	}
+}
