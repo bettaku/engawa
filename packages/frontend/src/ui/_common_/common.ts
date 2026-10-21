@@ -176,7 +176,7 @@ export function openInstanceMenu(ev: MouseEvent) {
 				type: 'a',
 				text: i18n.ts.document,
 				icon: 'ti ti-bulb',
-				href: 'https://misskey-hub.net/docs/for-users/',
+				href: 'https://bettaku.github.io/engawa/',
 				target: '_blank',
 			}, {
 				type: 'link',
