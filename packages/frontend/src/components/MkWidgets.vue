@@ -7,7 +7,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 <div :class="$style.root">
 	<template v-if="edit">
 		<header :class="$style.editHeader">
-			<MkSelect v-model="widgetAdderSelected" :items="widgetAdderSelectedDef" style="margin-bottom: var(--MI-margin)" data-e2e-widget-select>
+			<MkSelect v-model="widgetAdderSelected" :items="widgetAdderSelectedDef" searchable style="margin-bottom: var(--MI-margin)" data-e2e-widget-select>
 				<template #label>{{ i18n.ts.selectWidget }}</template>
 			</MkSelect>
 			<MkButton primary data-e2e-widget-add :class="$style.btn" @click="addWidget"><i class="ti ti-plus"></i> {{ i18n.ts.add }}</MkButton>
@@ -60,7 +60,7 @@ import { isLink } from '@@/js/is-link.js';
 import { genId } from '@/utility/id.js';
 import MkSelect from '@/components/MkSelect.vue';
 import MkButton from '@/components/MkButton.vue';
-import { widgets as widgetDefs, federationWidgets } from '@/widgets/index.js';
+import { widgets as widgetDefs, federationWidgets, widgetCategories } from '@/widgets/index.js';
 import * as os from '@/os.js';
 import { i18n } from '@/i18n.js';
 import { instance } from '@/instance.js';
@@ -107,7 +107,20 @@ const {
 	model: widgetAdderSelected,
 	def: widgetAdderSelectedDef,
 } = useMkSelect({
-	items: computed(() => [{ label: i18n.ts.none, value: null }, ..._widgetDefs.value.map(x => ({ label: i18n.ts._widgets[x], value: x }))]),
+	items: computed(() => {
+		const toOption = (x: string) => ({ label: i18n.ts._widgets[x], value: x });
+		const categorized = new Set<string>(Object.values(widgetCategories).flat());
+		const groups = Object.entries(widgetCategories).map(([category, names]) => ({
+			type: 'group' as const,
+			label: i18n.ts._widgetCategories[category],
+			items: names.filter(x => _widgetDefs.value.includes(x)).map(toOption),
+		}));
+		const uncategorized = _widgetDefs.value.filter(x => !categorized.has(x));
+		if (uncategorized.length > 0) {
+			groups.push({ type: 'group' as const, label: i18n.ts._widgetCategories.other, items: uncategorized.map(toOption) });
+		}
+		return [{ label: i18n.ts.none, value: null }, ...groups.filter(g => g.items.length > 0)];
+	}),
 	initialValue: null,
 });
 

@@ -11259,6 +11259,36 @@ export interface Locale extends ILocale {
          */
         "saturday": string;
     };
+    "_widgetCategories": {
+        /**
+         * ノート
+         */
+        "note": string;
+        /**
+         * ユーザー
+         */
+        "user": string;
+        /**
+         * 時計・カレンダー
+         */
+        "time": string;
+        /**
+         * 情報
+         */
+        "information": string;
+        /**
+         * サーバー
+         */
+        "server": string;
+        /**
+         * ツール
+         */
+        "tool": string;
+        /**
+         * その他
+         */
+        "other": string;
+    };
     "_widgets": {
         /**
          * プロフィール

@@ -81,3 +81,13 @@ export const widgets = [
 
 	...federationWidgets,
 ];
+
+// ウィジェット追加画面でのカテゴリ分け（ここに含まれないウィジェットは末尾に表示される）
+export const widgetCategories = {
+	note: ['timeline', 'postForm', 'notifications', 'search', 'trends', 'photos'],
+	user: ['profile', 'activity', 'userList', 'birthdayFollowings', 'chat'],
+	time: ['calendar', 'clock', 'digitalClock', 'unixClock'],
+	information: ['memo', 'rss', 'rssTicker', 'slideshow', 'weather'],
+	server: ['instanceInfo', 'serverMetric', 'onlineUsers', 'jobQueue', ...federationWidgets],
+	tool: ['button', 'aiscript', 'aiscriptApp', 'aichan', 'clicker', 'dice'],
+} as const satisfies Record<string, string[]>;

@@ -2951,6 +2951,14 @@ _weekday:
   friday: "金曜日"
   saturday: "土曜日"
 
+_widgetCategories:
+  note: "ノート"
+  user: "ユーザー"
+  time: "時計・カレンダー"
+  information: "情報"
+  server: "サーバー"
+  tool: "ツール"
+  other: "その他"
 _widgets:
   profile: "プロフィール"
   instanceInfo: "サーバー情報"

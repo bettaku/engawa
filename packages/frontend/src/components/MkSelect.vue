@@ -83,6 +83,7 @@ const props = defineProps<{
 	inline?: boolean;
 	small?: boolean;
 	large?: boolean;
+	searchable?: boolean;
 }>();
 
 type ModelTChecked = MODELT & (
@@ -196,6 +197,7 @@ function show() {
 
 	os.popupMenu(menu, container.value, {
 		width: container.value?.offsetWidth,
+		searchable: props.searchable,
 		onClosing: () => {
 			opening.value = false;
 		},

@@ -28,6 +28,9 @@
 
 ### Client
 - enhance(frontend): enable to display more timezone on clock widgets
+- enhance(frontend): セレクトメニュー（EnumForm）で選択肢の検索・カテゴリ分けができるように
+	- ウィジェット追加画面のウィジェット選択がカテゴリ別に表示され、検索できるようになりました
+	- 時計ウィジェットのタイムゾーン選択が地域別に表示され、検索できるようになりました
 - fix(frontend): チャンネルに関する消し忘れを修正
 - fix(frontend): ドライブからファイルを添付した際に投稿フォームに何も表示されない問題
 - enhance(frontend): サイコロウィジェットで複数個振ったときに個々の出目を表示するように
