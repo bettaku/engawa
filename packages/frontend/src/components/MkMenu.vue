@@ -42,8 +42,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 				:placeholder="i18n.ts.search"
 				autocomplete="off"
 				@keydown.down.prevent="focusFirstItem"
-				@keydown.enter.prevent="selectFirstItem"
-				@keydown.esc.prevent="close(false)"
+				@keydown.enter="onSearchEnter"
+				@keydown.esc="onSearchEsc"
 			/>
 		</div>
 		<div
@@ -334,6 +334,23 @@ function focusFirstItem() {
 
 function selectFirstItem() {
 	getFocusableItems().at(0)?.click();
+}
+
+// IME変換中のEnter/Escは変換操作なので無視する
+function isImeComposing(ev: KeyboardEvent) {
+	return ev.isComposing || ev.key === 'Process' || ev.keyCode === 229;
+}
+
+function onSearchEnter(ev: KeyboardEvent) {
+	if (isImeComposing(ev)) return;
+	ev.preventDefault();
+	selectFirstItem();
+}
+
+function onSearchEsc(ev: KeyboardEvent) {
+	if (isImeComposing(ev)) return;
+	ev.preventDefault();
+	close(false);
 }
 
 const child = useTemplateRef('child');
