@@ -1,40 +1,36 @@
 <div align="center">
-<a href="https://misskey-hub.net">
-	<img src="./assets/title_float_cherrypick.svg" alt="CherryPick logo" style="border-radius:50%" width="300"/>
-</a>
 
-**🌎 **CherryPick** is an open source, federated social media platform that's free forever! 🚀**
+# engawa
 
-[Learn more](https://misskey-hub.net/)
+**縁側のように、気楽に。個人・少人数のための分散型SNS**
+
+[ドキュメント](https://bettaku.github.io/engawa/)
 
 ---
 [EN](./README.md) JP
 
 ---
 
-<a href="https://misskey-hub.net/servers/">
-		<img src="https://custom-icon-badges.herokuapp.com/badge/find_an-instance-acea31?logoColor=acea31&style=for-the-badge&logo=misskey&labelColor=363B40" alt="find an instance"/></a>
-
-<a href="https://misskey-hub.net/docs/for-admin/install/guides/">
+<a href="https://bettaku.github.io/engawa/install/">
 		<img src="https://custom-icon-badges.herokuapp.com/badge/create_an-instance-FBD53C?logoColor=FBD53C&style=for-the-badge&logo=server&labelColor=363B40" alt="create an instance"/></a>
 
 <a href="./CONTRIBUTING.md">
 		<img src="https://custom-icon-badges.herokuapp.com/badge/become_a-contributor-A371F7?logoColor=A371F7&style=for-the-badge&logo=git-merge&labelColor=363B40" alt="become a contributor"/></a>
 
-<a href="https://discord.gg/V8qghB28Aj">
-		<img src="https://custom-icon-badges.herokuapp.com/badge/join_the-community-5865F2?logoColor=5865F2&style=for-the-badge&logo=discord&labelColor=363B40" alt="join the community"/></a>
-
-<a href="https://www.patreon.com/noridev">
-		<img src="https://custom-icon-badges.herokuapp.com/badge/become_a-patron-F96854?logoColor=F96854&style=for-the-badge&logo=patreon&labelColor=363B40" alt="become a patron"/></a>
-
 </div>
 
 ---
 ## About
-このリポジトリは、[CherryPick](https://github.com/kokonect-link/cherrypick.git)のフォークソフトウェアです。  
-Firefish、Sharkey、Foundkeyなどの影響を受けた改造をしています。  
-フォーク元との差異については[こちら](./docs/WhatsDifference.md)をご覧ください。  
-インストール方法などの詳細は[docs](./docs/docs.md)をご覧ください。
+engawaは、ありふれたCherryPickのフォークのひとつです。[Misskey](https://misskey-hub.net/)のフォークである[CherryPick](https://github.com/kokonect-link/cherrypick)から派生しています。ActivityPubに対応しており、他の分散型SNSと相互に繋がります。
+
+名前は日本家屋の縁側からです。
+
+- **小さく建てる。** 個人や少人数で、気楽に運用できることを目指しています。
+- **緩やかに過ごす。** 日向ぼっこをしながら猫を撫でるような、急かされない場所を目指しています。
+- **正直に伝える。** engawaはエンタープライズ向けではありません。開発者は1人で、耐障害性・安定性・セキュリティについて保証はできません。
+
+engawaが何であり、何でないのかは[engawaについて](https://bettaku.github.io/engawa/intro/)をご覧ください。
+インストール方法などの詳細は[ドキュメント](https://bettaku.github.io/engawa/)をご覧ください。
 
 ---
 
@@ -52,10 +48,6 @@ Thanks to [Chromatic](https://www.chromatic.com/) for providing the visual testi
 
 Thanks to [Codecov](https://about.codecov.io/for/open-source/) for providing the code coverage platform that helps us improve our test coverage.
 
-<a href="https://crowdin.com/"><img src="https://user-images.githubusercontent.com/20679825/230709597-1299a011-171a-4294-a91e-355a9b37c672.svg" height="30" alt="Crowdin" /></a>
-
-Thanks to [Crowdin](https://crowdin.com/) for providing the localization platform that helps us translate CherryPick into many languages.
-
 <a href="https://hub.docker.com/"><img src="https://user-images.githubusercontent.com/20679825/230148221-f8e73a32-a49b-47c3-9029-9a15c3824f92.png" height="30" alt="Docker" /></a>
 
-Thanks to [Docker](https://hub.docker.com/) for providing the container platform that helps us run CherryPick in production.
+Thanks to [Docker](https://hub.docker.com/) for providing the container platform that helps us run engawa in production.
