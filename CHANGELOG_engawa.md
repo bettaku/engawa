@@ -28,6 +28,7 @@
 
 ### Client
 - enhance(frontend): enable to display more timezone on clock widgets
+- enhance(frontend): 投稿フォームの添付ファイルとアップローダーで、代替テキスト（ALT）が設定されているかどうかを表示するように ( [#301](https://github.com/bettaku/engawa/issues/301) )
 - enhance(frontend): セレクトメニュー（EnumForm）で選択肢の検索・カテゴリ分けができるように
 	- ウィジェット追加画面のウィジェット選択がカテゴリ別に表示され、検索できるようになりました
 	- 時計ウィジェットのタイムゾーン選択が地域別に表示され、検索できるようになりました
