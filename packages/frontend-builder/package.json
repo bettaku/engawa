@@ -21,6 +21,6 @@
 		"estree-walker": "3.0.3",
 		"magic-string": "0.30.21",
 		"rolldown": "1.0.0-rc.13",
-		"vite": "8.2.2"
+		"vite": "8.2.4"
 	}
 }
