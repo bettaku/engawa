@@ -40,6 +40,7 @@
 	- `sanitize-html` 2.17.7（`javascript:` URI の検証不備）、`uuid` 14、`happy-dom` / `minimatch` / `vite` / `rollup` / `vitest` / Storybook 9.1.20 などの開発用依存を更新
 	- `@tabler/icons-webfont` が同梱する未使用の `sharp` 0.33 系を override で排除、`@misskey-dev/summaly` の更新で `private-ip` への依存を排除
 	- `cherrypick-js` のテスト基盤を vitest 4 に更新（vitest 3 系の任意ファイル読み取り脆弱性）
+	- `vue` 3.5.44（`@vue/server-renderer`）、`sanitize-html` 2.18.1、`vite` 8.2.4、Storybook 9.1.21、`start-server-and-test` 2.1.5（`axios` / `joi` / `follow-redirects`）などを更新
 
 ### Server
 - fix(backend): chat
@@ -53,6 +54,9 @@
 	- `@simplewebauthn/server` を v13 に更新（`@simplewebauthn/types` は同梱化されたため削除）
 	- `jsonld` を v9 に更新（`normalize` の既定アルゴリズムは RDFC-1.0 になりましたが URDNA2015 と同一の出力です）
 	- `js-yaml` 4.3.2（マージキーによる CPU 消費 DoS）、`postcss` 8.5.26（sourceMappingURL 経由の任意ファイル読み取り）
+	- `nodemailer` を v10 に更新（Node.js 20 以上が必須になった以外の破壊的変更なし）
+	- `@nestjs/*` 11.2.7（`multer`）、`body-parser` 1.20.8（`qs`）、`fastify` 5.12.7、`probe-image-size` 7.4.0、`sharp` 0.35.5、`@swc/cli` 0.7.10（`piscina` / `@xhmikosr/decompress`）を更新
+	- 間接依存の `proxy-addr`、`undici`、`@fastify/busboy`、`fast-uri`、`@grpc/grpc-js`、`brace-expansion` などを修正版に更新
 
 ### Misc
 - chore: パッケージマネージャーを pnpm v11 に更新
