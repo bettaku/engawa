@@ -4,8 +4,20 @@
 		{
 			"name": "docs",
 			"runtimeExecutable": "pnpm",
-			"runtimeArgs": ["--filter", "docs", "docs:dev"],
+			"runtimeArgs": [
+				"--filter",
+				"docs",
+				"docs:dev"
+			],
 			"port": 4321
+		},
+		{
+			"name": "dev",
+			"runtimeExecutable": "pnpm",
+			"runtimeArgs": [
+				"dev"
+			],
+			"port": 3000
 		}
 	]
 }
