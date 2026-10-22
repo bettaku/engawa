@@ -61,4 +61,6 @@
 - chore(docs): Improve Issue Template
 - refactor(backend): テスト基盤をJestからVitestに移行
 - refactor(frontend): サイコロのロジックを自前実装にし、`@dice-roller/rpg-dice-roller` への依存を削除
+- enhance(ci): リリース管理を GitHub Actions のワークフローから GitHub App（engawa Release Manager）に移行
+	- `/release start` などのコメントでプレリリース・リリースPR・タグ・GitHub Release を作成します
 
