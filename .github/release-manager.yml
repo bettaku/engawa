@@ -1,0 +1,63 @@
+# engawa Release Manager (GitHub App) configuration.
+# https://github.com/1673beta/engawa-release-manager
+# The App reads this file from the default branch. Comment `/release help` on any issue for commands.
+
+# The release PR is opened from developBranch into stableBranch.
+stableBranch: main
+developBranch: develop
+
+# Every package.json whose "version" is rewritten on each bump.
+packageJsons:
+  - package.json
+  - packages/cherrypick-js/package.json
+
+changelog:
+  path: CHANGELOG_engawa.md
+  # Title of the section (without "## ") that collects unreleased changes.
+  unreleasedHeading: x.x.x (unreleased)
+  # Prepended to the changelog on the develop branch after each release.
+  # `{{pkg.<field>}}` is replaced with the field of the root package.json.
+  template: |
+    ## x.x.x (unreleased)
+
+    ### General
+    - 
+
+    ### Client
+    - 
+
+    ### Server
+    - 
+
+    ### Misc
+    - 
+
+versioning:
+  # engawa: <CherryPick base version>-engawa<YYYYMMDD>, e.g. 4.17.0-engawa20261022
+  # semver: <major>.<minor>.<patch>, bumped with `/release start [major|minor|patch]`
+  scheme: engawa
+  suffix: engawa
+  timeZone: Asia/Tokyo
+  # Rewrite the date to the actual release day when merging.
+  redateOnRelease: true
+
+prerelease:
+  # Prereleases are <target>.<channel>.<n>, e.g. 4.17.0-engawa20261022.beta.2
+  draftChannel: alpha
+  readyChannel: beta
+  channels: [alpha, beta, rc]
+  resetNumberOnChannelChange: true
+  # Publish the first `beta` automatically when the release PR is marked ready for review.
+  onReadyForReview: true
+
+merge:
+  method: merge
+  requireApproval: true
+  # Used only when branch protection does not determine the review decision.
+  requiredApprovals: 1
+  requireChecks: true
+
+# Repository roles allowed to run release commands.
+allowedRoles: [admin, maintain, write]
+
+commandPrefix: /release
