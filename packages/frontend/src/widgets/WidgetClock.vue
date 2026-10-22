@@ -36,7 +36,7 @@ import type { FormWithDefault, GetFormResultType } from '@/utility/form.js';
 import MkContainer from '@/components/MkContainer.vue';
 import MkAnalogClock from '@/components/MkAnalogClock.vue';
 import MkDigitalClock from '@/components/MkDigitalClock.vue';
-import { timezones } from '@/utility/timezones.js';
+import { timezones, timezoneEnumItems } from '@/utility/timezones.js';
 import { i18n } from '@/i18n.js';
 
 const name = 'clock';
@@ -130,13 +130,8 @@ const widgetPropsDef = {
 	timezone: {
 		type: 'enum',
 		default: null,
-		enum: [...timezones.apply(null).map((tz) => ({
-			label: tz.name,
-			value: tz.name.toLowerCase(),
-		})), {
-			label: '(auto)',
-			value: null,
-		}],
+		searchable: true,
+		enum: timezoneEnumItems(),
 	},
 } satisfies FormWithDefault;
 

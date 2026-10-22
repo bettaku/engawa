@@ -2843,6 +2843,14 @@ _weekday:
   thursday: "목요일"
   friday: "금요일"
   saturday: "토요일"
+_widgetCategories:
+  note: "노트"
+  user: "유저"
+  time: "시계 · 캘린더"
+  information: "정보"
+  server: "서버"
+  tool: "도구"
+  other: "기타"
 _widgets:
   profile: "프로필"
   instanceInfo: "서버 정보"

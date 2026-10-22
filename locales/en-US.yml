@@ -2851,6 +2851,14 @@ _weekday:
   thursday: "Thursday"
   friday: "Friday"
   saturday: "Saturday"
+_widgetCategories:
+  note: "Notes"
+  user: "Users"
+  time: "Clock & Calendar"
+  information: "Information"
+  server: "Server"
+  tool: "Tools"
+  other: "Other"
 _widgets:
   profile: "Profile"
   instanceInfo: "Instance Information"

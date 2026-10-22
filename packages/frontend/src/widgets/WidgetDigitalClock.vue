@@ -18,7 +18,7 @@ import { computed } from 'vue';
 import { useWidgetPropsManager } from './widget.js';
 import type { WidgetComponentEmits, WidgetComponentExpose, WidgetComponentProps } from './widget.js';
 import type { FormWithDefault, GetFormResultType } from '@/utility/form.js';
-import { timezones } from '@/utility/timezones.js';
+import { timezones, timezoneEnumItems } from '@/utility/timezones.js';
 import MkDigitalClock from '@/components/MkDigitalClock.vue';
 
 const name = 'digitalClock';
@@ -44,13 +44,8 @@ const widgetPropsDef = {
 	timezone: {
 		type: 'enum',
 		default: null,
-		enum: [...timezones.apply(null).map((tz) => ({
-			label: tz.name,
-			value: tz.name.toLowerCase(),
-		})), {
-			label: '(auto)',
-			value: null,
-		}],
+		searchable: true,
+		enum: timezoneEnumItems(),
 	},
 } satisfies FormWithDefault;
 

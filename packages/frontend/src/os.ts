@@ -675,6 +675,7 @@ export async function cropImageFile(imageFile: File | Blob, options: {
 export function popupMenu(items: (MenuItem | null)[], anchorElement?: HTMLElement | EventTarget | null, options?: {
 	align?: string;
 	width?: number;
+	searchable?: boolean;
 	onClosing?: () => void;
 }): Promise<void> {
 	if (!(anchorElement instanceof HTMLElement)) {
@@ -688,6 +689,7 @@ export function popupMenu(items: (MenuItem | null)[], anchorElement?: HTMLElemen
 			anchorElement,
 			width: options?.width,
 			align: options?.align,
+			searchable: options?.searchable,
 			returnFocusTo,
 		}, {
 			closed: () => {
