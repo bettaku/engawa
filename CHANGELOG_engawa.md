@@ -67,4 +67,8 @@
 - refactor(frontend): サイコロのロジックを自前実装にし、`@dice-roller/rpg-dice-roller` への依存を削除
 - enhance(ci): リリース管理を GitHub Actions のワークフローから GitHub App（engawa Release Manager）に移行
 	- `/release start` などのコメントでプレリリース・リリースPR・タグ・GitHub Release を作成します
+- enhance(ci): コンテナイメージの公開先を Docker Hub から GitHub Container Registry（`ghcr.io/bettaku/engawa`）に変更
+	- リリースごとにサブモジュール込みのソースtarballと `SHA256SUMS` を GitHub Release に添付します
+	- イメージとtarballには来歴証明（attestation）が付き、`gh attestation verify` で検証できます
+	- npm への cherrypick-js の自動公開はひとまず止めました
 
