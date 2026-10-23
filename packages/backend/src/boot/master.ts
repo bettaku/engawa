@@ -51,8 +51,8 @@ function greet() {
 		console.log(chalkTemplate`--- ${os.hostname()} {gray (PID: ${process.pid.toString()})} ---`);
 	}
 
-	bootLogger.info('Welcome to CherryPick!');
-	bootLogger.info(`CherryPick v${meta.version}`, null, true);
+	bootLogger.info('Welcome to Engawa!');
+	bootLogger.info(`Engawa v${meta.version}`, null, true);
 	bootLogger.info(`Based on Misskey v${meta.basedMisskeyVersion}`, null, true);
 }
 

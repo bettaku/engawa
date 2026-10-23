@@ -78,14 +78,14 @@ export class NodeinfoServerService {
 			const document: any = {
 				software: {
 					/*
-					 * ソフトウェアの名前を変更すると、一部の独自機能が使用できなくなったり、CherryPickとして認識されないなどの不利益が発生する場合があります。
+					 * ソフトウェアの名前を変更すると、一部の独自機能が使用できなくなったり、Engawaとして認識されないなどの不利益が発生する場合があります。
 					 * フォーク開発者はこの点に注意して修正を行ってください。
 					 *
-					 * CherryPickはMisskey互換性のため、JoinMisskey APIからのリクエストには"misskey"として応答します。
+					 * EngawaはMisskey互換性のため、JoinMisskey APIからのリクエストには"misskey"として応答します。
 					 * これにより、Misskey Hubのインスタンスリストに掲載されます。
-					 * それ以外のリクエストには"cherrypick"として応答します。
+					 * それ以外のリクエストには"engawa"として応答します。
 					 */
-					name: 'cherrypick',
+					name: 'engawa',
 					version: this.config.version,
 					basedMisskeyVersion: this.config.basedMisskeyVersion,
 					homepage: nodeinfo_homepage,

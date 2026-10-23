@@ -4,7 +4,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<SearchMarker path="/settings/cherrypick" label="CherryPick" :keywords="['cherrypick']" icon="ti ti-bulb-filled">
+<SearchMarker path="/settings/cherrypick" label="Engawa" :keywords="['cherrypick']" icon="ti ti-bulb-filled">
 	<div class="_gaps_m">
 		<FormSection first>
 			<template #label><SearchLabel>{{ i18n.ts._cherrypick.function }}</SearchLabel></template>
@@ -243,7 +243,7 @@ const headerActions = computed(() => []);
 const headerTabs = computed(() => []);
 
 definePage(() => ({
-	title: 'CherryPick',
+	title: 'Engawa',
 	icon: 'ti ti-bulb-filled',
 }));
 </script>

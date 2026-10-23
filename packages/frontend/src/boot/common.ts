@@ -32,7 +32,7 @@ import { launchPlugins } from '@/plugin.js';
 import { popup } from '@/os.js';
 
 export async function common(createVue: () => Promise<App<Element>>) {
-	console.info(`CherryPick v${version}`);
+	console.info(`Engawa v${version}`);
 
 	if (_DEV_) {
 		console.warn('Development mode!!!');
@@ -365,7 +365,7 @@ export async function common(createVue: () => Promise<App<Element>>) {
 			'font-size: 20px; font-weight: 700; color: #f00;',
 		);
 		console.log(
-			`%c${i18n.tsx._selfXssPrevention.description3({ link: 'https://github.com/kokonect-link/cherrypick' })}`,
+			`%c${i18n.tsx._selfXssPrevention.description3({ link: 'https://github.com/bettaku/engawa' })}`,
 			'font-size: 14px;',
 		);
 		console.log(i18n.tsx._selfXssPrevention.description4({ link: 'https://misskey-hub.net/docs/for-users/resources/self-xss/' }));

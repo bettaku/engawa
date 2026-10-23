@@ -1,9 +1,9 @@
 {
 	id: 'da73e355-3f13-4f0d-8202-d0946716601a',
 	base: 'dark',
-	name: 'CherryPick Dark',
+	name: 'Engawa Dark',
 	author: 'noridev',
-	desc: 'CherryPick default dark theme',
+	desc: 'Engawa default dark theme',
 
 	props: {
 		accent: '#ffc5e6',

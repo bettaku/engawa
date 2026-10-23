@@ -404,14 +404,14 @@ export class MiMeta {
 
 	@Column('varchar', {
 		length: 1024,
-		default: 'https://github.com/kokonect-link/cherrypick',
+		default: 'https://github.com/bettaku/engawa',
 		nullable: true,
 	})
 	public repositoryUrl: string | null;
 
 	@Column('varchar', {
 		length: 1024,
-		default: 'https://github.com/kokonect-link/cherrypick/issues/new',
+		default: 'https://github.com/bettaku/engawa/issues/new',
 		nullable: true,
 	})
 	public feedbackUrl: string | null;

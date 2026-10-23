@@ -55,7 +55,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<SearchMarker :keywords="['banner', 'display']">
 			<MkPreferenceContainer k="bannerDisplay">
 				<MkRadios v-model="bannerDisplay">
-					<template #label><SearchLabel>{{ i18n.ts.displayBanner }}</SearchLabel> <span class="_beta" style="vertical-align: middle;">CherryPick</span></template>
+					<template #label><SearchLabel>{{ i18n.ts.displayBanner }}</SearchLabel> <span class="_beta" style="vertical-align: middle;">Engawa</span></template>
 					<option value="all">{{ i18n.ts._bannerDisplay.all }}</option>
 					<option value="topBottom">{{ i18n.ts._bannerDisplay.topBottom }}</option>
 					<option value="top">{{ i18n.ts._bannerDisplay.top }}</option>
@@ -68,7 +68,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 		<SearchMarker :keywords="['bottom']">
 			<FormSection>
-				<template #label><SearchLabel>{{ i18n.ts.bottomNavbar }}</SearchLabel> <span class="_beta" style="vertical-align: middle;">CherryPick</span></template>
+				<template #label><SearchLabel>{{ i18n.ts.bottomNavbar }}</SearchLabel> <span class="_beta" style="vertical-align: middle;">Engawa</span></template>
 				<template v-if="!isMobile" #description>{{ i18n.ts.cannotBeUsedFunc }} <a class="_link" @click="learnMoreBottomNavbar">{{ i18n.ts.learnMore }}</a></template>
 				<div class="_gaps_m">
 					<MkDisableSection :disabled="isFriendly().value">

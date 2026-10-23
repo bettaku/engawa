@@ -5,7 +5,7 @@
 
 	name: 'Light',
 	author: 'noridev & syuilo',
-	desc: 'CherryPick default light theme',
+	desc: 'Engawa default light theme',
 	kind: 'light',
 
 	props: {

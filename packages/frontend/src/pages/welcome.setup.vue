@@ -44,7 +44,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</g>
 			</svg>
 			<div :class="$style.title">
-				<div>Welcome to CherryPick!</div>
+				<div>Welcome to Engawa!</div>
 				<div :class="$style.version">v{{ version }} <span style="font-size: 11px; opacity: 0.5;">({{ gitHash.substring(0, 8) }})</span></div>
 			</div>
 			<div style="padding: 16px 32px 32px 32px;">

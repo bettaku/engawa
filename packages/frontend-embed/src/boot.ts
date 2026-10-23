@@ -29,7 +29,7 @@ import { postMessageToParentWindow, setIframeId } from '@/post-message.js';
 import { serverContext } from '@/server-context.js';
 import { i18n } from '@/i18n.js';
 
-console.log('CherryPick Embed');
+console.log('Engawa Embed');
 
 //#region Embedパラメータの取得・パース
 const params = new URLSearchParams(window.location.search);
@@ -155,7 +155,7 @@ console.log(
 	'font-size: 20px; font-weight: 700; color: #f00;',
 );
 console.log(
-	`%c${i18n.tsx._selfXssPrevention.description3({ link: 'https://github.com/kokonect-link/cherrypick' })}`,
+	`%c${i18n.tsx._selfXssPrevention.description3({ link: 'https://github.com/bettaku/engawa' })}`,
 	'font-size: 14px;',
 );
 console.log(i18n.tsx._selfXssPrevention.description4({ link: 'https://misskey-hub.net/docs/for-users/resources/self-xss/' }));

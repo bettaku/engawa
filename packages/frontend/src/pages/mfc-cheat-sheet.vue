@@ -440,7 +440,7 @@ const preview_scale = ref('$[scale.x=2 🍮]\n$[scale.y=2 🍮]\n\n$[scale.x=2.5
 const preview_fg = ref('$[fg.color=ffbcdc Cherry]$[fg.color=b1d3ff Pick]');
 const preview_bg = ref('$[bg.color=ffbcdc Cherry]$[bg.color=b1d3ff Pick]');
 const preview_plain = ref('<plain>**bold** @mention #hashtag `code` $[x2 🍮]</plain>');
-const preview_ruby = ref('$[ruby CherryPick Misskey]');
+const preview_ruby = ref('$[ruby Engawa えんがわ]');
 const preview_border = ref('$[border Example]\n$[border.color=ffbcdc Cherry]$[border.color=b1d3ff Pick]\n\n$[border $[position.x=1.5 MFM]\n$[position.x=1.5 なんもわからん]]\n$[border.noclip $[position.x=1.5 MFM]\n$[position.x=1.5 完全に理解した]]\n\n$[border.radius=4 角丸の半径] $[border.width=4 枠線の太さ]\n$[border.style=solid これが普通]\n$[border.style=hidden 枠線を隠せる]\n$[border.style=dotted ドット]\n$[border.style=dashed 点線]\n$[border.style=double 二重枠]\n\n$[border.style=groove 額縁1]\n$[border.style=ridge 額縁2]\n\n$[border.style=inset インセット]\n$[border.style=outset アウトセット]\n\n$[border.radius=8,width=4,color=b1d3ff,style=dotted,noclip $[position.x=1.5 ボーダーMFM]\n$[position.x=1.5 完全に理解した]]');
 
 const headerActions = computed(() => []);

@@ -22,6 +22,10 @@
 	- Node.js 22.xのサポートは終了しました
 	- 推奨環境はNode.js v24 LTSの最新版です
 	- 追加サポートとしてNode.js v26でも動作します
+- **ソフトウェアの名前を CherryPick から Engawa に変更しました**
+	- nodeinfo のソフトウェア名が `cherrypick` から `engawa` に、User-Agent が `Engawa/<バージョン>` に変わります。他のサーバーからは Engawa として認識されます
+	- リポジトリURLとフィードバックURLの既定値を `https://github.com/bettaku/engawa` に変更しました。既定値のまま使っているサーバーは、マイグレーションで新しいURLに移ります（管理者が設定した値は変わりません）
+	- アバターデコレーションの連合は、相手が `engawa` の場合も行われます
 
 ### General
 - enhance: 管理画面におけるアイコンデコレーションをページネーションで取得するように

@@ -275,7 +275,7 @@ export interface Locale extends ILocale {
      */
     "forceRenoteVisibilitySelector": string;
     /**
-     * CherryPick研究室
+     * Engawa研究室
      */
     "cherrypickLabs": string;
     /**
@@ -295,7 +295,7 @@ export interface Locale extends ILocale {
      */
     "welcome": string;
     /**
-     * CherryPickへの移行が完了しました！
+     * Engawaへの移行が完了しました！
      */
     "cherrypickMigrated": string;
     /**
@@ -399,11 +399,11 @@ export interface Locale extends ILocale {
      */
     "enableReceivePrerelease": string;
     /**
-     * 未発売バージョンのCherryPickを利用しています！
+     * 未発売バージョンのEngawaを利用しています！
      */
     "youAreRunningBetaClient": string;
     /**
-     * CherryPickアップデート
+     * Engawaアップデート
      */
     "cherrypickUpdate": string;
     /**
@@ -484,7 +484,7 @@ export interface Locale extends ILocale {
      */
     "renoteConfirm": string;
     /**
-     * この設定は「設定 → CherryPick」で変更できます。
+     * この設定は「設定 → Engawa」で変更できます。
      */
     "renoteConfirmDescription": string;
     /**
@@ -565,14 +565,14 @@ export interface Locale extends ILocale {
      */
     "headlineMisskey": string;
     /**
-     * ようこそ！CherryPickは、オープンソースの分散型マイクロブログサービスです。
+     * ようこそ！Engawaは、オープンソースの分散型マイクロブログサービスです。
      * 「ノート」を作成して、いま起こっていることを共有したり、あなたについて皆に発信しよう📡
      * 「リアクション」機能で、皆のノートに素早く反応を追加することもできます👍
      * 新しい世界を探検しよう🚀
      */
     "introMisskey": string;
     /**
-     * {name}は、オープンソースのプラットフォーム<b>CherryPick</b>のサーバーのひとつです。
+     * {name}は、オープンソースのプラットフォーム<b>Engawa</b>のサーバーのひとつです。
      */
     "poweredByMisskeyDescription": ParameterizedString<"name">;
     /**
@@ -608,8 +608,8 @@ export interface Locale extends ILocale {
      */
     "initialPasswordIsIncorrect": string;
     /**
-     * CherryPickを自分でインストールした場合は、設定ファイルに入力したパスワードを使用してください。
-     * CherryPickのホスティングサービスなどを使用している場合は、提供されたパスワードを使用してください。
+     * Engawaを自分でインストールした場合は、設定ファイルに入力したパスワードを使用してください。
+     * Engawaのホスティングサービスなどを使用している場合は、提供されたパスワードを使用してください。
      * パスワードを設定していない場合は、空欄にしたまま続行してください。
      */
     "initialPasswordForSetupDescription": string;
@@ -1318,7 +1318,7 @@ export interface Locale extends ILocale {
      */
     "flagAsBot": string;
     /**
-     * このアカウントがプログラムによって運用される場合は、このフラグをオンにします。オンにすると、反応の連鎖を防ぐためのフラグとして他の開発者に役立ったり、CherryPickのシステム上での扱いがBotに合ったものになります。
+     * このアカウントがプログラムによって運用される場合は、このフラグをオンにします。オンにすると、反応の連鎖を防ぐためのフラグとして他の開発者に役立ったり、Engawaのシステム上での扱いがBotに合ったものになります。
      */
     "flagAsBotDescription": string;
     /**
@@ -2427,7 +2427,7 @@ export interface Locale extends ILocale {
      */
     "about": string;
     /**
-     * CherryPickについて
+     * Engawaについて
      */
     "aboutMisskey": string;
     /**
@@ -3043,7 +3043,7 @@ export interface Locale extends ILocale {
      */
     "notUseSound": string;
     /**
-     * CherryPickがアクティブな時のみサウンドを出力する
+     * Engawaがアクティブな時のみサウンドを出力する
      */
     "useSoundOnlyWhenActive": string;
     /**
@@ -3111,7 +3111,7 @@ export interface Locale extends ILocale {
      */
     "scratchpad": string;
     /**
-     * スクラッチパッドは、AiScriptの実験環境を提供します。CherryPickと対話するコードの記述、実行、結果の確認ができます。
+     * スクラッチパッドは、AiScriptの実験環境を提供します。Engawaと対話するコードの記述、実行、結果の確認ができます。
      */
     "scratchpadDescription": string;
     /**
@@ -3687,7 +3687,7 @@ export interface Locale extends ILocale {
      */
     "private": string;
     /**
-     * CherryPickは有志によって様々な言語に翻訳されています。{link}で翻訳に協力できます。
+     * Engawaは有志によって様々な言語に翻訳されています。{link}で翻訳に協力できます。
      */
     "i18nInfo": ParameterizedString<"link">;
     /**
@@ -3920,7 +3920,7 @@ export interface Locale extends ILocale {
      */
     "sendErrorReports": string;
     /**
-     * オンにすると、問題が発生したときにエラーの詳細情報がCherryPickに共有され、ソフトウェアの品質向上に役立てることができます。エラー情報には、OSのバージョン、ブラウザの種類、行動履歴などが含まれます。
+     * オンにすると、問題が発生したときにエラーの詳細情報がEngawaに共有され、ソフトウェアの品質向上に役立てることができます。エラー情報には、OSのバージョン、ブラウザの種類、行動履歴などが含まれます。
      */
     "sendErrorReportsDescription": string;
     /**
@@ -3992,11 +3992,11 @@ export interface Locale extends ILocale {
      */
     "latestVersion": string;
     /**
-     * CherryPickは最新です。
+     * Engawaは最新です。
      */
     "youAreRunningUpToDateClient": string;
     /**
-     * 新しいバージョンのCherryPickが利用可能です。
+     * 新しいバージョンのEngawaが利用可能です。
      */
     "newVersionOfClientAvailable": string;
     /**
@@ -4304,7 +4304,7 @@ export interface Locale extends ILocale {
      */
     "learnMore": string;
     /**
-     * CherryPickが更新されました！
+     * Engawaが更新されました！
      */
     "misskeyUpdated": string;
     /**
@@ -4852,11 +4852,11 @@ export interface Locale extends ILocale {
      */
     "remindMeLater": string;
     /**
-     * CherryPickを気に入っていただけましたか？
+     * Engawaを気に入っていただけましたか？
      */
     "didYouLikeMisskey": string;
     /**
-     * CherryPickは{host}が使用している無料のソフトウェアです。これからも開発を続けられるように、ぜひ寄付をお願いします！
+     * Engawaは{host}が使用している無料のソフトウェアです。これからも開発を続けられるように、ぜひ寄付をお願いします！
      */
     "pleaseDonate": ParameterizedString<"host">;
     /**
@@ -5396,7 +5396,7 @@ export interface Locale extends ILocale {
      */
     "later": string;
     /**
-     * CherryPickへ
+     * Engawaへ
      */
     "goToMisskey": string;
     /**
@@ -5660,7 +5660,7 @@ export interface Locale extends ILocale {
      */
     "repositoryUrl": string;
     /**
-     * ソースコードが公開されているリポジトリがある場合、そのURLを記入します。CherryPickを現状のまま（ソースコードにいかなる変更も加えずに）使用している場合は https://github.com/kokonect-link/cherrypick と記入します。
+     * ソースコードが公開されているリポジトリがある場合、そのURLを記入します。Engawaを現状のまま（ソースコードにいかなる変更も加えずに）使用している場合は https://github.com/bettaku/engawa と記入します。
      */
     "repositoryUrlDescription": string;
     /**
@@ -6683,7 +6683,7 @@ export interface Locale extends ILocale {
     };
     "_settings": {
         /**
-         * CherryPickの独自機能、パッチ、UIに関する設定を行えます。
+         * Engawaの独自機能、パッチ、UIに関する設定を行えます。
          */
         "cherrypickBanner": string;
         /**
@@ -7134,7 +7134,7 @@ export interface Locale extends ILocale {
          */
         "function": string;
         /**
-         * CherryPickが追加する独自機能を有効または無効にします。
+         * Engawaが追加する独自機能を有効または無効にします。
          */
         "functionDescription": string;
         /**
@@ -7373,7 +7373,7 @@ export interface Locale extends ILocale {
          */
         "haveFun": ParameterizedString<"name">;
         /**
-         * このまま{name}(CherryPick)の使い方についてのチュートリアルに進むこともできますが、ここで中断してすぐに使い始めることもできます。
+         * このまま{name}(Engawa)の使い方についてのチュートリアルに進むこともできますが、ここで中断してすぐに使い始めることもできます。
          */
         "youCanContinueTutorial": ParameterizedString<"name">;
         /**
@@ -7416,7 +7416,7 @@ export interface Locale extends ILocale {
              */
             "title": string;
             /**
-             * ここでは、CherryPickの基本的な使い方や機能を確認できます。
+             * ここでは、Engawaの基本的な使い方や機能を確認できます。
              */
             "description": string;
         };
@@ -7426,7 +7426,7 @@ export interface Locale extends ILocale {
              */
             "title": string;
             /**
-             * CherryPickでの投稿は「ノート」と呼びます。ノートはタイムラインに時系列で並んでいて、リアルタイムで更新されていきます。
+             * Engawaでの投稿は「ノート」と呼びます。ノートはタイムラインに時系列で並んでいて、リアルタイムで更新されていきます。
              */
             "description": string;
             /**
@@ -7486,7 +7486,7 @@ export interface Locale extends ILocale {
              */
             "title": string;
             /**
-             * CherryPickには、使い方に応じて複数のタイムラインが用意されています（サーバーによってはいずれかが無効になっていることがあります）。
+             * Engawaには、使い方に応じて複数のタイムラインが用意されています（サーバーによってはいずれかが無効になっていることがあります）。
              */
             "description1": string;
             /**
@@ -7528,7 +7528,7 @@ export interface Locale extends ILocale {
              */
             "title": string;
             /**
-             * CherryPickにノートを投稿する際には、様々なオプションの設定が可能です。投稿フォームはこのようになっています。
+             * Engawaにノートを投稿する際には、様々なオプションの設定が可能です。投稿フォームはこのようになっています。
              */
             "description1": string;
             "_visibility": {
@@ -7628,7 +7628,7 @@ export interface Locale extends ILocale {
              */
             "title": string;
             /**
-             * ここで紹介した機能はほんの一部にすぎません。CherryPickの使い方をより詳しく知るには、{link}をご覧ください。
+             * ここで紹介した機能はほんの一部にすぎません。Engawaの使い方をより詳しく知るには、{link}をご覧ください。
              */
             "description": ParameterizedString<"link">;
         };
@@ -7983,7 +7983,7 @@ export interface Locale extends ILocale {
          * フォロワーの移行は自動ですが、フォローの移行は手動で行う必要があります。移行前にこのアカウントでフォローエクスポートし、移行後すぐに移行先アカウントでインポートを行なってください。
          * リスト・ミュート・ブロックについても同様ですので、手動で移行する必要があります。
          *
-         * （この説明はこのサーバー（CherryPick v13.12.0以降）の仕様です。Mastodonなどの他のActivityPubソフトウェアでは挙動が異なる場合があります。）
+         * （この説明はこのサーバー（Engawa v13.12.0以降）の仕様です。Mastodonなどの他のActivityPubソフトウェアでは挙動が異なる場合があります。）
          */
         "moveAccountDescription": string;
         /**
@@ -8031,7 +8031,7 @@ export interface Locale extends ILocale {
                  */
                 "description": string;
                 /**
-                 * 良いCherryPickライフを！
+                 * 良いEngawaライフを！
                  */
                 "flavor": string;
             };
@@ -8355,7 +8355,7 @@ export interface Locale extends ILocale {
                  */
                 "description": string;
                 /**
-                 * CherryPickを使ってくれてありがとう！
+                 * Engawaを使ってくれてありがとう！
                  */
                 "flavor": string;
             };
@@ -8555,15 +8555,15 @@ export interface Locale extends ILocale {
             };
             "_iLoveCherryPick": {
                 /**
-                 * I Love CherryPick
+                 * I Love Engawa
                  */
                 "title": string;
                 /**
-                 * "I ❤ #CherryPick"を投稿した
+                 * "I ❤ #Engawa"を投稿した
                  */
                 "description": string;
                 /**
-                 * CherryPickを使ってくださりありがとうございます！ by 開発チーム
+                 * Engawaを使ってくださりありがとうございます！ by 開発チーム
                  */
                 "flavor": string;
             };
@@ -8589,7 +8589,7 @@ export interface Locale extends ILocale {
             };
             "_client60min": {
                 /**
-                 * CherryPickの見すぎ
+                 * Engawaの見すぎ
                  */
                 "title": string;
                 /**
@@ -8737,7 +8737,7 @@ export interface Locale extends ILocale {
             };
             "_setNameToNoriDev": {
                 /**
-                 * 神様コンプレックス（CherryPick）
+                 * 神様コンプレックス（Engawa）
                  */
                 "title": string;
                 /**
@@ -8839,7 +8839,7 @@ export interface Locale extends ILocale {
             };
             "_tutorialCompleted": {
                 /**
-                 * CherryPick初心者講座 修了証
+                 * Engawa初心者講座 修了証
                  */
                 "title": string;
                 /**
@@ -9617,7 +9617,7 @@ export interface Locale extends ILocale {
     };
     "_aboutMisskey": {
         /**
-         * CherryPickは、Misskeyをベースに2021年から開発中のカスタマイズオープンソースのソフトウェアです。
+         * Engawaは、Misskeyのフォークである CherryPick をベースに開発されている、オープンソースのソフトウェアです。
          */
         "about": string;
         /**
@@ -9637,7 +9637,7 @@ export interface Locale extends ILocale {
          */
         "original": string;
         /**
-         * {name}はオリジナルのCherryPickを改変したバージョンを使用しています。
+         * {name}はオリジナルのEngawaを改変したバージョンを使用しています。
          */
         "thisIsModifiedVersion": ParameterizedString<"name">;
         /**
@@ -9676,7 +9676,7 @@ export interface Locale extends ILocale {
              */
             "translation": string;
             /**
-             * CherryPickに寄付
+             * Engawaに寄付
              */
             "donate": string;
             /**
@@ -9709,11 +9709,11 @@ export interface Locale extends ILocale {
          */
         "cheatSheet": string;
         /**
-         * MFCは、CherryPick内の様々な場所で使用できる専用のマークアップ言語です。ここでは、MFCで使用可能な構文一覧が確認できます。
+         * MFCは、Engawa内の様々な場所で使用できる専用のマークアップ言語です。ここでは、MFCで使用可能な構文一覧が確認できます。
          */
         "intro": string;
         /**
-         * CherryPickでFediverseの世界が広がります
+         * EngawaでFediverseの世界が広がります
          */
         "dummy": string;
         /**
@@ -10469,7 +10469,7 @@ export interface Locale extends ILocale {
          */
         "driveFileDurationWarn": string;
         /**
-         * 長い音声を使用するとCherryPickの使用に支障をきたす可能性があります。それでも続行しますか？
+         * 長い音声を使用するとEngawaの使用に支障をきたす可能性があります。それでも続行しますか？
          */
         "driveFileDurationWarnDescription": string;
         /**
@@ -13252,7 +13252,7 @@ export interface Locale extends ILocale {
          */
         "summaryProxy": string;
         /**
-         * CherryPick本体ではなく、サマリープロキシを使用してプレビューを生成します。
+         * Engawa本体ではなく、サマリープロキシを使用してプレビューを生成します。
          */
         "summaryProxyDescription": string;
         /**
@@ -13569,7 +13569,7 @@ export interface Locale extends ILocale {
          */
         "description2": string;
         /**
-         * 貼り付けようとする項目が何なのか正確に理解しているのであれば、私たちと一緒にCherryPickを開発するのはいかがでしょうか？ {link}
+         * 貼り付けようとする項目が何なのか正確に理解しているのであれば、私たちと一緒にEngawaを開発するのはいかがでしょうか？ {link}
          */
         "description3": ParameterizedString<"link">;
         /**
@@ -13729,7 +13729,7 @@ export interface Locale extends ILocale {
          */
         "otherOption3": string;
         /**
-         * CherryPickをセーフモードで起動
+         * Engawaをセーフモードで起動
          */
         "otherOption4": string;
     };
@@ -13759,13 +13759,13 @@ export interface Locale extends ILocale {
          */
         "pleaseSelectUser": string;
         /**
-         * 例: cherrypick.example.com
+         * 例: engawa.example.com
          */
         "serverHostPlaceholder": string;
     };
     "_serverSetupWizard": {
         /**
-         * CherryPickのインストールが完了しました！
+         * Engawaのインストールが完了しました！
          */
         "installCompleted": string;
         /**
@@ -13789,7 +13789,7 @@ export interface Locale extends ILocale {
          */
         "settingsYouMakeHereCanBeChangedLater": string;
         /**
-         * CherryPickをどのように使いますか？
+         * Engawaをどのように使いますか？
          */
         "howWillYouUseMisskey": string;
         "_use": {
@@ -13918,7 +13918,7 @@ export interface Locale extends ILocale {
         "donationRequest": string;
         "_donationRequest": {
             /**
-             * CherryPickは有志によって開発されている無料のソフトウェアです。
+             * Engawaは有志によって開発されている無料のソフトウェアです。
              */
             "text1": string;
             /**
@@ -14796,7 +14796,7 @@ export interface Locale extends ILocale {
              */
             "toggleLocalOnly": string;
             /**
-             * この機能は「設定 → CherryPick」から該当の機能を有効にすることで利用できます。
+             * この機能は「設定 → Engawa」から該当の機能を有効にすることで利用できます。
              */
             "featureWarn": string;
             /**
