@@ -1206,14 +1206,6 @@ export interface Locale extends ILocale {
      */
     "unsuspend": string;
     /**
-     * センシティブとして設定
-     */
-    "setAsSensitive": string;
-    /**
-     * センシティブを解除
-     */
-    "unsetAsSensitive": string;
-    /**
      * ブロックしますか？
      */
     "blockConfirm": string;
@@ -1337,14 +1329,6 @@ export interface Locale extends ILocale {
      * にゃにゃにゃ？？
      */
     "flagAsCatDescription": string;
-    /**
-     * センシティブとして設定
-     */
-    "flagAsSensitive": string;
-    /**
-     * このオプションを有効にすると、このアカウントはセンシティブなアカウントとして他者に表示されます。この機能を有効にすると、検索結果に表示されなくなります。現在ローカル限定の機能です。
-     */
-    "flagAsSensitiveDescription": string;
     /**
      * タイムラインにノートへの返信を表示する
      */
@@ -7171,14 +7155,6 @@ export interface Locale extends ILocale {
          */
         "useEnterToSendDescription": string;
         /**
-         * Shift + Enterキーを押して送信
-         */
-        "useShiftEnterToSend": string;
-        /**
-         * オプションを有効にすると、行替えはEnterキーでできます。チャットを送信するときはオプションの影響を受けません。
-         */
-        "useShiftEnterToSendDescription": string;
-        /**
          * ショートカットキーで公開範囲を切り替える
          */
         "postFormVisibilityHotkey": string;
@@ -7876,22 +7852,6 @@ export interface Locale extends ILocale {
          * 一定期間モデレーターのアクティビティが検出されなかった場合、スパム防止のためこの設定は自動でオフになります。
          */
         "thisSettingWillAutomaticallyOffWhenModeratorsInactive": string;
-        /**
-         * 検索エンジンのインデックス
-         */
-        "index": string;
-        /**
-         * Elasticsearchに対してインデックスを貼る処理を実行します。
-         */
-        "indexDesc": string;
-        /**
-         * 全てにインデックスを貼る
-         */
-        "fullIndex": string;
-        /**
-         * インデックスを貼り直す
-         */
-        "reIndex": string;
         /**
          * バブルタイムラインは無効化されています。ベースロールからバブルタイムラインを有効にしてください。
          */
@@ -8785,20 +8745,6 @@ export interface Locale extends ILocale {
                  */
                 "description": string;
             };
-            "_setNameToYojo": {
-                /**
-                 * ロリータコンプレックス
-                 */
-                "title": string;
-                /**
-                 * 名前を 幼女 に設定した
-                 */
-                "description": string;
-                /**
-                 * これであなたもロリコン
-                 */
-                "flavor": string;
-            };
             "_passedSinceAccountCreated1": {
                 /**
                  * 一周年
@@ -8922,62 +8868,6 @@ export interface Locale extends ILocale {
                 "description": string;
                 /**
                  * これくらいの　おべんとばこに　🤯　🤯　ちょっとつめて
-                 */
-                "flavor": string;
-            };
-            "_ohayoujo1": {
-                /**
-                 * 今日も一日！
-                 */
-                "title": string;
-                /**
-                 * おはようようじょー！と投稿した
-                 */
-                "description": string;
-                /**
-                 * おはようじょー！
-                 */
-                "flavor": string;
-            };
-            "_ohayoujo7": {
-                /**
-                 * 元気いっぱい！
-                 */
-                "title": string;
-                /**
-                 * おはようようじょー！と7日投稿した
-                 */
-                "description": string;
-                /**
-                 * おはようじょー！
-                 */
-                "flavor": string;
-            };
-            "_ohayoujo30": {
-                /**
-                 * 笑顔満点
-                 */
-                "title": string;
-                /**
-                 * おはようようじょー！と30日投稿した
-                 */
-                "description": string;
-                /**
-                 * おはようじょー！
-                 */
-                "flavor": string;
-            };
-            "_ohayoujo365": {
-                /**
-                 * 皆勤賞
-                 */
-                "title": string;
-                /**
-                 * おはようようじょー！と365日投稿した
-                 */
-                "description": string;
-                /**
-                 * おはようじょー！
                  */
                 "flavor": string;
             };
@@ -9250,10 +9140,6 @@ export interface Locale extends ILocale {
              */
             "canSearchNotes": string;
             /**
-             * 高度な検索の利用
-             */
-            "canAdvancedSearchNotes": string;
-            /**
              * ユーザー検索の利用
              */
             "canSearchUsers": string;
@@ -9359,10 +9245,6 @@ export interface Locale extends ILocale {
              * 鍵アカウントユーザー
              */
             "isLocked": string;
-            /**
-             * 管理者
-             */
-            "isAdmin": string;
             /**
              * 「アカウントを見つけやすくする」が有効なユーザー
              */
@@ -11685,14 +11567,6 @@ export interface Locale extends ILocale {
          */
         "avatarDecorationMax": ParameterizedString<"max">;
         /**
-         * 縦書きにする
-         */
-        "makeVertical": string;
-        /**
-         * 横書きにする
-         */
-        "makeHorizontal": string;
-        /**
          * フォローされた時のメッセージ
          */
         "followedMessage": string;
@@ -13490,14 +13364,6 @@ export interface Locale extends ILocale {
              * 絵文字の更新・削除に失敗しました。詳細は登録ログをご確認ください。
              */
             "alertEmojisRegisterFailedDescription": string;
-            /**
-             * 絵文字の最大表示件数
-             */
-            "numberOfDisplayEmojis": string;
-            /**
-             * 設定
-             */
-            "settings": string;
         };
         "_logs": {
             /**
@@ -14826,10 +14692,6 @@ export interface Locale extends ILocale {
         "queryDescription": string;
     };
     "_accountTruncate": {
-        /**
-         * アカウントの整理
-         */
-        "accountDelete": string;
         /**
          * アカウントの整理は負荷のかかる処理であるため、作成したコンテンツの数やアップロードしたファイルの数が多いと完了までに時間がかかることがあります。
          */
