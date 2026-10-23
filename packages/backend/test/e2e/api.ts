@@ -216,7 +216,7 @@ describe('API', () => {
 					bearer: true,
 				});
 				assert.strictEqual(result.status, 401);
-				assert.ok(result.headers.get('WWW-Authenticate')?.startsWith('Bearer realm="CherryPick", error="invalid_token", error_description'));
+				assert.ok(result.headers.get('WWW-Authenticate')?.startsWith('Bearer realm="Engawa", error="invalid_token", error_description'));
 			});
 
 			test('multipartリクエスト', async () => {
@@ -225,7 +225,7 @@ describe('API', () => {
 					bearer: true,
 				});
 				assert.strictEqual(result.status, 401);
-				assert.ok(result.headers.get('WWW-Authenticate')?.startsWith('Bearer realm="CherryPick", error="invalid_token", error_description'));
+				assert.ok(result.headers.get('WWW-Authenticate')?.startsWith('Bearer realm="Engawa", error="invalid_token", error_description'));
 			});
 
 			test('streaming', async () => {
@@ -238,7 +238,7 @@ describe('API', () => {
 					() => { },
 				), (err: IncomingMessage) => {
 					assert.strictEqual(err.statusCode, 401);
-					assert.ok(err.headers['www-authenticate']?.startsWith('Bearer realm="CherryPick", error="invalid_token", error_description'));
+					assert.ok(err.headers['www-authenticate']?.startsWith('Bearer realm="Engawa", error="invalid_token", error_description'));
 					return true;
 				});
 			});
@@ -248,13 +248,13 @@ describe('API', () => {
 			test('一般リクエスト', async () => {
 				const result = await api('admin/get-index-stats', {});
 				assert.strictEqual(result.status, 401);
-				assert.strictEqual(result.headers.get('WWW-Authenticate'), 'Bearer realm="CherryPick"');
+				assert.strictEqual(result.headers.get('WWW-Authenticate'), 'Bearer realm="Engawa"');
 			});
 
 			test('multipartリクエスト', async () => {
 				const result = await uploadFile();
 				assert.strictEqual(result.status, 401);
-				assert.strictEqual(result.headers.get('WWW-Authenticate'), 'Bearer realm="CherryPick"');
+				assert.strictEqual(result.headers.get('WWW-Authenticate'), 'Bearer realm="Engawa"');
 			});
 		});
 
@@ -265,7 +265,7 @@ describe('API', () => {
 				bearer: true,
 			});
 			assert.strictEqual(result.status, 400);
-			assert.ok(result.headers.get('WWW-Authenticate')?.startsWith('Bearer realm="CherryPick", error="invalid_request", error_description'));
+			assert.ok(result.headers.get('WWW-Authenticate')?.startsWith('Bearer realm="Engawa", error="invalid_request", error_description'));
 		});
 
 		describe('invalid bearer format', () => {
