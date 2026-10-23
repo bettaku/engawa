@@ -5,6 +5,7 @@
 
 // yojo-art 由来の実績（setNameToYojo, ohayoujo1/7/30/365）は ACHIEVEMENT_TYPES から削除済み。
 // 獲得済みの記録が user_profile.achievements に残っていれば取り除く。
+// 実績はローカルユーザーしか獲得しないので、リモートユーザーの行（userHost あり）と、実績が空の行は見ない。
 const NAMES = `'setNameToYojo', 'ohayoujo1', 'ohayoujo7', 'ohayoujo30', 'ohayoujo365'`;
 
 export class RemoveYojoArtAchievements1792780720072 {
@@ -17,7 +18,9 @@ export class RemoveYojoArtAchievements1792780720072 {
                 FROM jsonb_array_elements("achievements") WITH ORDINALITY AS t(a, ord)
                 WHERE a->>'name' NOT IN (${NAMES})
             )
-            WHERE EXISTS (
+            WHERE "userHost" IS NULL
+            AND "achievements" <> '[]'::jsonb
+            AND EXISTS (
                 SELECT 1 FROM jsonb_array_elements("achievements") a
                 WHERE a->>'name' IN (${NAMES})
             )
