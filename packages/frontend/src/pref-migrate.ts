@@ -242,6 +242,7 @@ export function migrateOldSettings() {
 		prefer.commit('nicknameEnabled', store.s.nicknameEnabled);
 		prefer.commit('nicknameMap', store.s.nicknameMap);
 		prefer.commit('useEnterToSend', store.s.useEnterToSend);
+		prefer.commit('useShiftEnterToSend', store.s.useShiftEnterToSend);
 		prefer.commit('postFormVisibilityHotkey', store.s.postFormVisibilityHotkey);
 		prefer.commit('showRenoteConfirmPopup', store.s.showRenoteConfirmPopup);
 		prefer.commit('expandOnNoteClick', store.s.expandOnNoteClick);

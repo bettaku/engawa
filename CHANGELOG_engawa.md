@@ -41,6 +41,9 @@
 - fix(frontend): 脆弱性が報告されていた依存パッケージを更新・排除
 	- `sanitize-html` 2.17.7（`javascript:` URI の検証不備）、`uuid` 14、`happy-dom` / `minimatch` / `vite` / `rollup` / `vitest` / Storybook 9.1.20 などの開発用依存を更新
 	- `@tabler/icons-webfont` が同梱する未使用の `sharp` 0.33 系を override で排除、`@misskey-dev/summaly` の更新で `private-ip` への依存を排除
+- fix(frontend): 「Shift + Enterキーを押して送信」の設定が設定画面から消えていたのを修正
+	- オンにしているときに、Ctrl（Cmd）+ Enterキーでも送信できるようにする設定を追加しました
+	- 以前この設定をオンにしていた場合は、そのまま引き継がれます。簡易投稿フォームでも使えるようになりました
 - fix(frontend): 英語・韓国語で一部の表示が抜けていたのを修正
 	- 検索可能範囲、インデックス許可、MFC のボーダー、セキュアモードなどの訳を追加しました
 	- どこからも使われていないロケールのキーを削除しました
