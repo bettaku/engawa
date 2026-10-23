@@ -2260,10 +2260,6 @@ _achievements:
     _setNameToNoriDev:
       title: "神様コンプレックス（CherryPick）"
       description: "名前を noridev に設定した"
-    _setNameToYojo:
-      title: "ロリータコンプレックス"
-      description: "名前を 幼女 に設定した"
-      flavor: "これであなたもロリコン"
     _passedSinceAccountCreated1:
       title: "一周年"
       description: "アカウント作成から1年経過した"
@@ -2301,22 +2297,6 @@ _achievements:
       title: "ダブル🤯"
       description: "バブルゲームで最も大きいモノを2つ同時に出した"
       flavor: "これくらいの　おべんとばこに　🤯　🤯　ちょっとつめて"
-    _ohayoujo1:
-      title: "今日も一日！"
-      description: "おはようようじょー！と投稿した"
-      flavor: "おはようじょー！"
-    _ohayoujo7:
-      title: "元気いっぱい！"
-      description: "おはようようじょー！と7日投稿した"
-      flavor: "おはようじょー！"
-    _ohayoujo30:
-      title: "笑顔満点"
-      description: "おはようようじょー！と30日投稿した"
-      flavor: "おはようじょー！"
-    _ohayoujo365:
-      title: "皆勤賞"
-      description: "おはようようじょー！と365日投稿した"
-      flavor: "おはようじょー！"
 
 _role:
   new: "ロールの作成"

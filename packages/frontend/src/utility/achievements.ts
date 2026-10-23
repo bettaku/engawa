@@ -81,15 +81,10 @@ export const ACHIEVEMENT_TYPES = [
 	'justPlainLucky',
 	'setNameToSyuilo',
 	'setNameToNoriDev',
-	'setNameToYojo',
 	'cookieClicked',
 	'brainDiver',
 	'smashTestNotificationButton',
 	'tutorialCompleted',
-	'ohayoujo1',
-	'ohayoujo7',
-	'ohayoujo30',
-	'ohayoujo365',
 ] as const;
 
 export const ACHIEVEMENT_BADGES = {
@@ -433,11 +428,6 @@ export const ACHIEVEMENT_BADGES = {
 		bg: 'linear-gradient(0deg, rgb(187 183 59), rgb(255 143 77))',
 		frame: 'bronze',
 	},
-	'setNameToYojo': {
-		img: '/fluent-emoji/1f36e.png',
-		bg: 'linear-gradient(0deg, rgb(187 183 59), rgb(255 143 77))',
-		frame: 'platinum',
-	},
 	'passedSinceAccountCreated1': {
 		img: '/fluent-emoji/0031-20e3.png',
 		bg: null,
@@ -482,26 +472,6 @@ export const ACHIEVEMENT_BADGES = {
 		img: '/fluent-emoji/1f393.png',
 		bg: 'linear-gradient(0deg, rgb(220 223 225), rgb(172 192 207))',
 		frame: 'bronze',
-	},
-	'ohayoujo1': {
-		img: '/fluent-emoji/1f331.png',
-		bg: null,
-		frame: 'bronze',
-	},
-	'ohayoujo7': {
-		img: '/fluent-emoji/1f337.png',
-		bg: 'linear-gradient(0deg, rgb(255 77 77), rgb(247 155 214))',
-		frame: 'bronze',
-	},
-	'ohayoujo30': {
-		img: '/fluent-emoji/1f32f.png',
-		bg: 'linear-gradient(0deg, rgb(255 77 77), rgb(247 155 214))',
-		frame: 'silver',
-	},
-	'ohayoujo365': {
-		img: '/fluent-emoji/1f336.png',
-		bg: 'linear-gradient(0deg, rgb(255 77 77), rgb(247 155 214))',
-		frame: 'gold',
 	},
 /* @see <https://github.com/misskey-dev/misskey/pull/10365#discussion_r1155511107>
 } as const satisfies Record<typeof ACHIEVEMENT_TYPES[number], {

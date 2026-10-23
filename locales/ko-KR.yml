@@ -2269,22 +2269,6 @@ _achievements:
       title: "더블🤯"
       description: "버블게임에서 가장 큰 물건 2개를 동시에 내놓았어요"
       flavor: "이 정도만　도시락통에 🤯🤯 조금만 더"
-    _ohayoujo1:
-      title: "오늘도 힘내자!"
-      description: "\"おはようようじょー！\"라고 게시했어요"
-      flavor: "おはようじょー！"
-    _ohayoujo7:
-      title: "기운이 넘쳐!"
-      description: "\"おはようようじょー！\"라고 7일 동안 게시했어요"
-      flavor: "おはようじょー！"
-    _ohayoujo30:
-      title: "웃음 만점"
-      description: "\"おはようようじょー！\"라고 30일 동안 게시했어요"
-      flavor: "おはようじょー！"
-    _ohayoujo365:
-      title: "개근상"
-      description: "\"おはようようじょー！\"라고 365일 동안 게시했어요"
-      flavor: "おはようじょー！"
 _role:
   new: "새 역할 생성"
   edit: "역할 편집"
