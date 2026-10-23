@@ -178,6 +178,10 @@ jobs:
           images: ${{ env.REGISTRY_IMAGE }}
           flavor: latest=false
           tags: type=semver,pattern={{version}},value=${{ needs.resolve.outputs.version }}
+          # 既定では github.sha が入る。手動実行ではタグのコミットと違うことがあるので、resolve の値で上書きする
+          labels: |
+            org.opencontainers.image.revision=${{ needs.resolve.outputs.sha }}
+            org.opencontainers.image.version=${{ needs.resolve.outputs.version }}
       - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
