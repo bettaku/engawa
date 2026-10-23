@@ -59,7 +59,6 @@ reviews:
     # アーカイブ済み・upstream 由来の CHANGELOG（アクティブなのは CHANGELOG_engawa.md のみ）
     - "!CHANGELOG.md"
     - "!CHANGELOG_CHERRYPICK.md"
-    - "!CHANGELOG_yojo.md"
     - "!CHANGELOG_engawa_archived.md"
 
   path_instructions:
