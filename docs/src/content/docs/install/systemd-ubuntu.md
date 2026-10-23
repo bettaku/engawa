@@ -8,7 +8,7 @@ sidebar:
 
 Ubuntu 24.04 LTS を想定した、engawaをゼロから構築する手順です。Debian 12でも、パッケージ名が同じなのでほぼそのまま使えます。
 
-Dockerを使う場合はこのページではなく、Docker向けの手順を参照してください。RHEL系（AlmaLinux・Rocky Linux・RHEL）をお使いの場合は [systemdでインストールする（RHEL系）](/engawa/install/systemd-rhel/) を参照してください。
+Dockerを使う場合はこのページではなく、[Dockerでインストールする](/engawa/install/docker/)を参照してください。RHEL系（AlmaLinux・Rocky Linux・RHEL）をお使いの場合は [systemdでインストールする（RHEL系）](/engawa/install/systemd-rhel/) を参照してください。
 
 :::note[この手順で作られるもの]
 - engawa本体（`/home/engawa/engawa`）
