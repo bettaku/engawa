@@ -2269,22 +2269,6 @@ _achievements:
       title: "Double🤯"
       description: "Two of the biggest objects in the bubble game at the same time"
       flavor: "You can fill a lunch box like this 🤯 🤯 a bit."
-    _ohayoujo1:
-      title: "Another day!"
-      description: "Posted \"おはようようじょー！\""
-      flavor: "おはようじょー！"
-    _ohayoujo7:
-      title: "Full of energy!"
-      description: "Posted \"おはようようじょー！\" on 7 days"
-      flavor: "おはようじょー！"
-    _ohayoujo30:
-      title: "All smiles"
-      description: "Posted \"おはようようじょー！\" on 30 days"
-      flavor: "おはようじょー！"
-    _ohayoujo365:
-      title: "Perfect attendance"
-      description: "Posted \"おはようようじょー！\" on 365 days"
-      flavor: "おはようじょー！"
 _role:
   new: "New role"
   edit: "Edit role"

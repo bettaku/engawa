@@ -8745,20 +8745,6 @@ export interface Locale extends ILocale {
                  */
                 "description": string;
             };
-            "_setNameToYojo": {
-                /**
-                 * ロリータコンプレックス
-                 */
-                "title": string;
-                /**
-                 * 名前を 幼女 に設定した
-                 */
-                "description": string;
-                /**
-                 * これであなたもロリコン
-                 */
-                "flavor": string;
-            };
             "_passedSinceAccountCreated1": {
                 /**
                  * 一周年
@@ -8882,62 +8868,6 @@ export interface Locale extends ILocale {
                 "description": string;
                 /**
                  * これくらいの　おべんとばこに　🤯　🤯　ちょっとつめて
-                 */
-                "flavor": string;
-            };
-            "_ohayoujo1": {
-                /**
-                 * 今日も一日！
-                 */
-                "title": string;
-                /**
-                 * おはようようじょー！と投稿した
-                 */
-                "description": string;
-                /**
-                 * おはようじょー！
-                 */
-                "flavor": string;
-            };
-            "_ohayoujo7": {
-                /**
-                 * 元気いっぱい！
-                 */
-                "title": string;
-                /**
-                 * おはようようじょー！と7日投稿した
-                 */
-                "description": string;
-                /**
-                 * おはようじょー！
-                 */
-                "flavor": string;
-            };
-            "_ohayoujo30": {
-                /**
-                 * 笑顔満点
-                 */
-                "title": string;
-                /**
-                 * おはようようじょー！と30日投稿した
-                 */
-                "description": string;
-                /**
-                 * おはようじょー！
-                 */
-                "flavor": string;
-            };
-            "_ohayoujo365": {
-                /**
-                 * 皆勤賞
-                 */
-                "title": string;
-                /**
-                 * おはようようじょー！と365日投稿した
-                 */
-                "description": string;
-                /**
-                 * おはようじょー！
                  */
                 "flavor": string;
             };

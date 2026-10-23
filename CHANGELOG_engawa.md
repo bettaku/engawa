@@ -29,6 +29,8 @@
 
 ### General
 - enhance: 管理画面におけるアイコンデコレーションをページネーションで取得するように
+- chore: yojo-art 由来の実績（名前を「幼女」にする、「おはようようじょー！」と投稿する）を削除 ( [#339](https://github.com/bettaku/engawa/issues/339) )
+	- これらはすでに獲得できなくなっていました。獲得済みの記録が残っていても表示されなくなります
 
 ### Client
 - enhance(frontend): enable to display more timezone on clock widgets
