@@ -1,9 +1,8 @@
 name: On Release Created (Publish cherrypick-js)
 
+# npm の cherrypick-js は kokonect-link のパッケージなので、engawa からの公開はひとまず止める。
+# 再開するときは、パッケージ名を engawa 独自のものに変えてから release: created を戻す。
 on:
-  release:
-    types: [created]
-
   workflow_dispatch:
 
 jobs:

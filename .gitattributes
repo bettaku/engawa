@@ -6,3 +6,10 @@
 *.blend -diff -text
 *.afdesign -diff -text
 * text=auto eol=lf
+
+# リリースのソースtarball（git archive）から除くテスト用ディレクトリ
+packages/backend/test/ export-ignore
+packages/backend/test-federation/ export-ignore
+packages/frontend/test/ export-ignore
+packages/cherrypick-js/test/ export-ignore
+packages-internal/changelog-checker/test/ export-ignore
