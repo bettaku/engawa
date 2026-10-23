@@ -7155,6 +7155,22 @@ export interface Locale extends ILocale {
          */
         "useEnterToSendDescription": string;
         /**
+         * Shift + Enterキーを押して送信
+         */
+        "useShiftEnterToSend": string;
+        /**
+         * オプションを有効にすると、行替えはEnterキーでできます。チャットを送信するときはオプションの影響を受けません。
+         */
+        "useShiftEnterToSendDescription": string;
+        /**
+         * Ctrl（Cmd）+ Enterキーでも送信する
+         */
+        "alsoUseCtrlEnterToSend": string;
+        /**
+         * Shift + Enterキーに加えて、Ctrl（Cmd）+ Enterキーでも送信できるようにします。
+         */
+        "alsoUseCtrlEnterToSendDescription": string;
+        /**
          * ショートカットキーで公開範囲を切り替える
          */
         "postFormVisibilityHotkey": string;

@@ -58,6 +58,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<div v-if="prefer.s.useEnterToSend" :class="$style.content">
 						<kbd>Enter</kbd>
 					</div>
+					<template v-else-if="prefer.s.useShiftEnterToSend">
+						<div :class="$style.content">
+							<kbd>Shift</kbd> + <kbd>Enter</kbd>
+						</div>
+						<div v-if="prefer.s.alsoUseCtrlEnterToSend" :class="$style.content">
+							<kbd>Ctrl</kbd> + <kbd>Enter</kbd>
+						</div>
+					</template>
 					<div v-else :class="$style.content">
 						<kbd>Ctrl</kbd> + <kbd>Enter</kbd>
 					</div>

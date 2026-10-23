@@ -182,6 +182,7 @@ import { claimAchievement } from '@/utility/achievements.js';
 import { emojiPicker } from '@/utility/emoji-picker.js';
 import { mfmFunctionPicker } from '@/utility/mfm-function-picker.js';
 import { prefer } from '@/preferences.js';
+import { isPostShortcut } from '@/utility/is-post-shortcut.js';
 import { getPluginHandlers } from '@/plugin.js';
 import { DI } from '@/di.js';
 import { globalEvents } from '@/events.js';
@@ -778,11 +779,7 @@ function clear() {
 }
 
 function onKeydown(ev: KeyboardEvent) {
-	if (prefer.s.useEnterToSend && !ev.shiftKey) {
-		if (ev.key === 'Enter' && canPost.value) post();
-	} else {
-		if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey) && canPost.value) post();
-	}
+	if (isPostShortcut(ev) && canPost.value) post();
 
 	if (prefer.s.postFormVisibilityHotkey) {
 		if (ev.ctrlKey && ev.shiftKey && (visibility.value === 'specified')) visibility.value = 'public';
