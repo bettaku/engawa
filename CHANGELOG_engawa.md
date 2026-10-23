@@ -39,6 +39,9 @@
 - fix(frontend): 脆弱性が報告されていた依存パッケージを更新・排除
 	- `sanitize-html` 2.17.7（`javascript:` URI の検証不備）、`uuid` 14、`happy-dom` / `minimatch` / `vite` / `rollup` / `vitest` / Storybook 9.1.20 などの開発用依存を更新
 	- `@tabler/icons-webfont` が同梱する未使用の `sharp` 0.33 系を override で排除、`@misskey-dev/summaly` の更新で `private-ip` への依存を排除
+- fix(frontend): 英語・韓国語で一部の表示が抜けていたのを修正
+	- 検索可能範囲、インデックス許可、MFC のボーダー、セキュアモードなどの訳を追加しました
+	- どこからも使われていないロケールのキーを削除しました
 	- `cherrypick-js` のテスト基盤を vitest 4 に更新（vitest 3 系の任意ファイル読み取り脆弱性）
 	- `vue` 3.5.44（`@vue/server-renderer`）、`sanitize-html` 2.18.1、`vite` 8.2.4、Storybook 9.1.21、`start-server-and-test` 2.1.5（`axios` / `joi` / `follow-redirects`）などを更新
 
