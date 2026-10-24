@@ -6,7 +6,7 @@
 import * as assert from 'node:assert';
 import { readFile } from 'node:fs/promises';
 import { basename, isAbsolute } from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 import { inspect } from 'node:util';
 import WebSocket, { ClientOptions } from 'ws';
 import fetch, { File, RequestInit, type Headers } from 'node-fetch';
@@ -118,7 +118,7 @@ export const relativeFetch = async (path: string, init?: RequestInit | undefined
 export function randomString(chars = 'abcdefghijklmnopqrstuvwxyz0123456789', length = 16) {
 	let randomString = '';
 	for (let i = 0; i < length; i++) {
-		randomString += chars[Math.floor(Math.random() * chars.length)];
+		randomString += chars[randomInt(chars.length)];
 	}
 	return randomString;
 }

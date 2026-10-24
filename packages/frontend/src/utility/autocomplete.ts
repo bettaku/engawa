@@ -164,7 +164,7 @@ export class Autocomplete {
 		if (isMfmTag && !opened && this.onlyType.includes('mfmTag')) {
 			const mfmTag = text.substring(mfmTagIndex + 1);
 			if (!mfmTag.includes(' ')) {
-				this.open('mfmTag', mfmTag.replace('[', ''));
+				this.open('mfmTag', mfmTag.startsWith('[') ? mfmTag.slice(1) : mfmTag);
 				opened = true;
 			}
 		}
@@ -183,7 +183,7 @@ export class Autocomplete {
 		if (isHtmlTag && !opened && this.onlyType.includes('htmlTag')) {
 			const htmlTag = text.substring(htmlTagIndex + 1);
 			if (!htmlTag.includes(' ')) {
-				this.open('htmlTag', htmlTag.replace('<', ''));
+				this.open('htmlTag', htmlTag);
 				opened = true;
 			}
 		}
