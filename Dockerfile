@@ -99,6 +99,9 @@ COPY --chown=cherrypick:cherrypick . ./
 ENV LD_PRELOAD=/usr/local/lib/libjemalloc.so
 ENV MALLOC_CONF=background_thread:true,metadata_thp:auto,dirty_decay_ms:30000,muzzy_decay_ms:30000
 ENV NODE_ENV=production
+# pnpm 11 は pnpm run の前に依存関係を確認し、足りなければ pnpm install を走らせようとする。
+# 実行用のイメージには本番の依存関係しか入れていないので、TTYのないコンテナではそこで止まってしまう
+ENV pnpm_config_verify_deps_before_run=false
 HEALTHCHECK --interval=5s --retries=20 CMD ["/bin/bash", "/cherrypick/healthcheck.sh"]
 ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["pnpm", "run", "migrateandstart"]

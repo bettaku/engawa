@@ -55,6 +55,7 @@
 	- `vue` 3.5.44（`@vue/server-renderer`）、`sanitize-html` 2.18.1、`vite` 8.2.4、Storybook 9.1.21、`start-server-and-test` 2.1.5（`axios` / `joi` / `follow-redirects`）などを更新
 
 ### Server
+- fix(docker): pnpm 11 への更新後、コンテナイメージが起動直後に `pnpm install` を走らせようとして起動できなかった問題を修正
 - fix(backend): chat
 	- チャットの連合機能に関する不具合の修正
 - fix(backend): Hacker's Pubなどのh2タグ内にハッシュタグから始まるidを持っているHTMLが来た場合、無視するように
