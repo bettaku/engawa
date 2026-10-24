@@ -1,6 +1,6 @@
 {
 	"name": "cherrypick",
-	"version": "4.17.0-engawa20260408",
+	"version": "4.17.1-alpha.0",
 	"basedCherryPickVersion": "4.17.0",
 	"basedMisskeyVersion": "2025.10.2",
 	"codename": "nasubi",
