@@ -6,6 +6,9 @@ on:
     workflows:
       - Get api.json from CherryPick # get-api-diff.yml
 
+permissions:
+  contents: read
+
 jobs:
   compare-diff:
     runs-on: ubuntu-latest
@@ -16,7 +19,7 @@ jobs:
 # api-artifact
     steps:
       - name: Download artifact
-        uses: actions/github-script@v7.1.0
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         with:
           script: |
             const fs = require('fs');
@@ -60,7 +63,7 @@ jobs:
       - name: Echo full diff
         run: cat ./api-full.json.diff
       - name: Upload full diff to Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: api-artifact
           path: |
@@ -89,13 +92,13 @@ jobs:
           fi
 
           echo "$FOOTER" >> ./output.md
-      - uses: thollander/actions-comment-pull-request@v2
+      - uses: thollander/actions-comment-pull-request@fabd468d3a1a0b97feee5f6b9e499eab0dd903f6 # v2.5.0
         with:
           pr_number: ${{ steps.load-pr-num.outputs.pr-number }}
           comment_tag: show_diff
           filePath: ./output.md
       - name: Tell error to PR
-        uses: thollander/actions-comment-pull-request@v2
+        uses: thollander/actions-comment-pull-request@fabd468d3a1a0b97feee5f6b9e499eab0dd903f6 # v2.5.0
         if: failure() && steps.load-pr-num.outputs.pr-number
         with:
           pr_number: ${{ steps.load-pr-num.outputs.pr-number }}

@@ -9,6 +9,9 @@ on:
     paths:
       - packages/backend/**
       - .github/workflows/get-api-diff.yml
+permissions:
+  contents: read
+
 jobs:
   get-from-cherrypick:
     runs-on: ubuntu-latest
@@ -25,14 +28,14 @@ jobs:
             ref: refs/pull/${{ github.event.number }}/merge
 
     steps:
-    - uses: actions/checkout@v4.3.0
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
       with:
         ref: ${{ matrix.ref }}
         submodules: true
     - name: Setup pnpm
-      uses: pnpm/action-setup@v6.0.9
+      uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
     - name: Use Node.js
-      uses: actions/setup-node@v4.4.0
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
       with:
         node-version-file: '.node-version'
         cache: 'pnpm'
@@ -48,7 +51,7 @@ jobs:
     - name: Copy API.json
       run: cp packages/backend/built/api.json ${{ matrix.api-json-name }}
     - name: Upload Artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: api-artifact-${{ matrix.api-json-name }}
         path: ${{ matrix.api-json-name }}
@@ -61,7 +64,7 @@ jobs:
           PR_NUMBER: ${{ github.event.number }}
         run: |
           echo "$PR_NUMBER" > ./pr_number
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: api-artifact-pr-number
           path: pr_number
