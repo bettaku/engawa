@@ -94,4 +94,4 @@ Like engawa, yojo-art is a fork built on CherryPick `4.17.0`; it is not upstream
 - **Only in yojo-art** — advanced search (OpenSearch). engawa merged it once but has since removed it.
 - **Only in engawa** — "private" visibility, Authorized Fetch, and setting `robots.txt`.
 
-Changes have been merged in both directions in the past. The `CHANGELOG_yojo.md` bundled in the repository is yojo-art's history, and a feature listed there is not necessarily in engawa.
+Changes have been merged in both directions in the past. For yojo-art's history, see [the yojo-art repository](https://github.com/yojo-art/cherrypick). A feature listed there is not necessarily in engawa.

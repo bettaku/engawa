@@ -94,4 +94,4 @@ yojo-artはengawaと同じくCherryPick `4.17.0` を土台とするフォーク�
 - **yojo-artにのみあるもの** — 高度な検索（OpenSearch）。engawaも一度取り込みましたが、現在は削除済みです。
 - **engawaにのみあるもの** — 公開範囲「プライベート」、Authorized Fetch、`robots.txt`の設定。
 
-過去に双方向の取り込みがありました。リポジトリに同梱されている`CHANGELOG_yojo.md`はyojo-art側の履歴で、そこに載っている機能がengawaにあるとは限りません。
+過去に双方向の取り込みがありました。yojo-art側の変更履歴は[yojo-artのリポジトリ](https://github.com/yojo-art/cherrypick)を参照してください。そこに載っている機能がengawaにあるとは限りません。
