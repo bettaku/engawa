@@ -5,7 +5,7 @@
 
 import * as assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { checkNewRelease, checkNewTopic } from '../src/checker.js';
+import { checkNewRelease, checkNewTopic, excludeArchived, findArchivedInHead } from '../src/checker.js';
 import { Release, ReleaseCategory } from '../src/parser.js';
 
 function release(name: string, categories: Record<string, string[]> = {}): Release {
@@ -156,3 +156,55 @@ describe('checkNewTopic', () => {
 		assert.equal(result.message, 'There is an error in the update history. expected additions:1.1.0, actual additions:1.0.0');
 	});
 });
+
+describe('checkNewRelease（base側が空）', () => {
+	it('base側にリリースがなければ、head側で増えた分はすべて新しいリリースとして成功', () => {
+		assert.equal(checkNewRelease([], [release('1.0.0')]).success, true);
+	});
+});
+
+describe('excludeArchived', () => {
+	it('アーカイブ済みのリリースをbase側から除く', () => {
+		const base = [release('20250205'), release('0.4.2')];
+		const archived = [release('20250205'), release('0.4.2'), release('0.1.0')];
+
+		assert.deepEqual(excludeArchived(base, archived), []);
+	});
+
+	it('アーカイブにないリリースは残す', () => {
+		const base = [release('1.0.0'), release('20250205')];
+		const archived = [release('20250205')];
+
+		assert.deepEqual(excludeArchived(base, archived).map(r => r.releaseName), ['1.0.0']);
+	});
+
+	it('アーカイブの移行直後のリリースPR（base: 旧履歴、head: 1.0.0）を通す', () => {
+		const archived = [release('20250205'), release('0.4.2')];
+		const base = excludeArchived([release('20250205'), release('0.4.2')], archived);
+		const head = [release('1.0.0')];
+
+		assert.equal(checkNewRelease(base, head).success, true);
+	});
+
+	it('アーカイブに移していないリリースを消したら、引き続き失敗する', () => {
+		const archived = [release('20250205')];
+		const base = excludeArchived([release('1.0.0'), release('20250205')], archived);
+		const head = [release('1.1.0')];
+
+		assert.equal(checkNewRelease(base, head).success, false);
+	});
+});
+
+describe('findArchivedInHead', () => {
+	it('head側とアーカイブの両方にあるリリース名を返す', () => {
+		const head = [release('1.1.0'), release('1.0.0')];
+		const archived = [release('1.0.0'), release('20250205')];
+
+		assert.deepEqual(findArchivedInHead(head, archived), ['1.0.0']);
+	});
+
+	it('重複がなければ空', () => {
+		assert.deepEqual(findArchivedInHead([release('1.0.0')], [release('20250205')]), []);
+	});
+});
+
