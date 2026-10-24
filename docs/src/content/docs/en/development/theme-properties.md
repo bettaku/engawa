@@ -2,6 +2,8 @@
 title: Theme properties
 description: A map from each property you can write in a theme's json5 file to the part of the UI it controls
 lastUpdated: 2026-09-20
+sidebar:
+  order: 6
 ---
 
 This page describes where each property under `props` in a theme file shows up on screen.

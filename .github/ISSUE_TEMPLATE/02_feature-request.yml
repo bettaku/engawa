@@ -9,8 +9,8 @@ body:
         Thank you for suggesting an improvement. You may write the proposal in any language.
         改善のご提案ありがとうございます。提案は任意の言語で記入できます。
 
-        Use this form for user-facing features and enhancements. For questions or troubleshooting, use [GitHub Discussions](https://github.com/kokonect-link/cherrypick/discussions) or [Discord](https://discord.gg/V8qghB28Aj).
-        このフォームは、利用者向けの機能や改善に使用してください。質問やトラブルシューティングは[GitHub Discussions](https://github.com/kokonect-link/cherrypick/discussions)または[Discord](https://discord.gg/V8qghB28Aj)を利用してください。
+        Use this form for user-facing features and enhancements. For questions or troubleshooting, use [GitHub Discussions](https://github.com/bettaku/engawa/discussions).
+        このフォームは、利用者向けの機能や改善に使用してください。質問やトラブルシューティングは[GitHub Discussions](https://github.com/bettaku/engawa/discussions)を利用してください。
 
   - type: checkboxes
     id: preflight
