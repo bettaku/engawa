@@ -12,6 +12,7 @@ In this section, there will be documents using for installation of engawa.
 
 - [Installing with systemd (Ubuntu / Debian)](/engawa/en/install/systemd-ubuntu/): the full build on Ubuntu 24.04 and Debian 12.
 - [Installing with systemd (RHEL family)](/engawa/en/install/systemd-rhel/): the full build on AlmaLinux, Rocky Linux and RHEL.
+- [Installing with Docker](/engawa/en/install/docker/): using Docker Compose and the published container image, with no build on the server.
 
 ## Configuration
 
