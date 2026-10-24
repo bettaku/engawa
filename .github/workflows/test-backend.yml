@@ -20,6 +20,9 @@ on:
       - .github/cherrypick/test.yml
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   unit:
     name: Unit tests (backend)
@@ -45,16 +48,16 @@ jobs:
           - 56312:6379
 
     steps:
-    - uses: actions/checkout@v4.3.0
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
       with:
         submodules: true
     - name: Setup pnpm
-      uses: pnpm/action-setup@v6.0.9
+      uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
     - name: Install FFmpeg
       run: |
         sudo apt install -y ffmpeg
     - name: Use Node.js
-      uses: actions/setup-node@v4.4.0
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
       with:
         node-version-file: ${{ matrix.node-version-file }}
         cache: 'pnpm'
@@ -68,7 +71,7 @@ jobs:
     - name: Test
       run: pnpm --filter backend test-and-coverage
     - name: Upload to Codecov
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac # v5.5.5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./packages/backend/coverage/coverage-final.json
@@ -98,13 +101,13 @@ jobs:
           - 56312:6379
 
     steps:
-      - uses: actions/checkout@v4.3.0
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
         with:
           submodules: true
       - name: Setup pnpm
-        uses: pnpm/action-setup@v6.0.9
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
       - name: Use Node.js
-        uses: actions/setup-node@v4.4.0
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version-file: ${{ matrix.node-version-file }}
           cache: 'pnpm'
@@ -118,7 +121,7 @@ jobs:
       - name: Test
         run: pnpm --filter backend test-and-coverage:e2e
       - name: Upload to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac # v5.5.5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./packages/backend/coverage/coverage-final.json
@@ -143,16 +146,16 @@ jobs:
           POSTGRES_HOST_AUTH_METHOD: trust
 
     steps:
-      - uses: actions/checkout@v4.3.0
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
         with:
           submodules: true
       - name: Setup pnpm
-        uses: pnpm/action-setup@v6.0.9
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
       - name: Get current date
         id: current-date
         run: echo "today=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
       - name: Use Node.js
-        uses: actions/setup-node@v4.4.0
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version-file: ${{ matrix.node-version-file }}
           cache: 'pnpm'
