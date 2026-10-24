@@ -5,7 +5,7 @@
 
 import * as assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { checkNewRelease, checkNewTopic, excludeArchived } from '../src/checker.js';
+import { checkNewRelease, checkNewTopic, excludeArchived, findArchivedInHead } from '../src/checker.js';
 import { Release, ReleaseCategory } from '../src/parser.js';
 
 function release(name: string, categories: Record<string, string[]> = {}): Release {
@@ -192,6 +192,19 @@ describe('excludeArchived', () => {
 		const head = [release('1.1.0')];
 
 		assert.equal(checkNewRelease(base, head).success, false);
+	});
+});
+
+describe('findArchivedInHead', () => {
+	it('head側とアーカイブの両方にあるリリース名を返す', () => {
+		const head = [release('1.1.0'), release('1.0.0')];
+		const archived = [release('1.0.0'), release('20250205')];
+
+		assert.deepEqual(findArchivedInHead(head, archived), ['1.0.0']);
+	});
+
+	it('重複がなければ空', () => {
+		assert.deepEqual(findArchivedInHead([release('1.0.0')], [release('20250205')]), []);
 	});
 });
 

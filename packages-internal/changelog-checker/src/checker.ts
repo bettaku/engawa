@@ -104,3 +104,13 @@ export function excludeArchived(base: Release[], archived: Release[]): Release[]
 	const names = new Set(archived.map(r => r.releaseName));
 	return base.filter(r => !names.has(r.releaseName));
 }
+
+/**
+ * head側とアーカイブの両方にあるリリース名を返す。
+ * 同じリリースがアーカイブにもあると、base側から除かれて、誤って消したことを見逃してしまう。
+ */
+export function findArchivedInHead(head: Release[], archived: Release[]): string[] {
+	const names = new Set(archived.map(r => r.releaseName));
+	return head.filter(r => names.has(r.releaseName)).map(r => r.releaseName);
+}
+
