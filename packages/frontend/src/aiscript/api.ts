@@ -35,10 +35,8 @@ export function aiScriptReadline(q: string): Promise<string> {
 }
 
 export function createAiScriptEnv(opts: { storageKey: string, token?: string }) {
-	const table = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-	const randomString = Array.from(crypto.getRandomValues(new Uint32Array(32)))
-		.map(v => table[v % table.length])
-		.join('');
+	// 実行環境ごとに使い捨てる値（アクセストークンを保存するキーに使う）
+	const randomString = crypto.randomUUID();
 	return {
 		USER_ID: $i ? values.STR($i.id) : values.NULL,
 		USER_NAME: $i?.name ? values.STR($i.name) : values.NULL,

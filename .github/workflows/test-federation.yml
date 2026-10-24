@@ -23,6 +23,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+permissions:
+  contents: read
+
 jobs:
   # Pull requests run only against the default Node version to keep them fast.
   # Pushes to master/develop, the nightly schedule and manual dispatches run the
