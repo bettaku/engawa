@@ -12,8 +12,8 @@ body:
         Before submitting, search for existing issues and confirm the problem on the latest stable release when possible. If you cannot test the latest stable release, explain why in the version field.
         送信前に既存のIssueを検索し、可能であれば最新の安定版で再現することを確認してください。最新安定版で確認できない場合は、バージョン欄に理由を記載してください。
 
-        For questions or troubleshooting, use [GitHub Discussions](https://github.com/kokonect-link/cherrypick/discussions) or [Discord](https://discord.gg/V8qghB28Aj). Report security vulnerabilities according to the [Security Policy](https://github.com/kokonect-link/cherrypick/security/policy), not in a public issue.
-        質問やトラブルシューティングは[GitHub Discussions](https://github.com/kokonect-link/cherrypick/discussions)または[Discord](https://discord.gg/V8qghB28Aj)を利用してください。セキュリティ上の脆弱性は公開Issueに書かず、[Security Policy](https://github.com/kokonect-link/cherrypick/security/policy)に従って報告してください。
+        For questions or troubleshooting, use [GitHub Discussions](https://github.com/bettaku/engawa/discussions). Report security vulnerabilities according to the [Security Policy](https://github.com/bettaku/engawa/security/policy), not in a public issue.
+        質問やトラブルシューティングは[GitHub Discussions](https://github.com/bettaku/engawa/discussions)を利用してください。セキュリティ上の脆弱性は公開Issueに書かず、[Security Policy](https://github.com/bettaku/engawa/security/policy)に従って報告してください。
 
   - type: checkboxes
     id: preflight

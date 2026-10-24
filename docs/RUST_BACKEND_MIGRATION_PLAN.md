@@ -225,7 +225,7 @@ Rustによる直接キュー管理へ進む際は、実際のBullMQバージョ�
 | Frontend E2E | `pnpm e2e`、[Playwright設定](../packages/frontend/playwright.config.ts) | 既存の`CHERRYPICK_URL`指定を活用し、Node起動を前提とするルートスクリプトを調整する |
 | DB migration | `CHERRYPICK_CONFIG_YML=test.yml pnpm --filter backend migrate`、同設定で`pnpm --filter backend check-migrations` | 過去版→移行版、旧実装での再読込、Rust SQL、migration実行系の最終移管を検証する |
 
-バックエンドテストの設定とDB準備は[開発ガイド](DEVELOPMENT.md)、[test-backend.yml](../.github/workflows/test-backend.yml)を参照する。実データを保持する環境にテストの`dropSchema` / `synchronize`経路を接続しない。
+バックエンドテストの設定とDB準備は[テストのドキュメント](https://bettaku.github.io/engawa/development/testing/)、[test-backend.yml](../.github/workflows/test-backend.yml)を参照する。実データを保持する環境にテストの`dropSchema` / `synchronize`経路を接続しない。
 
 [vitest.config.e2e.ts](../packages/backend/vitest.config.e2e.ts)はNestJSサーバーを起動する`built-test/entry.js`を参照し、[test/utils.ts](../packages/backend/test/utils.ts)などはTypeORMと環境制御に依存する。既存E2Eが無変更でRustを検証できるとは扱わない。公開HTTP・WebSocketによる試験と、実装固有の準備処理を分離する作業をフェーズ0〜2に含める。
 

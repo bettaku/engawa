@@ -1,11 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: 💬 CherryPick Discussions / GitHub Discussions
-    url: https://github.com/kokonect-link/cherrypick/discussions
+  - name: 💬 Engawa Discussions / GitHub Discussions
+    url: https://github.com/bettaku/engawa/discussions
     about: Ask questions and get troubleshooting help / 質問やトラブルシューティングを相談する
-  - name: 💬 CherryPick Discord / Discordコミュニティ
-    url: https://discord.gg/V8qghB28Aj
-    about: Chat with the CherryPick community / CherryPickコミュニティで交流・相談する
   - name: 🔒 Security vulnerability / セキュリティ上の脆弱性
-    url: https://github.com/kokonect-link/cherrypick/security/policy
+    url: https://github.com/bettaku/engawa/security/policy
     about: Report vulnerabilities privately; do not open a public issue / 脆弱性を公開Issueではなく非公開で報告する

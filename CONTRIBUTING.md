@@ -1,645 +1,137 @@
 # Contribution guide
-We're glad you're interested in contributing CherryPick! In this document you will find the information you need to contribute to the project.
+
+Thank you for your interest in contributing to Engawa! This document explains how to take part in the project: asking questions, reporting issues, sending pull requests, reviewing and releasing.
+
+Technical information for developers (setting up the environment, running tests, and notes on the backend and frontend code) is in the [developer documentation](https://bettaku.github.io/engawa/en/development/).
 
 > [!NOTE]
-> This project uses Japanese as its major language, **but you do not need to translate and write the Issues/PRs in Japanese.**
-> Also, you might receive comments on your Issue/PR in Japanese, but you do not need to reply to them in Japanese as well.\
-> The accuracy of machine translation into Japanese is not high, so it will be easier for us to understand if you write it in the original language.
-> It will also allow the reader to use the translation tool of their preference if necessary.
+> The main language of this project is Japanese, **but you don't need to write Issues or pull requests in Japanese.**
+> You may receive comments in Japanese, and you don't need to reply in Japanese either.
+> Machine translation into Japanese is not very accurate, so writing in your own language is often easier for us to understand. It also lets readers use the translation tool they prefer.
 
-## Roadmap
-See [ROADMAP.md](./ROADMAP.md)
+## Table of contents
+
+- [Getting help](#getting-help)
+- [Issues](#issues)
+- [Discuss before you implement](#discuss-before-you-implement)
+- [Branches](#branches)
+- [Pull requests](#pull-requests)
+- [Reviewing](#reviewing)
+- [Releases](#releases)
+- [Localization](#localization)
+- [Security](#security)
+
+## Getting help
+
+Please ask questions and get troubleshooting help in [GitHub Discussions](https://github.com/bettaku/engawa/discussions). Issues are not for questions.
 
 ## Issues
-Before creating an issue, please check the following:
-- To avoid duplication, please search for similar issues before creating a new issue.
-- Use the Bug Report form for reproducible problems and the Feature Request form for user-facing improvements. The Development Task form is intended for maintainers to track internal engineering work.
-- Do not use Issues to ask questions or troubleshooting.
-	- Issues should only be used for bug tracking, feature proposals, and maintainer development tasks.
-	- Please ask questions or troubleshooting in [GitHub Discussions](https://github.com/kokonect-link/cherrypick/discussions) or [Discord](https://discord.gg/V8qghB28Aj).
-- Do not report security vulnerabilities in a public Issue. Follow the private reporting instructions in our [Security Policy](./SECURITY.md).
+
+Before creating an issue, please check the following.
+
+- Search for similar issues first to avoid duplicates.
+- Choose the right form:
+	- **Bug report** for problems you can reproduce
+	- **Feature request** for user-facing improvements
+	- **Development task** for internal engineering work tracked by maintainers
+- Do not report security vulnerabilities in a public issue. See [Security](#security).
 
 > [!WARNING]
-> Do not close issues that are about to be resolved. It should remain open until a commit that actually resolves it is merged.
-
-### Recommended discussing before implementation
-We welcome your proposal.
-
-When you want to add a feature or fix a bug, **first have the design and policy reviewed in an Issue** (if it is not there, please make one). Without this step, there is a high possibility that the PR will not be merged even if it is implemented.
-
-At this point, you also need to clarify the goals of the PR you will create, and make sure that the other members of the team are aware of them.
-PRs that do not have a clear set of do's and don'ts tend to be bloated and difficult to review.
-
-Also, when you start implementation, assign yourself to the Issue (if you cannot do it yourself, ask Committer to assign you).
-By expressing your intention to work on the Issue, you can prevent conflicts in the work.
-
-To the Committers: you should not assign someone on it before the Final Decision.
+> Do not close an issue that is about to be resolved. Keep it open until the commit that actually resolves it is merged.
 
 ### How issues are triaged
 
-The Committers may:
-* close an issue that is not reproducible on latest stable release,
-* merge an issue into another issue,
-* split an issue into multiple issues,
-* or re-open that has been closed for some reason which is not applicable anymore.
+Maintainers may:
 
-@syuilo reserves the Final Decision rights including whether the project will implement feature and how to implement, these rights are not always exercised.
+- close an issue that cannot be reproduced on the latest stable release,
+- merge an issue into another,
+- split an issue into several,
+- or reopen an issue whose reason for closing no longer applies.
 
-## Well-known branches
-- **`master`** branch is tracking the latest release and used for production purposes.
-- **`develop`** branch is where we work for the next release.
-	- When you create a PR, basically target it to this branch.
-- **`l10n_develop`** branch is reserved for localization management.
+## Discuss before you implement
 
-## Creating a PR
-Thank you for your PR! Before creating a PR, please check the following:
-- If possible, prefix the title with a keyword that identifies the type of this PR, as shown below.
-	- `fix` / `refactor` / `feat` / `enhance` / `perf` / `chore` etc
-	- Also, make sure that the granularity of this PR is appropriate. Please do not include more than one type of change or interest in a single PR.
-- If there is an Issue which will be resolved by this PR, please include a reference to the Issue in the text.
-- Please add the summary of the changes to [`CHANGELOG_CHERRYPICK.md`](/CHANGELOG_CHERRYPICK.md). However, this is not necessary for changes that do not affect the users, such as refactoring.
-- Check if there are any documents that need to be created or updated due to this change.
-- If you have added a feature or fixed a bug, please add a test case if possible.
-- Please make sure that tests and Lint are passed in advance.
-	- You can run it with `pnpm test` and `pnpm lint`. [See more info](#testing)
-- If this PR includes UI changes, please attach a screenshot in the text.
+Proposals are welcome. When you want to add a feature or fix a non-trivial bug, **first have the design and policy reviewed in an issue** (create one if it doesn't exist). Without this step, a pull request may not be merged even if it is implemented.
 
-Thanks for your cooperation 🤗
+In the issue, make clear what the pull request will and will not do, so that others understand its goal. Pull requests without a clear scope tend to grow and become hard to review.
 
-### Additional things for ActivityPub payload changes
-*This section is specific to kokonect-link implementation. Other fork or implementation may take different way. A significant difference is that non-"kokonect-link" extension is not described in the misskey-hub's document.*
+When you start working on it, assign yourself to the issue (or ask a maintainer to assign you). This tells others you are working on it and avoids duplicated work.
 
-If PR includes changes to ActivityPub payload, please reflect it in [misskey-hub's document](https://github.com/misskey-dev/misskey-hub-next/blob/master/content/ns.md) by sending PR.
+## Branches
 
-The name of purporsed extension property (referred as "extended property" in later) to ActivityPub shall be prefixed by `_misskey_`. (i.e. `_misskey_quote`)
+- **`main`** tracks the latest release.
+- **`develop`** is where work for the next release happens. **Target your pull requests at this branch.**
 
-The extended property in `packages/backend/src/core/activitypub/type.ts` **must** be declared as optional because ActivityPub payloads that comes from older CherryPick or other implementation may not contain it.
+## Pull requests
 
-The extended property must be included in the context definition. Context is defined in `packages/backend/src/core/activitypub/misc/contexts.ts`.
-The key shall be same as the name of extended property, and the value shall be same as "short IRI".
+Before opening a pull request, please check the following.
 
-"Short IRI" is defined in misskey-hub's document, but usually takes form of `misskey:<name of extended property>`. (i.e. `misskey:_misskey_quote`)
+- Prefix the title with the type of change: `type(scope): summary`.
+	- Types: `fix`, `refactor`, `feat`, `enhance`, `perf`, `chore`
+	- Examples: `fix(frontend): ...`, `enhance(backend): ...`, `chore(ci): ...`
+	- Keep each pull request focused. Don't mix several kinds of changes or concerns in one pull request.
+- If the pull request resolves an issue, reference it in the description.
+- Add a summary of user-facing changes to [`CHANGELOG_engawa.md`](./CHANGELOG_engawa.md). Changes that don't affect users, such as refactoring, don't need an entry.
+- Check whether any documentation needs to be added or updated.
+- If you add a feature or fix a bug, add a test case where possible.
+- Make sure tests and lint pass: `pnpm test` and `pnpm lint`. See [Testing](https://bettaku.github.io/engawa/en/development/testing/) for details.
+- If the pull request changes the UI, attach screenshots to the description.
 
-One should not add property that has defined before by other implementation, or add custom variant value to "well-known" property.
+### ActivityPub payload changes
 
-## Reviewers guide
-Be willing to comment on the good points and not just the things you want fixed 💯
+If a pull request changes the ActivityPub payload:
 
-読んでおくといいやつ
-- https://blog.lacolaco.net/posts/1e2cf439b3c2/
-- https://konifar-zatsu.hatenadiary.jp/entry/2024/11/05/192421
+- Prefix the name of the extension property with `_misskey_` (e.g. `_misskey_quote`).
+- Declare the extension property as **optional** in `packages/backend/src/core/activitypub/type.ts`, because payloads from older versions or other implementations may not contain it.
+- Add the extension property to the context definition in `packages/backend/src/core/activitypub/misc/contexts.ts`. The key is the property name, and the value is its "short IRI", usually `misskey:<property name>` (e.g. `misskey:_misskey_quote`).
+- Do not add a property that another implementation has already defined, and do not add custom values to well-known properties.
+- Consider documenting the extension in [misskey-hub's namespace document](https://github.com/misskey-dev/misskey-hub-next/blob/master/content/ns.md).
 
-### Review perspective
-- Scope
-	- Are the goals of the PR clear?
-	- Is the granularity of the PR appropriate?
-- Security
-	- Does merging this PR create a vulnerability?
-- Performance
-	- Will merging this PR cause unexpected performance degradation?
-	- Is there a more efficient way?
-- Testing
-	- Does the test ensure the expected behavior?
-	- Are there any omissions or gaps?
-	- Does it check for anomalies?
+## Reviewing
 
-## Security Advisory
-### For reporter
-Thank you for your reporting!
+Be willing to comment on the good points, not just the things you want fixed. 💯
 
-If you can also create a patch to fix the vulnerability, please create a PR on the private fork.
+Points to look at:
 
-> [!note]
-> There is a GitHub bug that prevents merging if a PR not following the develop branch of upstream, so please keep follow the develop branch.
+- **Scope**: Is the goal of the pull request clear? Is its size appropriate?
+- **Security**: Does merging it introduce a vulnerability?
+- **Performance**: Does it cause unexpected performance degradation? Is there a more efficient way?
+- **Testing**: Do the tests ensure the expected behavior? Are there gaps? Are error cases covered?
 
-### For kokonect-link member
-修正PRがdevelopに追従されていないとマージできないので、マージできなかったら
+## Releases
 
-> Could you merge or rebase onto upstream develop branch?
+Releases are managed by the **engawa Release Manager** GitHub App, configured in [`.github/release-manager.yml`](./.github/release-manager.yml). Maintainers drive it with comments.
 
-などと伝える。
-
-## Deploy
-The `/deploy` command by issue comment can be used to deploy the contents of a PR to the preview environment.
-```
-/deploy sha=<commit hash>
-```
-An actual domain will be assigned so you can test the federation.
-
-## Merge
-
-## Release
-### Release Instructions
-1. Commit version changes in the `develop` branch ([package.json](package.json))
-2. Create a release PR.
-	- Into `master` from `develop` branch.
-	- The title must be in the format `Release: x.y.z`.
-		- `x.y.z` is the new version you are trying to release.
-3. Deploy and perform a simple QA check. Also verify that the tests passed.
-4. Merge it. (Do not squash commit)
-5. Create a [release of GitHub](https://github.com/kokonect-link/cherrypick/releases)
-	- The target branch must be `master`
-	- The tag name must be the version
-
-> [!NOTE]
-> Why this instruction is necessary:
-> - To perform final QA checks
-> - To distribute responsibility
-> - To check direct commits to develop
-> - To celebrate the release together 🎉
-
-## Localization (l10n)
-Misskey uses [Crowdin](https://crowdin.com/project/misskey) for localization management.
-You can improve our translations with your Crowdin account.
-Your changes in Crowdin are automatically submitted as a PR (with the title "New Crowdin translations") to the repository.
-The owner [@syuilo](https://github.com/syuilo) merges the PR into the develop branch before the next release.
-
-If your language is not listed in Crowdin, please open an issue. We will add it to Crowdin.
-For newly added languages, once the translation progress per language exceeds 70%, it will be officially introduced into Misskey and made available to users.
-
-![Crowdin](https://d322cqt584bo4o.cloudfront.net/misskey/localized.svg)
-
-## Development
-### Setup
-Before developing, you have to set up environment. CherryPick requires Redis, PostgreSQL, and FFmpeg.
-
-You would want to install Meilisearch to experiment related features. Technically, meilisearch is not strict requirement, but some features and tests require it.
-
-There are a few ways to proceed.
-
-#### Use system-wide software
-You could install them in system-wide (such as from package manager).
-
-#### Use `docker compose`
-You could obtain middleware container by typing `docker compose -f $PROJECT_ROOT/compose.local-db.yml up -d`.
-
-#### Use Devcontainer
-Devcontainer also has necessary setting. This method can be done by connecting from VSCode.
-
-Instead of running `pnpm` locally, you can use Dev Container to set up your development environment.
-To use Dev Container, open the project directory on VSCode with Dev Containers installed.
-**Note:** If you are using Windows, please clone the repository with WSL. Using Git for Windows will result in broken files due to the difference in how newlines are handled.
-
-It will run the following command automatically inside the container.
-``` bash
-git submodule update --init
-pnpm install --frozen-lockfile
-cp .devcontainer/devcontainer.yml .config/default.yml
-pnpm build
-pnpm migrate
-```
-
-After finishing the migration, you can proceed.
-
-### Start developing
-During development, it is useful to use the
-```
-pnpm dev
-```
-command.
-
-- Server-side source files and automatically builds them if they are modified. Automatically start the server process(es).
-- Service Worker is watched by esbuild.
-- Vite HMR (just the `vite` command) is available. The behavior may be different from production.
-- Vite runs behind the backend (the backend will proxy Vite at /vite and /embed_vite except for websocket used for HMR).
-- You can see CherryPick by accessing `http://localhost:3000` (Replace `3000` with the port configured with `port` in .config/default.yml).
-
-## Testing
-You can run non-backend tests by executing following commands:
-```sh
-pnpm --filter frontend test
-pnpm --filter cherrypick-js test
-```
-
-Backend tests require manual preparation of servers. See the next section for more on this.
-
-### Backend
-There are three types of test codes for the backend:
-- Unit tests: [`/packages/backend/test/unit`](/packages/backend/test/unit)
-- Single-server E2E tests: [`/packages/backend/test/e2e`](/packages/backend/test/e2e)
-- Multiple-server E2E tests: [`/packages/backend/test-federation`](/packages/backend/test-federation)
-
-#### Running Unit Tests or Single-server E2E Tests
-1. Create a config file:
-```sh
-cp .github/cherrypick/test.yml .config/
-```
-
-2. Start DB and Redis servers for testing:
-```sh
-docker compose -f packages/backend/test/compose.yml up
-```
-Instead, you can prepare an empty (data can be erased) DB and edit `.config/test.yml` appropriately.
-
-3. Run all tests:
-```sh
-pnpm --filter backend test     # unit tests
-pnpm --filter backend test:e2e # single-server E2E tests
-```
-If you want to run a specific test, pass a path relative to `packages/backend`:
-```sh
-pnpm --filter backend test test/unit/activitypub.ts
-pnpm --filter backend test:e2e test/e2e/nodeinfo.ts
-```
-You can also filter by test name with `-t`, or watch files with `pnpm --filter backend vitest-watch`.
-
-#### Running Multiple-server E2E Tests
-See [`/packages/backend/test-federation/README.md`](/packages/backend/test-federation/README.md).
-
-## Environment Variable
-
-- `CHERRYPICK_CONFIG_YML`: Specify the file path of config.yml instead of default.yml (e.g. `2nd.yml`).
-- `CHERRYPICK_WEBFINGER_USE_HTTP`: If it's set true, WebFinger requests will be http instead of https, useful for testing federation between servers in localhost. NEVER USE IN PRODUCTION.
-
-## Continuous integration
-CherryPick uses GitHub Actions for executing automated tests.
-Configuration files are located in [`/.github/workflows`](/.github/workflows).
-
-## Vue
-CherryPick uses Vue(v3) as its front-end framework.
-- Use TypeScript.
-- **When creating a new component, please use the Composition API (with [setup sugar](https://v3.vuejs.org/api/sfc-script-setup.html) and [ref sugar](https://github.com/vuejs/rfcs/discussions/369)) instead of the Options API.**
-	- Some of the existing components are implemented in the Options API, but it is an old implementation. Refactors that migrate those components to the Composition API are also welcome.
-
-## Tabler Icons
-アイコンは、Production Build時に使用されていないものが削除されるようになっています。
-
-**アイコンを動的に設定する際には、 `ti-${someVal}` のような、アイコン名のみを動的に変化させる実装を行わないでください。**
-必ず `ti-xxx` のような完全なクラス名を含めるようにしてください。
-
-## nirax
-niraxは、CherryPickで使用しているオリジナルのフロントエンドルーティングシステムです。
-**vue-routerから影響を多大に受けているので、まずはvue-routerについて学ぶことをお勧めします。**
-
-### ルート定義
-ルート定義は、以下の形式のオブジェクトの配列です。
-
-```ts
-{
-	name?: string;
-	path: string;
-	component: Component;
-	query?: Record<string, string>;
-	loginRequired?: boolean;
-	hash?: string;
-	children?: RouteDef[];
-}
-```
+| Command | Where | What it does |
+|---|---|---|
+| `/release start <version>` | any issue or PR | Starts a release cycle: bumps to the first prerelease (e.g. `1.1.0-alpha.0`), tags it, publishes a prerelease and opens a draft release pull request (`develop` → `main`) |
+| `/release start major\|minor\|patch` | any issue or PR | Same as above, but computes the next version by bumping the current one |
+| `/release prerelease [channel]` | release PR | Publishes the next prerelease (e.g. `/release prerelease rc`) |
+| `/release merge` | release PR | Checks approval and CI, writes the final version, merges, tags and publishes the release |
+| `/release review` | release PR | Posts the release review request |
+| `/release sync` | release PR | Re-syncs the release PR description with the changelog |
+| `/release status` | any issue or PR | Shows the current release state |
 
 > [!WARNING]
-> 現状、ルートは定義された順に評価されます。
-> たとえば、`/foo/:id`ルート定義の次に`/foo/bar`ルート定義がされていた場合、後者がマッチすることはありません。
+> `/release start` without an argument bumps the **patch** version. Pass the version explicitly when you mean something else (e.g. `/release start 1.1.0`).
 
-### 複数のルーター
-vue-routerとの最大の違いは、niraxは複数のルーターが存在することを許可している点です。
-これにより、アプリ内ウィンドウでブラウザとは個別にルーティングすることなどが可能になります。
+The flow is:
 
-## Storybook
+1. Run `/release start <version>`. The changelog section `x.x.x (unreleased)` is renamed to the version, and the first `alpha` prerelease is published.
+2. Mark the release pull request as ready for review. The App publishes the first `beta`. Run `/release prerelease rc` when you want a release candidate.
+3. Deploy, do a quick QA check, and make sure CI passes.
+4. Get the release pull request approved, then run `/release merge`.
 
-CherryPick uses [Storybook](https://storybook.js.org/) for UI development.
+When a release (including a prerelease) is published, [`release-artifacts.yml`](./.github/workflows/release-artifacts.yml) builds the container image (`ghcr.io/bettaku/engawa`) and the source tarball, and attaches attestations.
 
-### Setup & Run
+## Localization
 
-#### Setup
+Locale files live in [`locales/`](./locales/). There is no external translation service.
 
-```bash
-pnpm --filter cherrypick-js build
-```
+- `ja-JP.yml` is the source. When you add or change text, edit `ja-JP.yml` first.
+- Add the English (`en-US.yml`) and Korean (`ko-KR.yml`) translations in the same pull request.
+- Other languages are optional. Improvements to them are welcome.
+- After editing locale files, regenerate the type definitions with `pnpm build-assets` (or run `pnpm dev`, which does it automatically).
 
-#### Run
+## Security
 
-```bash
-pnpm --filter frontend storybook-dev
-```
-
-### Usage
-
-When you create a new component (in this example, `MyComponent.vue`), the story file (`MyComponent.stories.ts`) will be automatically generated by the `.storybook/generate.js` script.
-You can override the default story by creating a impl story file (`MyComponent.stories.impl.ts`).
-
-```ts
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
-import { StoryObj } from '@storybook/vue3';
-import MyComponent from './MyComponent.vue';
-export const Default = {
-	render(args) {
-		return {
-			components: {
-				MyComponent,
-			},
-			setup() {
-				return {
-					args,
-				};
-			},
-			computed: {
-				props() {
-					return {
-						...this.args,
-					};
-				},
-			},
-			template: '<MyComponent v-bind="props" />',
-		};
-	},
-	args: {
-		foo: 'bar',
-	},
-	parameters: {
-		layout: 'centered',
-	},
-} satisfies StoryObj<typeof MyComponent>;
-```
-
-If you want to opt-out from the automatic generation, create a `MyComponent.stories.impl.ts` file and add the following line to the file.
-
-```ts
-import MyComponent from './MyComponent.vue';
-void MyComponent;
-```
-
-You can override the component meta by creating a meta story file (`MyComponent.stories.meta.ts`).
-
-```ts
-export const argTypes = {
-	scale: {
-		control: {
-			type: 'range',
-			min: 1,
-			max: 4,
-		},
-	},
-};
-```
-
-Also, you can use msw to mock API requests in the storybook. Creating a `MyComponent.stories.msw.ts` file to define the mock handlers.
-
-```ts
-import { HttpResponse, http } from 'msw';
-export const handlers = [
-	http.post('/api/notes/timeline', ({ request }) => {
-		return HttpResponse.json([]);
-	}),
-];
-```
-
-Don't forget to re-run the `.storybook/generate.js` script after adding, editing, or removing the above files.
-
-## Nest
-
-### Nest Service Circular dependency / Nestでサービスの循環参照でエラーが起きた場合
-
-#### forwardRef
-まずは簡単に`forwardRef`を試してみる
-
-```typescript
-export class FooService {
-	constructor(
-		@Inject(forwardRef(() => BarService))
-		private barService: BarService
-	) {
-	}
-}
-```
-
-#### OnModuleInit
-できなければ`OnModuleInit`を使う
-
-```typescript
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
-import { BarService } from '@/core/BarService';
-
-@Injectable()
-export class FooService implements OnModuleInit {
-	private barService: BarService // constructorから移動してくる
-
-	constructor(
-		private moduleRef: ModuleRef,
-	) {
-	}
-
-	async onModuleInit() {
-		this.barService = this.moduleRef.get(BarService.name);
-	}
-
-	public async niceMethod() {
-		return await this.barService.incredibleMethod({ hoge: 'fuga' });
-	}
-}
-```
-
-##### Service Unit Test
-テストで`onModuleInit`を呼び出す必要がある
-
-```typescript
-// import ...
-
-describe('test', () => {
-	let app: TestingModule;
-	let fooService: FooService; // for test case
-	let barService: BarService; // for test case
-
-	beforeEach(async () => {
-		app = await Test.createTestingModule({
-			imports: ...,
-			providers: [
-				FooService,
-				{ // mockする (mockは必須ではないかもしれない)
-					provide: BarService,
-					useFactory: () => ({
-						incredibleMethod: vi.fn(),
-					}),
-				},
-				{ // Provideにする
-					provide: BarService.name,
-					useExisting: BarService,
-				},
-			],
-		})
-			.useMocker(...
-			.compile();
-
-		fooService = app.get<FooService>(FooService);
-		barService = app.get<BarService>(BarService) as Mocked<BarService>;
-
-		// onModuleInitを実行する
-		await fooService.onModuleInit();
-	});
-
-	test('nice', () => {
-		await fooService.niceMethod();
-
-		expect(barService.incredibleMethod).toHaveBeenCalled();
-		expect(barService.incredibleMethod.mock.lastCall![0])
-			.toEqual({ hoge: 'fuga' });
-	});
-})
-```
-
-## Notes
-
-### Misskeyのドメイン固有の概念は`Mi`をprefixする
-例えばGoogleが自社サービスをMap、Earth、DriveではなくGoogle Map、Google Earth、Google Driveのように命名するのと同じ
-コード上でMisskeyのドメイン固有の概念には`Mi`をprefixすることで、他のドメインの同様の概念と区別できるほか、名前の衝突を防ぐ。
-ただし、文脈上Misskeyのものを指すことが明らかであり、名前の衝突の恐れがない場合は、一時的なローカル変数に限って`Mi`を省略してもよい。
-
-### CherryPick.jsの型生成
-```bash
-pnpm build-cherrypick-js-with-types
-```
-
-### How to resolve conflictions occurred at pnpm-lock.yaml?
-
-Just execute `pnpm` to fix it.
-
-### INSERTするときにはsaveではなくinsertを使用する
-#6441
-
-### placeholder
-SQLをクエリビルダで組み立てる際、使用するプレースホルダは重複してはならない
-例えば
-``` ts
-query.andWhere(new Brackets(qb => {
-	for (const type of ps.fileType) {
-		qb.orWhere(`:type = ANY(note.attachedFileTypes)`, { type: type });
-	}
-}));
-```
-と書くと、ループ中で`type`というプレースホルダが複数回使われてしまいおかしくなる
-だから次のようにする必要がある
-```ts
-query.andWhere(new Brackets(qb => {
-	for (const type of ps.fileType) {
-		const i = ps.fileType.indexOf(type);
-		qb.orWhere(`:type${i} = ANY(note.attachedFileTypes)`, { [`type${i}`]: type });
-	}
-}));
-```
-
-### Not `null` in TypeORM
-```ts
-const foo = await Foos.findOne({
-	bar: Not(null)
-});
-```
-のようなクエリ(`bar`が`null`ではない)は期待通りに動作しない。
-次のようにします:
-```ts
-const foo = await Foos.findOne({
-	bar: Not(IsNull())
-});
-```
-
-### `null` in SQL
-SQLを発行する際、パラメータが`null`になる可能性のある場合はSQL文を出し分けなければならない
-例えば
-``` ts
-query.where('file.folderId = :folderId', { folderId: ps.folderId });
-```
-という処理で、`ps.folderId`が`null`だと結果的に`file.folderId = null`のようなクエリが発行されてしまい、これは正しいSQLではないので期待した結果が得られない
-だから次のようにする必要がある
-``` ts
-if (ps.folderId) {
-	query.where('file.folderId = :folderId', { folderId: ps.folderId });
-} else {
-	query.where('file.folderId IS NULL');
-}
-```
-
-### `[]` in SQL
-SQLを発行する際、`IN`のパラメータが`[]`(空の配列)になる可能性のある場合はSQL文を出し分けなければならない
-例えば
-``` ts
-const users = await Users.find({
-	id: In(userIds)
-});
-```
-という処理で、`userIds`が`[]`だと結果的に`user.id IN ()`のようなクエリが発行されてしまい、これは正しいSQLではないので期待した結果が得られない
-だから次のようにする必要がある
-``` ts
-const users = userIds.length > 0 ? await Users.find({
-	id: In(userIds)
-}) : [];
-```
-
-### 配列のインデックス in SQL
-SQLでは配列のインデックスは**1始まり**。
-`[a, b, c]`の `a`にアクセスしたいなら`[0]`ではなく`[1]`と書く
-
-### null IN
-nullが含まれる可能性のあるカラムにINするときは、そのままだとおかしくなるのでORなどでnullのハンドリングをしよう。
-
-### enumの削除は気をつける
-enumの列挙の内容の削除は、その値をもつレコードを全て削除しないといけない
-
-削除が重たかったり不可能だったりする場合は、削除しないでおく
-
-### Migration作成方法
-packages/backendで:
-```sh
-pnpm dlx typeorm migration:generate -d ormconfig.js -o <migration name>
-```
-
-- 生成後、ファイルをmigration下に移してください
-- 作成されたスクリプトは不必要な変更を含むため除去してください
-
-### コネクションには`markRaw`せよ
-**Vueのコンポーネントのdataオプションとして**cherrypick.jsのコネクションを設定するとき、必ず`markRaw`でラップしてください。インスタンスが不必要にリアクティブ化されることで、cherrypick.js内の処理で不具合が発生するとともに、パフォーマンス上の問題にも繋がる。なお、Composition APIを使う場合はこの限りではない(リアクティブ化はマニュアルなため)。
-
-### JSONのimportに気を付けよう
-TypeScriptでjsonをimportすると、tscでコンパイルするときにそのjsonファイルも一緒にdistディレクトリに吐き出されてしまう。この挙動により、意図せずファイルの書き換えが発生することがあるので、jsonをimportするときは書き換えられても良いものかどうか確認すること。書き換えされて欲しくない場合は、importで読み込むのではなく、`fs.readFileSync`などの関数を使って読み込むようにすればよい。
-
-### コンポーネントのスタイル定義でmarginを持たせない
-コンポーネント自身がmarginを設定するのは問題の元となることはよく知られている
-marginはそのコンポーネントを使う側が設定する
-
-## その他
-### HTMLのクラス名で follow という単語は使わない
-広告ブロッカーで誤ってブロックされる
-
-### indexというファイル名を使うな
-ESMではディレクトリインポートは廃止されているのと、ディレクトリインポートせずともファイル名が index だと何故か一部のライブラリ？でディレクトリインポートだと見做されてエラーになる
-
-## CSS Recipe
-
-### Lighten CSS vars
-
-``` css
-color: hsl(from var(--MI_THEME-accent) h s calc(l + 10));
-```
-
-### Darken CSS vars
-
-``` css
-color: hsl(from var(--MI_THEME-accent) h s calc(l - 10));
-```
-
-### Add alpha to CSS vars
-
-``` css
-color: color(from var(--MI_THEME-accent) srgb r g b / 0.5);
-```
-
-## 考え方
-この内容はMisskeyに限定されたもので、CherryPickの意思を代表しません。
-
-### DRYに囚われるな
-必要なのは一般化ではなく抽象化と考えます。
-盲信せず、誤った・不必要な共通化は避け、それが自然だと感じる場合は重複させる勇気を持ちましょう。
-
-### Misskeyを複雑にしない実装
-それがいくら複雑であっても、Misskey固有のコンテキストと関心が分離されている(もしくは事実上分離されていると見做すことができる)実装であれば、それはMisskeyのコードベースに対する複雑性に影響を与えないと考えます。
-
-例えるなら、VueやAiScriptといったMisskeyが使用しているライブラリの内部実装がいくら複雑だったとしても、「それを使用しているからMisskeyの実装は複雑である」ということにはならないのと同じです。
-
-Misskeyのドメイン知識から関心が分離されているということは、Misskeyの実装について考える時にそれらの内部実装を考慮する必要が無く、認知負荷を増やさないからです。
-
-また重要な点は、その実装が、Misskeyリポジトリの外部にあるか・内部にあるかということや、Misskeyがメンテナンスするものか・第三者がメンテナンスするものかといったことは複雑性を考える上ではほとんど無視できるという点です。
-
-もちろんその実装がMisskeyリポジトリにあり、Misskeyがメンテナンスしなければならないものは、保守のコストはかかります。
-しかし、Misskeyの本質的な設計・実装という観点で見たときは、その実装は実質的に外部ライブラリのように振る舞います。
-換言すれば「たまたまMisskeyの開発者と同じ人たちがメンテナンスしているし、たまたまMisskeyのリポジトリ内に置いてあるだけの外部ライブラリ」です。
-
-そのため、実装をなるべくMisskeyのドメイン知識から独立したものにすれば、Misskeyのコードベースの複雑性を上げることなく機能実装を行うことができ、お得であると言えます。
-もちろんそれにこだわって、些細な実装でもそのように分離してしまうとかえって認知負荷が増えたり、実装量が増えてメリットをデメリットが上回る場合もあるので、ケースバイケースではあります。
+Please report security vulnerabilities privately. See the [Security Policy](./SECURITY.md).
