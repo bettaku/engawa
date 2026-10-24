@@ -33,6 +33,11 @@ export function checkNewRelease(base: Release[], head: Release[]): Result {
 		return Result.ofFailed('Invalid release count.');
 	}
 
+	// base側にリリースがない（初めてのリリース、またはすべてアーカイブ済み）なら、head側で増えた分はすべて新しいリリース
+	if (base.length === 0) {
+		return Result.ofSuccess();
+	}
+
 	const baseLatest = base[0];
 	const headPrevious = head[releaseCountDiff];
 
@@ -89,4 +94,13 @@ export function checkNewTopic(base: Release[], head: Release[]): Result {
 	}
 
 	return Result.ofSuccess();
+}
+
+/**
+ * base側のリリースから、アーカイブ（CHANGELOG_engawa_archived.md）に移したものを除く。
+ * アーカイブに移したリリースはhead側のCHANGELOG_engawa.mdから消えるので、そのままでは「リリースが減った」と判定される。
+ */
+export function excludeArchived(base: Release[], archived: Release[]): Release[] {
+	const names = new Set(archived.map(r => r.releaseName));
+	return base.filter(r => !names.has(r.releaseName));
 }

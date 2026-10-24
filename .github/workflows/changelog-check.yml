@@ -36,6 +36,9 @@ jobs:
         run: cp _base/CHANGELOG_engawa.md packages-internal/changelog-checker/CHANGELOG_engawa-base.md
       - name: Copy to Checker directory for CHANGELOG_engawa-head.md
         run: cp CHANGELOG_engawa.md packages-internal/changelog-checker/CHANGELOG_engawa-head.md
+      # アーカイブに移したリリースは、base側との比較から除く
+      - name: Copy to Checker directory for CHANGELOG_engawa-archived.md
+        run: cp CHANGELOG_engawa_archived.md packages-internal/changelog-checker/CHANGELOG_engawa-archived.md
       - name: diff
         continue-on-error: true
         run: diff -u CHANGELOG_engawa-base.md CHANGELOG_engawa-head.md

@@ -5,7 +5,7 @@
 
 import * as process from 'node:process';
 import * as fs from 'node:fs';
-import { checkNewRelease, checkNewTopic } from './checker.js';
+import { checkNewRelease, checkNewTopic, excludeArchived } from './checker.js';
 import { parseChangeLog } from './parser.js';
 
 function abort(message?: string) {
@@ -22,7 +22,8 @@ function main() {
 		return;
 	}
 
-	const base = parseChangeLog('./CHANGELOG_engawa-base.md');
+	const archived = fs.existsSync('./CHANGELOG_engawa-archived.md') ? parseChangeLog('./CHANGELOG_engawa-archived.md') : [];
+	const base = excludeArchived(parseChangeLog('./CHANGELOG_engawa-base.md'), archived);
 	const head = parseChangeLog('./CHANGELOG_engawa-head.md');
 
 	const result = (base.length < head.length)
