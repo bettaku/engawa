@@ -14,7 +14,7 @@
 - 
 -->
 
-## x.x.x (unreleased)
+## 1.0.0
 
 ### NOTE
 - これまでのCHANGELOG_engawaは2025年2月以降更新されていなかったことと、リブランディングを計画しているためarchivedになりました。
