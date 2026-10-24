@@ -33,16 +33,12 @@ changelog:
     - 
 
 versioning:
-  # engawa: <CherryPick base version>-engawa<YYYYMMDD>, e.g. 4.17.0-engawa20261022
   # semver: <major>.<minor>.<patch>, bumped with `/release start [major|minor|patch]`
-  scheme: engawa
-  suffix: engawa
-  timeZone: Asia/Tokyo
-  # Rewrite the date to the actual release day when merging.
-  redateOnRelease: true
+  # (engawa follows its own SemVer from 1.0.0; the CherryPick base is kept as basedCherryPickVersion in package.json)
+  scheme: semver
 
 prerelease:
-  # Prereleases are <target>.<channel>.<n>, e.g. 4.17.0-engawa20261022.beta.2
+  # Prereleases are <target>-<channel>.<n>, e.g. 1.0.0-beta.2
   draftChannel: alpha
   readyChannel: beta
   channels: [alpha, beta, rc]

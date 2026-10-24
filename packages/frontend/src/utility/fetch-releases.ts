@@ -7,6 +7,8 @@ import { compareVersions } from 'compare-versions';
 import { version } from '@@/js/config.js';
 import { misskeyApi } from '@/utility/misskey-api.js';
 
+export const ENGAWA_REPO = 'bettaku/engawa';
+
 export const openCommitPage = (repo: string, hash: string) => {
 	if (hash && hash !== 'unknown') {
 		window.open(`https://github.com/${repo}/commit/${hash}`, '_blank');
@@ -16,11 +18,11 @@ export const openCommitPage = (repo: string, hash: string) => {
 export async function fetchCherrypickReleases(): Promise<boolean> {
 	try {
 		const meta = await misskeyApi('admin/meta');
-		const response = await window.fetch('https://api.github.com/repos/kokonect-link/cherrypick/releases');
+		const response = await window.fetch(`https://api.github.com/repos/${ENGAWA_REPO}/releases`);
 		const releasesData = await response.json();
 
 		if (!Array.isArray(releasesData) || releasesData.length === 0) {
-			console.warn('No CherryPick releases found.');
+			console.warn('No Engawa releases found.');
 			return false;
 		}
 
@@ -29,7 +31,7 @@ export async function fetchCherrypickReleases(): Promise<boolean> {
 			: releasesData.filter((x: any) => !x.prerelease)[0];
 
 		if (!latestRelease || !latestRelease.tag_name || typeof latestRelease.tag_name !== 'string') {
-			console.warn('Invalid latest CherryPick release:', latestRelease);
+			console.warn('Invalid latest Engawa release:', latestRelease);
 			return false;
 		}
 
@@ -38,7 +40,7 @@ export async function fetchCherrypickReleases(): Promise<boolean> {
 			compareVersions(<string>meta.skipCherryPickVersion || version, latestRelease.tag_name) < 0
 		);
 	} catch (error) {
-		console.error('Failed to fetch CherryPick releases:', error);
+		console.error('Failed to fetch Engawa releases:', error);
 		return false;
 	}
 }

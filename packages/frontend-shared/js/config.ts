@@ -18,6 +18,7 @@ export const lang = localStorage.getItem('lang') ?? 'en-US';
 export const langs = _LANGS_;
 export const version = _VERSION_;
 export const basedMisskeyVersion = _BASEDMISSKEYVERSION_;
+export const basedCherryPickVersion = _BASEDCHERRYPICKVERSION_;
 export const gitHash = _GIT_HASH_;
 export const instanceName = (siteName === 'Engawa' || siteName === 'CherryPick' || siteName == null) ? host : siteName;
 export const application = applicationName ?? instanceName;

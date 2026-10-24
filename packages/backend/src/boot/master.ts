@@ -53,6 +53,7 @@ function greet() {
 
 	bootLogger.info('Welcome to Engawa!');
 	bootLogger.info(`Engawa v${meta.version}`, null, true);
+	bootLogger.info(`Based on CherryPick v${meta.basedCherryPickVersion}`, null, true);
 	bootLogger.info(`Based on Misskey v${meta.basedMisskeyVersion}`, null, true);
 }
 
