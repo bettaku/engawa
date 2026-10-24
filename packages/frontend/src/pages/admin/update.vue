@@ -14,9 +14,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</div>
 
 			<template v-if="(version && version.length > 0) && releasesCherryPick.length > 0">
-				<FormInfo v-if="compareVersions(version, releasesCherryPick[0].tag_name) > 0">{{ i18n.ts.youAreRunningBetaClient }}</FormInfo>
+				<FormInfo v-if="isNewerReleaseAvailable" warn>{{ i18n.ts.newVersionOfClientAvailable }}</FormInfo>
 				<FormInfo v-else-if="compareVersions(version, releasesCherryPick[0].tag_name) === 0" check>{{ i18n.ts.youAreRunningUpToDateClient }}</FormInfo>
-				<FormInfo v-else warn>{{ i18n.ts.newVersionOfClientAvailable }}</FormInfo>
+				<FormInfo v-else>{{ i18n.ts.youAreRunningBetaClient }}</FormInfo>
 			</template>
 
 			<FormSection first>
@@ -25,11 +25,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<template #key>{{ i18n.ts.currentVersion }} <i class="ti ti-external-link"></i></template>
 					<template #value>{{ version }} <span :class="$style.commitHash" @click.stop="openCommitPage(ENGAWA_REPO, gitHash)">({{ gitHash.substring(0, 8) }})</span></template>
 				</MkKeyValue>
-				<MkKeyValue v-if="isNewerReleaseAvailable && !skipVersion" style="margin-top: 10px;" @click="whatIsNewLatestCherryPick">
+				<MkKeyValue v-if="shouldShowLatestRelease" style="margin-top: 10px;" @click="whatIsNewLatestCherryPick">
 					<template #key>{{ i18n.ts.latestVersion }} <i class="ti ti-external-link"></i></template>
 					<template #value>{{ releasesCherryPick[0].tag_name }} <span :class="$style.commitHash" @click.stop="openCommitPage(ENGAWA_REPO, cherryPickTagsMap.get(releasesCherryPick[0].tag_name) || '')">({{ (cherryPickTagsMap.get(releasesCherryPick[0].tag_name) || 'unknown').substring(0, 8) }})</span></template>
 				</MkKeyValue>
-				<MkButton v-if="isNewerReleaseAvailable && !skipVersion" style="margin-top: 10px;" @click="skipThisVersion">{{ i18n.ts.skipThisVersion }}</MkButton>
+				<MkButton v-if="shouldShowLatestRelease" style="margin-top: 10px;" @click="skipThisVersion">{{ i18n.ts.skipThisVersion }}</MkButton>
 			</FormSection>
 
 			<FormSection @click="whatIsNewLatestCherryPick">
@@ -70,7 +70,7 @@ import { misskeyApi } from '@/utility/misskey-api.js';
 import { definePage } from '@/page.js';
 import { i18n } from '@/i18n.js';
 import { fetchInstance } from '@/instance.js';
-import { openCommitPage, getCommitHashForRelease, ENGAWA_REPO } from '@/utility/fetch-releases.js';
+import { openCommitPage, getCommitHashForRelease, isNewerRelease, ENGAWA_REPO } from '@/utility/fetch-releases.js';
 import FormInfo from '@/components/MkInfo.vue';
 import FormSection from '@/components/form/section.vue';
 import MkKeyValue from '@/components/MkKeyValue.vue';
@@ -96,7 +96,9 @@ async function fetchReleases(repo: string) {
 
 const releasesCherryPick = ref(await fetchReleases(ENGAWA_REPO));
 const releasesMisskey = ref(await fetchReleases('misskey-dev/misskey'));
-const isNewerReleaseAvailable = computed(() => releasesCherryPick.value.length > 0 && compareVersions(version, releasesCherryPick.value[0].tag_name) < 0);
+const isNewerReleaseAvailable = computed(() => releasesCherryPick.value.length > 0 && isNewerRelease(version, releasesCherryPick.value[0].tag_name));
+// スキップしたバージョンより新しいリリースが出たら、また表示する
+const shouldShowLatestRelease = computed(() => isNewerReleaseAvailable.value && (skipCherryPickVersion.value == null || isNewerRelease(skipCherryPickVersion.value, releasesCherryPick.value[0].tag_name)));
 const cherryPickTagsMap = new Map<string, string>();
 const misskeyTagsMap = new Map<string, string>();
 

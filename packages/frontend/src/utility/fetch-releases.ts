@@ -9,6 +9,15 @@ import { misskeyApi } from '@/utility/misskey-api.js';
 
 export const ENGAWA_REPO = 'bettaku/engawa';
 
+// 1.0.0 より前の表記（例: 4.17.0-engawa20260408）。数字の上では 1.0.0 以降より大きいが、実際には古い
+const isLegacyEngawaVersion = (v: string) => /-engawa\d/.test(v);
+
+/** current より release のほうが新しいか（旧表記のバージョンは、新しい表記のリリースより古いとみなす） */
+export function isNewerRelease(current: string, release: string): boolean {
+	if (isLegacyEngawaVersion(current) !== isLegacyEngawaVersion(release)) return isLegacyEngawaVersion(current);
+	return compareVersions(current, release) < 0;
+}
+
 export const openCommitPage = (repo: string, hash: string) => {
 	if (hash && hash !== 'unknown') {
 		window.open(`https://github.com/${repo}/commit/${hash}`, '_blank');
@@ -36,8 +45,8 @@ export async function fetchCherrypickReleases(): Promise<boolean> {
 		}
 
 		return (
-			compareVersions(version, latestRelease.tag_name) < 0 &&
-			compareVersions(<string>meta.skipCherryPickVersion || version, latestRelease.tag_name) < 0
+			isNewerRelease(version, latestRelease.tag_name) &&
+			(meta.skipCherryPickVersion == null || isNewerRelease(meta.skipCherryPickVersion, latestRelease.tag_name))
 		);
 	} catch (error) {
 		console.error('Failed to fetch Engawa releases:', error);
