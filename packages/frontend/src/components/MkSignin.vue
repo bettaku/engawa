@@ -70,6 +70,7 @@ import { nextTick, onBeforeUnmount, ref, shallowRef, useTemplateRef } from 'vue'
 import * as Misskey from 'cherrypick-js';
 import { supported as webAuthnSupported, parseRequestOptionsFromJSON } from '@github/webauthn-json/browser-ponyfill';
 import type { AuthenticationPublicKeyCredential } from '@github/webauthn-json/browser-ponyfill';
+import type { CredentialRequestOptionsJSON } from '@github/webauthn-json';
 import type { OpenOnRemoteOptions } from '@/utility/please-login.js';
 import type { PwResponse } from '@/components/MkSignin.password.vue';
 import { misskeyApi } from '@/utility/misskey-api.js';
@@ -113,16 +114,34 @@ const credentialRequest = shallowRef<CredentialRequestOptions | null>(null);
 const passkeyContext = ref('');
 const doingPasskeyFromInputPage = ref(false);
 
+type SigninCredential = NonNullable<Misskey.entities.SigninWithPasskeyRequest['credential']>;
+type SigninFlowRequest = Misskey.entities.SigninFlowRequest & { 'testcaptcha-response'?: string | null };
+
+function parseCredentialRequest(option: Misskey.entities.SigninWithPasskeyInitResponse['option']): CredentialRequestOptions {
+	return parseRequestOptionsFromJSON({
+		publicKey: option as CredentialRequestOptionsJSON['publicKey'],
+	});
+}
+
+function serializeCredential(credential: AuthenticationPublicKeyCredential): SigninCredential {
+	const json = credential.toJSON();
+	return {
+		...json,
+		response: {
+			...json.response,
+			userHandle: json.response.userHandle ?? undefined,
+		},
+	} as SigninCredential;
+}
+
 function onPasskeyLogin(): void {
 	if (webAuthnSupported()) {
 		doingPasskeyFromInputPage.value = true;
 		waiting.value = true;
-		misskeyApi('signin-with-passkey', {})
+		misskeyApi<Misskey.entities.SigninWithPasskeyInitResponse>('signin-with-passkey', {})
 			.then((res) => {
 				passkeyContext.value = res.context ?? '';
-				credentialRequest.value = parseRequestOptionsFromJSON({
-					publicKey: res.option,
-				});
+				credentialRequest.value = parseCredentialRequest(res.option);
 
 				page.value = 'passkey';
 				waiting.value = false;
@@ -135,8 +154,8 @@ function onPasskeyDone(credential: AuthenticationPublicKeyCredential): void {
 	waiting.value = true;
 
 	if (doingPasskeyFromInputPage.value) {
-		misskeyApi('signin-with-passkey', {
-			credential: credential.toJSON(),
+		misskeyApi<Misskey.entities.SigninWithPasskeyResponse>('signin-with-passkey', {
+			credential: serializeCredential(credential),
 			context: passkeyContext.value,
 		}).then((res) => {
 			if (res.signinResponse == null) {
@@ -150,7 +169,7 @@ function onPasskeyDone(credential: AuthenticationPublicKeyCredential): void {
 		tryLogin({
 			username: userInfo.value.username,
 			password: password.value,
-			credential: credential.toJSON(),
+			credential: serializeCredential(credential),
 		});
 	}
 }
@@ -217,13 +236,13 @@ async function onTotpSubmitted(token: string) {
 	}
 }
 
-async function tryLogin(req: Partial<Misskey.entities.SigninFlowRequest>): Promise<Misskey.entities.SigninFlowResponse> {
+async function tryLogin(req: Partial<SigninFlowRequest>): Promise<Misskey.entities.SigninFlowResponse> {
 	const _req = {
 		username: req.username ?? userInfo.value?.username,
 		...req,
 	};
 
-	function assertIsSigninFlowRequest(x: Partial<Misskey.entities.SigninFlowRequest>): x is Misskey.entities.SigninFlowRequest {
+	function assertIsSigninFlowRequest(x: Partial<SigninFlowRequest>): x is SigninFlowRequest {
 		return x.username != null;
 	}
 
@@ -253,9 +272,7 @@ async function tryLogin(req: Partial<Misskey.entities.SigninFlowRequest>): Promi
 				}
 				case 'passkey': {
 					if (webAuthnSupported()) {
-						credentialRequest.value = parseRequestOptionsFromJSON({
-							publicKey: res.authRequest,
-						});
+						credentialRequest.value = parseCredentialRequest(res.authRequest);
 						page.value = 'passkey';
 					} else {
 						page.value = 'totp';

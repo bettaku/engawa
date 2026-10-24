@@ -22,19 +22,23 @@ on:
       - packages/backend/**
       - .github/workflows/test-frontend.yml
       - .github/cherrypick/test.yml
+permissions:
+  contents: read
+
 jobs:
   vitest:
     name: Unit tests (frontend)
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4.3.0
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
       with:
+        persist-credentials: false
         submodules: true
     - name: Setup pnpm
-      uses: pnpm/action-setup@v4.2.0
+      uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
     - name: Use Node.js
-      uses: actions/setup-node@v4.4.0
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
       with:
         node-version-file: '.node-version'
         cache: 'pnpm'
@@ -48,7 +52,7 @@ jobs:
     - name: Test
       run: pnpm --filter frontend test-and-coverage
     - name: Upload Coverage
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac # v5.5.5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./packages/frontend/coverage/coverage-final.json
@@ -60,7 +64,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        browser: [chrome]
+        browser: [chromium]
 
     services:
       postgres:
@@ -76,19 +80,14 @@ jobs:
           - 56312:6379
 
     steps:
-    - uses: actions/checkout@v4.3.0
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
       with:
+        persist-credentials: false
         submodules: true
-    # https://github.com/cypress-io/cypress-docker-images/issues/150
-    #- name: Install mplayer for FireFox
-    #  run: sudo apt install mplayer -y
-    #  if: ${{ matrix.browser == 'firefox' }}
-    #- uses: browser-actions/setup-firefox@latest
-    #  if: ${{ matrix.browser == 'firefox' }}
     - name: Setup pnpm
-      uses: pnpm/action-setup@v4.2.0
+      uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
     - name: Use Node.js
-      uses: actions/setup-node@v4.4.0
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
       with:
         node-version-file: '.node-version'
         cache: 'pnpm'
@@ -97,29 +96,20 @@ jobs:
       run: cp .github/cherrypick/test.yml .config
     - name: Build
       run: pnpm build
-    # https://github.com/cypress-io/cypress/issues/4351#issuecomment-559489091
-    - name: ALSA Env
-      run: echo -e 'pcm.!default {\n type hw\n card 0\n}\n\nctl.!default {\n type hw\n card 0\n}' > ~/.asoundrc
-    # XXX: This tries reinstalling Cypress if the binary is not cached
-    # Remove this when the cache issue is fixed
-    - name: Cypress install
-      run: pnpm exec cypress install
-    - name: Cypress run
-      uses: cypress-io/github-action@v6
-      timeout-minutes: 15
-      with:
-        install: false
-        start: pnpm start:test
-        wait-on: 'http://localhost:61812'
-        headed: true
-        browser: ${{ matrix.browser }}
-    - uses: actions/upload-artifact@v4
-      if: failure()
-      with:
-        name: ${{ matrix.browser }}-cypress-screenshots
-        path: cypress/screenshots
-    - uses: actions/upload-artifact@v4
+    - name: Install Playwright browsers
+      run: pnpm --filter frontend exec playwright install --with-deps ${{ matrix.browser }}
+    - name: E2E tests
+      timeout-minutes: 30
+      run: pnpm start-server-and-test start:test http://localhost:61812 "pnpm --filter frontend test:e2e --project=${{ matrix.browser }}"
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       if: always()
       with:
-        name: ${{ matrix.browser }}-cypress-videos
-        path: cypress/videos
+        name: ${{ matrix.browser }}-playwright-report
+        path: packages/frontend/test/e2e/report
+        retention-days: 7
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      if: failure()
+      with:
+        name: ${{ matrix.browser }}-playwright-artifacts
+        path: packages/frontend/test/e2e/artifacts
+        retention-days: 7

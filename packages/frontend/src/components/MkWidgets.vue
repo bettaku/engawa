@@ -7,10 +7,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 <div :class="$style.root">
 	<template v-if="edit">
 		<header :class="$style.editHeader">
-			<MkSelect v-model="widgetAdderSelected" :items="widgetAdderSelectedDef" style="margin-bottom: var(--MI-margin)" data-cy-widget-select>
+			<MkSelect v-model="widgetAdderSelected" :items="widgetAdderSelectedDef" searchable style="margin-bottom: var(--MI-margin)" data-e2e-widget-select>
 				<template #label>{{ i18n.ts.selectWidget }}</template>
 			</MkSelect>
-			<MkButton primary data-cy-widget-add :class="$style.btn" @click="addWidget"><i class="ti ti-plus"></i> {{ i18n.ts.add }}</MkButton>
+			<MkButton primary data-e2e-widget-add :class="$style.btn" @click="addWidget"><i class="ti ti-plus"></i> {{ i18n.ts.add }}</MkButton>
 			<MkButton :class="$style.btn" @click="emit('exit')"><i class="ti ti-check"></i> {{ i18n.ts.close }}</MkButton>
 		</header>
 		<Sortable
@@ -23,14 +23,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 			@update:modelValue="v => emit('updateWidgets', v)"
 		>
 			<template #item="{element}">
-				<div :class="[$style.widget, $style.customizeContainer]" data-cy-customize-container>
+				<div :class="[$style.widget, $style.customizeContainer]" data-e2e-customize-container>
 					<header class="handle">
 						<span :class="$style.widgetContainerHandle"><i class="ti ti-menu"/></span>
 						<div style="position: absolute; top: 0; left: 35px; font-size: 12px; font-weight: bold; line-height: 33px;">
 							{{ i18n.ts._widgets[element.name] }}
 						</div>
 						<button :class="$style.widgetContainerConfig" class="_button" @click.prevent.stop="configWidget(element.id)" @touchend.prevent.stop="removeWidget(element)"><i class="ti ti-settings"></i></button>
-						<button :class="$style.widgetContainerRemove" data-cy-customize-container-remove class="_button" @click.prevent.stop="removeWidget(element)" @touchend.prevent.stop="removeWidget(element)"><i class="ti ti-x"></i></button>
+						<button :class="$style.widgetContainerRemove" data-e2e-customize-container-remove class="_button" @click.prevent.stop="removeWidget(element)" @touchend.prevent.stop="removeWidget(element)"><i class="ti ti-x"></i></button>
 					</header>
 					<div>
 						<component :is="`widget-${element.name}`" :ref="el => widgetRefs[element.id] = el" class="widget" :class="$style.customizeContainerHandleWidget" :widget="element" @updateProps="updateWidget(element.id, $event)"/>
@@ -60,7 +60,7 @@ import { isLink } from '@@/js/is-link.js';
 import { genId } from '@/utility/id.js';
 import MkSelect from '@/components/MkSelect.vue';
 import MkButton from '@/components/MkButton.vue';
-import { widgets as widgetDefs, federationWidgets } from '@/widgets/index.js';
+import { widgets as widgetDefs, federationWidgets, widgetCategories } from '@/widgets/index.js';
 import * as os from '@/os.js';
 import { i18n } from '@/i18n.js';
 import { instance } from '@/instance.js';
@@ -107,7 +107,20 @@ const {
 	model: widgetAdderSelected,
 	def: widgetAdderSelectedDef,
 } = useMkSelect({
-	items: computed(() => [{ label: i18n.ts.none, value: null }, ..._widgetDefs.value.map(x => ({ label: i18n.ts._widgets[x], value: x }))]),
+	items: computed(() => {
+		const toOption = (x: string) => ({ label: i18n.ts._widgets[x], value: x });
+		const categorized = new Set<string>(Object.values(widgetCategories).flat());
+		const groups = Object.entries(widgetCategories).map(([category, names]) => ({
+			type: 'group' as const,
+			label: i18n.ts._widgetCategories[category],
+			items: names.filter(x => _widgetDefs.value.includes(x)).map(toOption),
+		}));
+		const uncategorized = _widgetDefs.value.filter(x => !categorized.has(x));
+		if (uncategorized.length > 0) {
+			groups.push({ type: 'group' as const, label: i18n.ts._widgetCategories.other, items: uncategorized.map(toOption) });
+		}
+		return [{ label: i18n.ts.none, value: null }, ...groups.filter(g => g.items.length > 0)];
+	}),
 	initialValue: null,
 });
 

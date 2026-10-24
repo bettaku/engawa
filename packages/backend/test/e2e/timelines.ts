@@ -4,7 +4,7 @@
  */
 
 // How to run:
-// pnpm jest -- e2e/timelines.ts
+// pnpm --filter backend test:e2e test/e2e/timelines.ts
 
 import * as assert from 'assert';
 import { setTimeout } from 'node:timers/promises';

@@ -15,7 +15,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</button>
 		</MkInfo>
 		<MkPostForm v-if="prefer.r.showFixedPostForm.value" :class="$style.postForm" class="_panel" fixed style="margin-bottom: var(--MI-margin);"/>
-		<div v-if="!isAvailableBasicTimeline(src) && !src.startsWith('list:')" :class="[$style.disabled, $style.tl]">
+		<div v-if="isUnavailableTimeline(src)" :class="[$style.disabled, $style.tl]">
 			<p :class="$style.disabledTitle">
 				<i class="ti ti-circle-minus"></i>
 				{{ i18n.ts._disabledTimeline.title }}
@@ -54,7 +54,7 @@ import { store } from '@/store.js';
 import { i18n } from '@/i18n.js';
 import { $i } from '@/i.js';
 import { definePage } from '@/page.js';
-import { antennasCache, userListsCache, favoritedChannelsCache } from '@/cache.js';
+import { antennasCache, userListsCache } from '@/cache.js';
 import { deviceKind } from '@/utility/device-kind.js';
 import { deepMerge } from '@/utility/merge.js';
 import { miLocalStorage } from '@/local-storage.js';
@@ -82,6 +82,10 @@ const schedulePostList = $i ? (await misskeyApi('notes/drafts/list', { scheduled
 const tlComponent = useTemplateRef('tlComponent');
 
 type TimelinePageSrc = BasicTimelineType | `list:${string}`;
+
+function isUnavailableTimeline(timeline: TimelinePageSrc): boolean {
+	return !timeline.startsWith('list:') && !isAvailableBasicTimeline(timeline as BasicTimelineType);
+}
 
 const srcWhenNotSignin = ref<'local' | 'global'>(isAvailableBasicTimeline('local') ? 'local' : 'global');
 const src = computed<TimelinePageSrc>({
@@ -301,31 +305,6 @@ async function chooseAntenna(ev: MouseEvent): Promise<void> {
 			icon: 'ti ti-plus',
 			text: i18n.ts.createNew,
 			to: '/my/antennas',
-		},
-	];
-	os.popupMenu(items.filter(i => i != null), ev.currentTarget ?? ev.target);
-}
-
-async function chooseChannel(ev: MouseEvent): Promise<void> {
-	const channels = await favoritedChannelsCache.fetch();
-	const items: (MenuItem | undefined)[] = [
-		...channels.map(channel => {
-			const lastReadedAt = miLocalStorage.getItemAsJson(`channelLastReadedAt:${channel.id}`) ?? null;
-			const hasUnreadNote = (lastReadedAt && channel.lastNotedAt) ? Date.parse(channel.lastNotedAt) > lastReadedAt : !!(!lastReadedAt && channel.lastNotedAt);
-
-			return {
-				type: 'link' as const,
-				text: channel.name,
-				indicate: hasUnreadNote,
-				to: `/channels/${channel.id}`,
-			};
-		}),
-		(channels.length === 0 ? undefined : { type: 'divider' }),
-		{
-			type: 'link',
-			icon: 'ti ti-plus',
-			text: i18n.ts.createNew,
-			to: '/channels',
 		},
 	];
 	os.popupMenu(items.filter(i => i != null), ev.currentTarget ?? ev.target);

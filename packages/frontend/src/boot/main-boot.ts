@@ -84,6 +84,14 @@ export async function mainBoot() {
 		}
 	}
 
+	// useShiftEnterToSend は設定の移行（4.16.0）で引き継がれておらず、投稿フォームだけが旧 store を見ていた
+	// 旧 store に残っている値を一度だけ移す
+	// TODO: そのうち消す
+	if (store.s.useShiftEnterToSend) {
+		prefer.commit('useShiftEnterToSend', true);
+		store.set('useShiftEnterToSend', false);
+	}
+
 	if (isClientMigrated && $i) {
 		miLocalStorage.removeItem('neverShowDonationInfo');
 		miLocalStorage.removeItem('latestDonationInfoShownAt');
@@ -310,7 +318,7 @@ export async function mainBoot() {
 		}
 
 		const modifiedVersionMustProminentlyOfferInAgplV3Section13Read = miLocalStorage.getItem('modifiedVersionMustProminentlyOfferInAgplV3Section13Read');
-		if (modifiedVersionMustProminentlyOfferInAgplV3Section13Read !== 'true' && instance.repositoryUrl !== 'https://github.com/kokonect-link/cherrypick') {
+		if (modifiedVersionMustProminentlyOfferInAgplV3Section13Read !== 'true' && instance.repositoryUrl !== 'https://github.com/bettaku/engawa') {
 			const { dispose } = popup(defineAsyncComponent(() => import('@/components/MkSourceCodeAvailablePopup.vue')), {}, {
 				closed: () => dispose(),
 			});

@@ -71,10 +71,20 @@
 			],
 		},
 		{
+			// 推奨環境はNode.js v24 LTSの最新版に固定する
 			groupName: '[Node.js] Update dependencies',
 			matchFileNames: [
 				'.node-version',
 			],
+			allowedVersions: '<25.0.0',
+		},
+		{
+			// 追加サポートのNode.js v26は最新版を追従する
+			groupName: '[Node.js] Update dependencies',
+			matchFileNames: [
+				'.github/max.node-version',
+			],
+			allowedVersions: '<27.0.0',
 		},
 		{
 			groupName: '[Node.js] Update dependencies',
@@ -113,6 +123,14 @@
 			datasourceTemplate: 'docker',
 			depNameTemplate: 'node',
 			versioningTemplate: 'docker',
+		},
+		{
+			// 最小サポートバージョンは手動管理のため、max側だけを追従する
+			customType: 'regex',
+			managerFilePatterns: ['/^\\.github/max\\.node-version$/'],
+			matchStrings: ['(?<currentValue>.*)\\n'],
+			datasourceTemplate: 'node-version',
+			depNameTemplate: 'node',
 		},
 	],
 }

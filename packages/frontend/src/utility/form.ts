@@ -11,6 +11,12 @@ export type EnumItem = string | {
 	value: OptionValue;
 };
 
+export type EnumItemGroup = {
+	type: 'group';
+	label?: string;
+	items: EnumItem[];
+};
+
 type Hidden = boolean | ((v: any) => boolean);
 
 interface FormItemBase {
@@ -45,7 +51,9 @@ export interface EnumFormItem extends FormItemBase {
 	type: 'enum';
 	default?: string | null;
 	required?: boolean;
-	enum: EnumItem[];
+	enum: (EnumItem | EnumItemGroup)[];
+	/** 選択肢を検索できるようにする */
+	searchable?: boolean;
 }
 
 export interface RadioFormItem extends FormItemBase {
@@ -112,7 +120,8 @@ export type FormItemWithDefault = FormItem & {
 export type FormWithDefault = Record<string, FormItemWithDefault>;
 
 type GetRadioItemType<Item extends RadioFormItem = RadioFormItem> = Item['options'][number]['value'];
-type GetEnumItemType<Item extends EnumFormItem, E = Item['enum'][number]> = E extends { value: unknown } ? E['value'] : E;
+type GetEnumItemValue<E> = E extends { value: unknown } ? E['value'] : E;
+type GetEnumItemType<Item extends EnumFormItem, E = Item['enum'][number]> = E extends { type: 'group'; items: (infer I)[] } ? GetEnumItemValue<I> : GetEnumItemValue<E>;
 
 type InferDefault<T, Fallback> = T extends { default: infer D }
 	? D extends undefined ? Fallback : D

@@ -18,6 +18,10 @@ on:
         required: false
         default: ''
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   get-pr-ref:
     runs-on: ubuntu-latest
@@ -28,7 +32,7 @@ jobs:
       wait_time: ${{ steps.get-wait-time.outputs.wait_time }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.3.0
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
 
       - name: Check allowed users
         id: check-allowed-users
@@ -59,7 +63,7 @@ jobs:
   deploy-test-environment-pr-comment:
     needs: get-pr-ref
     if: needs.get-pr-ref.outputs.is-allowed-user == 'true'
-    uses: joinmisskey/misskey-tga/.github/workflows/deploy-test-environment.yml@main
+    uses: joinmisskey/misskey-tga/.github/workflows/deploy-test-environment.yml@ce04b6a509168cdfe5fc8f84092448ae6d8838bc # main
     with:
       repository: ${{ github.repository }}
       branch_or_hash: ${{ needs.get-pr-ref.outputs.pr-ref }}
@@ -69,7 +73,7 @@ jobs:
 
   deploy-test-environment-wd:
     if: github.event_name == 'workflow_dispatch'
-    uses: joinmisskey/misskey-tga/.github/workflows/deploy-test-environment.yml@main
+    uses: joinmisskey/misskey-tga/.github/workflows/deploy-test-environment.yml@ce04b6a509168cdfe5fc8f84092448ae6d8838bc # main
     with:
       repository: ${{ inputs.repository || github.repository }}
       branch_or_hash: ${{ inputs.branch_or_hash || github.ref_name }}

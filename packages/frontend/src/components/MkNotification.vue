@@ -82,7 +82,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<span v-else-if="notification.type === 'reaction:grouped' && notification.note.reactionAcceptance === 'likeOnly'" :class="$style.headerText">{{ i18n.tsx._notification.likedBySomeUsers({ n: getActualReactedUsersCount(notification) }) }}</span>
 			<span v-else-if="notification.type === 'reaction:grouped'" :class="$style.headerText">{{ i18n.tsx._notification.reactedBySomeUsers({ n: getActualReactedUsersCount(notification) }) }}</span>
 			<span v-else-if="notification.type === 'renote:grouped'" :class="$style.headerText">{{ i18n.tsx._notification.renotedBySomeUsers({ n: notification.users.length }) }}</span>
-			<span v-else-if="notification.type === 'note:grouped'" :class="$style.headerText">{{ i18n.tsx._notification.notedBySomeUsers({ n: notification.noteIds.length }) }}</span>
+			<span v-else-if="notification.type === 'note:grouped'" :class="$style.headerText">{{ i18n.tsx._notification.notedBySomeUsers({ n: notification.notes.length }) }}</span>
 			<span v-else-if="notification.type === 'app'" :class="$style.headerText">{{ notification.header }}</span>
 			<MkTime v-if="withTime" :time="notification.createdAt" :class="$style.headerTime" :mode="prefer.s.enableAbsoluteTime ? 'absolute' : 'relative'"/>
 		</header>
@@ -256,11 +256,13 @@ function getActualReactedUsersCount(notification: Misskey.entities.Notification)
 }
 
 const acceptGroupInvitation = () => {
+	if (props.notification.type !== 'groupInvited') return;
 	groupInviteDone.value = true;
 	misskeyApi('users/groups/invitations/accept', { invitationId: props.notification.invitation.id });
 };
 
 const rejectGroupInvitation = () => {
+	if (props.notification.type !== 'groupInvited') return;
 	groupInviteDone.value = true;
 	misskeyApi('users/groups/invitations/reject', { invitationId: props.notification.invitation.id });
 };

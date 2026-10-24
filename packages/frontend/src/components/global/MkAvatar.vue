@@ -49,7 +49,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	<template v-if="showDecoration || showDecorationWithFloatingBtn">
 		<img
 			v-for="decoration in decorations ?? user.avatarDecorations"
-			:class="[$style.decoration, { [$style.decorationBlink]: decoration.blink }]"
+			:class="[$style.decoration, { [$style.decorationSelected]: isSelectedDecoration(decoration) }]"
 			:src="getDecorationUrl(decoration)"
 			:style="{
 				rotate: getDecorationAngle(decoration),
@@ -88,7 +88,7 @@ const props = withDefaults(defineProps<{
 	link?: boolean;
 	preview?: boolean;
 	indicator?: boolean;
-	decorations?: (Omit<Misskey.entities.UserDetailed['avatarDecorations'][number], 'id'> & { blink?: boolean; })[];
+	decorations?: EditorDecoration[];
 	forceShowDecoration?: boolean;
 	noteClick?: boolean;
 	forceOpacity?: boolean;
@@ -115,6 +115,9 @@ const squareAvatars = ref((!prefer.s.setFederationAvatarShape && prefer.s.square
 const showDecoration = (props.forceShowDecoration || prefer.s.showAvatarDecorations) && !props.isFloatingBtn;
 const showDecorationWithFloatingBtn = props.isFloatingBtn && prefer.s.showAvatarDecorations && prefer.s.friendlyUiShowAvatarDecorationsInNavBtn;
 
+type Decoration = Misskey.entities.UserDetailed['avatarDecorations'][number];
+type EditorDecoration = Omit<Misskey.entities.UserDetailed['avatarDecorations'][number], 'id'> & { isSelected?: boolean; };
+
 const bound = computed(() => props.link
 	? { to: userPage(props.user), target: props.target }
 	: {});
@@ -131,6 +134,10 @@ function onClick(ev: MouseEvent): void {
 	if (props.noteClick) ev.stopPropagation();
 	if (props.link) return;
 	emit('click', ev);
+}
+
+function isSelectedDecoration(decoration: Decoration | EditorDecoration): boolean {
+	return 'isSelected' in decoration && decoration.isSelected === true;
 }
 
 function getDecorationUrl(decoration: Omit<Misskey.entities.UserDetailed['avatarDecorations'][number], 'id'>) {
@@ -426,16 +433,7 @@ onUnmounted(() => {
 	pointer-events: none;
 }
 
-.decorationBlink {
-	animation: blink 1s infinite;
-}
-
-@keyframes blink {
-	0%, 100% {
-		filter: brightness(2);
-	}
-	50% {
-		filter: brightness(1);
-	}
+.decorationSelected {
+	filter: brightness(1.25) drop-shadow(0 0 2px var(--MI_THEME-accent)) drop-shadow(0 0 2px var(--MI_THEME-accent));
 }
 </style>

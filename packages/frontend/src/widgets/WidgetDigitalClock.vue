@@ -4,10 +4,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<div data-cy-mkw-digitalClock class="_monospace" :class="[$style.root, { _panel: !widgetProps.transparent }]" :style="{ fontSize: `${widgetProps.fontSize}em` }">
+<div data-e2e-mkw-digitalClock class="_monospace" :class="[$style.root, { _panel: !widgetProps.transparent }]" :style="{ fontSize: `${widgetProps.fontSize}em` }">
 	<div v-if="widgetProps.showLabel" :class="$style.label">{{ tzAbbrev }}</div>
 	<div>
-		<MkDigitalClock :showMs="widgetProps.showMs" :offset="tzOffset"/>
+		<MkDigitalClock :showMs="widgetProps.showMs" :tz="timeZone"/>
 	</div>
 	<div v-if="widgetProps.showLabel" :class="$style.label">{{ tzOffsetLabel }}</div>
 </div>
@@ -18,7 +18,7 @@ import { computed } from 'vue';
 import { useWidgetPropsManager } from './widget.js';
 import type { WidgetComponentEmits, WidgetComponentExpose, WidgetComponentProps } from './widget.js';
 import type { FormWithDefault, GetFormResultType } from '@/utility/form.js';
-import { timezones } from '@/utility/timezones.js';
+import { timezones, timezoneEnumItems } from '@/utility/timezones.js';
 import MkDigitalClock from '@/components/MkDigitalClock.vue';
 
 const name = 'digitalClock';
@@ -44,13 +44,8 @@ const widgetPropsDef = {
 	timezone: {
 		type: 'enum',
 		default: null,
-		enum: [...timezones.map((tz) => ({
-			label: tz.name,
-			value: tz.name.toLowerCase(),
-		})), {
-			label: '(auto)',
-			value: null,
-		}],
+		searchable: true,
+		enum: timezoneEnumItems(),
 	},
 } satisfies FormWithDefault;
 
@@ -65,15 +60,37 @@ const { widgetProps, configure } = useWidgetPropsManager(name,
 	emit,
 );
 
-const tzAbbrev = computed(() => (widgetProps.timezone === null
-	? timezones.find((tz) => tz.name.toLowerCase() === Intl.DateTimeFormat().resolvedOptions().timeZone.toLowerCase())?.abbrev
-	: timezones.find((tz) => tz.name.toLowerCase() === widgetProps.timezone)?.abbrev) ?? '?');
+const timeZone = computed(() => (
+	widgetProps.timezone === null
+		? Intl.DateTimeFormat().resolvedOptions().timeZone
+		: timezones.apply(null).find((tz) => tz.name.toLowerCase() === widgetProps.timezone)?.name ?? 'UTC'
+));
 
-const tzOffset = computed(() => widgetProps.timezone === null
-	? 0 - new Date().getTimezoneOffset()
-	: timezones.find((tz) => tz.name.toLowerCase() === widgetProps.timezone)?.offset ?? 0);
+const tzAbbrev = computed(() => (
+	widgetProps.timezone === null
+		? timeZone.value.toString()
+		: timezones.apply(null).find((tz) => tz.name.toLowerCase() === widgetProps.timezone)?.name ?? '?'
+));
 
-const tzOffsetLabel = computed(() => (tzOffset.value >= 0 ? '+' : '-') + Math.floor(tzOffset.value / 60).toString().padStart(2, '0') + ':' + (tzOffset.value % 60).toString().padStart(2, '0'));
+const tzOffset = computed(() => (
+	widgetProps.timezone === null
+		? new Intl.DateTimeFormat('en-US', { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, timeZoneName: 'longOffset' })
+			.formatToParts(new Date())
+			.find((part) => part.type === 'timeZoneName')?.value
+			.trim() ?? 0
+		: new Intl.DateTimeFormat('en-US', { timeZone: timeZone.value, timeZoneName: 'longOffset' })
+			.formatToParts(new Date())
+			.find((part) => part.type === 'timeZoneName')?.value
+			.trim() ?? 0
+));
+
+console.log('tzOffset', tzOffset.value);
+
+const tzOffsetLabel = computed(() => {
+	const offset = tzOffset.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace(/\.00$/, '').replace(/^GMT/, 'UTC');
+	console.log('tzOffsetLabel', offset);
+	return `${offset}`;
+});
 
 defineExpose<WidgetComponentExpose>({
 	name,

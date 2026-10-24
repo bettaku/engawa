@@ -22,9 +22,21 @@ export type MisskeyEntity = {
 type FilterByEpRes<E extends Record<string, any>> = {
 	[K in keyof E]: E[K]['res'] extends Array<{ id: string }> ? K : never
 }[keyof E];
-export type PaginatorCompatibleEndpointPaths = FilterByEpRes<Misskey.Endpoints>;
+
+type PaginatorEndpointOverrides = {
+	'admin/abuse-report-resolver/list': {
+		req: Misskey.Endpoints['admin/abuse-report-resolver/list']['req'];
+		res: (Misskey.Endpoints['admin/abuse-report-resolver/list']['res'][number] & MisskeyEntity)[];
+	};
+};
+
+export type PaginatorCompatibleEndpointPaths = FilterByEpRes<Misskey.Endpoints> | keyof PaginatorEndpointOverrides;
 export type PaginatorCompatibleEndpoints = {
-	[K in PaginatorCompatibleEndpointPaths]: Misskey.Endpoints[K];
+	[K in PaginatorCompatibleEndpointPaths]: K extends keyof PaginatorEndpointOverrides
+		? PaginatorEndpointOverrides[K]
+		: K extends keyof Misskey.Endpoints
+			? Misskey.Endpoints[K]
+			: never;
 };
 
 export interface IPaginator<T = unknown, _T = T & MisskeyEntity> {
@@ -40,7 +52,7 @@ export interface IPaginator<T = unknown, _T = T & MisskeyEntity> {
 	canFetchNewer: Ref<boolean>;
 	canSearch: boolean;
 	error: Ref<boolean>;
-	computedParams: ComputedRef<Misskey.Endpoints[PaginatorCompatibleEndpointPaths]['req'] | null | undefined> | null;
+	computedParams: ComputedRef<PaginatorCompatibleEndpoints[PaginatorCompatibleEndpointPaths]['req'] | null | undefined> | null;
 	initialId: MisskeyEntity['id'] | null;
 	initialDate: number | null;
 	initialDirection: 'newer' | 'older';

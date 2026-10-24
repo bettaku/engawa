@@ -1,0 +1,122 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+#
+# CodeRabbit 設定 (https://github.com/bettaku/engawa/issues/298)
+#
+# 本リポジトリは公開リポジトリのため OSS プランが適用され、PR レビュー回数は
+# 「開発者ごと・リポジトリごと・1時間あたり 1〜10 回（スター数に応じて変動）」に制限される。
+# レビューは「push 単位」で 1 回消費されるため、以下の方針で消費を抑える。
+#
+# - 自動レビューは PR 作成時（または Draft → Ready 化時）の 1 回のみ。追加 push では走らせない
+#   → 修正後に再レビューが欲しいときは PR に `@coderabbitai review` とコメントする
+# - Draft PR、bot (dependabot / renovate) の PR、WIP 系タイトルの PR はレビューしない
+# - 生成物・ロックファイル・Crowdin 管理の翻訳ファイルはレビュー対象から外す
+#   （1 レビューあたりのファイル数上限にも効く）
+#
+# 残り回数は PR に `@coderabbitai rate limit` とコメントすると確認できる（回数は消費しない）。
+# コーディング規約は CLAUDE.md が自動で読み込まれるため、ここでは重複させない。
+
+language: ja-JP
+early_access: false
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  review_status: true
+  collapse_walkthrough: true
+  sequence_diagrams: true
+  poem: false
+  in_progress_fortune: false
+
+  auto_review:
+    enabled: true
+    drafts: false
+    # push ごとの再レビューはレート制限を最も消費するため無効化する
+    auto_incremental_review: false
+    ignore_title_keywords:
+      - WIP
+      - DO NOT MERGE
+      - "[skip review]"
+    ignore_usernames:
+      - dependabot[bot]
+      - renovate[bot]
+
+  path_filters:
+    # ロックファイル
+    - "!pnpm-lock.yaml"
+    # 自動生成コード
+    - "!packages/cherrypick-js/src/autogen/**"
+    - "!packages/cherrypick-js/etc/*.api.md"
+    - "!locales/index.d.ts"
+    # 翻訳ファイル（ja-JP.yml が原文。それ以外は Crowdin 管理）
+    - "!locales/[!j]*.yml"
+    - "!locales/ja-KS.yml"
+    - "!locales/jbo-EN.yml"
+    # サブモジュール・ビルド成果物・ベンダリング済みファイル
+    - "!fluent-emojis/**"
+    - "!built/**"
+    - "!**/*.min.js"
+    # アーカイブ済み・upstream 由来の CHANGELOG（アクティブなのは CHANGELOG_engawa.md のみ）
+    - "!CHANGELOG.md"
+    - "!CHANGELOG_CHERRYPICK.md"
+    - "!CHANGELOG_engawa_archived.md"
+
+  path_instructions:
+    - path: "packages/backend/migration/**"
+      instructions: |
+        TypeORM マイグレーション。down() が up() を正しく巻き戻せるか、既存データを失う変更
+        （カラム削除・型変更・NOT NULL 付与）に移行手順があるか、大きなテーブルへのロックや
+        フルスキャンを伴う処理がないかを確認する。エンティティ定義との整合性も確認すること。
+    - path: "packages/backend/src/core/activitypub/**"
+      instructions: |
+        リモートサーバーからの入力はすべて信頼できない前提でレビューする。
+        型・サイズ・URL の検証漏れ、SSRF、署名/オリジン検証の抜け、他インスタンスのリソースを
+        なりすませる実装がないかを重点的に確認する。
+    - path: "packages/backend/src/server/api/endpoints/**"
+      instructions: |
+        meta の requireCredential / kind / secure / limit が適切か、paramDef のバリデーションが十分か、
+        ノートの公開範囲・ブロック・ミュート・凍結状態を無視して情報が漏れないかを確認する。
+        API の破壊的変更がある場合は cherrypick-js の型再生成が必要な点を指摘する。
+    - path: "packages/frontend/**/*.vue"
+      instructions: |
+        UI 文字列のハードコードがないか（i18n.ts 経由で locales/ja-JP.yml のキーを使う）、
+        アクセシビリティ（ボタンのラベル、キーボード操作）に問題がないかを確認する。
+    - path: "locales/ja-JP.yml"
+      instructions: |
+        翻訳の原文ファイル。新規キーは既存の命名・階層に沿っているか、表記揺れがないかを確認する。
+        他言語ファイルは Crowdin で管理するため、ja-JP.yml 以外の直接編集は不要。
+    - path: ".github/workflows/**"
+      instructions: |
+        permissions が最小権限か、pull_request_target や workflow_run で信頼できないコードを
+        実行していないか、${{ github.event.* }} を run に直接埋め込むスクリプトインジェクションが
+        ないかを確認する。
+    - path: "CHANGELOG_engawa.md"
+      instructions: |
+        ユーザー向けの変更点が簡潔に記載されているか、既存エントリの書式に揃っているかを確認する。
+
+  pre_merge_checks:
+    docstrings:
+      mode: "off"
+    title:
+      mode: warning
+      requirements: |
+        `type(scope): 概要` または `type: 概要` 形式であること。
+        type は fix / refactor / feat / enhance / perf / chore / deps / docs のいずれか。
+    description:
+      mode: warning
+    issue_assessment:
+      mode: warning
+
+  tools:
+    # 日本語の文章に対して誤検知が多いため無効化
+    languagetool:
+      enabled: false
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  learnings:
+    scope: local
+  issues:
+    scope: local

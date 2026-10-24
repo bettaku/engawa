@@ -4,7 +4,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<SearchMarker path="/settings/cherrypick" label="CherryPick" :keywords="['cherrypick']" icon="ti ti-bulb-filled">
+<SearchMarker path="/settings/cherrypick" label="Engawa" :keywords="['cherrypick']" icon="ti ti-bulb-filled">
 	<div class="_gaps_m">
 		<FormSection first>
 			<template #label><SearchLabel>{{ i18n.ts._cherrypick.function }}</SearchLabel></template>
@@ -25,6 +25,24 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<MkSwitch v-if="!useShiftEnterToSend" v-model="useEnterToSend">
 								<template #label><SearchLabel>{{ i18n.ts._cherrypick.useEnterToSend }}</SearchLabel></template>
 								<template #caption><SearchText>{{ i18n.ts._cherrypick.useEnterToSendDescription }}</SearchText></template>
+							</MkSwitch>
+						</MkPreferenceContainer>
+					</SearchMarker>
+
+					<SearchMarker :keywords="['hotkey', 'enable', 'enter', 'shift']">
+						<MkPreferenceContainer k="useShiftEnterToSend">
+							<MkSwitch v-if="!useEnterToSend" v-model="useShiftEnterToSend">
+								<template #label><SearchLabel>{{ i18n.ts._cherrypick.useShiftEnterToSend }}</SearchLabel></template>
+								<template #caption><SearchText>{{ i18n.ts._cherrypick.useShiftEnterToSendDescription }}</SearchText></template>
+							</MkSwitch>
+						</MkPreferenceContainer>
+					</SearchMarker>
+
+					<SearchMarker :keywords="['hotkey', 'enable', 'enter', 'ctrl', 'cmd']">
+						<MkPreferenceContainer k="alsoUseCtrlEnterToSend">
+							<MkSwitch v-if="!useEnterToSend && useShiftEnterToSend" v-model="alsoUseCtrlEnterToSend">
+								<template #label><SearchLabel>{{ i18n.ts._cherrypick.alsoUseCtrlEnterToSend }}</SearchLabel></template>
+								<template #caption><SearchText>{{ i18n.ts._cherrypick.alsoUseCtrlEnterToSendDescription }}</SearchText></template>
 							</MkSwitch>
 						</MkPreferenceContainer>
 					</SearchMarker>
@@ -207,6 +225,7 @@ import MkPreferenceContainer from '@/components/MkPreferenceContainer.vue';
 const nicknameEnabled = prefer.model('nicknameEnabled');
 const useEnterToSend = prefer.model('useEnterToSend');
 const useShiftEnterToSend = prefer.model('useShiftEnterToSend');
+const alsoUseCtrlEnterToSend = prefer.model('alsoUseCtrlEnterToSend');
 const postFormVisibilityHotkey = prefer.model('postFormVisibilityHotkey');
 const showRenoteConfirmPopup = prefer.model('showRenoteConfirmPopup');
 const expandOnNoteClick = prefer.model('expandOnNoteClick');
@@ -243,7 +262,7 @@ const headerActions = computed(() => []);
 const headerTabs = computed(() => []);
 
 definePage(() => ({
-	title: 'CherryPick',
+	title: 'Engawa',
 	icon: 'ti ti-bulb-filled',
 }));
 </script>

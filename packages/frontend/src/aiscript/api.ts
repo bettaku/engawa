@@ -35,10 +35,8 @@ export function aiScriptReadline(q: string): Promise<string> {
 }
 
 export function createAiScriptEnv(opts: { storageKey: string, token?: string }) {
-	const table = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-	const randomString = Array.from(crypto.getRandomValues(new Uint32Array(32)))
-		.map(v => table[v % table.length])
-		.join('');
+	// 実行環境ごとに使い捨てる値（アクセストークンを保存するキーに使う）
+	const randomString = crypto.randomUUID();
 	return {
 		USER_ID: $i ? values.STR($i.id) : values.NULL,
 		USER_NAME: $i?.name ? values.STR($i.name) : values.NULL,
@@ -128,16 +126,16 @@ export function createAiScriptEnv(opts: { storageKey: string, token?: string }) 
 		'Mk:url': values.FN_NATIVE(() => {
 			return values.STR(window.location.href);
 		}),
-		'Mk:requestToken': values.FN_NATIVE(async ([value]) => {
+		'Mk:requestToken': values.FN_NATIVE(([value]) => {
 			utils.assertArray(value);
 			const permissions = (utils.valToJs(value) as unknown[]).map(val => {
 				if (typeof val !== 'string') {
 					throw new Error(`Invalid type. expected string but got ${typeof val}`);
 				}
 				return val;
-			}).filter(val => MkPermissions.includes(val));
-			return await new Promise(async (resolve: any) => {
-				await os.popup(defineAsyncComponent(() => import('@/components/MkFlashRequestTokenDialog.vue')), {
+			}).filter(val => MkPermissions.some(permission => permission === val));
+			return new Promise<typeof values.TRUE>(resolve => {
+				const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkFlashRequestTokenDialog.vue')), {
 					permissions,
 				}, {
 					accept: () => {
@@ -150,9 +148,10 @@ export function createAiScriptEnv(opts: { storageKey: string, token?: string }) 
 					},
 					cancel: () => resolve(values.FALSE),
 					closed: () => {
+						dispose();
 						resolve(values.FALSE);
 					},
-				}, 'closed');
+				});
 			});
 		}),
 		'Mk:nyaize': values.FN_NATIVE(([text]) => {

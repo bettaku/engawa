@@ -4,7 +4,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<MkContainer :showHeader="widgetProps.showHeader" data-cy-mkw-rss class="mkw-rss">
+<MkContainer :showHeader="widgetProps.showHeader" data-e2e-mkw-rss class="mkw-rss">
 	<template #icon><i class="ti ti-rss"></i></template>
 	<template #header>RSS</template>
 	<template #func="{ buttonStyleClass }"><button class="_button" :class="buttonStyleClass" @click="configure"><i class="ti ti-settings"></i></button></template>
@@ -13,13 +13,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<MkLoading v-if="fetching"/>
 		<MkResult v-else-if="(!items || items.length === 0) && widgetProps.showHeader" type="empty"/>
 		<div v-else :class="$style.feed">
-			<a v-for="item in items" :key="item.link" :class="$style.item" :href="item.link" rel="nofollow noopener" target="_blank" :title="item.title">{{ item.title }}</a>
+			<a v-for="item in items" :key="item.link" :class="$style.item" :href="rssLink(item.link)" rel="nofollow noopener" target="_blank" :title="item.title">{{ item.title }}</a>
 		</div>
 	</div>
 </MkContainer>
 </template>
 
 <script lang="ts" setup>
+import { rssLink } from '@/utility/rss-link.js';
 import { ref, watch, computed } from 'vue';
 import * as Misskey from 'cherrypick-js';
 import { url as base } from '@@/js/config.js';

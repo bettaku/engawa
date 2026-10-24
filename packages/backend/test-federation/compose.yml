@@ -4,19 +4,13 @@ include:
   - ./compose.c.yml
 
 services:
-  setup:
-    extends:
-      file: ./compose.tpl.yml
-      service: cherrypick
-    command: >
-      bash -c "
-        npm install -g pnpm
-        pnpm -F backend i
-        pnpm -F cherrypick-js i
-      "
-
   tester:
-    image: node:${NODE_VERSION}
+    image: cherrypick.local:${NODE_VERSION}
+    build:
+      context: ../../..
+      dockerfile: ./packages/backend/test-federation/Dockerfile
+      args:
+        NODE_VERSION: ${NODE_VERSION}
     depends_on:
       a.test:
         condition: service_healthy
@@ -34,78 +28,33 @@ services:
       - NODE_ENV=development
       - NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/rootCA.crt
     volumes:
+      # Mount the test sources so they can be edited and re-run without rebuilding the image.
       - type: bind
-        source: ../package.json
-        target: /cherrypick/packages/backend/package.json
+        source: ./test
+        target: /cherrypick/packages/backend/test-federation/test
         read_only: true
       - type: bind
         source: ../test/resources
         target: /cherrypick/packages/backend/test/resources
         read_only: true
       - type: bind
-        source: ./test
-        target: /cherrypick/packages/backend/test-federation/test
-        read_only: true
-      - type: bind
-        source: ../jest.config.cjs
-        target: /cherrypick/packages/backend/jest.config.cjs
-        read_only: true
-      - type: bind
-        source: ../jest.config.fed.cjs
-        target: /cherrypick/packages/backend/jest.config.fed.cjs
-        read_only: true
-      - type: bind
-        source: ../jest.js
-        target: /cherrypick/packages/backend/jest.js
-        read_only: true
-      - type: bind
-        source: ../../cherrypick-js/built
-        target: /cherrypick/packages/cherrypick-js/built
-        read_only: true
-      - type: bind
-        source: ../../cherrypick-js/package.json
-        target: /cherrypick/packages/cherrypick-js/package.json
-        read_only: true
-      - type: bind
-        source: ../../../package.json
-        target: /cherrypick/package.json
-        read_only: true
-      - type: bind
-        source: ../../../pnpm-lock.yaml
-        target: /cherrypick/pnpm-lock.yaml
-        read_only: true
-      - type: bind
-        source: ../../../pnpm-workspace.yaml
-        target: /cherrypick/pnpm-workspace.yaml
-        read_only: true
-      - type: bind
-        source: ../../../patches
-        target: /cherrypick/patches
-        read_only: true
-      - type: bind
         source: ./certificates/rootCA.crt
         target: /usr/local/share/ca-certificates/rootCA.crt
         read_only: true
     working_dir: /cherrypick
-    entrypoint: >
-      bash -c '
-        npm install -g pnpm
-        pnpm -F cherrypick-js i --frozen-lockfile
-        pnpm -F backend i --frozen-lockfile
-        exec "$0" "$@"
-      '
     command: pnpm -F backend test:fed
 
   daemon:
-    image: node:${NODE_VERSION}
+    image: cherrypick.local:${NODE_VERSION}
+    build:
+      context: ../../..
+      dockerfile: ./packages/backend/test-federation/Dockerfile
+      args:
+        NODE_VERSION: ${NODE_VERSION}
     depends_on:
       redis.test:
         condition: service_healthy
     volumes:
-      - type: bind
-        source: ../package.json
-        target: /cherrypick/packages/backend/package.json
-        read_only: true
       - type: bind
         source: ./daemon.ts
         target: /cherrypick/packages/backend/test-federation/daemon.ts
@@ -114,27 +63,9 @@ services:
         source: ./tsconfig.json
         target: /cherrypick/packages/backend/test-federation/tsconfig.json
         read_only: true
-      - type: bind
-        source: ../../../package.json
-        target: /cherrypick/package.json
-        read_only: true
-      - type: bind
-        source: ../../../pnpm-lock.yaml
-        target: /cherrypick/pnpm-lock.yaml
-        read_only: true
-      - type: bind
-        source: ../../../pnpm-workspace.yaml
-        target: /cherrypick/pnpm-workspace.yaml
-        read_only: true
-      - type: bind
-        source: ../../../patches
-        target: /cherrypick/patches
-        read_only: true
     working_dir: /cherrypick
     command: >
       bash -c "
-        npm install -g pnpm
-        pnpm -F backend i --frozen-lockfile
         pnpm exec tsc -p ./packages/backend/test-federation
         node ./packages/backend/test-federation/built/daemon.js
       "
@@ -149,5 +80,26 @@ services:
           create_host_path: true
     healthcheck:
       test: redis-cli ping
+      interval: 5s
+      retries: 20
+
+  # Single postgres server shared by every site. Each site uses its own database
+  # (cherrypick_a / cherrypick_b / cherrypick_c) created by init-db.sql on first init.
+  db.test:
+    image: postgres:15-alpine
+    env_file:
+      - ./.config/docker.env
+    volumes:
+      - type: bind
+        source: ./init-db.sql
+        target: /docker-entrypoint-initdb.d/init-db.sql
+        read_only: true
+      - type: bind
+        source: ./volumes/db
+        target: /var/lib/postgresql/data
+        bind:
+          create_host_path: true
+    healthcheck:
+      test: pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB
       interval: 5s
       retries: 20

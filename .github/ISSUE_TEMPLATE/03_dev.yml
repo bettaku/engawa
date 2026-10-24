@@ -1,24 +1,92 @@
-name: About Development
-description: 開発に関する問題
-labels: ["Dev"]
+name: 🛠 Development task / 開発タスク (Maintainers)
+description: Track internal maintenance and engineering work / 保守者向けの内部改善・開発作業
+labels: ["Development"]
 
 body:
   - type: markdown
     attributes:
       value: |
-        開発に関する問題を報告してください。
-        重複するIssueを避けるために、問題がすでに報告されていないかを検索してください。
+        This form is intended for maintainers to track refactoring, CI/CD, tests, dependencies, internal architecture, and other engineering work that is not a user-facing feature request.
+        このフォームは、リファクタリング、CI/CD、テスト、依存関係、内部アーキテクチャなど、利用者向け機能提案ではない開発作業を管理するための保守者向けフォームです。
+
+        Use the Feature Request form for user-facing behavior changes. Search for related issues before submitting. Reports may be written in any language.
+        利用者向けの動作変更にはFeature Requestフォームを使用してください。送信前に関連Issueを検索してください。報告は任意の言語で記入できます。
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-flight checklist / 事前確認
+      options:
+        - label: I searched for related issues and confirmed this is an internal development task. / 関連Issueを検索し、これが内部開発タスクであることを確認しました。
+          required: true
+        - label: I removed passwords, access tokens, email addresses, and other sensitive information. / パスワード、アクセストークン、メールアドレスなどの機密情報を除去しました。
+          required: true
 
   - type: textarea
+    id: background
     attributes:
-      label: Summary
-      description: Tell us what you want
+      label: Background and problem / 背景と問題
+      description: Explain the current state, the problem, and why it should be addressed. / 現状、問題、それを解決すべき理由を記載してください。
     validations:
       required: true
 
   - type: textarea
+    id: proposed-change
     attributes:
-      label: Purpose
-      description: Why do you want this?
+      label: Proposed change / 変更案
+      description: Describe the intended technical or process change at an implementation-ready level. / 意図する技術的またはプロセス上の変更を、実装に着手できる粒度で記載してください。
     validations:
       required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria / 完了条件
+      description: List the observable conditions that must be met for this task to be complete. / このタスクの完了に必要な、確認可能な条件を列挙してください。
+      placeholder: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+
+  - type: dropdown
+    id: affected-areas
+    attributes:
+      label: Affected areas / 影響範囲
+      description: Select all areas expected to change. / 変更が予想される範囲をすべて選択してください。
+      multiple: true
+      options:
+        - Frontend / フロントエンド
+        - Backend or API / バックエンドまたはAPI
+        - Federation or ActivityPub / 連合またはActivityPub
+        - CI/CD or release process / CI/CDまたはリリースプロセス
+        - Tests / テスト
+        - Dependencies / 依存関係
+        - Documentation or localization / ドキュメントまたはローカライズ
+        - Other / その他
+    validations:
+      required: false
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and non-goals / スコープと非目標
+      description: Clarify what is included and intentionally excluded. / 対象に含めるものと、意図的に含めないものを明確にしてください。
+    validations:
+      required: false
+
+  - type: textarea
+    id: risks
+    attributes:
+      label: Compatibility, migration, and performance risks / 互換性・移行・性能上のリスク
+      description: Describe breaking changes, data migrations, rollout concerns, security implications, or performance impact. / 破壊的変更、データ移行、ロールアウト上の懸念、セキュリティへの影響、性能への影響を記載してください。
+    validations:
+      required: false
+
+  - type: textarea
+    id: related-references
+    attributes:
+      label: Related issues and pull requests / 関連Issue・Pull Request
+      description: Add links or references to related work and prior decisions. / 関連する作業や過去の決定へのリンクまたは参照を追加してください。
+    validations:
+      required: false

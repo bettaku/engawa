@@ -3,52 +3,41 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-export const timezones = [{
-	name: 'UTC',
-	abbrev: 'UTC',
-	offset: 0,
-}, {
-	name: 'Europe/Berlin',
-	abbrev: 'CET',
-	offset: 60,
-}, {
-	name: 'Asia/Tokyo',
-	abbrev: 'JST',
-	offset: 540,
-}, {
-	name: 'Asia/Seoul',
-	abbrev: 'KST',
-	offset: 540,
-}, {
-	name: 'Asia/Shanghai',
-	abbrev: 'CST',
-	offset: 480,
-}, {
-	name: 'Australia/Sydney',
-	abbrev: 'AEST',
-	offset: 600,
-}, {
-	name: 'Australia/Darwin',
-	abbrev: 'ACST',
-	offset: 570,
-}, {
-	name: 'Australia/Perth',
-	abbrev: 'AWST',
-	offset: 480,
-}, {
-	name: 'America/New_York',
-	abbrev: 'EST',
-	offset: -300,
-}, {
-	name: 'America/Mexico_City',
-	abbrev: 'CST',
-	offset: -360,
-}, {
-	name: 'America/Phoenix',
-	abbrev: 'MST',
-	offset: -420,
-}, {
-	name: 'America/Los_Angeles',
-	abbrev: 'PST',
-	offset: -480,
-}];
+export const timezones = () => {
+	const timezone = Intl.supportedValuesOf('timeZone').map((tz) => {
+		return {
+			name: tz,
+		};
+	});
+	return timezone.sort((a, b) => a.name.localeCompare(b.name));
+};
+
+/**
+ * EnumForm用のタイムゾーン選択肢を地域ごとにグループ化して返す
+ */
+export const timezoneEnumItems = () => {
+	const groups = new Map<string, { label: string; value: string }[]>();
+	const others: { label: string; value: string }[] = [];
+
+	for (const tz of timezones()) {
+		const item = { label: tz.name, value: tz.name.toLowerCase() };
+		const slashIndex = tz.name.indexOf('/');
+		if (slashIndex === -1) {
+			others.push(item);
+			continue;
+		}
+		const region = tz.name.slice(0, slashIndex);
+		const group = groups.get(region);
+		if (group) {
+			group.push(item);
+		} else {
+			groups.set(region, [item]);
+		}
+	}
+
+	return [
+		{ label: '(auto)', value: null },
+		...others,
+		...Array.from(groups, ([label, items]) => ({ type: 'group' as const, label, items })),
+	];
+};

@@ -388,13 +388,6 @@ export class SearchService {
 			query.andWhere('LOWER(note."text") LIKE :q', { q: `%${ sqlLikeEscape(q.toLowerCase())}%` });
 		}
 
-		if (opts.excludeNsfw) {
-			query.andWhere('note.cw IS NULL')
-				.andWhere('NOT EXISTS (SELECT 1 FROM drive_file df WHERE df.id = ANY(note.fileIds) AND df.isSensitive = TRUE)');
-		} else {
-			query.orWhere('LOWER(note.cw) LIKE :q', { q: `%${sqlLikeEscape(q.toLowerCase())}%` });
-		}
-
 		this.queryService.generateVisibilityQuery(query, me);
 		this.queryService.generateBaseNoteFilteringQuery(query, me);
 

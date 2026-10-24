@@ -114,7 +114,7 @@ const filesPagination = {
 	noPaging: true,
 };
 
-const meta = useTemplateRef('meta');
+const meta = ref<Misskey.entities.AdminMetaResponse | null>(null);
 
 function onInstanceClick(i) {
 	os.pageWindow(`/instance-info/${i.host}`);

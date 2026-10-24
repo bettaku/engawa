@@ -32,13 +32,27 @@ SPDX-License-Identifier: AGPL-3.0-only
 		@contextmenu.self.prevent="() => {}"
 	>
 		<slot name="header"></slot>
+		<div v-if="searchable" :class="$style.search">
+			<i class="ti ti-search" :class="$style.searchIcon"></i>
+			<input
+				ref="searchEl"
+				v-model="searchQuery"
+				type="search"
+				:class="$style.searchInput"
+				:placeholder="i18n.ts.search"
+				autocomplete="off"
+				@keydown.down.prevent="focusFirstItem"
+				@keydown.enter="onSearchEnter"
+				@keydown.esc="onSearchEsc"
+			/>
+		</div>
 		<div
 			ref="itemsEl"
 			v-hotkey="keymap"
 			tabindex="0"
 			:class="$style.menuItems"
 		>
-			<template v-for="item in (items2 ?? [])">
+			<template v-for="item in (displayItems ?? [])">
 				<div v-if="item.type === 'divider'" role="separator" tabindex="-1" :class="$style.divider"></div>
 
 				<div v-else-if="item.type === 'label'" role="menuitem" tabindex="-1" :class="[$style.label]">
@@ -213,7 +227,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</button>
 			</template>
 
-			<span v-if="items2 == null || items2.length === 0" tabindex="-1" :class="[$style.none, $style.item]">
+			<span v-if="displayItems == null || displayItems.length === 0" tabindex="-1" :class="[$style.none, $style.item]">
 				<span>{{ i18n.ts.none }}</span>
 			</span>
 		</div>
@@ -248,6 +262,7 @@ const props = defineProps<{
 	align?: 'center' | string;
 	width?: number;
 	maxHeight?: number;
+	searchable?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -262,6 +277,81 @@ const isNestingMenu = inject<boolean>('isNestingMenu', false);
 const itemsEl = useTemplateRef('itemsEl');
 
 const items2 = ref<InnerMenuItem[]>();
+
+const searchEl = useTemplateRef('searchEl');
+const searchQuery = ref('');
+
+function getSearchableText(item: InnerMenuItem): string | null {
+	if (item.type === 'user') return `${item.user.name ?? ''} ${item.user.username}`;
+	if ('text' in item) return unref(item.text);
+	return null;
+}
+
+const displayItems = computed<InnerMenuItem[] | undefined>(() => {
+	if (!props.searchable || items2.value == null) return items2.value;
+	const query = searchQuery.value.trim().toLowerCase();
+	if (query === '') return items2.value;
+
+	const result: InnerMenuItem[] = [];
+	let currentLabel: InnerMenuItem | null = null;
+	let labelMatched = false;
+	let labelPushed = false;
+
+	for (const item of items2.value) {
+		if (item.type === 'divider') {
+			currentLabel = null;
+			labelMatched = false;
+			continue;
+		}
+		if (item.type === 'label') {
+			// ラベルにマッチした場合はそのグループの項目をすべて表示する
+			currentLabel = item;
+			labelMatched = unref(item.text).toLowerCase().includes(query);
+			labelPushed = false;
+			continue;
+		}
+		const text = getSearchableText(item);
+		if (text == null) continue;
+		if (!labelMatched && !text.toLowerCase().includes(query)) continue;
+		if (currentLabel != null && !labelPushed) {
+			result.push(currentLabel);
+			labelPushed = true;
+		}
+		result.push(item);
+	}
+
+	return result;
+});
+
+function getFocusableItems(): HTMLElement[] {
+	if (itemsEl.value == null) return [];
+	return Array.from(itemsEl.value.children).filter(isFocusable) as HTMLElement[];
+}
+
+function focusFirstItem() {
+	getFocusableItems().at(0)?.focus();
+}
+
+function selectFirstItem() {
+	getFocusableItems().at(0)?.click();
+}
+
+// IME変換中のEnter/Escは変換操作なので無視する
+function isImeComposing(ev: KeyboardEvent) {
+	return ev.isComposing || ev.key === 'Process' || ev.keyCode === 229;
+}
+
+function onSearchEnter(ev: KeyboardEvent) {
+	if (isImeComposing(ev)) return;
+	ev.preventDefault();
+	selectFirstItem();
+}
+
+function onSearchEsc(ev: KeyboardEvent) {
+	if (isImeComposing(ev)) return;
+	ev.preventDefault();
+	close(false);
+}
 
 const child = useTemplateRef('child');
 
@@ -466,7 +556,13 @@ onMounted(() => {
 	setupHandlers();
 
 	if (!isNestingMenu) {
-		nextTick(() => itemsEl.value?.focus({ preventScroll: true }));
+		nextTick(() => {
+			if (props.searchable && searchEl.value != null && !isTouchUsing) {
+				searchEl.value.focus({ preventScroll: true });
+			} else {
+				itemsEl.value?.focus({ preventScroll: true });
+			}
+		});
 	}
 });
 
@@ -554,6 +650,41 @@ onBeforeUnmount(() => {
 .menuItems {
 	padding: 8px 0;
 	box-sizing: border-box;
+}
+
+.search {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	background: var(--MI_THEME-popup);
+	border-bottom: solid 0.5px var(--MI_THEME-divider);
+}
+
+.searchIcon {
+	opacity: 0.7;
+}
+
+.searchInput {
+	flex: 1;
+	min-width: 0;
+	height: 32px;
+	padding: 0 8px;
+	font: inherit;
+	font-size: 0.9em;
+	color: var(--MI_THEME-fg);
+	background: var(--MI_THEME-panel);
+	border: solid 1px var(--MI_THEME-panel);
+	border-radius: 6px;
+	outline: none;
+	box-sizing: border-box;
+
+	&:focus {
+		border-color: var(--MI_THEME-accent);
+	}
 }
 
 .item {

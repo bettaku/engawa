@@ -58,8 +58,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 			}
 
 			await this.usersRepository.update(me.id, updates);
-
-			return await this.usersRepository.findOneByOrFail({ id: me.id });
 		});
 	}
 }

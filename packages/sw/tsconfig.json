@@ -14,12 +14,14 @@
 		"moduleResolution": "nodenext",
 		"removeComments": false,
 		"noLib": false,
+		// TS 6.0 で libReplacement のデフォルトが false になったため、
+		// @typescript/lib-webworker による lib 差し替えを維持するために明示する
+		"libReplacement": true,
 		"strict": true,
 		"strictNullChecks": true,
 		"experimentalDecorators": true,
 		"resolveJsonModule": true,
 		"isolatedModules": true,
-		"baseUrl": ".",
 		"paths": {
 			"@/*": ["./src/*"],
 			"@@/*": ["../frontend-shared/*"]

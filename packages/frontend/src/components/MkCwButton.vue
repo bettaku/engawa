@@ -20,7 +20,7 @@ const props = defineProps<{
 	text: string | null;
 	renote?: Misskey.entities.Note | null;
 	files?: Misskey.entities.DriveFile[];
-	poll?: Misskey.entities.Note['poll'] | PollEditorModelValue | null;
+	poll?: Misskey.entities.Note['poll'] | Misskey.entities.NoteHistory['poll'] | PollEditorModelValue | null;
 }>();
 
 const emit = defineEmits<{

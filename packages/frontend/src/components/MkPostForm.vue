@@ -39,7 +39,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			</button>
 			<button ref="otherSettingsButton" v-tooltip="i18n.ts.other" class="_button" :class="$style.headerRightItem" @click="showOtherSettings"><i class="ti ti-dots"></i></button>
 			<div :class="$style.submit">
-				<button v-click-anime class="_button" :class="$style.submitButton" :disabled="!canPost" data-cy-open-post-form-submit @click="post">
+				<button v-click-anime class="_button" :class="$style.submitButton" :disabled="!canPost" data-e2e-open-post-form-submit @click="post">
 					<div :class="$style.submitInner">
 						<template v-if="posted"></template>
 						<template v-else-if="posting"><MkEllipsis/></template>
@@ -93,7 +93,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</div>
 	<div :class="[$style.textOuter, { [$style.withCw]: useCw }]">
 		<div v-if="targetChannel" :class="$style.colorBar" :style="{ background: targetChannel.color }"></div>
-		<textarea ref="textareaEl" v-model="text" :class="[$style.text]" :disabled="posting || posted" :readonly="textAreaReadOnly" :placeholder="placeholder" data-cy-post-form-text @keydown="onKeydown" @keyup="onKeyup" @paste="onPaste" @compositionupdate="onCompositionUpdate" @compositionend="onCompositionEnd"/>
+		<textarea ref="textareaEl" v-model="text" :class="[$style.text]" :disabled="posting || posted" :readonly="textAreaReadOnly" :placeholder="placeholder" data-e2e-post-form-text @keydown="onKeydown" @keyup="onKeyup" @paste="onPaste" @compositionupdate="onCompositionUpdate" @compositionend="onCompositionEnd"/>
 		<div v-if="maxTextLength - textLength < 100" :class="['_acrylic', $style.textCount, { [$style.textOver]: textLength > maxTextLength }]">{{ maxTextLength - textLength }}</div>
 	</div>
 	<input v-show="withHashtags" ref="hashtagsInputEl" v-model="hashtags" :class="$style.hashtags" :placeholder="i18n.ts.hashtags" list="hashtags">
@@ -173,6 +173,7 @@ import { claimAchievement } from '@/utility/achievements.js';
 import { emojiPicker } from '@/utility/emoji-picker.js';
 import { mfmFunctionPicker } from '@/utility/mfm-function-picker.js';
 import { prefer } from '@/preferences.js';
+import { isPostShortcut } from '@/utility/is-post-shortcut.js';
 import { getPluginHandlers } from '@/plugin.js';
 import { DI } from '@/di.js';
 import { globalEvents } from '@/events.js';
@@ -825,13 +826,7 @@ function clear() {
 }
 
 function onKeydown(ev: KeyboardEvent) {
-	if (prefer.s.useEnterToSend && !ev.shiftKey) {
-		if (ev.key === 'Enter' && canPost.value) post();
-	} else if (store.s.useShiftEnterToSend) {
-		if (ev.key === 'Enter' && ev.shiftKey && canPost.value) post();
-	} else {
-		if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey) && canPost.value) post();
-	}
+	if (isPostShortcut(ev) && canPost.value) post();
 
 	if (prefer.s.postFormVisibilityHotkey) {
 		if (ev.ctrlKey && ev.shiftKey && (visibility.value === 'specified')) visibility.value = 'public';
@@ -1239,7 +1234,9 @@ async function post(ev?: MouseEvent) {
 			clear();
 		}
 
-		globalEvents.emit('notePosted', res.createdNote);
+		if (res && typeof res === 'object' && 'createdNote' in res) {
+			globalEvents.emit('notePosted', res.createdNote as Misskey.entities.Note);
+		}
 
 		nextTick(() => {
 			deleteDraft();
@@ -1267,7 +1264,7 @@ async function post(ev?: MouseEvent) {
 
 			const text = postData.text ?? '';
 			const lowerCase = text.toLowerCase();
-			if ((lowerCase.includes('love') || lowerCase.includes('❤')) && lowerCase.includes('cherrypick')) {
+			if ((lowerCase.includes('love') || lowerCase.includes('❤')) && (lowerCase.includes('engawa') || lowerCase.includes('cherrypick'))) {
 				claimAchievement('iLoveCherryPick');
 			}
 			if ([

@@ -127,7 +127,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<div class="_gaps_s">
 						<SearchMarker :keywords="['font', 'size']">
 							<div style="width: 100%">
-								<div :class="$style.label"><SearchLabel>{{ i18n.ts.fontSize }}</SearchLabel> <span class="_beta" style="vertical-align: middle;">CherryPick</span></div>
+								<div :class="$style.label"><SearchLabel>{{ i18n.ts.fontSize }}</SearchLabel> <span class="_beta" style="vertical-align: middle;">Engawa</span></div>
 								<div :class="$style.fontSize" class="_panel">
 									<MkPreferenceContainer k="fontSize">
 										<div v-for="size in 19" v-show="fontSize === size" :key="size" :style="{ fontSize: `${size + 6}px` }">{{ i18n.ts._mfc.dummy }}</div>
@@ -199,7 +199,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<SearchMarker :keywords="['avatar', 'icon', 'square', 'federation', 'shape']">
 							<MkPreferenceContainer k="setFederationAvatarShape">
 								<MkSwitch v-model="setFederationAvatarShape" @update:modelValue="cantUseSetFederationAvatarShape">
-									<template #label><SearchLabel>{{ i18n.ts.setFederationAvatarShape }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+									<template #label><SearchLabel>{{ i18n.ts.setFederationAvatarShape }}</SearchLabel> <span class="_beta">Engawa</span></template>
 									<template #caption>
 										{{ $i.policies.canSetFederationAvatarShape ? i18n.ts.setFederationAvatarShapeDescription : i18n.ts.cannotBeUsedFunc }}
 										<span v-if="!$i.policies.canSetFederationAvatarShape" style="margin-left: 3px;"><a class="_link" @click="learnMoreCantUseSetFederationAvatarShape">{{ i18n.ts.learnMore }}</a></span>
@@ -227,7 +227,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<SearchMarker :keywords="['show', 'unread', 'notification', 'count']">
 							<MkPreferenceContainer k="showUnreadNotificationsCount">
 								<MkSwitch v-model="showUnreadNotificationsCount">
-									<template #label><SearchLabel>{{ i18n.ts.showUnreadNotificationsCount }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+									<template #label><SearchLabel>{{ i18n.ts.showUnreadNotificationsCount }}</SearchLabel> <span class="_beta">Engawa</span></template>
 								</MkSwitch>
 							</MkPreferenceContainer>
 						</SearchMarker>
@@ -235,7 +235,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<SearchMarker :keywords="['file', 'grid', 'layout', 'user', 'page']">
 							<MkPreferenceContainer k="filesGridLayoutInUserPage">
 								<MkSwitch v-model="filesGridLayoutInUserPage">
-									<template #label><SearchLabel>{{ i18n.ts.filesGridLayoutInUserPage }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+									<template #label><SearchLabel>{{ i18n.ts.filesGridLayoutInUserPage }}</SearchLabel> <span class="_beta">Engawa</span></template>
 									<template #caption><SearchText>{{ i18n.ts.filesGridLayoutInUserPageDescription }}</SearchText></template>
 								</MkSwitch>
 							</MkPreferenceContainer>
@@ -270,7 +270,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['post', 'form', 'note', 'replies']">
 								<MkPreferenceContainer k="showFixedPostFormInReplies">
 									<MkSwitch v-model="showFixedPostFormInReplies">
-										<template #label><SearchLabel>{{ i18n.ts.showFixedPostFormInReplies }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+										<template #label><SearchLabel>{{ i18n.ts.showFixedPostFormInReplies }}</SearchLabel> <span class="_beta">Engawa</span></template>
 										<template #caption><SearchText>{{ i18n.ts.showFixedPostFormInRepliesDescription }}</SearchText></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
@@ -279,7 +279,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['force', 'collapse', 'renote']">
 								<MkPreferenceContainer k="forceCollapseAllRenotes">
 									<MkSwitch v-model="forceCollapseAllRenotes">
-										<template #label><SearchLabel>{{ i18n.ts.forceCollapseAllRenotes }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+										<template #label><SearchLabel>{{ i18n.ts.forceCollapseAllRenotes }}</SearchLabel> <span class="_beta">Engawa</span></template>
 										<template #caption><SearchText>{{ i18n.ts.forceCollapseAllRenotesDescription }}</SearchText></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
@@ -297,7 +297,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['collapse', 'reply', 'replies']">
 								<MkPreferenceContainer k="collapseReplies">
 									<MkSwitch v-model="collapseReplies">
-										<template #label><SearchLabel>{{ i18n.ts.collapseReplies }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+										<template #label><SearchLabel>{{ i18n.ts.collapseReplies }}</SearchLabel> <span class="_beta">Engawa</span></template>
 										<template #caption><SearchText>{{ i18n.ts.collapseRepliesDescription }}</SearchText></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
@@ -306,7 +306,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['collapse', 'long', 'note', 'content']">
 								<MkPreferenceContainer k="collapseLongNoteContent">
 									<MkSwitch v-model="collapseLongNoteContent">
-										<template #label><SearchLabel>{{ i18n.ts.collapseLongNoteContent }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+										<template #label><SearchLabel>{{ i18n.ts.collapseLongNoteContent }}</SearchLabel> <span class="_beta">Engawa</span></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -314,7 +314,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['collapse', 'note']">
 								<MkPreferenceContainer k="collapseDefault">
 									<MkSwitch v-model="collapseDefault">
-										<template #label><SearchLabel>{{ i18n.ts.collapseDefault }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+										<template #label><SearchLabel>{{ i18n.ts.collapseDefault }}</SearchLabel> <span class="_beta">Engawa</span></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -322,7 +322,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['media', 'note', 'collapse']">
 								<MkPreferenceContainer k="allMediaNoteCollapse">
 									<MkSwitch v-model="allMediaNoteCollapse">
-										<template #label><SearchLabel>{{ i18n.ts.allMediaNoteCollapse }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+										<template #label><SearchLabel>{{ i18n.ts.allMediaNoteCollapse }}</SearchLabel> <span class="_beta">Engawa</span></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -344,7 +344,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 								<SearchMarker :keywords="['hide', 'avatar', 'note', 'display']">
 									<MkPreferenceContainer k="hideAvatarsInNote">
 										<MkSwitch v-model="hideAvatarsInNote">
-											<template #label><SearchLabel>{{ i18n.ts.hideAvatarsInNote }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+											<template #label><SearchLabel>{{ i18n.ts.hideAvatarsInNote }}</SearchLabel> <span class="_beta">Engawa</span></template>
 										</MkSwitch>
 									</MkPreferenceContainer>
 								</SearchMarker>
@@ -352,7 +352,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 								<SearchMarker :keywords="['enable', 'absolute', 'time', 'note', 'display']">
 									<MkPreferenceContainer k="enableAbsoluteTime">
 										<MkSwitch v-model="enableAbsoluteTime">
-											<template #label><SearchLabel>{{ i18n.ts.enableAbsoluteTime }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+											<template #label><SearchLabel>{{ i18n.ts.enableAbsoluteTime }}</SearchLabel> <span class="_beta">Engawa</span></template>
 										</MkSwitch>
 									</MkPreferenceContainer>
 								</SearchMarker>
@@ -360,7 +360,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 								<SearchMarker :keywords="['enable', 'mark', 'date', 'note', 'display']">
 									<MkPreferenceContainer k="enableMarkByDate">
 										<MkSwitch v-model="enableMarkByDate" :disabled="prefer.s.enableAbsoluteTime">
-											<template #label><SearchLabel>{{ i18n.ts.enableMarkByDate }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+											<template #label><SearchLabel>{{ i18n.ts.enableMarkByDate }}</SearchLabel> <span class="_beta">Engawa</span></template>
 										</MkSwitch>
 									</MkPreferenceContainer>
 								</SearchMarker>
@@ -368,7 +368,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 								<SearchMarker :keywords="['show', 'reply', 'target', 'note', 'display']">
 									<MkPreferenceContainer k="showReplyTargetNote">
 										<MkSwitch v-model="showReplyTargetNote">
-											<template #label><SearchLabel>{{ i18n.ts.showReplyTargetNote }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+											<template #label><SearchLabel>{{ i18n.ts.showReplyTargetNote }}</SearchLabel> <span class="_beta">Engawa</span></template>
 										</MkSwitch>
 									</MkPreferenceContainer>
 								</SearchMarker>
@@ -376,7 +376,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 								<SearchMarker :keywords="['show', 'reply', 'target', 'note', 'transparent', 'display']">
 									<MkPreferenceContainer k="showReplyTargetNoteInSemiTransparent">
 										<MkSwitch v-model="showReplyTargetNoteInSemiTransparent">
-											<template #label><SearchLabel>{{ i18n.ts.showReplyTargetNoteInSemiTransparent }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+											<template #label><SearchLabel>{{ i18n.ts.showReplyTargetNoteInSemiTransparent }}</SearchLabel> <span class="_beta">Engawa</span></template>
 										</MkSwitch>
 									</MkPreferenceContainer>
 								</SearchMarker>
@@ -392,7 +392,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 								<SearchMarker :keywords="['note', 'gap', 'body']">
 									<MkPreferenceContainer k="showGapBodyOfTheNote">
 										<MkSwitch v-model="showGapBodyOfTheNote">
-											<template #label><SearchLabel>{{ i18n.ts.showGapBodyOfTheNote }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+											<template #label><SearchLabel>{{ i18n.ts.showGapBodyOfTheNote }}</SearchLabel> <span class="_beta">Engawa</span></template>
 										</MkSwitch>
 									</MkPreferenceContainer>
 								</SearchMarker>
@@ -418,7 +418,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 								<SearchMarker :keywords="['footer', 'action', 'sub', 'note', 'show']">
 									<MkPreferenceContainer k="showSubNoteFooterButton">
 										<MkSwitch v-model="showSubNoteFooterButton">
-											<template #label><SearchLabel>{{ i18n.ts.showSubNoteFooterButton }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+											<template #label><SearchLabel>{{ i18n.ts.showSubNoteFooterButton }}</SearchLabel> <span class="_beta">Engawa</span></template>
 											<template #caption><SearchText>{{ i18n.ts.showSubNoteFooterButtonDescription }}</SearchText></template>
 										</MkSwitch>
 									</MkPreferenceContainer>
@@ -427,7 +427,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 								<SearchMarker :keywords="['footer', 'action', 'info', 'note', 'enable']">
 									<MkPreferenceContainer k="infoButtonForNoteActionsEnabled">
 										<MkSwitch v-model="infoButtonForNoteActionsEnabled">
-											<template #label><SearchLabel>{{ i18n.ts.infoButtonForNoteActions }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+											<template #label><SearchLabel>{{ i18n.ts.infoButtonForNoteActions }}</SearchLabel> <span class="_beta">Engawa</span></template>
 											<template #caption><SearchText>{{ i18n.ts.infoButtonForNoteActionsDescription }}</SearchText></template>
 										</MkSwitch>
 									</MkPreferenceContainer>
@@ -436,13 +436,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 								<SearchMarker :keywords="['note', 'action', 'translate', 'show']">
 									<MkPreferenceContainer k="showTranslateButtonInNote">
 										<MkSwitch v-model="showTranslateButtonInNote">
-											<template #label><SearchLabel>{{ i18n.ts.showTranslateButtonInNote }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+											<template #label><SearchLabel>{{ i18n.ts.showTranslateButtonInNote }}</SearchLabel> <span class="_beta">Engawa</span></template>
 										</MkSwitch>
 									</MkPreferenceContainer>
 								</SearchMarker>
 
 								<div class="_gaps_s" style="margin: 1em 0;">
-									<div style="font-weight: bold; margin: 0 0 8px 0;">{{ i18n.ts.noteFooterButton }} <span class="_beta" style="vertical-align: middle;">CherryPick</span></div>
+									<div style="font-weight: bold; margin: 0 0 8px 0;">{{ i18n.ts.noteFooterButton }} <span class="_beta" style="vertical-align: middle;">Engawa</span></div>
 
 									<SearchMarker :keywords="['reply']">
 										<MkPreferenceContainer k="showReplyButtonInNoteFooter">
@@ -516,7 +516,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 								<SearchMarker :keywords="['renote', 'quote', 'separation', 'note']">
 									<MkPreferenceContainer k="renoteQuoteButtonSeparation">
 										<MkSwitch v-model="renoteQuoteButtonSeparation">
-											<template #label><SearchLabel>{{ i18n.ts.renoteQuoteButtonSeparation }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+											<template #label><SearchLabel>{{ i18n.ts.renoteQuoteButtonSeparation }}</SearchLabel> <span class="_beta">Engawa</span></template>
 										</MkSwitch>
 									</MkPreferenceContainer>
 								</SearchMarker>
@@ -524,7 +524,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 								<SearchMarker :keywords="['renote', 'visibility', 'selection', 'note']">
 									<MkPreferenceContainer k="renoteVisibilitySelection">
 										<MkSwitch v-model="renoteVisibilitySelection">
-											<template #label><SearchLabel>{{ i18n.ts.showRenoteVisibilitySelector }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+											<template #label><SearchLabel>{{ i18n.ts.showRenoteVisibilitySelector }}</SearchLabel> <span class="_beta">Engawa</span></template>
 										</MkSwitch>
 									</MkPreferenceContainer>
 								</SearchMarker>
@@ -541,7 +541,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 													{ label: i18n.ts._visibility.followers, value: 'followers' },
 												]"
 											>
-												<template #label><SearchLabel>{{ i18n.ts.forceRenoteVisibilitySelector }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+												<template #label><SearchLabel>{{ i18n.ts.forceRenoteVisibilitySelector }}</SearchLabel> <span class="_beta">Engawa</span></template>
 											</MkSelect>
 										</MkPreferenceContainer>
 									</SearchMarker>
@@ -550,7 +550,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 								<SearchMarker :keywords="['show', 'alt', 'text', 'warning']">
 									<MkPreferenceContainer k="showNoAltTextWarning">
 										<MkSwitch v-model="showNoAltTextWarning">
-											<template #label><SearchLabel>{{ i18n.ts.showNoAltWarning }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+											<template #label><SearchLabel>{{ i18n.ts.showNoAltWarning }}</SearchLabel> <span class="_beta">Engawa</span></template>
 											<template #caption><SearchText>{{ i18n.ts.showNoAltWarningDescription }}</SearchText></template>
 										</MkSwitch>
 									</MkPreferenceContainer>
@@ -559,7 +559,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 								<SearchMarker :keywords="['always', 'show', 'cw', 'nsfw']">
 									<MkPreferenceContainer k="alwaysShowCw">
 										<MkSwitch v-model="alwaysShowCw">
-											<template #label><SearchLabel>{{ i18n.ts.alwaysShowCw }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+											<template #label><SearchLabel>{{ i18n.ts.alwaysShowCw }}</SearchLabel> <span class="_beta">Engawa</span></template>
 										</MkSwitch>
 									</MkPreferenceContainer>
 								</SearchMarker>
@@ -676,7 +676,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 											{ label: i18n.ts._nsfwOpenBehavior.doubleClick, value: 'doubleClick' },
 										]"
 									>
-										<template #label><SearchLabel>{{ i18n.ts.nsfwOpenBehavior }}</SearchLabel> <span class="_beta" style="vertical-align: middle;">CherryPick</span></template>
+										<template #label><SearchLabel>{{ i18n.ts.nsfwOpenBehavior }}</SearchLabel> <span class="_beta" style="vertical-align: middle;">Engawa</span></template>
 									</MkSelect>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -731,7 +731,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['show', 'profile', 'preview']">
 								<MkPreferenceContainer k="showProfilePreview">
 									<MkSwitch v-model="showProfilePreview">
-										<template #label><SearchLabel>{{ i18n.ts.previewNoteProfile }}</SearchLabel> <span class="_beta" style="vertical-align: middle;">CherryPick</span></template>
+										<template #label><SearchLabel>{{ i18n.ts.previewNoteProfile }}</SearchLabel> <span class="_beta" style="vertical-align: middle;">Engawa</span></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -770,13 +770,17 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 						<SearchMarker :keywords="['default', 'note', 'searchableby', 'search']">
 							<MkPreferenceContainer k="defaultNoteSearchableBy">
-								<MkSelect v-model="defaultNoteSearchableBy">
-									<template #label><SearchLabel>{{ i18n.ts._searchableBy.searchableBy }}</SearchLabel></template>
-									<option value="public">{{ i18n.ts._searchableBy.public }}</option>
-									<option value="followers">{{ i18n.ts._searchableBy.followers }}</option>
-									<option value="reacted">{{ i18n.ts._searchableBy.reacted }}</option>
-									<option value="limited">{{ i18n.ts._searchableBy.limited }}</option>
-								</MkSelect>
+									<MkSelect
+										v-model="defaultNoteSearchableBy"
+										:items="[
+											{ value: 'public', label: i18n.ts._searchableBy.public },
+											{ value: 'followers', label: i18n.ts._searchableBy.followers },
+											{ value: 'reacted', label: i18n.ts._searchableBy.reacted },
+											{ value: 'limited', label: i18n.ts._searchableBy.limited },
+										]"
+									>
+										<template #label><SearchLabel>{{ i18n.ts._searchableBy.searchableBy }}</SearchLabel></template>
+									</MkSelect>
 							</MkPreferenceContainer>
 						</SearchMarker>
 					</div>
@@ -801,7 +805,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['show', 'reply', 'notification', 'note']">
 								<MkPreferenceContainer k="showReplyInNotification">
 									<MkSwitch v-model="showReplyInNotification">
-										<template #label><SearchLabel>{{ i18n.ts.showReplyInNotification }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+										<template #label><SearchLabel>{{ i18n.ts.showReplyInNotification }}</SearchLabel> <span class="_beta">Engawa</span></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -836,7 +840,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 			<SearchMarker :label="i18n.ts._externalNavigationWarning.externalNavigationWarning" :keywords="['external', 'navigation', 'warning']">
 				<MkFolder>
-					<template #label><SearchLabel>{{ i18n.ts._externalNavigationWarning.externalNavigationWarning }}</SearchLabel> <span class="_beta" style="vertical-align: middle;">CherryPick</span></template>
+					<template #label><SearchLabel>{{ i18n.ts._externalNavigationWarning.externalNavigationWarning }}</SearchLabel> <span class="_beta" style="vertical-align: middle;">Engawa</span></template>
 					<template #icon><i class="ti ti-external-link"></i></template>
 
 					<div class="_gaps_m">
@@ -923,7 +927,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['disable', 'animation', 'image', 'photo', 'picture', 'media', 'thumbnail', 'gif']">
 								<MkPreferenceContainer k="disableShowingAnimatedImages">
 									<MkSwitch v-model="disableShowingAnimatedImages">
-										<template #label><SearchLabel>{{ i18n.ts.disableShowingAnimatedImages }}</SearchLabel> <span class="_beta" style="vertical-align: middle;">CherryPick</span></template>
+										<template #label><SearchLabel>{{ i18n.ts.disableShowingAnimatedImages }}</SearchLabel> <span class="_beta" style="vertical-align: middle;">Engawa</span></template>
 										<template #caption><i class="ti ti-alert-triangle" style="color: var(--MI_THEME-warn);"></i> {{ i18n.ts.disableShowingAnimatedImagesDescription }} {{ i18n.ts.disableShowingAnimatedImages_caption }}</template>
 									</MkSwitch>
 								</MkPreferenceContainer>
@@ -1066,7 +1070,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<SearchMarker :keywords="['smooth', 'animation', 'motion', 'reduce']">
 							<MkPreferenceContainer k="smoothTransitionAnimations">
 								<MkSwitch :modelValue="!smoothTransitionAnimations" @update:modelValue="v => smoothTransitionAnimations = !v">
-									<template #label><SearchLabel>{{ i18n.ts._settings.smoothTransitionAnimations }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+									<template #label><SearchLabel>{{ i18n.ts._settings.smoothTransitionAnimations }}</SearchLabel> <span class="_beta">Engawa</span></template>
 									<template #caption><SearchText>{{ i18n.ts.turnOffToImprovePerformance }}</SearchText></template>
 								</MkSwitch>
 							</MkPreferenceContainer>
@@ -1102,7 +1106,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<SearchMarker :keywords="['blur', 'modal', 'bg', 'remove']">
 							<MkPreferenceContainer k="removeModalBgColorForBlur">
 								<MkSwitch v-if="useBlurEffect && useBlurEffectForModal" v-model="removeModalBgColorForBlur">
-									<template #label><SearchLabel>{{ i18n.ts.removeModalBgColorForBlur }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+									<template #label><SearchLabel>{{ i18n.ts.removeModalBgColorForBlur }}</SearchLabel> <span class="_beta">Engawa</span></template>
 								</MkSwitch>
 							</MkPreferenceContainer>
 						</SearchMarker>
@@ -1201,7 +1205,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['auto', 'load', 'more', 'reply', 'replies']">
 								<MkPreferenceContainer k="autoLoadMoreReplies">
 									<MkSwitch v-model="autoLoadMoreReplies">
-										<template #label><SearchLabel>{{ i18n.ts.autoLoadMoreReplies }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+										<template #label><SearchLabel>{{ i18n.ts.autoLoadMoreReplies }}</SearchLabel> <span class="_beta">Engawa</span></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -1209,7 +1213,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['auto', 'load', 'more', 'conversation']">
 								<MkPreferenceContainer k="autoLoadMoreConversation">
 									<MkSwitch v-model="autoLoadMoreConversation">
-										<template #label><SearchLabel>{{ i18n.ts.autoLoadMoreConversation }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+										<template #label><SearchLabel>{{ i18n.ts.autoLoadMoreConversation }}</SearchLabel> <span class="_beta">Engawa</span></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -1217,7 +1221,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['auto', 'translate']">
 								<MkPreferenceContainer k="useAutoTranslate">
 									<MkSwitch v-model="useAutoTranslate" @update:modelValue="learnMoreAutoTranslate">
-										<template #label><SearchLabel>{{ i18n.ts.useAutoTranslate }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+										<template #label><SearchLabel>{{ i18n.ts.useAutoTranslate }}</SearchLabel> <span class="_beta">Engawa</span></template>
 										<template v-if="!$i.policies.canUseAutoTranslate" #caption>{{ i18n.ts.cannotBeUsedFunc }} <a class="_link" @click="learnMoreCantUseAutoTranslate">{{ i18n.ts.learnMore }}</a></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
@@ -1226,7 +1230,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['welcome', 'toast']">
 								<MkPreferenceContainer k="welcomeBackToast">
 									<MkSwitch v-model="welcomeBackToast">
-										<template #label><SearchLabel>{{ i18n.ts.welcomeBackToast }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+										<template #label><SearchLabel>{{ i18n.ts.welcomeBackToast }}</SearchLabel> <span class="_beta">Engawa</span></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -1234,7 +1238,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 							<SearchMarker :keywords="['disable', 'nyaize', 'note']">
 								<MkPreferenceContainer k="disableNyaize">
 									<MkSwitch v-model="disableNyaize">
-										<template #label><SearchLabel>{{ i18n.ts.noNyaization }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+										<template #label><SearchLabel>{{ i18n.ts.noNyaization }}</SearchLabel> <span class="_beta">Engawa</span></template>
 									</MkSwitch>
 								</MkPreferenceContainer>
 							</SearchMarker>
@@ -1251,7 +1255,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 										{ label: i18n.ts._serverDisconnectedBehavior.none, value: 'none' },
 									]"
 								>
-									<template #label><SearchLabel>{{ i18n.ts.whenServerDisconnected }}</SearchLabel> <span class="_beta" style="vertical-align: middle;">CherryPick</span></template>
+									<template #label><SearchLabel>{{ i18n.ts.whenServerDisconnected }}</SearchLabel> <span class="_beta" style="vertical-align: middle;">Engawa</span></template>
 								</MkSelect>
 							</MkPreferenceContainer>
 						</SearchMarker>
@@ -1265,7 +1269,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 										{ label: i18n.ts._requireRefreshBehavior.quiet, value: 'quiet' },
 									]"
 								>
-									<template #label><SearchLabel>{{ i18n.ts.requireRefresh }}</SearchLabel> <span class="_beta" style="vertical-align: middle;">CherryPick</span></template>
+									<template #label><SearchLabel>{{ i18n.ts.requireRefresh }}</SearchLabel> <span class="_beta" style="vertical-align: middle;">Engawa</span></template>
 								</MkSelect>
 							</MkPreferenceContainer>
 						</SearchMarker>
@@ -1280,7 +1284,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 										{ label: i18n.ts._newNoteReceivedNotificationBehavior.none, value: 'none' },
 									]"
 								>
-									<template #label><SearchLabel>{{ i18n.ts.newNoteReceivedNotification }}</SearchLabel> <span class="_beta" style="vertical-align: middle;">CherryPick</span></template>
+									<template #label><SearchLabel>{{ i18n.ts.newNoteReceivedNotification }}</SearchLabel> <span class="_beta" style="vertical-align: middle;">Engawa</span></template>
 								</MkSelect>
 							</MkPreferenceContainer>
 						</SearchMarker>
@@ -1327,21 +1331,21 @@ SPDX-License-Identifier: AGPL-3.0-only
 									{ label: i18n.ts.other, value: 'other' },
 								]"
 							>
-								<template #label><SearchLabel>{{ i18n.ts._searchSite.title }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+								<template #label><SearchLabel>{{ i18n.ts._searchSite.title }}</SearchLabel> <span class="_beta">Engawa</span></template>
 								<template #caption><SearchText>{{ i18n.ts._searchSite.description }}</SearchText></template>
 							</MkSelect>
 
 							<template v-if="store.s.searchEngine == 'other'">
 								<SearchMarker>
 									<MkInput v-model="searchEngineUrl">
-										<template #label><SearchLabel>{{ i18n.ts._searchSite.otherSearchEngine }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+										<template #label><SearchLabel>{{ i18n.ts._searchSite.otherSearchEngine }}</SearchLabel> <span class="_beta">Engawa</span></template>
 										<template #caption><SearchText>{{ i18n.ts._searchSite.otherDescription }}</SearchText></template>
 									</MkInput>
 								</SearchMarker>
 
 								<SearchMarker>
 									<MkInput v-model="searchEngineUrlQuery">
-										<template #label><SearchLabel>{{ i18n.ts._searchSite.query }}</SearchLabel> <span class="_beta">CherryPick</span></template>
+										<template #label><SearchLabel>{{ i18n.ts._searchSite.query }}</SearchLabel> <span class="_beta">Engawa</span></template>
 										<template #caption><SearchText>{{ i18n.ts._searchSite.queryDescription }}</SearchText></template>
 									</MkInput>
 								</SearchMarker>
@@ -1372,7 +1376,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<FormLink to="/settings/statusbar"><template #icon><i class="ti ti-equal-double"></i></template>{{ i18n.ts.statusbar }}</FormLink>
 			<FormLink to="/settings/deck"><template #icon><i class="ti ti-columns"></i></template>{{ i18n.ts.deck }}</FormLink>
 			<FormLink to="/settings/custom-css"><template #icon><i class="ti ti-code"></i></template>{{ i18n.ts.customCss }}</FormLink>
-			<FormLink to="/settings/cherrypick"><template #icon><i class="ti ti-bulb-filled"></i></template>CherryPick</FormLink>
+			<FormLink to="/settings/cherrypick"><template #icon><i class="ti ti-bulb-filled"></i></template>Engawa</FormLink>
 		</div>
 	</div>
 </SearchMarker>

@@ -657,9 +657,6 @@ type BlockingListRequest = operations['blocking___list']['requestBody']['content
 // @public (undocumented)
 type BlockingListResponse = operations['blocking___list']['responses']['200']['content']['application/json'];
 
-// @public (undocumented)
-type Channel = components['schemas']['Channel'];
-
 // Warning: (ae-forgotten-export) The symbol "AnyOf" needs to be exported by the entry point index.d.ts
 //
 // @public (undocumented)
@@ -2153,7 +2150,6 @@ declare namespace entities {
         InviteCode,
         Page,
         PageBlock,
-        Channel,
         QueueCount,
         QueueMetrics,
         QueueJob,
