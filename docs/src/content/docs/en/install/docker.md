@@ -1,7 +1,7 @@
 ---
 title: Installing with Docker
 description: Setting up engawa with Docker Compose and the published container image
-lastUpdated: 2026-10-23
+lastUpdated: 2026-10-25
 sidebar:
   order: 4
 ---
@@ -11,8 +11,8 @@ This page sets up engawa with Docker Compose. The engawa container image is publ
 To set up without Docker, see [Installing with systemd (Ubuntu / Debian)](/engawa/en/install/systemd-ubuntu/) or [Installing with systemd (RHEL family)](/engawa/en/install/systemd-rhel/).
 
 :::note[What you end up with]
-- Three containers managed by Docker Compose: engawa, PostgreSQL and Redis
-- A working directory `~/engawa` holding the configuration and the data (uploaded files, the database and Redis)
+- Three containers managed by Docker Compose: engawa, PostgreSQL and Valkey
+- A working directory `~/engawa` holding the configuration and the data (uploaded files, the database and Valkey)
 - HTTPS served by nginx (or Caddy) on the server
 :::
 
@@ -131,14 +131,14 @@ services:
       - ./.config:/cherrypick/.config:ro
 
   redis:
-    image: redis:7-alpine
+    image: valkey/valkey:9.0-alpine
     restart: always
     networks:
       - internal_network
     volumes:
       - ./redis:/data
     healthcheck:
-      test: "redis-cli ping"
+      test: "valkey-cli ping"
       interval: 5s
       retries: 20
 
@@ -162,7 +162,9 @@ networks:
   external_network:
 ```
 
-`internal_network` cannot reach the outside, and PostgreSQL and Redis are connected only to it. engawa is also connected to `external_network` so it can talk to other servers.
+`internal_network` cannot reach the outside, and PostgreSQL and Valkey are connected only to it. engawa is also connected to `external_network` so it can talk to other servers.
+
+Valkey is a Redis-compatible database. In engawa's config file you point the `redis:` section at it as you would for Redis, so the service is also named `redis`.
 
 If you change `ports` to `"3000:3000"`, the port becomes reachable directly from outside, bypassing the reverse proxy. Keep the `127.0.0.1:` prefix.
 
@@ -337,6 +339,86 @@ Run it in `~/engawa`. The backup contains the entire database. The command creat
 :::
 
 If the release notes describe extra steps, follow them first.
+
+### Migrating from the old setup (PostgreSQL 15 and Redis 7)
+
+Setups based on the `compose_example.yml` from before engawa 1.0.0 use PostgreSQL 15 and Redis 7. The `compose.yml` in this guide uses PostgreSQL 18 and Valkey 9.0, and you cannot migrate just by changing the images.
+
+- PostgreSQL cannot use an old data directory across a major version. Back up the database and restore it into a freshly started PostgreSQL 18
+- The PostgreSQL 18 image stores its data in a different place, so the mount point also changes from `/var/lib/postgresql/data` to `/var/lib/postgresql`. Starting it on the old `db` directory silently creates an empty database instead of failing
+- Valkey 9.0 cannot read data saved by Redis 7 as is and fails to start. Convert it once before starting
+
+Run the following in `~/engawa`.
+
+1. Stop engawa.
+
+   ```bash
+   docker compose stop web
+   ```
+
+2. Back up the database with the command in "Updating" above. Note the path it prints.
+
+3. Stop all containers and move the old database aside. Redis saves its data to the `redis` directory when it stops.
+
+   ```bash
+   docker compose down
+   mv db db-pg15
+   ```
+
+4. Replace `redis` and `db` in `compose.yml` with the following (the same as in "4. Write compose.yml").
+
+   ```yaml
+     redis:
+       image: valkey/valkey:9.0-alpine
+       restart: always
+       networks:
+         - internal_network
+       volumes:
+         - ./redis:/data
+       healthcheck:
+         test: "valkey-cli ping"
+         interval: 5s
+         retries: 20
+
+     db:
+       image: postgres:18-alpine
+       restart: always
+       networks:
+         - internal_network
+       env_file:
+         - .config/docker.env
+       volumes:
+         - ./db:/var/lib/postgresql
+       healthcheck:
+         test: "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"
+         interval: 5s
+         retries: 20
+   ```
+
+5. Convert the Redis data into a format Valkey can read.
+
+   ```bash
+   docker run --rm -v "$PWD/redis:/data" valkey/valkey:9.0-alpine sh -c 'valkey-server --rdb-version-check relaxed --daemonize yes && until valkey-cli ping 2>/dev/null | grep -q PONG; do sleep 1; done && valkey-cli save && valkey-cli shutdown nosave'
+   ```
+
+   If it prints `OK`, the conversion succeeded. Besides caches, Redis holds jobs such as pending deliveries, so converting it is recommended over deleting it.
+
+6. Start PostgreSQL 18 and restore the backup. Replace `~/engawa-backup-XXXX/engawa.sql` with the path you noted in step 2.
+
+   ```bash
+   docker compose up -d --wait db
+   docker compose exec -T db sh -c 'psql -q -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < ~/engawa-backup-XXXX/engawa.sql
+   ```
+
+   The new database and user are created from `POSTGRES_*` in `docker.env`. If you changed `docker.env` after the first start, make it match the `db:` values in `default.yml` first.
+
+7. Start engawa.
+
+   ```bash
+   docker compose up -d
+   ```
+
+Once everything works, you can delete the `db-pg15` directory.
 
 ### Building the image from source
 

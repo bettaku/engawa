@@ -1,7 +1,7 @@
 ---
 title: Dockerでインストールする
 description: Docker Composeと公開済みのコンテナイメージを使って、engawaを構築する手順
-lastUpdated: 2026-10-23
+lastUpdated: 2026-10-25
 sidebar:
   order: 4
 ---
@@ -11,8 +11,8 @@ Docker Compose を使って engawa を構築する手順です。engawa のコ�
 Dockerを使わずに構築する場合は [systemdでインストールする（Ubuntu / Debian）](/engawa/install/systemd-ubuntu/) または [systemdでインストールする（RHEL系）](/engawa/install/systemd-rhel/) を参照してください。
 
 :::note[この手順で作られるもの]
-- engawa本体・PostgreSQL・Redis の3つのコンテナ（Docker Compose で管理）
-- 作業ディレクトリ `~/engawa`（設定ファイルと、アップロードされたファイル・データベース・Redisのデータ）
+- engawa本体・PostgreSQL・Valkey の3つのコンテナ（Docker Compose で管理）
+- 作業ディレクトリ `~/engawa`（設定ファイルと、アップロードされたファイル・データベース・Valkeyのデータ）
 - サーバー上の nginx（またはCaddy）によるHTTPS配信
 :::
 
@@ -131,14 +131,14 @@ services:
       - ./.config:/cherrypick/.config:ro
 
   redis:
-    image: redis:7-alpine
+    image: valkey/valkey:9.0-alpine
     restart: always
     networks:
       - internal_network
     volumes:
       - ./redis:/data
     healthcheck:
-      test: "redis-cli ping"
+      test: "valkey-cli ping"
       interval: 5s
       retries: 20
 
@@ -162,7 +162,9 @@ networks:
   external_network:
 ```
 
-`internal_network` は外部と通信できないネットワークで、PostgreSQLとRedisはこちらにだけつながります。engawa本体は、他のサーバーと通信するために `external_network` にもつながります。
+`internal_network` は外部と通信できないネットワークで、PostgreSQLとValkeyはこちらにだけつながります。engawa本体は、他のサーバーと通信するために `external_network` にもつながります。
+
+ValkeyはRedis互換のデータベースです。engawaの設定ファイルではRedisと同じく `redis:` の項目に接続先を書くので、サービス名も `redis` にしています。
 
 `ports` を `"3000:3000"` にすると、リバースプロキシを通さずに外部から直接つながってしまいます。`127.0.0.1:` を外さないでください。
 
@@ -337,6 +339,86 @@ docker compose up -d
 :::
 
 リリースノートに個別の作業が書かれている場合は、そちらを優先してください。
+
+### 以前の構成（PostgreSQL 15・Redis 7）から移行する
+
+engawa 1.0.0 より前の `compose_example.yml` を元にした環境では、PostgreSQL 15 と Redis 7 を使っています。この手順の `compose.yml` は PostgreSQL 18 と Valkey 9.0 を使うので、イメージを書き換えるだけでは移行できません。
+
+- PostgreSQLは、メジャーバージョンが変わると古いデータディレクトリをそのまま使えません。バックアップを取り、空の状態で起動したPostgreSQL 18にリストアします
+- PostgreSQL 18のイメージはデータの置き場所が変わったため、マウント先も `/var/lib/postgresql/data` から `/var/lib/postgresql` に変わります。古い `db` ディレクトリのまま起動すると、エラーにならずに空のデータベースが作られてしまいます
+- Valkey 9.0は、Redis 7が保存したデータをそのままでは読めず、起動に失敗します。一度だけ変換してから起動します
+
+以下は `~/engawa` で実行してください。
+
+1. engawaを止めます。
+
+   ```bash
+   docker compose stop web
+   ```
+
+2. 上の「アップデートのしかた」のコマンドで、データベースのバックアップを取ります。表示された保存先のパスを控えておきます。
+
+3. すべてのコンテナを止めて、古いデータベースを退避します。Redisは、止まるときにデータを `redis` ディレクトリに保存します。
+
+   ```bash
+   docker compose down
+   mv db db-pg15
+   ```
+
+4. `compose.yml` の `redis` と `db` を、次の内容に書き換えます（「4. compose.yml を書く」と同じ内容です）。
+
+   ```yaml
+     redis:
+       image: valkey/valkey:9.0-alpine
+       restart: always
+       networks:
+         - internal_network
+       volumes:
+         - ./redis:/data
+       healthcheck:
+         test: "valkey-cli ping"
+         interval: 5s
+         retries: 20
+
+     db:
+       image: postgres:18-alpine
+       restart: always
+       networks:
+         - internal_network
+       env_file:
+         - .config/docker.env
+       volumes:
+         - ./db:/var/lib/postgresql
+       healthcheck:
+         test: "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"
+         interval: 5s
+         retries: 20
+   ```
+
+5. Redisのデータを、Valkeyが読める形式に変換します。
+
+   ```bash
+   docker run --rm -v "$PWD/redis:/data" valkey/valkey:9.0-alpine sh -c 'valkey-server --rdb-version-check relaxed --daemonize yes && until valkey-cli ping 2>/dev/null | grep -q PONG; do sleep 1; done && valkey-cli save && valkey-cli shutdown nosave'
+   ```
+
+   `OK` と表示されれば変換できています。Redisにはキャッシュのほか、配送待ちのジョブなども入っているので、削除せずに変換することをおすすめします。
+
+6. PostgreSQL 18を起動して、バックアップをリストアします。`~/engawa-backup-XXXX/engawa.sql` は、手順2で控えたパスに置き換えます。
+
+   ```bash
+   docker compose up -d --wait db
+   docker compose exec -T db sh -c 'psql -q -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < ~/engawa-backup-XXXX/engawa.sql
+   ```
+
+   新しいデータベースとユーザーは `docker.env` の `POSTGRES_*` で作られます。`docker.env` を後から書き換えていた場合は、先に `default.yml` の `db:` の値と合わせておいてください。
+
+7. engawaを起動します。
+
+   ```bash
+   docker compose up -d
+   ```
+
+動作に問題がないことを確認したら、`db-pg15` ディレクトリは削除して構いません。
 
 ### ソースコードからイメージをビルドする
 
