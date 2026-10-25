@@ -61,6 +61,9 @@
 
 ### Server
 - fix(docker): pnpm 11 への更新後、コンテナイメージが起動直後に `pnpm install` を走らせようとして起動できなかった問題を修正
+- enhance(docker): `compose_example.yml` の PostgreSQL を 15 から 18 に更新
+	- PostgreSQL 18 のイメージに合わせて、ボリュームのマウント先を `/var/lib/postgresql/data` から `/var/lib/postgresql` に変更しました（データは `./db/18/docker` に置かれます）
+	- 既存の環境では、イメージを書き換えるだけでは移行できません。`pg_dump` でバックアップを取り、新しい空の `db` ディレクトリで起動してからリストアしてください
 - fix(backend): chat
 	- チャットの連合機能に関する不具合の修正
 - fix(backend): Hacker's Pubなどのh2タグ内にハッシュタグから始まるidを持っているHTMLが来た場合、無視するように
