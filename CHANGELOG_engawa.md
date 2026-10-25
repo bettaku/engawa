@@ -14,6 +14,20 @@
 - 
 -->
 
+## x.x.x (unreleased)
+
+### General
+- 
+
+### Client
+- 
+
+### Server
+- 
+
+### Misc
+- 
+
 ## 1.0.0
 
 ### NOTE
