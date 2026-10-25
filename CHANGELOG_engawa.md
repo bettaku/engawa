@@ -61,9 +61,16 @@
 
 ### Server
 - fix(docker): pnpm 11 への更新後、コンテナイメージが起動直後に `pnpm install` を走らせようとして起動できなかった問題を修正
-- enhance(docker): `compose_example.yml` の PostgreSQL を 15 から 18 に更新
+- enhance(docker): `compose_example.yml` の PostgreSQL を 15 から 18 に、Redis 7 を Valkey 9.0 に更新
 	- PostgreSQL 18 のイメージに合わせて、ボリュームのマウント先を `/var/lib/postgresql/data` から `/var/lib/postgresql` に変更しました（データは `./db/18/docker` に置かれます）
-	- 既存の環境では、イメージを書き換えるだけでは移行できません。`pg_dump` でバックアップを取り、新しい空の `db` ディレクトリで起動してからリストアしてください
+	- Valkey は Redis 互換で、サービス名は `redis` のままなので、`default.yml` の `redis:` の設定は変更不要です
+	- **既存の環境では、イメージを書き換えるだけでは移行できません**。古い `db` ディレクトリのまま起動すると、エラーにならずに空のデータベースが作られます。また、Redis 7 が保存したデータが残っていると Valkey が起動しません。次の手順で移行してください
+		1. `docker compose stop web` で engawa を止め、`docker compose exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' > engawa.sql` でバックアップを取る
+		2. `docker compose down` で止め（Redis はデータを保存してから止まります）、`mv db db-pg15` で古いデータベースを退避する
+		3. `compose.yml` の `redis` と `db` を新しい `compose_example.yml` と同じ内容に書き換える
+		4. `docker run --rm -v "$PWD/redis:/data" valkey/valkey:9.0-alpine sh -c 'valkey-server --rdb-version-check relaxed --daemonize yes && until valkey-cli ping 2>/dev/null | grep -q PONG; do sleep 1; done && valkey-cli save && valkey-cli shutdown nosave'` で Redis のデータを Valkey 用に変換する
+		5. `docker compose up -d --wait db` で PostgreSQL 18 を起動し、`docker compose exec -T db sh -c 'psql -q -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < engawa.sql` でリストアする
+		6. `docker compose up -d` で起動し、問題がなければ `db-pg15` を削除する
 - fix(backend): chat
 	- チャットの連合機能に関する不具合の修正
 - fix(backend): Hacker's Pubなどのh2タグ内にハッシュタグから始まるidを持っているHTMLが来た場合、無視するように
@@ -82,6 +89,9 @@
 ### Misc
 - chore: パッケージマネージャーを pnpm v11 に更新
 	- `.npmrc` の設定と build 許可リスト（`allowBuilds`）を `pnpm-workspace.yaml` に移行
+- chore(dev): 開発用の `compose.local-db.yml` と devcontainer で、PostgreSQL 18 と Valkey 9.0 を使うように
+	- 既存のデータベースは引き継がれません。必要なら `pg_dump` でバックアップを取ってから更新してください
+	- 既存の Redis 7 のデータ（`./redis` や devcontainer の `redis-data` ボリューム）が残っていると Valkey が起動しないため、削除してください
 - enhance(ci): Issueラベルの自動管理化
 - chore(docs): Improve Issue Template
 - refactor(backend): テスト基盤をJestからVitestに移行

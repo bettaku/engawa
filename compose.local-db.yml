@@ -3,25 +3,25 @@
 services:
   redis:
     restart: unless-stopped
-    image: redis:7-alpine
+    image: valkey/valkey:9.0-alpine
     ports:
       - "6379:6379"
     volumes:
       - ./redis:/data
     healthcheck:
-      test: "redis-cli ping"
+      test: "valkey-cli ping"
       interval: 5s
       retries: 20
 
   db:
     restart: unless-stopped
-    image: postgres:15-alpine
+    image: postgres:18-alpine
     ports:
       - "5432:5432"
     env_file:
       - .config/docker.env
     volumes:
-      - ./db:/var/lib/postgresql/data
+      - ./db:/var/lib/postgresql
     healthcheck:
       test: "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"
       interval: 5s
