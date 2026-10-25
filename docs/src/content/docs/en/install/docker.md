@@ -305,22 +305,10 @@ Open `https://example.com` in a browser. You are done when the initial setup scr
 
 ## Updating
 
-When a new version is released, read the release notes, then change the tag in `image:` in `compose.yml` to the new version.
-
-```bash
-cd ~/engawa
-nano compose.yml
-```
-
-Pull the image and recreate the container. Migrations run automatically on startup.
-
-```bash
-docker compose pull
-docker compose up -d
-```
+When a new version is released, read the release notes first.
 
 :::caution
-Back up the database before updating. Migrations are hard to undo.
+Back up the database before you update the image. The new image runs migrations on startup, and migrations are hard to undo.
 
 ```bash
 (
@@ -337,6 +325,20 @@ Back up the database before updating. Migrations are hard to undo.
 
 Run it in `~/engawa`. The backup contains the entire database. The command creates a directory readable only by you each time it runs, saves the dump there, and prints its path on success. If no path is printed, it failed, and the working directory is removed automatically.
 :::
+
+Then change the tag in `image:` in `compose.yml` to the new version.
+
+```bash
+cd ~/engawa
+nano compose.yml
+```
+
+Pull the image and recreate the container. Migrations run automatically on startup.
+
+```bash
+docker compose pull
+docker compose up -d
+```
 
 If the release notes describe extra steps, follow them first.
 
@@ -358,11 +360,12 @@ Run the following in `~/engawa`.
 
 2. Back up the database with the command in "Updating" above. Note the path it prints.
 
-3. Stop all containers and move the old database aside. Redis saves its data to the `redis` directory when it stops.
+3. Stop all containers and move the old database and the Redis data aside. Redis saves its data to the `redis` directory when it stops. The conversion in step 5 rewrites the `redis` directory, so copy the original data to `redis-7` first.
 
    ```bash
    docker compose down
    mv db db-pg15
+   sudo cp -a redis redis-7
    ```
 
 4. Replace `redis` and `db` in `compose.yml` with the following (the same as in "4. Write compose.yml").
@@ -418,7 +421,7 @@ Run the following in `~/engawa`.
    docker compose up -d
    ```
 
-Once everything works, you can delete the `db-pg15` directory.
+Once everything works, you can delete the `db-pg15` and `redis-7` directories. If the migration fails, restore `compose.yml`, move `db-pg15` back to `db` and `redis-7` back to `redis`, and the previous setup will start again.
 
 ### Building the image from source
 
