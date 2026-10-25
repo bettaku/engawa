@@ -8,7 +8,7 @@ sidebar:
 
 This page walks through building engawa from scratch on Ubuntu 24.04 LTS. Debian 12 uses the same package names, so the steps apply there almost unchanged.
 
-If you want to use Docker, follow the Docker guide instead. For RHEL-family systems (AlmaLinux, Rocky Linux, RHEL), see [Installing with systemd (RHEL family)](/engawa/en/install/systemd-rhel/).
+If you want to use Docker, follow [Installing with Docker](/engawa/en/install/docker/) instead. For RHEL-family systems (AlmaLinux, Rocky Linux, RHEL), see [Installing with systemd (RHEL family)](/engawa/en/install/systemd-rhel/).
 
 :::note[What you end up with]
 - engawa itself, in `/home/engawa/engawa`
