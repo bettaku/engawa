@@ -5,11 +5,10 @@
 
 process.env.NODE_ENV = 'test';
 
-import { jest } from '@jest/globals';
+import { type Mocked, vi } from 'vitest';
+import { generateMock } from '../mocker.js';
 import { Test } from '@nestjs/testing';
-import { ModuleMocker } from 'jest-mock';
 import type { TestingModule } from '@nestjs/testing';
-import type { MockFunctionMetadata } from 'jest-mock';
 import { ApRendererService } from '@/core/activitypub/ApRendererService.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { IdService } from '@/core/IdService.js';
@@ -19,12 +18,10 @@ import { SystemAccountService } from '@/core/SystemAccountService.js';
 import { GlobalModule } from '@/GlobalModule.js';
 import { UtilityService } from '@/core/UtilityService.js';
 
-const moduleMocker = new ModuleMocker(global);
-
 describe('RelayService', () => {
 	let app: TestingModule;
 	let relayService: RelayService;
-	let queueService: jest.Mocked<QueueService>;
+	let queueService: Mocked<QueueService>;
 
 	beforeAll(async () => {
 		app = await Test.createTestingModule({
@@ -42,12 +39,10 @@ describe('RelayService', () => {
 		})
 			.useMocker((token) => {
 				if (token === QueueService) {
-					return { deliver: jest.fn() };
+					return { deliver: vi.fn() };
 				}
 				if (typeof token === 'function') {
-					const mockMetadata = moduleMocker.getMetadata(token) as MockFunctionMetadata<any, any>;
-					const Mock = moduleMocker.generateFromMetadata(mockMetadata);
-					return new Mock();
+					return generateMock(token as any);
 				}
 			})
 			.compile();
@@ -55,7 +50,7 @@ describe('RelayService', () => {
 		app.enableShutdownHooks();
 
 		relayService = app.get<RelayService>(RelayService);
-		queueService = app.get<QueueService>(QueueService) as jest.Mocked<QueueService>;
+		queueService = app.get<QueueService>(QueueService) as Mocked<QueueService>;
 	});
 
 	afterAll(async () => {

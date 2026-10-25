@@ -1,10 +1,13 @@
-name: Check the description in CHANGELOG_CHERRYPICK.md
+name: Check the description in CHANGELOG_engawa.md
 
 on:
   pull_request:
     branches:
-      - master
+      - main
       - develop
+
+permissions:
+  contents: read
 
 jobs:
   check-changelog:
@@ -12,11 +15,17 @@ jobs:
 
     steps:
       - name: Checkout head
-        uses: actions/checkout@v4.3.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
       - name: Setup Node.js
-        uses: actions/setup-node@v4.4.0
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version-file: '.node-version'
+
+      - name: Install dependencies
+        run: pnpm --filter changelog-checker install
 
       - name: Checkout base
         run: |
@@ -24,20 +33,21 @@ jobs:
           cp -r .git _base/.git
           cd _base
           git fetch --depth 1 origin ${{ github.base_ref }}
-          git checkout origin/${{ github.base_ref }} CHANGELOG_CHERRYPICK.md
+          git checkout origin/${{ github.base_ref }} CHANGELOG_engawa.md
 
-      - name: Copy to Checker directory for CHANGELOG_CHERRYPICK-base.md
-        run: cp _base/CHANGELOG_CHERRYPICK.md scripts/changelog-checker/CHANGELOG_CHERRYPICK-base.md
-      - name: Copy to Checker directory for CHANGELOG_CHERRYPICK-head.md
-        run: cp CHANGELOG_CHERRYPICK.md scripts/changelog-checker/CHANGELOG_CHERRYPICK-head.md
+      - name: Copy to Checker directory for CHANGELOG_engawa-base.md
+        run: cp _base/CHANGELOG_engawa.md packages-internal/changelog-checker/CHANGELOG_engawa-base.md
+      - name: Copy to Checker directory for CHANGELOG_engawa-head.md
+        run: cp CHANGELOG_engawa.md packages-internal/changelog-checker/CHANGELOG_engawa-head.md
+      # アーカイブに移したリリースは、base側との比較から除く
+      - name: Copy to Checker directory for CHANGELOG_engawa-archived.md
+        run: |
+          if [ -f CHANGELOG_engawa_archived.md ]; then
+            cp CHANGELOG_engawa_archived.md packages-internal/changelog-checker/CHANGELOG_engawa-archived.md
+          fi
       - name: diff
         continue-on-error: true
-        run: diff -u CHANGELOG_CHERRYPICK-base.md CHANGELOG_CHERRYPICK-head.md
-        working-directory: scripts/changelog-checker
-
-      - name: Setup Checker
-        run: npm install
-        working-directory: scripts/changelog-checker
+        run: diff -u CHANGELOG_engawa-base.md CHANGELOG_engawa-head.md
+        working-directory: packages-internal/changelog-checker
       - name: Run Checker
-        run: npm run run
-        working-directory: scripts/changelog-checker
+        run: pnpm --filter changelog-checker run check

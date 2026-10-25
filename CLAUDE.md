@@ -25,7 +25,7 @@ pnpm migrate          # TypeORMマイグレーション実行
 pnpm lint             # 全リンター実行（typecheck + ESLint）
 pnpm biome-lint       # typecheck + Biome lint
 pnpm test             # 全パッケージのテスト
-pnpm jest             # バックエンドユニットテストのみ
+pnpm vitest           # バックエンドユニットテストのみ
 pnpm typecheck        # TypeScript型チェック（emit なし）
 ```
 
@@ -100,7 +100,7 @@ type一覧: `fix`、`refactor`、`feat`、`enhance`、`perf`、`chore`
 - 非自明な機能追加・バグ修正はIssueで設計を議論してから実装する
 - UI変更にはスクリーンショットをPRに添付する
 - PRを出す前に `pnpm test` と `pnpm lint` を通す
-- ユーザー向けの変更は `CHANGELOG_CHERRYPICK.md` に追記する
+- ユーザー向けの変更は `CHANGELOG_engawa.md` に追記する
 
 ## よくあるハマりポイント
 

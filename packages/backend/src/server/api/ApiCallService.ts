@@ -66,7 +66,7 @@ export class ApiCallService implements OnApplicationShutdown {
 	#sendApiError(reply: FastifyReply, err: ApiError): void {
 		let statusCode = err.httpStatusCode;
 		if (err.httpStatusCode === 401) {
-			reply.header('WWW-Authenticate', 'Bearer realm="CherryPick"');
+			reply.header('WWW-Authenticate', 'Bearer realm="Engawa"');
 		} else if (err.code === 'RATE_LIMIT_EXCEEDED') {
 			const info: unknown = err.info;
 			const unixEpochInSeconds = Date.now();
@@ -78,12 +78,12 @@ export class ApiCallService implements OnApplicationShutdown {
 				this.logger.warn(`rate limit information has unexpected type ${typeof(err.info?.reset)}`);
 			}
 		} else if (err.kind === 'client') {
-			reply.header('WWW-Authenticate', `Bearer realm="CherryPick", error="invalid_request", error_description="${err.message}"`);
+			reply.header('WWW-Authenticate', `Bearer realm="Engawa", error="invalid_request", error_description="${err.message}"`);
 			statusCode = statusCode ?? 400;
 		} else if (err.kind === 'permission') {
 			// (ROLE_PERMISSION_DENIEDは関係ない)
 			if (err.code === 'PERMISSION_DENIED') {
-				reply.header('WWW-Authenticate', `Bearer realm="CherryPick", error="insufficient_scope", error_description="${err.message}"`);
+				reply.header('WWW-Authenticate', `Bearer realm="Engawa", error="insufficient_scope", error_description="${err.message}"`);
 			}
 			statusCode = statusCode ?? 403;
 		} else if (!statusCode) {
@@ -95,7 +95,7 @@ export class ApiCallService implements OnApplicationShutdown {
 	#sendAuthenticationError(reply: FastifyReply, err: unknown): void {
 		if (err instanceof AuthenticationError) {
 			const message = 'Authentication failed. Please ensure your token is correct.';
-			reply.header('WWW-Authenticate', `Bearer realm="CherryPick", error="invalid_token", error_description="${message}"`);
+			reply.header('WWW-Authenticate', `Bearer realm="Engawa", error="invalid_token", error_description="${message}"`);
 			this.send(reply, 401, new ApiError({
 				message: 'Authentication failed. Please ensure your token is correct.',
 				code: 'AUTHENTICATION_FAILED',
@@ -203,46 +203,50 @@ export class ApiCallService implements OnApplicationShutdown {
 		}
 
 		const [path, cleanup] = await createTemp();
-		await stream.pipeline(multipartData.file, fs.createWriteStream(path));
+		try {
+			await stream.pipeline(multipartData.file, fs.createWriteStream(path));
 
-		// ファイルサイズが制限を超えていた場合
-		// なお truncated はストリームを読み切ってからでないと機能しないため、stream.pipeline より後にある必要がある
-		if (multipartData.file.truncated) {
-			cleanup();
-			reply.code(413);
-			reply.send();
-			return;
-		}
-
-		const fields = {} as Record<string, unknown>;
-		for (const [k, v] of Object.entries(multipartData.fields)) {
-			fields[k] = typeof v === 'object' && 'value' in v ? v.value : undefined;
-		}
-
-		// https://datatracker.ietf.org/doc/html/rfc6750.html#section-2.1 (case sensitive)
-		const token = request.headers.authorization?.startsWith('Bearer ')
-			? request.headers.authorization.slice(7)
-			: fields['i'];
-		if (token != null && typeof token !== 'string') {
-			reply.code(400);
-			return;
-		}
-		this.authenticateService.authenticate(token).then(([user, app, flashToken]) => {
-			this.call(endpoint, user, app, flashToken, fields, {
-				name: multipartData.filename,
-				path: path,
-			}, request).then((res) => {
-				this.send(reply, res);
-			}).catch((err: ApiError) => {
-				this.#sendApiError(reply, err);
-			});
-
-			if (user) {
-				this.logIp(request, user);
+			// ファイルサイズが制限を超えていた場合
+			// なお truncated はストリームを読み切ってからでないと機能しないため、stream.pipeline より後にある必要がある
+			if (multipartData.file.truncated) {
+				reply.code(413);
+				reply.send();
+				return;
 			}
-		}).catch(err => {
-			this.#sendAuthenticationError(reply, err);
-		});
+
+			const fields = {} as Record<string, unknown>;
+			for (const [k, v] of Object.entries(multipartData.fields)) {
+				fields[k] = typeof v === 'object' && 'value' in v ? v.value : undefined;
+			}
+
+			// https://datatracker.ietf.org/doc/html/rfc6750.html#section-2.1 (case sensitive)
+			const token = request.headers.authorization?.startsWith('Bearer ')
+				? request.headers.authorization.slice(7)
+				: fields['i'];
+			if (token != null && typeof token !== 'string') {
+				reply.code(400);
+				reply.send();
+				return;
+			}
+			await this.authenticateService.authenticate(token).then(async ([user, app, flashToken]) => {
+				await this.call(endpoint, user, app, flashToken, fields, {
+					name: multipartData.filename,
+					path: path,
+				}, request).then((res) => {
+					this.send(reply, res);
+				}).catch((err: ApiError) => {
+					this.#sendApiError(reply, err);
+				});
+
+				if (user) {
+					this.logIp(request, user);
+				}
+			}).catch(err => {
+				this.#sendAuthenticationError(reply, err);
+			});
+		} finally {
+			cleanup();
+		}
 	}
 
 	@bindThis

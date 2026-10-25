@@ -20,7 +20,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<div :class="$style.itemActionWrapper">
 				<MkButton :iconOnly="true" rounded @click="emit('showMenu', item, $event)"><i class="ti ti-dots"></i></MkButton>
 			</div>
-			<div :class="$style.itemThumbnail" :style="{ backgroundImage: `url(${ item.thumbnail })` }" @click="onThumbnailClick(item, $event)"></div>
+			<div :class="$style.itemThumbnail" :style="{ backgroundImage: `url(${ item.thumbnail })` }" @click="onThumbnailClick(item, $event)">
+				<div v-if="item.caption != null && item.caption.length > 0" :class="$style.itemAlt">ALT</div>
+			</div>
 			<div :class="$style.itemBody">
 				<div>
 					<i v-if="item.isSensitive" style="color: var(--MI_THEME-warn); margin-right: 0.5em;" class="ti ti-eye-exclamation"></i>
@@ -152,6 +154,22 @@ function onThumbnailClick(item: UploaderItem, ev: MouseEvent) {
 	background-position: center;
 	background-repeat: no-repeat;
 	border-radius: 6px;
+	position: relative;
+}
+
+.itemAlt {
+	position: absolute;
+	bottom: 4px;
+	left: 4px;
+	padding: 0 4px;
+	border-radius: 4px;
+	/* MkMediaImageのインジケーターと揃える */
+	background-color: black;
+	color: hsl(from var(--MI_THEME-accent) h s calc(l + 10));
+	font-size: 0.7em;
+	font-weight: bold;
+	line-height: 1.5;
+	pointer-events: none;
 }
 
 .itemBody {

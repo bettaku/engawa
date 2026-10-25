@@ -606,7 +606,7 @@ describe('OAuth', () => {
 				bearer: true,
 			});
 			assert.strictEqual(createResult.status, 403);
-			assert.ok(createResult.headers.get('WWW-Authenticate')?.startsWith('Bearer realm="CherryPick", error="insufficient_scope", error_description'));
+			assert.ok(createResult.headers.get('WWW-Authenticate')?.startsWith('Bearer realm="Engawa", error="insufficient_scope", error_description'));
 		});
 	});
 

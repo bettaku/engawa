@@ -16,19 +16,19 @@ services:
 
   redis:
     restart: unless-stopped
-    image: redis:7-alpine
+    image: valkey/valkey:9.0-alpine
     networks:
       - internal_network
     volumes:
       - redis-data:/data
     healthcheck:
-      test: "redis-cli ping"
+      test: "valkey-cli ping"
       interval: 5s
       retries: 20
 
   db:
     restart: unless-stopped
-    image: postgres:15-alpine
+    image: postgres:18-alpine
     networks:
       - internal_network
     environment:
@@ -36,7 +36,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: cherrypick
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql
     healthcheck:
       test: "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"
       interval: 5s

@@ -101,7 +101,7 @@ const numbersOpacityFactor = 0.35;
 
 const props = withDefaults(defineProps<{
 	thickness?: number;
-	offset?: number;
+	tz?: string;
 	twentyfour?: boolean;
 	graduations?: 'none' | 'dots' | 'numbers';
 	fadeGraduations?: boolean;
@@ -110,7 +110,7 @@ const props = withDefaults(defineProps<{
 }>(), {
 	numbers: false,
 	thickness: 0.1,
-	offset: 0 - new Date().getTimezoneOffset(),
+	tz: 'UTC',
 	twentyfour: false,
 	graduations: 'dots',
 	fadeGraduations: true,
@@ -156,13 +156,19 @@ const sLine = ref<SVGPathElement>();
 
 function tick() {
 	const now = props.now();
-	now.setMinutes(now.getMinutes() + now.getTimezoneOffset() + props.offset);
+	const formatter = new Intl.DateTimeFormat('en-US', {
+		timeZone: props.tz,
+		hour: '2-digit',
+		minute: '2-digit',
+		second: '2-digit',
+		hour12: false,
+	});
 	const previousS = s.value;
 	const previousM = m.value;
 	const previousH = h.value;
-	s.value = now.getSeconds();
-	m.value = now.getMinutes();
-	h.value = now.getHours();
+	s.value = Number(formatter.formatToParts(now).find((part) => part.type === 'second')?.value ?? 0);
+	m.value = Number(formatter.formatToParts(now).find((part) => part.type === 'minute')?.value ?? 0);
+	h.value = Number(formatter.formatToParts(now).find((part) => part.type === 'hour')?.value ?? 0);
 	if (previousS === s.value && previousM === m.value && previousH === h.value) {
 		return;
 	}

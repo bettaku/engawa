@@ -29,7 +29,7 @@ Once Phase 1 is complete and an environment conducive to the development of a st
 ## (3) Improve scalability
 Once the development of the feature has settled down, this may be an opportunity to make larger modifications.
 
-- Rewriting in Rust?
+- Rewriting in Rust? See the [backend Rust migration plan (Japanese)](docs/RUST_BACKEND_MIGRATION_PLAN.md) for the proposed phases, compatibility requirements, and rollout criteria.
 
 ## (4) Change the world
 It is time to promote Misskey and change the world.

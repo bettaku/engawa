@@ -14,38 +14,67 @@ on:
       - packages/backend/**
       - packages/cherrypick-js/**
       - .github/workflows/test-federation.yml
+  schedule:
+    # Nightly full-matrix run (also covers the minimum supported Node version).
+    - cron: '0 15 * * *'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
 jobs:
+  # Pull requests run only against the default Node version to keep them fast.
+  # Pushes to master/develop, the nightly schedule and manual dispatches run the
+  # full matrix including the minimum and the maximum supported Node versions.
+  setup:
+    name: Setup matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+    steps:
+      - id: set
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo 'matrix={"node-version-file":[".node-version"]}' >> "$GITHUB_OUTPUT"
+          else
+            echo 'matrix={"node-version-file":[".node-version",".github/min.node-version",".github/max.node-version"]}' >> "$GITHUB_OUTPUT"
+          fi
+
   test:
     name: Federation test
+    needs: setup
     runs-on: ubuntu-latest
     strategy:
-      matrix:
-        node-version-file:
-          - .node-version
-          - .github/min.node-version
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.setup.outputs.matrix) }}
     steps:
-      - uses: actions/checkout@v4.3.0
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
         with:
+          persist-credentials: false
           submodules: true
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6.0.3
-      - name: Install FFmpeg
-        run: |
-          sudo apt install -y ffmpeg
-      - name: Use Node.js
-        uses: actions/setup-node@v4.4.0
+      - name: Set NODE_VERSION
+        run: echo "NODE_VERSION=$(cat ${{ matrix.node-version-file }})" >> $GITHUB_ENV
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      # Build the shared federation image once. Every container (app servers, tester, daemon)
+      # reuses this image, so dependencies are installed and the project is built only once.
+      - name: Build federation image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
-          node-version-file: ${{ matrix.node-version-file }}
-          cache: 'pnpm'
-      - name: Build CherryPick
-        run: |
-          pnpm i --frozen-lockfile
-          pnpm build
+          context: .
+          file: ./packages/backend/test-federation/Dockerfile
+          build-args: |
+            NODE_VERSION=${{ env.NODE_VERSION }}
+          tags: cherrypick.local:${{ env.NODE_VERSION }}
+          load: true
+          cache-from: type=gha,scope=fed-${{ env.NODE_VERSION }}
+          cache-to: type=gha,mode=max,scope=fed-${{ env.NODE_VERSION }}
       - name: Setup
         run: |
-          echo "NODE_VERSION=$(cat ${{ matrix.node-version-file }})" >> $GITHUB_ENV
           cd packages/backend/test-federation
           bash ./setup.sh
           sudo chmod 644 ./certificates/*.test.key

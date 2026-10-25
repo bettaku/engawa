@@ -11,6 +11,7 @@ import { instance } from '@/instance.js';
 import { i18n } from '@/i18n.js';
 import { $i } from '@/i.js';
 import { prefer } from '@/preferences.js';
+import { store } from '@/store.js';
 
 function toolsMenuItems(): MenuItem[] {
 	const items: MenuItem[] = [{
@@ -54,8 +55,10 @@ function toolsMenuItems(): MenuItem[] {
 			text: i18n.ts.replayUserSetupDialog,
 			icon: 'ti ti-list-numbers',
 			action: () => {
-				prefer.commit('accountSetupWizard', 0);
-				os.popup(defineAsyncComponent(() => import('@/components/MkUserSetupDialog.vue')), {}, {}, 'closed');
+				store.set('accountSetupWizard', 0);
+				const { dispose } = os.popup(defineAsyncComponent(() => import('@/components/MkUserSetupDialog.vue')), {}, {
+					closed: () => dispose(),
+				});
 			},
 		});
 	}
@@ -173,7 +176,7 @@ export function openInstanceMenu(ev: MouseEvent) {
 				type: 'a',
 				text: i18n.ts.document,
 				icon: 'ti ti-bulb',
-				href: 'https://misskey-hub.net/docs/for-users/',
+				href: 'https://bettaku.github.io/engawa/',
 				target: '_blank',
 			}, {
 				type: 'link',

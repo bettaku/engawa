@@ -722,6 +722,9 @@ export const PREF_DEF = definePreferences({
 	useShiftEnterToSend: {
 		default: false,
 	},
+	alsoUseCtrlEnterToSend: {
+		default: false,
+	},
 	postFormVisibilityHotkey: {
 		default: true,
 	},

@@ -19,6 +19,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<div v-if="element.isSensitive" :class="$style.sensitive">
 					<i class="ti ti-eye-exclamation" style="margin: auto;"></i>
 				</div>
+				<div v-if="element.comment != null && element.comment.length > 0" :class="$style.alt">ALT</div>
 			</div>
 		</template>
 	</Sortable>
@@ -248,6 +249,22 @@ function showFileMenu(file: Misskey.entities.DriveFile, ev: MouseEvent | Keyboar
 	z-index: 2;
 	background: rgba(17, 17, 17, .7);
 	color: #fff;
+}
+
+.alt {
+	position: absolute;
+	bottom: 4px;
+	left: 4px;
+	z-index: 3;
+	padding: 0 4px;
+	border-radius: 4px;
+	/* MkMediaImageのインジケーターと揃える */
+	background-color: black;
+	color: hsl(from var(--MI_THEME-accent) h s calc(l + 10));
+	font-size: 0.7em;
+	font-weight: bold;
+	line-height: 1.5;
+	pointer-events: none;
 }
 
 .remain {

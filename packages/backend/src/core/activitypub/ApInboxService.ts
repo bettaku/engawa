@@ -4,7 +4,7 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { In } from 'typeorm';
+import { In, IsNull } from 'typeorm';
 import { DI } from '@/di-symbols.js';
 import type { Config } from '@/config.js';
 import { UserFollowingService } from '@/core/UserFollowingService.js';
@@ -30,6 +30,7 @@ import { QueueService } from '@/core/QueueService.js';
 import type { UsersRepository, NotesRepository, FollowingsRepository, AbuseUserReportsRepository, FollowRequestsRepository, MiMeta, ChatMessagesRepository, ChatRoomsRepository, ChatRoomInvitationsRepository, ChatRoomMembershipsRepository } from '@/models/_.js';
 import { bindThis } from '@/decorators.js';
 import type { MiRemoteUser } from '@/models/User.js';
+import type { MiChatRoom } from '@/models/ChatRoom.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { AbuseReportService } from '@/core/AbuseReportService.js';
 import { IdentifiableError } from '@/misc/identifiable-error.js';
@@ -284,6 +285,25 @@ export class ApInboxService {
 		return 'ok';
 	}
 
+	/**
+	 * Resolve a local `chat_room` row from a (possibly remote) room URI.
+	 * Local rooms are matched by their real primary key (host column is null);
+	 * remote rooms are matched by their full federation URI, never by the raw id
+	 * extracted from the path — otherwise a remote URI could resolve to a local room
+	 * that happens to share the same id.
+	 */
+	@bindThis
+	private async resolveChatRoomByUri(roomUri: string): Promise<MiChatRoom | null> {
+		const roomIdMatch = roomUri.match(/\/chat\/rooms\/([a-zA-Z0-9]+)$/);
+		if (!roomIdMatch) return null;
+
+		const host = this.utilityService.extractDbHost(roomUri);
+		if (this.utilityService.isSelfHost(host)) {
+			return this.chatRoomsRepository.findOneBy({ id: roomIdMatch[1], host: IsNull() });
+		}
+		return this.chatRoomsRepository.findOneBy({ uri: roomUri });
+	}
+
 	@bindThis
 	private async acceptInvite(actor: MiRemoteUser, activity: IInvite): Promise<string> {
 		// actor is the one who accepted the invitation (invitee)
@@ -296,31 +316,30 @@ export class ApInboxService {
 		const roomUri = getApId(roomObject);
 		if (!roomUri) return 'skip: invalid room object';
 
-		// Extract room ID from URI
-		const roomIdMatch = roomUri.match(/\/chat\/rooms\/([a-zA-Z0-9]+)$/);
-		if (!roomIdMatch) return 'skip: invalid room URI format';
-		const roomId = roomIdMatch[1];
+		// A remote user can only accept an invitation to one of our local rooms.
+		if (!this.utilityService.isUriLocal(roomUri)) return 'skip: room is not local';
 
 		// Find the room
-		const room = await this.chatRoomsRepository.findOneBy({ id: roomId });
+		const room = await this.resolveChatRoomByUri(roomUri);
 		if (!room) {
-			this.logger.warn(`Room not found: ${roomId}`);
+			this.logger.warn(`Room not found: ${roomUri}`);
 			return 'skip: room not found';
 		}
 
-		// Delete the invitation
+		// A membership may only be created when a genuine invitation exists (created
+		// server-side when a local owner invited this user). Without this the actor
+		// could self-join any local room whose id it knows.
 		const invitation = await this.chatRoomInvitationsRepository.findOneBy({
-			roomId,
+			roomId: room.id,
 			userId: actor.id,
 		});
-		if (invitation) {
-			await this.chatRoomInvitationsRepository.delete(invitation.id);
-		}
+		if (!invitation) return 'skip: no invitation exists';
+		await this.chatRoomInvitationsRepository.delete(invitation.id);
 
 		// Check if already a member
 		const existingMembership = await this.chatService.isRoomMember(room, actor.id);
 		if (existingMembership) {
-			this.logger.info(`User ${actor.id} is already a member of room ${roomId}`);
+			this.logger.info(`User ${actor.id} is already a member of room ${room.id}`);
 			return 'ok';
 		}
 
@@ -333,7 +352,7 @@ export class ApInboxService {
 
 		await this.chatRoomMembershipsRepository.insertOne(membership);
 
-		this.logger.info(`Remote user ${actor.id} accepted invitation and joined room ${roomId}`);
+		this.logger.info(`Remote user ${actor.id} accepted invitation and joined room ${room.id}`);
 		return 'ok';
 	}
 
@@ -684,18 +703,10 @@ export class ApInboxService {
 					return 'skip: group chat message missing context';
 				}
 
-				const roomIdMatch = contextUri.match(/\/chat\/rooms\/([a-zA-Z0-9]+)$/);
-				if (!roomIdMatch) {
-					this.logger.warn(`Invalid context URI format: ${contextUri}`);
-					return 'skip: invalid context URI format';
-				}
-
-				const roomId = roomIdMatch[1];
-
-				// Check if the room exists locally
-				const room = await this.chatRoomsRepository.findOneBy({ id: roomId });
+				// Check if the room exists locally (resolved by host + id / uri, never by bare id)
+				const room = await this.resolveChatRoomByUri(contextUri);
 				if (!room) {
-					this.logger.warn(`Room not found: ${roomId}`);
+					this.logger.warn(`Room not found: ${contextUri}`);
 					return 'skip: room not found';
 				}
 
@@ -920,24 +931,21 @@ export class ApInboxService {
 
 		this.logger.info(`[rejectInvite] Room URI: ${roomUri}`);
 
-		// Extract room ID from URI
-		const roomIdMatch = roomUri.match(/\/chat\/rooms\/([a-zA-Z0-9]+)$/);
-		if (!roomIdMatch) return 'skip: invalid room URI format';
-		const roomId = roomIdMatch[1];
+		// Resolve the room by host + id / uri (never by bare id)
+		const room = await this.resolveChatRoomByUri(roomUri);
+		if (!room) return 'skip: room not found';
 
-		this.logger.info(`[rejectInvite] Searching for invitation - roomId: ${roomId}, userId: ${actor.id}`);
+		this.logger.info(`[rejectInvite] Searching for invitation - roomId: ${room.id}, userId: ${actor.id}`);
 
-		// Find the invitation and delete it
+		// Find the invitation and delete it (keyed on room + actor, so a stranger
+		// cannot delete unrelated invitations)
 		const invitation = await this.chatRoomInvitationsRepository.findOneBy({
-			roomId,
+			roomId: room.id,
 			userId: actor.id,
 		});
 
 		if (!invitation) {
-			this.logger.warn(`[rejectInvite] Invitation not found for roomId: ${roomId}, userId: ${actor.id}`);
-			// Try to find all invitations for this room to debug
-			const allInvitations = await this.chatRoomInvitationsRepository.findBy({ roomId });
-			this.logger.warn(`[rejectInvite] All invitations for room ${roomId}: ${JSON.stringify(allInvitations.map(i => ({ id: i.id, userId: i.userId })))}`);
+			this.logger.warn(`[rejectInvite] Invitation not found for roomId: ${room.id}, userId: ${actor.id}`);
 			return 'skip: invitation not found';
 		}
 
@@ -947,7 +955,7 @@ export class ApInboxService {
 		const deleteResult = await this.chatRoomInvitationsRepository.delete({ id: invitation.id });
 
 		this.logger.info(`[rejectInvite] Delete result: ${JSON.stringify(deleteResult)}`);
-		this.logger.info(`[rejectInvite] Successfully deleted invitation ${invitation.id} from user ${actor.id} for room ${roomId}`);
+		this.logger.info(`[rejectInvite] Successfully deleted invitation ${invitation.id} from user ${actor.id} for room ${room.id}`);
 
 		return 'ok';
 	}
@@ -975,16 +983,15 @@ export class ApInboxService {
 
 		const roomIdMatch = targetUri.match(/\/chat\/rooms\/([a-zA-Z0-9]+)$/);
 		if (roomIdMatch) {
-			const roomId = roomIdMatch[1];
-			this.logger.info(`[ApInboxService.remove] Matched room ID: ${roomId}, actor: ${actor.uri}`);
+			this.logger.info(`[ApInboxService.remove] Matched room URI: ${targetUri}, actor: ${actor.uri}`);
 
-			const room = await this.chatRoomsRepository.findOneBy({ id: roomId });
+			const room = await this.resolveChatRoomByUri(targetUri);
 			if (!room) {
-				this.logger.warn(`[ApInboxService.remove] Room not found: ${roomId}`);
+				this.logger.warn(`[ApInboxService.remove] Room not found: ${targetUri}`);
 				return 'room not found';
 			}
 
-			// Delete the membership
+			// Delete the membership (only ever the actor's own membership)
 			const result = await this.chatRoomMembershipsRepository.delete({
 				roomId: room.id,
 				userId: actor.id,
@@ -1057,10 +1064,11 @@ export class ApInboxService {
 		const roomUri = getApId(roomObject);
 		if (!roomUri) return 'skip: invalid room object';
 
-		// Extract room ID from URI
-		const roomIdMatch = roomUri.match(/\/chat\/rooms\/([a-zA-Z0-9]+)$/);
-		if (!roomIdMatch) return 'skip: invalid room URI format';
-		const roomId = roomIdMatch[1];
+		// The room must belong to the instance cancelling the invitation.
+		if (this.utilityService.extractDbHost(roomUri) !== this.utilityService.extractDbHost(actor.uri)) return 'skip: room host mismatch';
+
+		const room = await this.resolveChatRoomByUri(roomUri);
+		if (!room) return 'skip: room not found';
 
 		// Get the target user (invitee)
 		const targetUri = getApHrefNullable(activity.target);
@@ -1072,18 +1080,18 @@ export class ApInboxService {
 
 		// Find and delete the invitation
 		const invitation = await this.chatRoomInvitationsRepository.findOneBy({
-			roomId: roomId,
+			roomId: room.id,
 			userId: invitee.id,
 		});
 
 		if (!invitation) {
-			this.logger.warn(`Invitation not found: room=${roomId}, user=${invitee.id}`);
+			this.logger.warn(`Invitation not found: room=${room.id}, user=${invitee.id}`);
 			return 'skip: invitation not found';
 		}
 
 		await this.chatRoomInvitationsRepository.delete(invitation.id);
 
-		this.logger.info(`Cancelled invitation: room=${roomId}, user=${invitee.id}`);
+		this.logger.info(`Cancelled invitation: room=${room.id}, user=${invitee.id}`);
 		return 'ok: invitation cancelled';
 	}
 
@@ -1255,10 +1263,12 @@ export class ApInboxService {
 		const roomUri = getApId(roomObject);
 		if (!roomUri) return 'skip: invalid room object';
 
-		// Extract room ID from URI (format: https://example.com/chat/rooms/{roomId})
-		const roomIdMatch = roomUri.match(/\/chat\/rooms\/([a-zA-Z0-9]+)$/);
-		if (!roomIdMatch) return 'skip: invalid room URI format';
-		const roomId = roomIdMatch[1];
+		// The invited-to room must belong to the inviting instance. This prevents a
+		// remote actor from referencing one of our local rooms (or a third-party host).
+		const roomHost = this.utilityService.extractDbHost(roomUri);
+		if (roomHost !== this.utilityService.extractDbHost(actor.uri)) return 'skip: room host mismatch';
+
+		if (!roomUri.match(/\/chat\/rooms\/([a-zA-Z0-9]+)$/)) return 'skip: invalid room URI format';
 
 		// Get the target user (invitee)
 		const targetUri = getApHrefNullable(activity.target);
@@ -1268,16 +1278,19 @@ export class ApInboxService {
 		if (!invitee) return 'skip: target user not found';
 		if (!this.userEntityService.isLocalUser(invitee)) return 'skip: target user is not local';
 
-		// Check if the room already exists locally
-		let room = await this.chatRoomsRepository.findOneBy({ id: roomId });
+		// Check if the room already exists locally (matched by its federation URI)
+		let room = await this.resolveChatRoomByUri(roomUri);
 
-		// If the room doesn't exist, create a local copy for the remote room
+		// If the room doesn't exist, create a local mirror for the remote room.
+		// The primary key is generated locally (never the remote-supplied id) and the
+		// origin is recorded in the uri/host columns.
 		if (!room) {
 			const roomName = typeof roomObject.name === 'string' ? roomObject.name : 'Remote Chat Room';
 			const roomDescription = typeof roomObject.summary === 'string' ? roomObject.summary : '';
 
-			// Extract owner from attributedTo field
-			let ownerId = actor.id; // Default to actor if attributedTo is not available
+			// Extract owner from attributedTo field. Only honour an owner that lives on
+			// the same host as the room; never let a remote room claim a local owner.
+			let ownerId = actor.id; // Default to actor if attributedTo is unusable
 
 			if (roomObject.attributedTo) {
 				// Handle both single value and array
@@ -1286,20 +1299,22 @@ export class ApInboxService {
 					: roomObject.attributedTo;
 				const ownerUri = getApHrefNullable(attributedTo);
 
-				if (ownerUri) {
+				if (ownerUri && this.utilityService.extractDbHost(ownerUri) === roomHost) {
 					const owner = await this.apDbResolverService.getUserFromApId(ownerUri);
-					if (owner) {
+					if (owner && this.userEntityService.isRemoteUser(owner)) {
 						ownerId = owner.id;
 					}
 				}
 			}
 
 			room = await this.chatRoomsRepository.insertOne({
-				id: roomId,
+				id: this.idService.gen(),
 				name: roomName,
 				description: roomDescription,
 				ownerId: ownerId,
 				isArchived: false,
+				uri: roomUri,
+				host: roomHost,
 			});
 		}
 

@@ -44,7 +44,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				</g>
 			</svg>
 			<div :class="$style.title">
-				<div>Welcome to CherryPick!</div>
+				<div>Welcome to Engawa!</div>
 				<div :class="$style.version">v{{ version }} <span style="font-size: 11px; opacity: 0.5;">({{ gitHash.substring(0, 8) }})</span></div>
 			</div>
 			<div style="padding: 16px 32px 32px 32px;">
@@ -53,21 +53,21 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<div><b>{{ i18n.ts._serverSetupWizard.installCompleted }}</b></div>
 						<div>{{ i18n.ts._serverSetupWizard.firstCreateAccount }}</div>
 					</div>
-					<MkInput v-model="setupPassword" type="password" data-cy-admin-initial-password>
+					<MkInput v-model="setupPassword" type="password" data-e2e-admin-initial-password>
 						<template #label>{{ i18n.ts.initialPasswordForSetup }} <div v-tooltip:dialog="i18n.ts.initialPasswordForSetupDescription" class="_button _help"><i class="ti ti-help-circle"></i></div></template>
 						<template #prefix><i class="ti ti-lock"></i></template>
 					</MkInput>
-					<MkInput v-model="username" pattern="^[a-zA-Z0-9_]{1,20}$" :spellcheck="false" required data-cy-admin-username>
+					<MkInput v-model="username" pattern="^[a-zA-Z0-9_]{1,20}$" :spellcheck="false" required data-e2e-admin-username>
 						<template #label>{{ i18n.ts.username }} <div v-tooltip:dialog="i18n.ts.usernameInfo" class="_button _help"><i class="ti ti-help-circle"></i></div></template>
 						<template #prefix>@</template>
 						<template #suffix>@{{ host }}</template>
 					</MkInput>
-					<MkInput v-model="password" type="password" data-cy-admin-password>
+					<MkInput v-model="password" type="password" data-e2e-admin-password>
 						<template #label>{{ i18n.ts.password }}</template>
 						<template #prefix><i class="ti ti-lock"></i></template>
 					</MkInput>
 					<div>
-						<MkButton gradate large rounded :disabled="accountCreating" data-cy-admin-ok style="margin: 0 auto;" type="submit">
+						<MkButton gradate large rounded :disabled="accountCreating" data-e2e-admin-ok style="margin: 0 auto;" type="submit">
 							{{ accountCreating ? i18n.ts.processing : i18n.ts.next }}<MkEllipsis v-if="accountCreating"/>
 						</MkButton>
 					</div>
@@ -76,7 +76,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<div style="text-align: center;" class="_gaps_s">
 						<div><b>{{ i18n.ts._serverSetupWizard.accountCreated }}</b></div>
 					</div>
-					<MkButton gradate large rounded data-cy-next style="margin: 0 auto;" @click="step++">
+					<MkButton gradate large rounded data-e2e-next style="margin: 0 auto;" @click="step++">
 						{{ i18n.ts.next }}
 					</MkButton>
 				</div>
@@ -110,12 +110,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 						<div><b>{{ i18n.ts._serverSetupWizard.donationRequest }}</b></div>
 						<div>{{ i18n.ts._serverSetupWizard._donationRequest.text1 }}<br>{{ i18n.ts._serverSetupWizard._donationRequest.text2 }}<br>{{ i18n.ts._serverSetupWizard._donationRequest.text3 }}</div>
 						<!--<MkLink target="_blank" url="https://misskey-hub.net/docs/donate/" style="margin: 0 auto;">{{ i18n.ts.learnMore }}</MkLink>-->
-						<MkA class="_link" style="margin: 0 auto;" @click="donateCherryPick">
+						<button class="_button _link" style="margin: 0 auto;" @click="donateCherryPick">
 							<i class="ti ti-pig-money"></i> {{ i18n.ts._aboutMisskey._cherrypick.donate }} <i class="ti ti-external-link"></i>
-						</MkA>
+						</button>
 					</div>
 					<div class="_buttonsCenter">
-						<MkButton gradate large rounded data-cy-next style="margin: 0 auto;" @click="finish">
+						<MkButton gradate large rounded data-e2e-next style="margin: 0 auto;" @click="finish">
 							{{ i18n.ts.start }}
 						</MkButton>
 					</div>

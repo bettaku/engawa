@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import { randomInt } from 'node:crypto';
 import { parseBigInt16 } from '@/misc/bigint.js';
 
 const CHARS = '0123456789abcdef';
@@ -25,7 +26,7 @@ function getRandom() {
 	let str = '';
 
 	for (let i = 0; i < 16; i++) {
-		str += CHARS[Math.floor(Math.random() * CHARS.length)];
+		str += CHARS[randomInt(CHARS.length)];
 	}
 
 	return str;

@@ -93,8 +93,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 												</template>
 											</I18n>
 										</div>
-										<div v-if="draft.channel" class="_nowrap">
-											<i class="ti ti-device-tv"></i> {{ i18n.tsx._drafts.postTo({ channel: draft.channel.name }) }}
+										<div v-if="getDraftChannel(draft)" class="_nowrap">
+											<i class="ti ti-device-tv"></i> {{ i18n.tsx._drafts.postTo({ channel: getDraftChannel(draft)!.name }) }}
 										</div>
 									</div>
 								</div>
@@ -177,6 +177,13 @@ import { misskeyApi } from '@/utility/misskey-api';
 import { Paginator } from '@/utility/paginator.js';
 import MkTabs from '@/components/MkTabs.vue';
 import MkInfo from '@/components/MkInfo.vue';
+import type { PostFormProps } from '@/types/post-form.js';
+
+type NoteDraftWithChannel = Misskey.entities.NoteDraft & { channel?: PostFormProps['channel'] };
+
+function getDraftChannel(draft: Misskey.entities.NoteDraft): PostFormProps['channel'] {
+	return (draft as NoteDraftWithChannel).channel ?? null;
+}
 
 const props = defineProps<{
 	scheduled?: boolean;

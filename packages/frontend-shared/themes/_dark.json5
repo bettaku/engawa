@@ -5,7 +5,7 @@
 
 	name: 'Dark',
 	author: 'noridev & syuilo',
-	desc: 'CherryPick default dark theme',
+	desc: 'Engawa default dark theme',
 	kind: 'dark',
 
 	props: {

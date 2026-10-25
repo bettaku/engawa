@@ -17,7 +17,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 			<Transition :name="$style.change" mode="default" appear>
 				<MkMarqueeText :key="key" :duration="widgetProps.duration" :reverse="widgetProps.reverse">
 					<span v-for="item in items" :key="item.link" :class="$style.item">
-						<a :href="item.link" rel="nofollow noopener" target="_blank" :title="item.title">{{ item.title }}</a><span :class="$style.divider"></span>
+						<a :href="rssLink(item.link)" rel="nofollow noopener" target="_blank" :title="item.title">{{ item.title }}</a><span :class="$style.divider"></span>
 					</span>
 				</MkMarqueeText>
 			</Transition>
@@ -27,6 +27,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 </template>
 
 <script lang="ts" setup>
+import { rssLink } from '@/utility/rss-link.js';
 import { ref, watch, computed } from 'vue';
 import * as Misskey from 'cherrypick-js';
 import { url as base } from '@@/js/config.js';

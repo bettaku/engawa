@@ -242,7 +242,7 @@ export class GlobalModule implements OnApplicationShutdown {
 
 	async onApplicationShutdown(signal: string): Promise<void> {
 		await this.dispose();
-		process.emitWarning('CherryPick is shutting down', {
+		process.emitWarning('Engawa is shutting down', {
 			code: 'CHERRYPICK_SHUTDOWN',
 			detail: `Application received ${signal} signal`,
 		});

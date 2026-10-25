@@ -9,7 +9,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 	<template #default="{ items: user }">
 		<div :class="$style.stream">
-			<XFiles v-for="item in user" :key="item.user.id" :user="item.user" :note="item"/>
+		<template v-for="item in user" :key="item.user.id">
+			<XFiles v-if="hasFiles(item)" :user="item.user" :note="item"/>
+		</template>
 		</div>
 	</template>
 </MkPagination>
@@ -20,6 +22,11 @@ import { Paginator } from '@/utility/paginator.js';
 import MkPagination from '@/components/MkPagination.vue';
 import XFiles from '@/pages/user/index.timeline.files.files.vue';
 import { i18n } from '@/i18n.js';
+import type * as Misskey from 'cherrypick-js';
+
+function hasFiles(note: Misskey.entities.Note): note is Misskey.entities.Note & { files: Misskey.entities.DriveFile[] } {
+	return note.files != null;
+}
 
 const props = defineProps<{
 	paginator: Paginator<'users/notes'>;

@@ -32,7 +32,7 @@ import { launchPlugins } from '@/plugin.js';
 import { popup } from '@/os.js';
 
 export async function common(createVue: () => Promise<App<Element>>) {
-	console.info(`CherryPick v${version}`);
+	console.info(`Engawa v${version}`);
 
 	if (_DEV_) {
 		console.warn('Development mode!!!');
@@ -77,7 +77,14 @@ export async function common(createVue: () => Promise<App<Element>>) {
 	//#region クライアントが更新されたかチェック
 	const lastVersion = miLocalStorage.getItem('lastVersion');
 	const lastBasedMisskeyVersion = miLocalStorage.getItem('lastBasedMisskeyVersion');
-	if (lastVersion !== version || lastBasedMisskeyVersion !== basedMisskeyVersion) {
+	// 1.0.0 より前のバージョン表記（例: 4.17.0-engawa20260408）は CherryPick のバージョンが前に付いていたため、
+	// 数字の上では 1.0.0 以降より大きい。そのまま比べると「他のソフトウェアからの移行」と判定されるので、更新として扱う
+	const isLegacyEngawaVersion = lastVersion != null && /-engawa\d/.test(lastVersion) && !/-engawa\d/.test(version);
+	if (isLegacyEngawaVersion) {
+		miLocalStorage.setItem('lastVersion', version);
+		miLocalStorage.setItem('lastBasedMisskeyVersion', basedMisskeyVersion);
+		isClientUpdated = true;
+	} else if (lastVersion !== version || lastBasedMisskeyVersion !== basedMisskeyVersion) {
 		if (lastVersion == null) miLocalStorage.setItem('lastVersion', version);
 		else if (compareVersions(version, lastVersion) === 0 || compareVersions(version, lastVersion) === 1) miLocalStorage.setItem('lastVersion', version);
 		miLocalStorage.setItem('lastBasedMisskeyVersion', basedMisskeyVersion);
@@ -365,7 +372,7 @@ export async function common(createVue: () => Promise<App<Element>>) {
 			'font-size: 20px; font-weight: 700; color: #f00;',
 		);
 		console.log(
-			`%c${i18n.tsx._selfXssPrevention.description3({ link: 'https://github.com/kokonect-link/cherrypick' })}`,
+			`%c${i18n.tsx._selfXssPrevention.description3({ link: 'https://github.com/bettaku/engawa' })}`,
 			'font-size: 14px;',
 		);
 		console.log(i18n.tsx._selfXssPrevention.description4({ link: 'https://misskey-hub.net/docs/for-users/resources/self-xss/' }));

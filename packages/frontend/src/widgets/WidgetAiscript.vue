@@ -4,7 +4,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 -->
 
 <template>
-<MkContainer :showHeader="widgetProps.showHeader" data-cy-mkw-aiscript class="mkw-aiscript">
+<MkContainer :showHeader="widgetProps.showHeader" data-e2e-mkw-aiscript class="mkw-aiscript">
 	<template #icon><i class="ti ti-terminal-2"></i></template>
 	<template #header>{{ i18n.ts._widgets.aiscript }}</template>
 
@@ -79,13 +79,18 @@ const run = async () => {
 				print: true,
 			});
 		},
-		log: (type, params) => {
-			switch (type) {
-				case 'end': logs.value.push({
-					id: genId(),
-					text: utils.valToString(params.val, true),
-					print: false,
-				}); break;
+			log: (type, params) => {
+				switch (type) {
+					case 'end': {
+					const value = params.val && 'isMutable' in params.val ? params.val.value : params.val;
+						if (value == null) break;
+						logs.value.push({
+							id: genId(),
+							text: utils.valToString(value, true),
+							print: false,
+						});
+						break;
+					}
 				default: break;
 			}
 		},

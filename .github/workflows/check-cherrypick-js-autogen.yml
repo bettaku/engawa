@@ -9,6 +9,9 @@ on:
     paths:
       - packages/backend/**
 
+permissions:
+  contents: read
+
 jobs:
   # pull_request_target safety: permissions: read-all, and there are no secrets used in this job
   generate-cherrypick-js:
@@ -18,18 +21,18 @@ jobs:
     if: ${{ github.event.pull_request.mergeable == null || github.event.pull_request.mergeable == true }}
     steps:
       - name: checkout
-        uses: actions/checkout@v4.3.0
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
         with:
           submodules: true
           persist-credentials: false
           ref: refs/pull/${{ github.event.pull_request.number }}/merge
 
       - name: setup pnpm
-        uses: pnpm/action-setup@v4.2.0
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
 
       - name: setup node
         id: setup-node
-        uses: actions/setup-node@v4.4.0
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version-file: '.node-version'
           cache: pnpm
@@ -53,7 +56,7 @@ jobs:
 
       # packages/cherrypick-js/generator/built/autogen
       - name: Upload Generated
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: generated-cherrypick-js
           path: packages/cherrypick-js/generator/built/autogen
@@ -66,14 +69,14 @@ jobs:
     if: ${{ github.event.pull_request.mergeable == null || github.event.pull_request.mergeable == true }}
     steps:
       - name: checkout
-        uses: actions/checkout@v4.3.0
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
         with:
           submodules: true
           persist-credentials: false
           ref: refs/pull/${{ github.event.pull_request.number }}/merge
 
       - name: Upload From Merged
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: actual-cherrypick-js
           path: packages/cherrypick-js/src/autogen
@@ -86,13 +89,13 @@ jobs:
       pull-requests: write
     steps:
       - name: download generated-cherrypick-js
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: generated-cherrypick-js
           path: cherrypick-js-generated
 
       - name: download actual-cherrypick-js
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: actual-cherrypick-js
           path: cherrypick-js-actual
@@ -113,7 +116,7 @@ jobs:
 
       - name: send message
         if: steps.check-changes.outputs.changes == 'true'
-        uses: thollander/actions-comment-pull-request@v2
+        uses: thollander/actions-comment-pull-request@fabd468d3a1a0b97feee5f6b9e499eab0dd903f6 # v2.5.0
         with:
           comment_tag: check-cherrypick-js-autogen
           message: |-
@@ -127,7 +130,7 @@ jobs:
 
       - name: send message
         if: steps.check-changes.outputs.changes == 'false'
-        uses: thollander/actions-comment-pull-request@v2
+        uses: thollander/actions-comment-pull-request@fabd468d3a1a0b97feee5f6b9e499eab0dd903f6 # v2.5.0
         with:
           comment_tag: check-cherrypick-js-autogen
           mode: delete

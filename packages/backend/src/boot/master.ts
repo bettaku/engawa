@@ -31,33 +31,29 @@ const themeColor = chalk.hex('#ffa9c3');
 
 function greet() {
 	if (!envOption.quiet) {
-		//#region CherryPick logo
+		//#region Engawa logo
 		const v = `v${meta.version}`;
-		console.log(chalk.hex('#ffa9c3').bold('   _____ _                         ') + chalk.hex('#95e3e8').bold(' _____ _      _'));
-		console.log(chalk.hex('#ffa9c3').bold('  / ____| |                        ') + chalk.hex('#95e3e8').bold('|  __ (_)    | |'));
-		console.log(chalk.hex('#ffa9c3').bold(' | |    | |__   ___ _ __ _ __ _   _') + chalk.hex('#95e3e8').bold('| |__) |  ___| | __'));
-		console.log(chalk.hex('#ffa9c3').bold(' | |    | \'_ \\ / _ \\ \'__| \'__| | | ') + chalk.hex('#95e3e8').bold('|  ___/ |/ __| |/ /'));
-		console.log(chalk.hex('#ffa9c3').bold(' | |____| | | |  __/ |  | |  | |_| ') + chalk.hex('#95e3e8').bold('| |   | | (__|   <'));
-		console.log(chalk.hex('#ffa9c3').bold('  \\_____|_| |_|\\___|_|  |_|   \\__, ') + chalk.hex('#95e3e8').bold('|_|   |_|\\___|_|\\_\\'));
-		console.log(chalk.hex('#ffa9c3').bold('                               __/ |'));
-		console.log(chalk.hex('#ffa9c3').bold('                              |___/'));
+		console.log(chalk.hex('#c7e5df').bold('  ______'));
+		console.log(chalk.hex('#c7e5df').bold(' |  ____|'));
+		console.log(chalk.hex('#c7e5df').bold(' | |__   _ __   __ _  __ _ __      __ __ _'));
+		console.log(chalk.hex('#c7e5df').bold(' |  __| | \'_ \\ / _` |/ _` |\\ \\ /\\ / // _` |'));
+		console.log(chalk.hex('#c7e5df').bold(' | |____| | | | (_| | (_| | \\ V  V /| (_| |'));
+		console.log(chalk.hex('#c7e5df').bold(' |______|_| |_|\\__, |\\__,_|  \\_/\\_/  \\__,_|'));
+		console.log(chalk.hex('#c7e5df').bold('                __/ |'));
+		console.log(chalk.hex('#c7e5df').bold('               |___/'));
 		//#endregion
 
 		console.log(chalk.hex('#ffa9c3').bold(' Cherry') + chalk.hex('#95e3e8').bold('Pick') + (' is an open-source decentralized microblogging platform based from') + (chalk.hex('#9ec23f').bold(' Misskey') + ('.')));
 		console.log(chalk.hex('#ffbb00')(' If you like ') + chalk.hex('#ffa9c3').bold('Cherry') + chalk.hex('#95e3e8').bold('Pick') + chalk.hex('#ffbb00')(', please donate to support development.'));
-		console.log(chalk.hex('#ffbb00')(' ・Patreon: https://www.patreon.com/noridev'));
-		console.log(chalk.hex('#ffbb00')(' ・Paypal: https://www.paypal.me/noridev'));
-		console.log(chalk.hex('#ffbb00')(' ・GitHub Sponsers: https://github.com/sponsors/noridev'));
-		console.log(chalk.hex('#ffbb00')(' ・Kakao Pay: https://qr.kakaopay.com/Ej9SHx6pQ'));
-		console.log(chalk.hex('#ffbb00')(' ・pixivFANBOX: https://noridev.fanbox.cc/plans'));
-		// console.log(chalk.hex('#ffa9c3').bold(' KOKO') + chalk.hex('#95e3e8').bold('NECT') + chalk.hex('#ffa9c3')(' with') + chalk.hex('#95e3e8').bold(' NoriDev.'));
+		console.log(chalk.hex('#ffbb00')(' ・GitHub Sponsers: https://github.com/sponsors/1673beta'));
 
 		console.log('');
 		console.log(chalkTemplate`--- ${os.hostname()} {gray (PID: ${process.pid.toString()})} ---`);
 	}
 
-	bootLogger.info('Welcome to CherryPick!');
-	bootLogger.info(`CherryPick v${meta.version}`, null, true);
+	bootLogger.info('Welcome to Engawa!');
+	bootLogger.info(`Engawa v${meta.version}`, null, true);
+	bootLogger.info(`Based on CherryPick v${meta.basedCherryPickVersion}`, null, true);
 	bootLogger.info(`Based on Misskey v${meta.basedMisskeyVersion}`, null, true);
 }
 

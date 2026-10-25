@@ -39,7 +39,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 					<span v-text="v.label || k"></span>
 					<template v-if="v.description" #caption>{{ v.description }}</template>
 				</MkSwitch>
-				<MkSelect v-else-if="v.type === 'enum'" v-model="values[k]" :items="getMkSelectDef(v)">
+				<MkSelect v-else-if="v.type === 'enum'" v-model="values[k]" :items="getMkSelectDef(v)" :searchable="v.searchable">
 					<template #label><span v-text="v.label || k"></span><span v-if="v.required === false"> ({{ i18n.ts.optional }})</span></template>
 				</MkSelect>
 				<MkRadios v-else-if="v.type === 'radio'" v-model="values[k]">
@@ -77,7 +77,7 @@ import MkButton from './MkButton.vue';
 import MkRadios from './MkRadios.vue';
 import XFile from './MkFormDialog.file.vue';
 import type { MkSelectItem } from '@/components/MkSelect.vue';
-import type { Form, EnumFormItem, RadioFormItem } from '@/utility/form.js';
+import type { Form, EnumFormItem, EnumItem, RadioFormItem } from '@/utility/form.js';
 import MkModalWindow from '@/components/MkModalWindow.vue';
 import { i18n } from '@/i18n.js';
 
@@ -120,12 +120,20 @@ function cancel() {
 	dialog.value?.close();
 }
 
+function getMkSelectOption(v: EnumItem) {
+	if (typeof v === 'string') {
+		return { value: v, label: v };
+	} else {
+		return { value: v.value, label: v.label };
+	}
+}
+
 function getMkSelectDef(def: EnumFormItem): MkSelectItem[] {
 	return def.enum.map((v) => {
-		if (typeof v === 'string') {
-			return { value: v, label: v };
+		if (typeof v !== 'string' && 'type' in v) {
+			return { type: 'group', label: v.label, items: v.items.map(getMkSelectOption) };
 		} else {
-			return { value: v.value, label: v.label };
+			return getMkSelectOption(v);
 		}
 	});
 }

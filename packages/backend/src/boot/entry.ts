@@ -20,7 +20,7 @@ import { readyRef } from './ready.js';
 
 import 'reflect-metadata';
 
-process.title = `CherryPick (${cluster.isPrimary ? 'master' : 'worker'})`;
+process.title = `Engawa (${cluster.isPrimary ? 'master' : 'worker'})`;
 
 Error.stackTraceLimit = Infinity;
 EventEmitter.defaultMaxListeners = 128;

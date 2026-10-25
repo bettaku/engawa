@@ -33,9 +33,6 @@ const paginatorForNotes = markRaw(new Paginator('notes/featured', {
 const paginatorForPolls = markRaw(new Paginator('notes/polls/recommendation', {
 	limit: 10,
 	offsetMode: true,
-	params: {
-		excludeChannels: true,
-	},
 }));
 
 const tab = ref<'notes' | 'polls'>('notes');

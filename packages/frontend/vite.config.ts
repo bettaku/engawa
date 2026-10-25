@@ -181,6 +181,7 @@ export function getConfig(): UserConfig {
 		define: {
 			_VERSION_: JSON.stringify(meta.version),
 			_BASEDMISSKEYVERSION_: JSON.stringify(meta.basedMisskeyVersion),
+			_BASEDCHERRYPICKVERSION_: JSON.stringify(meta.basedCherryPickVersion),
 			_GIT_HASH_: JSON.stringify(gitHash),
 			_LANGS_: JSON.stringify(Object.entries(locales).map(([k, v]) => [k, v._lang_])),
 			_ENV_: JSON.stringify(process.env.NODE_ENV),
@@ -250,21 +251,6 @@ export function getConfig(): UserConfig {
 
 		worker: {
 			format: 'es',
-		},
-
-		test: {
-			environment: 'happy-dom',
-			deps: {
-				optimizer: {
-					web: {
-						include: [
-							// XXX: misskey-dev/browser-image-resizer has no "type": "module"
-							'browser-image-resizer',
-						],
-					},
-				},
-			},
-			includeSource: ['src/**/*.ts'],
 		},
 	};
 }

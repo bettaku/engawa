@@ -7,6 +7,7 @@ import { MainModule } from '@/MainModule.js';
 import { ServerService } from '@/server/ServerService.js';
 import { loadConfig } from '@/config.js';
 import { NestLogger } from '@/NestLogger.js';
+import type { FastifyInstance } from 'fastify';
 
 const config = loadConfig();
 const originEnv = JSON.stringify(process.env);
@@ -15,6 +16,7 @@ process.env.NODE_ENV = 'test';
 
 let app: INestApplicationContext;
 let serverService: ServerService;
+let controllerServer: FastifyInstance;
 
 /**
  * テスト用のサーバインスタンスを起動する
@@ -30,12 +32,21 @@ async function launch() {
 	serverService = app.get(ServerService);
 	await serverService.launch();
 
-	await startControllerEndpoints();
+	controllerServer = await startControllerEndpoints();
 
 	// ジョブキューは必要な時にテストコード側で起動する
 	// ジョブキューが動くとテスト結果の確認に支障が出ることがあるので意図的に動かさないでいる
 
 	console.log('application initialized.');
+
+	// Vitest の globalSetup は返り値の関数を teardown として呼ぶ。
+	// これを返さないとテスト終了後もサーバが生き残ってプロセスが終了しない。
+	return async () => {
+		await controllerServer.close();
+		await serverService.dispose();
+		await app.close();
+		await killTestServer();
+	};
 }
 
 /**
@@ -93,6 +104,8 @@ async function startControllerEndpoints(port = config.port + 1000) {
 	});
 
 	await fastify.listen({ port: port, host: 'localhost' });
+
+	return fastify;
 }
 
 export default launch;

@@ -14,12 +14,12 @@ export function genOpenapiSpec(config: Config, includeSelfRef = false) {
 
 		info: {
 			version: `${config.version} (${config.basedMisskeyVersion})`,
-			title: 'CherryPick API',
+			title: 'Engawa API',
 		},
 
 		externalDocs: {
 			description: 'Repository',
-			url: 'https://github.com/kokonect-link/cherrypick',
+			url: 'https://github.com/bettaku/engawa',
 		},
 
 		servers: [{
@@ -98,7 +98,7 @@ export function genOpenapiSpec(config: Config, includeSelfRef = false) {
 			description: desc,
 			externalDocs: {
 				description: 'Source code',
-				url: `https://github.com/kokonect-link/cherrypick/blob/develop/packages/backend/src/server/api/endpoints/${endpoint.name}.ts`,
+				url: `https://github.com/bettaku/engawa/blob/develop/packages/backend/src/server/api/endpoints/${endpoint.name}.ts`,
 			},
 			...(endpoint.meta.tags ? {
 				tags: [endpoint.meta.tags[0]],

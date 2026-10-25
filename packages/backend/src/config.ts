@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import * as yaml from 'js-yaml';
 import { type FastifyServerOptions } from 'fastify';
+import { resolveViteEntry, type ViteEntry } from './misc/vite-entry.js';
 import type * as Sentry from '@sentry/node';
 import type * as SentryVue from '@sentry/vue';
 import type { RedisOptions } from 'ioredis';
@@ -227,9 +228,9 @@ export type Config = {
 	authUrl: string;
 	driveUrl: string;
 	userAgent: string;
-	frontendEntry: { file: string | null };
+	frontendEntry: ViteEntry;
 	frontendManifestExists: boolean;
-	frontendEmbedEntry: { file: string | null };
+	frontendEmbedEntry: ViteEntry;
 	frontendEmbedManifestExists: boolean;
 	mediaProxy: string;
 	externalMediaProxyEnabled: boolean;
@@ -359,10 +360,10 @@ export function loadConfig(): Config {
 		videoThumbnailGenerator: config.videoThumbnailGenerator ?
 			config.videoThumbnailGenerator.endsWith('/') ? config.videoThumbnailGenerator.substring(0, config.videoThumbnailGenerator.length - 1) : config.videoThumbnailGenerator
 			: null,
-		userAgent: `CherryPick/${version} (${config.url})`,
-		frontendEntry: frontendManifest['src/_boot_.ts'],
+		userAgent: `Engawa/${version} (${config.url})`,
+		frontendEntry: resolveViteEntry(frontendManifest, 'src/_boot_.ts'),
 		frontendManifestExists: frontendManifestExists,
-		frontendEmbedEntry: frontendEmbedManifest['src/boot.ts'],
+		frontendEmbedEntry: resolveViteEntry(frontendEmbedManifest, 'src/boot.ts'),
 		frontendEmbedManifestExists: frontendEmbedManifestExists,
 		perChannelMaxNoteCacheCount: config.perChannelMaxNoteCacheCount ?? 1000,
 		perUserNotificationsMaxCount: config.perUserNotificationsMaxCount ?? 500,

@@ -1,0 +1,312 @@
+name: Release artifacts
+
+# GitHub Release が公開されたら、配布物を作る。
+# - ソースtarball（サブモジュール込み）と SHA256SUMS を Release に添付する
+# - コンテナイメージを ghcr.io/bettaku/engawa に公開する
+# - どちらにも来歴証明（attestation）を付ける
+# Release は engawa Release Manager（GitHub App）が作る。App が起動しなかったときや作り直すときは、手動実行で tag を指定する。
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. 1.0.0)'
+        required: true
+        type: string
+
+permissions: {}
+
+env:
+  REGISTRY_IMAGE: ghcr.io/bettaku/engawa
+
+jobs:
+  resolve:
+    name: Resolve release
+    if: github.repository == 'bettaku/engawa'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+      sha: ${{ steps.resolve.outputs.sha }}
+      version: ${{ steps.resolve.outputs.version }}
+      prerelease: ${{ steps.resolve.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+      - name: Resolve tag, commit and version
+        id: resolve
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_PRERELEASE: ${{ github.event.release.prerelease }}
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = release ]; then
+            tag="$RELEASE_TAG"
+            prerelease="$RELEASE_PRERELEASE"
+          else
+            tag="$INPUT_TAG"
+            info=$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json isDraft,isPrerelease)
+            if [ "$(jq -r .isDraft <<< "$info")" = true ]; then
+              echo "::error::Release $tag is a draft"; exit 1
+            fi
+            prerelease=$(jq -r .isPrerelease <<< "$info")
+          fi
+
+          if ! [[ "$tag" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Tag '$tag' is not a semver version"; exit 1
+          fi
+          # semver 上のプレリリースかどうかと、Release の prerelease フラグが一致すること
+          if [[ "$tag" == *-* ]]; then expected=true; else expected=false; fi
+          if [ "$prerelease" != "$expected" ]; then
+            echo "::error::Release prerelease flag ($prerelease) does not match tag $tag"; exit 1
+          fi
+
+          sha=$(git rev-parse --verify "refs/tags/$tag^{commit}")
+          version=$(git show "$sha:package.json" | jq -r .version)
+          if [ "$version" != "$tag" ]; then
+            echo "::error::package.json version ($version) at $sha does not match tag $tag"; exit 1
+          fi
+
+          {
+            echo "tag=$tag"
+            echo "sha=$sha"
+            echo "version=$version"
+            echo "prerelease=$prerelease"
+          } >> "$GITHUB_OUTPUT"
+          echo "Resolved $tag -> $sha (prerelease: $prerelease)"
+
+  tarball:
+    name: Source tarball
+    needs: resolve
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.resolve.outputs.sha }}
+          submodules: true
+          persist-credentials: false
+      - name: Create tarball
+        env:
+          VERSION: ${{ needs.resolve.outputs.version }}
+          SHA: ${{ needs.resolve.outputs.sha }}
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/tarball"; dist="$RUNNER_TEMP/dist"
+          mkdir -p "$work" "$dist"
+          name="engawa-${VERSION}"; prefix="${name}/"
+
+          # .gitattributes の export-ignore（テスト用ディレクトリ）はここで効く
+          git -c core.autocrlf=false archive --format=tar --prefix="$prefix" -o "$work/main.tar" "$SHA"
+          git -C fluent-emojis archive --format=tar --prefix="${prefix}fluent-emojis/" -o "$work/emojis.tar" HEAD
+          tar --concatenate --file="$work/main.tar" "$work/emojis.tar"
+          gzip -n -9 < "$work/main.tar" > "$dist/${name}.tar.gz"
+
+          # 検証: サブモジュールの中身・version・除外対象
+          mkdir -p "$work/verify"
+          tar -xzf "$dist/${name}.tar.gz" -C "$work/verify"
+          test -n "$(ls -A "$work/verify/${prefix}fluent-emojis")"
+          jq -e --arg v "$VERSION" '.version == $v' "$work/verify/${prefix}package.json" > /dev/null
+          excluded=$(tar -tzf "$dist/${name}.tar.gz" | grep -E "^${prefix}(packages/backend/test|packages/backend/test-federation|packages/frontend/test|packages/cherrypick-js/test|packages-internal/changelog-checker/test)/" || true)
+          if [ -n "$excluded" ]; then
+            echo "::error::export-ignore did not exclude test directories"; echo "$excluded" | head; exit 1
+          fi
+
+          (cd "$dist" && sha256sum "${name}.tar.gz" > SHA256SUMS)
+          cat "$dist/SHA256SUMS"
+      - name: Attest tarball
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: ${{ runner.temp }}/dist/engawa-*.tar.gz
+      - name: Upload to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.resolve.outputs.tag }}
+        run: gh release upload "$TAG" "$RUNNER_TEMP"/dist/* --clobber --repo "$GITHUB_REPOSITORY"
+
+  # see https://docs.docker.com/build/ci/github-actions/multi-platform/#distribute-build-across-multiple-runners
+  image:
+    name: Image (${{ matrix.platform }})
+    needs: resolve
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@ceedf095f4ec1a097402bc6bd80831f2e1a6fde6 # v2.0.0
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          swap-storage: true
+      - name: Prepare
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: echo "PLATFORM_PAIR=${PLATFORM//\//-}" >> "$GITHUB_ENV"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.resolve.outputs.sha }}
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.REGISTRY_IMAGE }}
+          flavor: latest=false
+          tags: type=semver,pattern={{version}},value=${{ needs.resolve.outputs.version }}
+          # 既定では github.sha が入る。手動実行ではタグのコミットと違うことがあるので、resolve の値で上書きする
+          labels: |
+            org.opencontainers.image.revision=${{ needs.resolve.outputs.sha }}
+            org.opencontainers.image.version=${{ needs.resolve.outputs.version }}
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          provenance: false
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=release-${{ env.PLATFORM_PAIR }}
+          cache-to: type=gha,mode=max,scope=release-${{ env.PLATFORM_PAIR }}
+          outputs: type=image,name=${{ env.REGISTRY_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+      - name: Export digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/digests"
+          touch "$RUNNER_TEMP/digests/${DIGEST#sha256:}"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: digests-${{ env.PLATFORM_PAIR }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  manifest:
+    name: Manifest
+    needs: [resolve, image]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          sparse-checkout: .github/scripts
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-*
+          merge-multiple: true
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      # まず staging タグで index を作り、この実行で作った digest を控える（staging は他の実行と共有なので、後から照会し直さない）
+      - name: Create manifest list (staging)
+        id: index
+        working-directory: ${{ runner.temp }}/digests
+        env:
+          VERSION: ${{ needs.resolve.outputs.version }}
+          SHA: ${{ needs.resolve.outputs.sha }}
+        run: |
+          set -euo pipefail
+          docker buildx imagetools create \
+            --tag "$REGISTRY_IMAGE:staging" \
+            --metadata-file "$RUNNER_TEMP/index-metadata.json" \
+            --annotation "index:org.opencontainers.image.source=https://github.com/bettaku/engawa" \
+            --annotation "index:org.opencontainers.image.version=$VERSION" \
+            --annotation "index:org.opencontainers.image.revision=$SHA" \
+            --annotation "index:org.opencontainers.image.licenses=AGPL-3.0-only" \
+            --annotation "index:org.opencontainers.image.description=engawa - an ActivityPub server forked from CherryPick" \
+            $(printf "$REGISTRY_IMAGE@sha256:%s " *)
+          cat "$RUNNER_TEMP/index-metadata.json"
+          digest=$(jq -r '."containerimage.descriptor".digest // ."containerimage.digest" // empty' "$RUNNER_TEMP/index-metadata.json")
+          if ! [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "::error::Could not read the index digest from imagetools metadata"; exit 1
+          fi
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+      - name: Attest image
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ${{ env.REGISTRY_IMAGE }}
+          subject-digest: ${{ steps.index.outputs.digest }}
+          push-to-registry: true
+      # attestation が成功してから完全版タグを付ける（manifest をバイト列のままコピーするので digest は変わらない）
+      - name: Tag version
+        env:
+          GHCR_IMAGE: bettaku/engawa
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.resolve.outputs.version }}
+          DIGEST: ${{ steps.index.outputs.digest }}
+        run: node .github/scripts/ghcr-tags.mjs tag "$VERSION" "$DIGEST"
+      - name: Inspect image
+        env:
+          VERSION: ${{ needs.resolve.outputs.version }}
+        run: docker buildx imagetools inspect "$REGISTRY_IMAGE:$VERSION"
+
+  # latest / X / X.Y を、全安定版から毎回計算し直して付け替える（収束型）
+  floating:
+    name: Floating tags
+    needs: [resolve, manifest]
+    if: needs.resolve.outputs.prerelease != 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    concurrency:
+      group: release-floating-tags
+      cancel-in-progress: false
+      queue: max
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          sparse-checkout: .github/scripts
+          persist-credentials: false
+      - name: Fetch releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/releases?per_page=100" > "$RUNNER_TEMP/releases.json"
+      - name: Update floating tags
+        env:
+          GHCR_IMAGE: bettaku/engawa
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ github.token }}
+        run: node .github/scripts/ghcr-tags.mjs floating "$RUNNER_TEMP/releases.json"
