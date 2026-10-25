@@ -143,14 +143,14 @@ services:
       retries: 20
 
   db:
-    image: postgres:15-alpine
+    image: postgres:18-alpine
     restart: always
     networks:
       - internal_network
     env_file:
       - .config/docker.env
     volumes:
-      - ./db:/var/lib/postgresql/data
+      - ./db:/var/lib/postgresql
     healthcheck:
       test: "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"
       interval: 5s
