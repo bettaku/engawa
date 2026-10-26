@@ -6,6 +6,7 @@
 import { vi } from 'vitest';
 import { UserFollowingService } from '@/core/UserFollowingService.js';
 import { ApRendererService } from '@/core/activitypub/ApRendererService.js';
+import { UserBlockingService } from '@/core/UserBlockingService.js';
 
 // Exercise the real service and renderer with in-memory repositories. No server
 // or database is needed to verify the Activity IDs delivered to the remote inbox.
@@ -115,7 +116,28 @@ describe('Follow Activity identity', () => {
 		followings.set('pair', { id: 'legacy', requestId: null, follower, followee });
 		await service.unfollow(follower as any, followee as any, true);
 		expect(deliver.mock.calls.at(-1)?.[1]).toMatchObject({
-			id: `${url}/follows/legacy/undo`, object: { id: `${url}/follows/alice/bob` },
+			id: `${url}/activities/undo-follow/legacy`, object: { id: `${url}/follows/alice/bob` },
 		});
+	});
+
+	test('blocking undoes the original pending request activity with distinct IDs', async () => {
+		const blocking = Object.assign(Object.create(UserBlockingService.prototype), {
+			config: { url }, followRequestsRepository: (service as any).followRequestsRepository,
+			userEntityService: (service as any).userEntityService, apRendererService: (service as any).apRendererService,
+			queueService: { deliver },
+			globalEventService: { publishMainStream: vi.fn() },
+			webhookService: { enqueueUserWebhook: vi.fn() },
+		});
+		const undoIds = [];
+		for (let i = 0; i < 2; i++) {
+			await service.createFollowRequest(follower as any, followee as any);
+			const follow = deliver.mock.calls.at(-1)?.[1];
+			await blocking.cancelRequest(follower, followee, true);
+			const undo = deliver.mock.calls.at(-1)?.[1];
+			expect(undo.object).toEqual(follow);
+			expect(undo.id).toBe(`${follow.id}/undo`);
+			undoIds.push(undo.id);
+		}
+		expect(new Set(undoIds).size).toBe(2);
 	});
 });

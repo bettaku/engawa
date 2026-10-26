@@ -12,6 +12,7 @@ import type { HttpRequestService } from '@/core/HttpRequestService.js';
 import type { LoggerService } from '@/core/LoggerService.js';
 import type { UtilityService } from '@/core/UtilityService.js';
 import type {
+	FollowingsRepository,
 	FollowRequestsRepository,
 	MiMeta,
 	NoteReactionsRepository,
@@ -41,6 +42,7 @@ export class MockResolver extends Resolver {
 			{} as PollsRepository,
 			{} as NoteReactionsRepository,
 			{} as FollowRequestsRepository,
+			{} as FollowingsRepository,
 			{} as UtilityService,
 			{} as SystemAccountService,
 			{} as ApRequestService,

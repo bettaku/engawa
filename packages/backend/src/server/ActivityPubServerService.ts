@@ -1029,25 +1029,29 @@ export class ActivityPubServerService {
 				return reply.send({ error: 'Forbidden' });
 			}
 
-			// This may be used before the follow is completed, so we do not
-			// check if the following exists and only check if the follow request exists.
+			// This may be used before the follow is completed, so we check the
+			// follow request first. Accepted requests are deleted, but the following
+			// keeps the original Follow ID.
 
-			const followRequest = await this.followRequestsRepository.findOneBy({
+			const followId = `${this.config.url}/follows/${request.params.followRequestId}`;
+			const follow = await this.followRequestsRepository.findOneBy({
 				id: request.params.followRequestId,
+			}) ?? await this.followingsRepository.findOneBy({
+				requestId: followId,
 			});
 
-			if (followRequest == null) {
+			if (follow == null) {
 				reply.code(404);
 				return;
 			}
 
 			const [follower, followee] = await Promise.all([
 				this.usersRepository.findOneBy({
-					id: followRequest.followerId,
+					id: follow.followerId,
 					host: IsNull(),
 				}),
 				this.usersRepository.findOneBy({
-					id: followRequest.followeeId,
+					id: follow.followeeId,
 					host: Not(IsNull()),
 				}),
 			]) as [MiLocalUser | MiRemoteUser | null, MiLocalUser | MiRemoteUser | null];
@@ -1059,7 +1063,7 @@ export class ActivityPubServerService {
 
 			reply.header('Cache-Control', 'public, max-age=180');
 			this.setResponseType(request, reply);
-			return (this.apRendererService.addContext(this.apRendererService.renderFollow(follower, followee)));
+			return (this.apRendererService.addContext(this.apRendererService.renderFollow(follower, followee, followId)));
 		});
 
 		done();

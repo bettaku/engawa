@@ -398,7 +398,7 @@ export class UserFollowingService implements OnModuleInit {
 			const undo = this.apRendererService.renderUndo(this.apRendererService.renderFollow(follower as MiPartialLocalUser, followee as MiPartialRemoteUser, following.requestId ?? undefined), follower);
 			// Legacy followings no longer have their original Follow ID. Keep the old
 			// object reference, but use the relationship ID to avoid duplicate Undo IDs.
-			if (following.requestId == null) undo.id = `${this.config.url}/follows/${following.id}/undo`;
+			if (following.requestId == null) undo.id = `${this.config.url}/activities/undo-follow/${following.id}`;
 			const content = this.apRendererService.addContext(undo);
 			this.queueService.deliver(follower, content, followee.inbox, false);
 		}

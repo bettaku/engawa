@@ -14,6 +14,7 @@ export class MiFollowing {
 	@PrimaryColumn(id())
 	public id: string;
 
+	@Index()
 	@Column('varchar', {
 		length: 512, nullable: true,
 		comment: 'id of Follow Activity.',
