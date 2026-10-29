@@ -15,6 +15,13 @@ export class MiFollowing {
 	public id: string;
 
 	@Index()
+	@Column('varchar', {
+		length: 512, nullable: true,
+		comment: 'id of Follow Activity.',
+	})
+	public requestId: string | null;
+
+	@Index()
 	@Column({
 		...id(),
 		comment: 'The followee user ID.',
