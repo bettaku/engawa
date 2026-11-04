@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../packages/backend/config.schema.json
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # CherryPick configuration
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -220,7 +221,7 @@ fulltextSearch:
   #   You need to install pgroonga and configure it as a PostgreSQL extension.
   #   In addition to the above, you need to create a pgroonga index on the text column of the note table.
   #   see: https://pgroonga.github.io/tutorial/
-  # - meilisearch
+  # - meilisearch (deprecated; scheduled for removal)
   #   Use Meilisearch.
   #   You need to install Meilisearch and configure.
   provider: sqlLike
@@ -230,6 +231,7 @@ fulltextSearch:
 # You can set scope to local (default value) or global
 # (include notes from remote).
 
+# Deprecated; scheduled for removal (bettaku/engawa#325).
 #meilisearch:
 #  host: localhost
 #  port: 7700
@@ -321,9 +323,6 @@ id: 'aidx'
 # Local address used for outgoing requests
 #outgoingAddress: 127.0.0.1
 
-# IP address family used for outgoing request (ipv4, ipv6 or dual)
-#outgoingAddressFamily: ipv4
-
 # Cloud Logging
 #cloudLogging:
 #  projectId: example-project-id
@@ -358,6 +357,7 @@ proxyBypassHosts:
 # There is no reference implementation.
 # For example, CherryPick will point to the following URL:
 #   https://example.com/thumbnail.webp?thumbnail=1&url=https%3A%2F%2Fstorage.example.com%2Fpath%2Fto%2Fvideo.mp4
+# Deprecated; scheduled for removal (bettaku/engawa#326).
 #videoThumbnailGenerator: https://example.com
 
 # For security reasons, uploading attachments from the intranet is prohibited,
@@ -369,6 +369,12 @@ proxyBypassHosts:
 
 # Upload or download file size limits (bytes)
 #maxFileSize: 262144000
+
+# Maximum number of notifications kept per user
+#perUserNotificationsMaxCount: 500
+
+# Inactivity threshold for antennas (milliseconds)
+#deactivateAntennaThreshold: 604800000
 
 # PID File of master process
 #pidFile: /tmp/cherrypick.pid

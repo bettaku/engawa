@@ -5,137 +5,17 @@
 
 import * as fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
-import * as yaml from 'js-yaml';
+import { dirname } from 'node:path';
+import cluster from 'node:cluster';
+import { parseConfigSource, configPath, ConfigValidationError, formatDiagnostic } from './config/parse.js';
+import type { ConfigInput, RedisOptionsSource } from './config/types.js';
 import { type FastifyServerOptions } from 'fastify';
 import { resolveViteEntry, type ViteEntry } from './misc/vite-entry.js';
 import type * as Sentry from '@sentry/node';
 import type * as SentryVue from '@sentry/vue';
 import type { RedisOptions } from 'ioredis';
 
-type RedisOptionsSource = Partial<RedisOptions> & {
-	host: string;
-	port: number;
-	family?: number;
-	pass: string;
-	db?: number;
-	prefix?: string;
-};
-
-/**
- * 設定ファイルの型
- */
-type Source = {
-	url?: string;
-	port?: number;
-	socket?: string;
-	trustProxy?: FastifyServerOptions['trustProxy'];
-	chmodSocket?: string;
-	disableHsts?: boolean;
-	db: {
-		host: string;
-		port: number;
-		db?: string;
-		user?: string;
-		pass?: string;
-		disableCache?: boolean;
-		extra?: { [x: string]: string };
-	};
-	dbReplications?: boolean;
-	dbSlaves?: {
-		host: string;
-		port: number;
-		db: string;
-		user: string;
-		pass: string;
-	}[];
-	redis: RedisOptionsSource;
-	redisForPubsub?: RedisOptionsSource;
-	redisForJobQueue?: RedisOptionsSource;
-	redisForTimelines?: RedisOptionsSource;
-	redisForReactions?: RedisOptionsSource;
-	fulltextSearch?: {
-		provider?: FulltextSearchProvider;
-	};
-	meilisearch?: {
-		host: string;
-		port: string;
-		apiKey: string;
-		ssl?: boolean;
-		index: string;
-		scope?: 'local' | 'global' | string[];
-	};
-	elasticsearch?: {
-		host: string;
-		port: number;
-		user: string;
-		pass: string;
-		ssl?: boolean;
-		index: string;
-		rejectUnauthorized?: boolean;
-		scope?: 'local' | 'global' | string[];
-		pingTimeout?: number;
-		requestTimeout?: number;
-	};
-	sentryForBackend?: { options: Partial<Sentry.NodeOptions>; enableNodeProfiling: boolean; };
-	sentryForFrontend?: {
-		options: Partial<SentryVue.BrowserOptions> & { dsn: string };
-		vueIntegration?: SentryVue.VueIntegrationOptions | null;
-		browserTracingIntegration?: Parameters<typeof SentryVue.browserTracingIntegration>[0] | null;
-		replayIntegration?: Parameters<typeof SentryVue.replayIntegration>[0] | null;
-	};
-
-	publishTarballInsteadOfProvideRepositoryUrl?: boolean;
-
-	setupPassword?: string;
-
-	proxy?: string;
-	proxySmtp?: string;
-	proxyBypassHosts?: string[];
-
-	allowedPrivateNetworks?: string[];
-
-	maxFileSize?: number;
-
-	clusterLimit?: number;
-
-	id: string;
-
-	outgoingAddress?: string;
-	outgoingAddressFamily?: 'ipv4' | 'ipv6' | 'dual';
-
-	deliverJobConcurrency?: number;
-	inboxJobConcurrency?: number;
-	relationshipJobConcurrency?: number;
-	deliverJobPerSec?: number;
-	inboxJobPerSec?: number;
-	relationshipJobPerSec?: number;
-	deliverJobMaxAttempts?: number;
-	inboxJobMaxAttempts?: number;
-
-	cloudLogging?: {
-		projectId: string;
-		saKeyPath: string;
-		logName?: string;
-	}
-
-	apFileBaseUrl?: string;
-
-	mediaProxy?: string;
-	videoThumbnailGenerator?: string;
-
-	perChannelMaxNoteCacheCount?: number;
-	perUserNotificationsMaxCount?: number;
-	deactivateAntennaThreshold?: number;
-	pidFile: string;
-
-	logging?: {
-		sql?: {
-			disableQueryTruncation?: boolean,
-			enableQueryParamLogging?: boolean,
-		}
-	}
-};
+export type { FulltextSearchProvider } from './config/types.js';
 
 export type Config = {
 	url: string;
@@ -144,47 +24,12 @@ export type Config = {
 	trustProxy: FastifyServerOptions['trustProxy'];
 	chmodSocket: string | undefined;
 	disableHsts: boolean | undefined;
-	db: {
-		host: string;
-		port: number;
-		db: string;
-		user: string;
-		pass: string;
-		disableCache?: boolean;
-		extra?: { [x: string]: string };
-	};
+	db: ConfigInput['db'] & { db: string; user: string; pass: string };
 	dbReplications: boolean | undefined;
-	dbSlaves: {
-		host: string;
-		port: number;
-		db: string;
-		user: string;
-		pass: string;
-	}[] | undefined;
-	fulltextSearch?: {
-		provider?: FulltextSearchProvider;
-	};
-	meilisearch: {
-		host: string;
-		port: string;
-		apiKey: string;
-		ssl?: boolean;
-		index: string;
-		scope?: 'local' | 'global' | string[];
-		locale?: string[];
-	} | undefined;
-	elasticsearch: {
-		host: string;
-		port: number;
-		user: string;
-		pass: string;
-		ssl?: boolean;
-		index: string;
-		rejectUnauthorized?: boolean;
-		scope?: 'local' | 'global' | string[];
-		pingTimeout?: number;
-		requestTimeout?: number;
-	} | undefined;
+	dbSlaves: ConfigInput['dbSlaves'];
+	fulltextSearch?: ConfigInput['fulltextSearch'];
+	meilisearch: ConfigInput['meilisearch'];
+	elasticsearch: ConfigInput['elasticsearch'];
 	proxy: string | undefined;
 	proxySmtp: string | undefined;
 	proxyBypassHosts: string[] | undefined;
@@ -202,18 +47,9 @@ export type Config = {
 	relationshipJobPerSec: number | undefined;
 	deliverJobMaxAttempts: number | undefined;
 	inboxJobMaxAttempts: number | undefined;
-	cloudLogging?: {
-		projectId: string;
-		saKeyPath: string;
-		logName?: string;
-	}
+	cloudLogging?: ConfigInput['cloudLogging'];
 	apFileBaseUrl: string | undefined;
-	logging?: {
-		sql?: {
-			disableQueryTruncation?: boolean,
-			enableQueryParamLogging?: boolean,
-		}
-	}
+	logging?: ConfigInput['logging'];
 
 	version: string;
 	basedMisskeyVersion: string;
@@ -240,7 +76,7 @@ export type Config = {
 	redisForJobQueue: RedisOptions & RedisOptionsSource;
 	redisForTimelines: RedisOptions & RedisOptionsSource;
 	redisForReactions: RedisOptions & RedisOptionsSource;
-	sentryForBackend: { options: Partial<Sentry.NodeOptions>; enableNodeProfiling: boolean; } | undefined;
+	sentryForBackend: { options: Partial<Sentry.NodeOptions>; enableNodeProfiling?: boolean; } | undefined;
 	sentryForFrontend: {
 		options: Partial<SentryVue.BrowserOptions> & { dsn: string };
 		vueIntegration?: SentryVue.VueIntegrationOptions | null;
@@ -250,29 +86,30 @@ export type Config = {
 	perChannelMaxNoteCacheCount: number;
 	perUserNotificationsMaxCount: number;
 	deactivateAntennaThreshold: number;
-	pidFile: string;
+	pidFile?: string;
 };
-
-export type FulltextSearchProvider = 'sqlLike' | 'sqlPgroonga' | 'meilisearch' | 'elasticsearch';
 
 const _filename = fileURLToPath(import.meta.url);
 const _dirname = dirname(_filename);
 
-/**
- * Path of configuration directory
- */
-const dir = `${_dirname}/../../../.config`;
-
-/**
- * Path of configuration file
- */
-export const path = process.env.CHERRYPICK_CONFIG_YML
-	? resolve(dir, process.env.CHERRYPICK_CONFIG_YML)
-	: process.env.NODE_ENV === 'test'
-		? resolve(dir, 'test.yml')
-		: resolve(dir, 'default.yml');
+export const path = configPath();
+let cached: Config | undefined;
 
 export function loadConfig(): Config {
+	if (cached) return cached;
+	const mode = process.env.CHERRYPICK_CONFIG_VALIDATION;
+	const { source, rawUrl, diagnostics } = parseConfigSource(path);
+	if (mode === 'error' && diagnostics.some(d => d.level === 'error')) {
+		throw new ConfigValidationError(diagnostics);
+	}
+	if (cluster.isPrimary && process.env.NODE_ENV !== 'test') {
+		for (const diagnostic of diagnostics) console.warn(formatDiagnostic(diagnostic));
+	}
+	cached = deriveConfig(source, rawUrl);
+	return cached;
+}
+
+function deriveConfig(config: ConfigInput, rawUrl: unknown): Config {
 	const meta = JSON.parse(fs.readFileSync(`${_dirname}/../../../built/meta.json`, 'utf-8'));
 
 	const frontendManifestExists = fs.existsSync(_dirname + '/../../../built/_frontend_vite_/manifest.json');
@@ -284,9 +121,7 @@ export function loadConfig(): Config {
 		JSON.parse(fs.readFileSync(`${_dirname}/../../../built/_frontend_embed_vite_/manifest.json`, 'utf-8'))
 		: { 'src/boot.ts': { file: null } };
 
-	const config = yaml.load(fs.readFileSync(path, 'utf-8')) as Source;
-
-	const url = tryCreateUrl(config.url ?? process.env.CHERRYPICK_URL ?? '');
+	const url = tryCreateUrl(config.url ?? '');
 	const version = meta.version;
 	const basedMisskeyVersion = meta.basedMisskeyVersion;
 	const host = url.host;
@@ -294,9 +129,9 @@ export function loadConfig(): Config {
 	const scheme = url.protocol.replace(/:$/, '');
 	const wsScheme = scheme.replace('http', 'ws');
 
-	const dbDb = config.db.db ?? process.env.DATABASE_DB ?? '';
-	const dbUser = config.db.user ?? process.env.DATABASE_USER ?? '';
-	const dbPass = config.db.pass ?? process.env.DATABASE_PASSWORD ?? '';
+	const dbDb = config.db.db ?? '';
+	const dbUser = config.db.user ?? '';
+	const dbPass = config.db.pass ?? '';
 
 	const externalMediaProxy = config.mediaProxy ?
 		config.mediaProxy.endsWith('/') ? config.mediaProxy.substring(0, config.mediaProxy.length - 1) : config.mediaProxy
@@ -311,9 +146,10 @@ export function loadConfig(): Config {
 		publishTarballInsteadOfProvideRepositoryUrl: !!config.publishTarballInsteadOfProvideRepositoryUrl,
 		setupPassword: config.setupPassword,
 		url: url.origin,
-		port: config.port ?? parseInt(process.env.PORT ?? '', 10),
+		port: config.port ?? NaN,
 		socket: config.socket,
-		trustProxy: config.trustProxy,
+		// Fastify also accepts a numeric hop count in lib/request.js.
+		trustProxy: config.trustProxy as FastifyServerOptions['trustProxy'],
 		chmodSocket: config.chmodSocket,
 		disableHsts: config.disableHsts,
 		host,
@@ -361,7 +197,7 @@ export function loadConfig(): Config {
 		videoThumbnailGenerator: config.videoThumbnailGenerator ?
 			config.videoThumbnailGenerator.endsWith('/') ? config.videoThumbnailGenerator.substring(0, config.videoThumbnailGenerator.length - 1) : config.videoThumbnailGenerator
 			: null,
-		userAgent: `Engawa/${version} (${config.url})`,
+		userAgent: `Engawa/${version} (${rawUrl})`,
 		frontendEntry: resolveViteEntry(frontendManifest, 'src/_boot_.ts'),
 		frontendManifestExists: frontendManifestExists,
 		frontendEmbedEntry: resolveViteEntry(frontendEmbedManifest, 'src/boot.ts'),
@@ -377,8 +213,8 @@ export function loadConfig(): Config {
 function tryCreateUrl(url: string) {
 	try {
 		return new URL(url);
-	} catch (e) {
-		throw new Error(`url="${url}" is not a valid URL.`);
+	} catch {
+		throw new Error('/url must be a valid URL');
 	}
 }
 
