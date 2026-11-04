@@ -5,7 +5,7 @@
 
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { configPath } from './config-path.mjs';
 import cssnano from 'cssnano';
 import * as yaml from 'js-yaml';
 import postcss from 'postcss';
@@ -16,17 +16,10 @@ import generateDTS from '../locales/generateDTS.js';
 import meta from '../package.json' with { type: "json" };
 import buildTarball from './tarball.mjs';
 
-const configDir = fileURLToPath(new URL('../.config', import.meta.url));
-const configPath = process.env.CHERRYPICK_CONFIG_YML
-	? path.resolve(configDir, process.env.CHERRYPICK_CONFIG_YML)
-	: process.env.NODE_ENV === 'test'
-		? path.resolve(configDir, 'test.yml')
-		: path.resolve(configDir, 'default.yml');
-
 let locales = buildLocales();
 
 async function loadConfig() {
-	return fs.readFile(configPath, 'utf-8').then(data => yaml.load(data)).catch(() => null);
+	return fs.readFile(configPath(), 'utf-8').then(data => yaml.load(data)).catch(() => null);
 }
 
 async function copyFrontendFonts() {

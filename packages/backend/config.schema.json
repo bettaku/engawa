@@ -1,0 +1,2569 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/input",
+  "$defs": {
+    "input": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "x-null-as-unset": true,
+          "x-env": "CHERRYPICK_URL",
+          "description": "Public URL of this instance."
+        },
+        "port": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 65535,
+          "x-null-as-unset": true,
+          "x-env": "PORT",
+          "description": "HTTP listen port. Optional when using a Unix socket."
+        },
+        "socket": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "description": "Unix socket to listen on instead of a TCP port."
+        },
+        "chmodSocket": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "File mode for the Unix socket."
+        },
+        "trustProxy": {
+          "$ref": "#/$defs/trustProxy",
+          "description": "Trusted reverse proxies or maximum trusted hop count."
+        },
+        "disableHsts": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "Disable the Strict-Transport-Security header."
+        },
+        "id": {
+          "type": "string",
+          "enum": [
+            "aid",
+            "aidx",
+            "meid",
+            "meidg",
+            "ulid",
+            "objectid"
+          ],
+          "description": "ID generation method."
+        },
+        "db": {
+          "type": "object",
+          "properties": {
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "db": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-null-as-unset": true,
+              "x-env": "DATABASE_DB"
+            },
+            "user": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-null-as-unset": true,
+              "x-env": "DATABASE_USER"
+            },
+            "pass": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-secret": true,
+              "x-null-as-unset": true,
+              "x-env": "DATABASE_PASSWORD"
+            },
+            "disableCache": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "extra": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "required": [
+            "host",
+            "port"
+          ],
+          "additionalProperties": false,
+          "description": "Primary PostgreSQL connection."
+        },
+        "dbReplications": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "Enable PostgreSQL read replicas."
+        },
+        "dbSlaves": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "object",
+            "properties": {
+              "host": {
+                "type": "string"
+              },
+              "port": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 65535
+              },
+              "db": {
+                "type": "string"
+              },
+              "user": {
+                "type": "string"
+              },
+              "pass": {
+                "type": "string",
+                "x-secret": true
+              }
+            },
+            "required": [
+              "host",
+              "port",
+              "db",
+              "user",
+              "pass"
+            ],
+            "additionalProperties": false
+          },
+          "description": "PostgreSQL replica connections."
+        },
+        "redis": {
+          "type": "object",
+          "properties": {
+            "path": {},
+            "tls": {},
+            "connectTimeout": {},
+            "disconnectTimeout": {},
+            "commandTimeout": {},
+            "socketTimeout": {},
+            "keepAlive": {},
+            "noDelay": {},
+            "connectionName": {},
+            "disableClientInfo": {},
+            "clientInfoTag": {},
+            "password": {},
+            "autoResubscribe": {},
+            "autoResendUnfulfilledCommands": {},
+            "readOnly": {},
+            "stringNumbers": {},
+            "monitor": {},
+            "maxRetriesPerRequest": {},
+            "maxLoadingRetryTime": {},
+            "enableAutoPipelining": {},
+            "autoPipeliningIgnoredCommands": {},
+            "offlineQueue": {},
+            "commandQueue": {},
+            "enableOfflineQueue": {},
+            "enableReadyCheck": {},
+            "lazyConnect": {},
+            "scripts": {},
+            "name": {},
+            "role": {},
+            "sentinelUsername": {},
+            "sentinelPassword": {},
+            "sentinels": {},
+            "preferredSlaves": {},
+            "sentinelCommandTimeout": {},
+            "enableTLSForSentinelMode": {},
+            "sentinelTLS": {},
+            "natMap": {},
+            "updateSentinels": {},
+            "sentinelMaxConnections": {},
+            "failoverDetector": {},
+            "keyPrefix": {},
+            "showFriendlyErrorStack": {},
+            "Connector": {},
+            "retryStrategy": {},
+            "reconnectOnError": {},
+            "sentinelRetryStrategy": {},
+            "sentinelReconnectStrategy": {},
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "pass": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-secret": true
+            },
+            "username": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "family": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "x-null-as-unset": true,
+              "enum": [
+                0,
+                4,
+                6,
+                null
+              ]
+            },
+            "db": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "x-null-as-unset": true
+            },
+            "prefix": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-null-as-unset": true
+            }
+          },
+          "required": [
+            "host",
+            "port"
+          ],
+          "additionalProperties": false,
+          "description": "Default Redis connection and ioredis options."
+        },
+        "redisForPubsub": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "path": {},
+            "tls": {},
+            "connectTimeout": {},
+            "disconnectTimeout": {},
+            "commandTimeout": {},
+            "socketTimeout": {},
+            "keepAlive": {},
+            "noDelay": {},
+            "connectionName": {},
+            "disableClientInfo": {},
+            "clientInfoTag": {},
+            "password": {},
+            "autoResubscribe": {},
+            "autoResendUnfulfilledCommands": {},
+            "readOnly": {},
+            "stringNumbers": {},
+            "monitor": {},
+            "maxRetriesPerRequest": {},
+            "maxLoadingRetryTime": {},
+            "enableAutoPipelining": {},
+            "autoPipeliningIgnoredCommands": {},
+            "offlineQueue": {},
+            "commandQueue": {},
+            "enableOfflineQueue": {},
+            "enableReadyCheck": {},
+            "lazyConnect": {},
+            "scripts": {},
+            "name": {},
+            "role": {},
+            "sentinelUsername": {},
+            "sentinelPassword": {},
+            "sentinels": {},
+            "preferredSlaves": {},
+            "sentinelCommandTimeout": {},
+            "enableTLSForSentinelMode": {},
+            "sentinelTLS": {},
+            "natMap": {},
+            "updateSentinels": {},
+            "sentinelMaxConnections": {},
+            "failoverDetector": {},
+            "keyPrefix": {},
+            "showFriendlyErrorStack": {},
+            "Connector": {},
+            "retryStrategy": {},
+            "reconnectOnError": {},
+            "sentinelRetryStrategy": {},
+            "sentinelReconnectStrategy": {},
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "pass": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-secret": true
+            },
+            "username": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "family": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "x-null-as-unset": true,
+              "enum": [
+                0,
+                4,
+                6,
+                null
+              ]
+            },
+            "db": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "x-null-as-unset": true
+            },
+            "prefix": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-null-as-unset": true
+            }
+          },
+          "required": [
+            "host",
+            "port"
+          ],
+          "additionalProperties": false,
+          "x-null-as-unset": true,
+          "description": "Redis connection for pub/sub. Defaults to redis."
+        },
+        "redisForJobQueue": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "path": {},
+            "tls": {},
+            "connectTimeout": {},
+            "disconnectTimeout": {},
+            "commandTimeout": {},
+            "socketTimeout": {},
+            "keepAlive": {},
+            "noDelay": {},
+            "connectionName": {},
+            "disableClientInfo": {},
+            "clientInfoTag": {},
+            "password": {},
+            "autoResubscribe": {},
+            "autoResendUnfulfilledCommands": {},
+            "readOnly": {},
+            "stringNumbers": {},
+            "monitor": {},
+            "maxRetriesPerRequest": {},
+            "maxLoadingRetryTime": {},
+            "enableAutoPipelining": {},
+            "autoPipeliningIgnoredCommands": {},
+            "offlineQueue": {},
+            "commandQueue": {},
+            "enableOfflineQueue": {},
+            "enableReadyCheck": {},
+            "lazyConnect": {},
+            "scripts": {},
+            "name": {},
+            "role": {},
+            "sentinelUsername": {},
+            "sentinelPassword": {},
+            "sentinels": {},
+            "preferredSlaves": {},
+            "sentinelCommandTimeout": {},
+            "enableTLSForSentinelMode": {},
+            "sentinelTLS": {},
+            "natMap": {},
+            "updateSentinels": {},
+            "sentinelMaxConnections": {},
+            "failoverDetector": {},
+            "keyPrefix": {},
+            "showFriendlyErrorStack": {},
+            "Connector": {},
+            "retryStrategy": {},
+            "reconnectOnError": {},
+            "sentinelRetryStrategy": {},
+            "sentinelReconnectStrategy": {},
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "pass": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-secret": true
+            },
+            "username": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "family": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "x-null-as-unset": true,
+              "enum": [
+                0,
+                4,
+                6,
+                null
+              ]
+            },
+            "db": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "x-null-as-unset": true
+            },
+            "prefix": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-null-as-unset": true
+            }
+          },
+          "required": [
+            "host",
+            "port"
+          ],
+          "additionalProperties": false,
+          "x-null-as-unset": true,
+          "description": "Redis connection for job queues. Defaults to redis."
+        },
+        "redisForTimelines": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "path": {},
+            "tls": {},
+            "connectTimeout": {},
+            "disconnectTimeout": {},
+            "commandTimeout": {},
+            "socketTimeout": {},
+            "keepAlive": {},
+            "noDelay": {},
+            "connectionName": {},
+            "disableClientInfo": {},
+            "clientInfoTag": {},
+            "password": {},
+            "autoResubscribe": {},
+            "autoResendUnfulfilledCommands": {},
+            "readOnly": {},
+            "stringNumbers": {},
+            "monitor": {},
+            "maxRetriesPerRequest": {},
+            "maxLoadingRetryTime": {},
+            "enableAutoPipelining": {},
+            "autoPipeliningIgnoredCommands": {},
+            "offlineQueue": {},
+            "commandQueue": {},
+            "enableOfflineQueue": {},
+            "enableReadyCheck": {},
+            "lazyConnect": {},
+            "scripts": {},
+            "name": {},
+            "role": {},
+            "sentinelUsername": {},
+            "sentinelPassword": {},
+            "sentinels": {},
+            "preferredSlaves": {},
+            "sentinelCommandTimeout": {},
+            "enableTLSForSentinelMode": {},
+            "sentinelTLS": {},
+            "natMap": {},
+            "updateSentinels": {},
+            "sentinelMaxConnections": {},
+            "failoverDetector": {},
+            "keyPrefix": {},
+            "showFriendlyErrorStack": {},
+            "Connector": {},
+            "retryStrategy": {},
+            "reconnectOnError": {},
+            "sentinelRetryStrategy": {},
+            "sentinelReconnectStrategy": {},
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "pass": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-secret": true
+            },
+            "username": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "family": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "x-null-as-unset": true,
+              "enum": [
+                0,
+                4,
+                6,
+                null
+              ]
+            },
+            "db": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "x-null-as-unset": true
+            },
+            "prefix": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-null-as-unset": true
+            }
+          },
+          "required": [
+            "host",
+            "port"
+          ],
+          "additionalProperties": false,
+          "x-null-as-unset": true,
+          "description": "Redis connection for timelines. Defaults to redis."
+        },
+        "redisForReactions": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "path": {},
+            "tls": {},
+            "connectTimeout": {},
+            "disconnectTimeout": {},
+            "commandTimeout": {},
+            "socketTimeout": {},
+            "keepAlive": {},
+            "noDelay": {},
+            "connectionName": {},
+            "disableClientInfo": {},
+            "clientInfoTag": {},
+            "password": {},
+            "autoResubscribe": {},
+            "autoResendUnfulfilledCommands": {},
+            "readOnly": {},
+            "stringNumbers": {},
+            "monitor": {},
+            "maxRetriesPerRequest": {},
+            "maxLoadingRetryTime": {},
+            "enableAutoPipelining": {},
+            "autoPipeliningIgnoredCommands": {},
+            "offlineQueue": {},
+            "commandQueue": {},
+            "enableOfflineQueue": {},
+            "enableReadyCheck": {},
+            "lazyConnect": {},
+            "scripts": {},
+            "name": {},
+            "role": {},
+            "sentinelUsername": {},
+            "sentinelPassword": {},
+            "sentinels": {},
+            "preferredSlaves": {},
+            "sentinelCommandTimeout": {},
+            "enableTLSForSentinelMode": {},
+            "sentinelTLS": {},
+            "natMap": {},
+            "updateSentinels": {},
+            "sentinelMaxConnections": {},
+            "failoverDetector": {},
+            "keyPrefix": {},
+            "showFriendlyErrorStack": {},
+            "Connector": {},
+            "retryStrategy": {},
+            "reconnectOnError": {},
+            "sentinelRetryStrategy": {},
+            "sentinelReconnectStrategy": {},
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "pass": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-secret": true
+            },
+            "username": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "family": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "x-null-as-unset": true,
+              "enum": [
+                0,
+                4,
+                6,
+                null
+              ]
+            },
+            "db": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "x-null-as-unset": true
+            },
+            "prefix": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-null-as-unset": true
+            }
+          },
+          "required": [
+            "host",
+            "port"
+          ],
+          "additionalProperties": false,
+          "x-null-as-unset": true,
+          "description": "Redis connection for reactions. Defaults to redis."
+        },
+        "fulltextSearch": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "provider": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-null-as-unset": true,
+              "enum": [
+                "sqlLike",
+                "sqlPgroonga",
+                "meilisearch",
+                "elasticsearch",
+                null
+              ]
+            }
+          },
+          "required": [],
+          "additionalProperties": false,
+          "description": "Full-text search provider."
+        },
+        "meilisearch": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 65535
+                },
+                {
+                  "type": "string",
+                  "pattern": "^[0-9]+$"
+                }
+              ]
+            },
+            "apiKey": {
+              "type": "string",
+              "x-secret": true
+            },
+            "index": {
+              "type": "string"
+            },
+            "ssl": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "scope": {
+              "$ref": "#/$defs/scope"
+            },
+            "locale": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "host",
+            "port",
+            "apiKey",
+            "index"
+          ],
+          "additionalProperties": false,
+          "deprecated": true,
+          "x-deprecation": "scheduled-removal",
+          "description": "Scheduled for removal (https://github.com/bettaku/engawa/issues/325)"
+        },
+        "elasticsearch": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "user": {
+              "type": "string"
+            },
+            "pass": {
+              "type": "string",
+              "x-secret": true
+            },
+            "index": {
+              "type": "string"
+            },
+            "ssl": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "scope": {
+              "$ref": "#/$defs/scope"
+            },
+            "rejectUnauthorized": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "pingTimeout": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1
+            },
+            "requestTimeout": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1
+            }
+          },
+          "required": [
+            "host",
+            "port",
+            "user",
+            "pass",
+            "index"
+          ],
+          "additionalProperties": false,
+          "description": "Elasticsearch connection and indexing options."
+        },
+        "sentryForBackend": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "options": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "dsn": {
+                  "$ref": "#/$defs/optionalSecret",
+                  "x-secret": true
+                }
+              }
+            },
+            "enableNodeProfiling": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "options"
+          ],
+          "additionalProperties": false,
+          "description": "Backend Sentry SDK options and profiling."
+        },
+        "sentryForFrontend": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "options": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "dsn": {
+                  "$ref": "#/$defs/secret",
+                  "x-secret": true
+                }
+              },
+              "required": [
+                "dsn"
+              ]
+            },
+            "vueIntegration": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": true
+            },
+            "browserTracingIntegration": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": true
+            },
+            "replayIntegration": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "required": [
+            "options"
+          ],
+          "additionalProperties": false,
+          "description": "Browser Sentry options. Set an integration to null to enable its defaults."
+        },
+        "publishTarballInsteadOfProvideRepositoryUrl": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "Publish a source tarball at build time."
+        },
+        "setupPassword": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "x-secret": true,
+          "description": "Password required to create the initial administrator."
+        },
+        "proxy": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Proxy for outbound HTTP and HTTPS requests."
+        },
+        "proxySmtp": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Proxy for outbound SMTP connections."
+        },
+        "proxyBypassHosts": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Hosts that bypass the HTTP proxy."
+        },
+        "allowedPrivateNetworks": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Private networks allowed for fetching attachments."
+        },
+        "maxFileSize": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "x-null-as-unset": true,
+          "description": "Maximum upload or download size in bytes (default 262144000)."
+        },
+        "clusterLimit": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "Maximum number of worker processes."
+        },
+        "outgoingAddress": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Local address used for outgoing requests."
+        },
+        "outgoingAddressFamily": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "ipv4",
+            "ipv6",
+            "dual"
+          ],
+          "deprecated": true,
+          "x-deprecation": "no-effect",
+          "description": "Deprecated IP family selection. Has no effect."
+        },
+        "deliverJobConcurrency": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "Concurrent jobs per worker for the deliver queue."
+        },
+        "inboxJobConcurrency": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "Concurrent jobs per worker for the inbox queue."
+        },
+        "relationshipJobConcurrency": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "Concurrent jobs per worker for the relationship queue."
+        },
+        "deliverJobPerSec": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "Maximum jobs per second for the deliver queue."
+        },
+        "inboxJobPerSec": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "Maximum jobs per second for the inbox queue."
+        },
+        "relationshipJobPerSec": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "Maximum jobs per second for the relationship queue."
+        },
+        "deliverJobMaxAttempts": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "Maximum attempts per job for the deliver queue."
+        },
+        "inboxJobMaxAttempts": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "Maximum attempts per job for the inbox queue."
+        },
+        "cloudLogging": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "projectId": {
+              "type": "string"
+            },
+            "saKeyPath": {
+              "type": "string"
+            },
+            "logName": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "projectId",
+            "saKeyPath"
+          ],
+          "additionalProperties": false,
+          "description": "Google Cloud Logging project and service account configuration."
+        },
+        "apFileBaseUrl": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Override the ActivityPub file URL for object storage."
+        },
+        "mediaProxy": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "External media proxy URL."
+        },
+        "videoThumbnailGenerator": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "deprecated": true,
+          "x-deprecation": "scheduled-removal",
+          "description": "Scheduled for removal (https://github.com/bettaku/engawa/issues/326)"
+        },
+        "perChannelMaxNoteCacheCount": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "x-null-as-unset": true,
+          "deprecated": true,
+          "x-deprecation": "no-effect",
+          "description": "Deprecated channel note cache limit. Has no effect."
+        },
+        "perUserNotificationsMaxCount": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "x-null-as-unset": true,
+          "description": "Maximum notifications per user (default 500)."
+        },
+        "deactivateAntennaThreshold": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "x-null-as-unset": true,
+          "description": "Antenna inactivity threshold in milliseconds (default 604800000)."
+        },
+        "pidFile": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Path for the master process ID file."
+        },
+        "logging": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "sql": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "disableQueryTruncation": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "enableQueryParamLogging": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                }
+              },
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [],
+          "additionalProperties": false,
+          "description": "SQL query logging options."
+        },
+        "proxyRemoteFiles": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "deprecated": true,
+          "x-deprecation": "migration-only",
+          "description": "Legacy setting used only when migrating the database."
+        },
+        "signToActivityPubGet": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "deprecated": true,
+          "x-deprecation": "migration-only",
+          "description": "Legacy setting used only when migrating the database."
+        },
+        "disallowExternalApRedirect": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "deprecated": true,
+          "x-deprecation": "migration-only",
+          "description": "Legacy setting used only when migrating the database."
+        }
+      },
+      "required": [
+        "db",
+        "redis",
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "effective": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "x-null-as-unset": true,
+          "x-env": "CHERRYPICK_URL",
+          "description": "Public URL of this instance."
+        },
+        "port": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 65535,
+          "x-null-as-unset": true,
+          "x-env": "PORT",
+          "description": "HTTP listen port. Optional when using a Unix socket."
+        },
+        "socket": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "description": "Unix socket to listen on instead of a TCP port."
+        },
+        "chmodSocket": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "File mode for the Unix socket."
+        },
+        "trustProxy": {
+          "$ref": "#/$defs/trustProxy",
+          "description": "Trusted reverse proxies or maximum trusted hop count."
+        },
+        "disableHsts": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "Disable the Strict-Transport-Security header."
+        },
+        "id": {
+          "type": "string",
+          "enum": [
+            "aid",
+            "aidx",
+            "meid",
+            "meidg",
+            "ulid",
+            "objectid"
+          ],
+          "description": "ID generation method."
+        },
+        "db": {
+          "type": "object",
+          "properties": {
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "db": {
+              "type": "string",
+              "x-null-as-unset": true,
+              "x-env": "DATABASE_DB"
+            },
+            "user": {
+              "type": "string",
+              "x-null-as-unset": true,
+              "x-env": "DATABASE_USER"
+            },
+            "pass": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-secret": true,
+              "x-null-as-unset": true,
+              "x-env": "DATABASE_PASSWORD"
+            },
+            "disableCache": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "extra": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "required": [
+            "host",
+            "port",
+            "db",
+            "user"
+          ],
+          "additionalProperties": false
+        },
+        "dbReplications": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "Enable PostgreSQL read replicas."
+        },
+        "dbSlaves": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "object",
+            "properties": {
+              "host": {
+                "type": "string"
+              },
+              "port": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 65535
+              },
+              "db": {
+                "type": "string"
+              },
+              "user": {
+                "type": "string"
+              },
+              "pass": {
+                "type": "string",
+                "x-secret": true
+              }
+            },
+            "required": [
+              "host",
+              "port",
+              "db",
+              "user",
+              "pass"
+            ],
+            "additionalProperties": false
+          },
+          "description": "PostgreSQL replica connections."
+        },
+        "redis": {
+          "type": "object",
+          "properties": {
+            "path": {},
+            "tls": {},
+            "connectTimeout": {},
+            "disconnectTimeout": {},
+            "commandTimeout": {},
+            "socketTimeout": {},
+            "keepAlive": {},
+            "noDelay": {},
+            "connectionName": {},
+            "disableClientInfo": {},
+            "clientInfoTag": {},
+            "password": {},
+            "autoResubscribe": {},
+            "autoResendUnfulfilledCommands": {},
+            "readOnly": {},
+            "stringNumbers": {},
+            "monitor": {},
+            "maxRetriesPerRequest": {},
+            "maxLoadingRetryTime": {},
+            "enableAutoPipelining": {},
+            "autoPipeliningIgnoredCommands": {},
+            "offlineQueue": {},
+            "commandQueue": {},
+            "enableOfflineQueue": {},
+            "enableReadyCheck": {},
+            "lazyConnect": {},
+            "scripts": {},
+            "name": {},
+            "role": {},
+            "sentinelUsername": {},
+            "sentinelPassword": {},
+            "sentinels": {},
+            "preferredSlaves": {},
+            "sentinelCommandTimeout": {},
+            "enableTLSForSentinelMode": {},
+            "sentinelTLS": {},
+            "natMap": {},
+            "updateSentinels": {},
+            "sentinelMaxConnections": {},
+            "failoverDetector": {},
+            "keyPrefix": {},
+            "showFriendlyErrorStack": {},
+            "Connector": {},
+            "retryStrategy": {},
+            "reconnectOnError": {},
+            "sentinelRetryStrategy": {},
+            "sentinelReconnectStrategy": {},
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "pass": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-secret": true
+            },
+            "username": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "family": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "x-null-as-unset": true,
+              "enum": [
+                0,
+                4,
+                6,
+                null
+              ]
+            },
+            "db": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "x-null-as-unset": true
+            },
+            "prefix": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-null-as-unset": true
+            }
+          },
+          "required": [
+            "host",
+            "port"
+          ],
+          "additionalProperties": false,
+          "description": "Default Redis connection and ioredis options."
+        },
+        "redisForPubsub": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "path": {},
+            "tls": {},
+            "connectTimeout": {},
+            "disconnectTimeout": {},
+            "commandTimeout": {},
+            "socketTimeout": {},
+            "keepAlive": {},
+            "noDelay": {},
+            "connectionName": {},
+            "disableClientInfo": {},
+            "clientInfoTag": {},
+            "password": {},
+            "autoResubscribe": {},
+            "autoResendUnfulfilledCommands": {},
+            "readOnly": {},
+            "stringNumbers": {},
+            "monitor": {},
+            "maxRetriesPerRequest": {},
+            "maxLoadingRetryTime": {},
+            "enableAutoPipelining": {},
+            "autoPipeliningIgnoredCommands": {},
+            "offlineQueue": {},
+            "commandQueue": {},
+            "enableOfflineQueue": {},
+            "enableReadyCheck": {},
+            "lazyConnect": {},
+            "scripts": {},
+            "name": {},
+            "role": {},
+            "sentinelUsername": {},
+            "sentinelPassword": {},
+            "sentinels": {},
+            "preferredSlaves": {},
+            "sentinelCommandTimeout": {},
+            "enableTLSForSentinelMode": {},
+            "sentinelTLS": {},
+            "natMap": {},
+            "updateSentinels": {},
+            "sentinelMaxConnections": {},
+            "failoverDetector": {},
+            "keyPrefix": {},
+            "showFriendlyErrorStack": {},
+            "Connector": {},
+            "retryStrategy": {},
+            "reconnectOnError": {},
+            "sentinelRetryStrategy": {},
+            "sentinelReconnectStrategy": {},
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "pass": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-secret": true
+            },
+            "username": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "family": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "x-null-as-unset": true,
+              "enum": [
+                0,
+                4,
+                6,
+                null
+              ]
+            },
+            "db": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "x-null-as-unset": true
+            },
+            "prefix": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-null-as-unset": true
+            }
+          },
+          "required": [
+            "host",
+            "port"
+          ],
+          "additionalProperties": false,
+          "x-null-as-unset": true,
+          "description": "Redis connection for pub/sub. Defaults to redis."
+        },
+        "redisForJobQueue": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "path": {},
+            "tls": {},
+            "connectTimeout": {},
+            "disconnectTimeout": {},
+            "commandTimeout": {},
+            "socketTimeout": {},
+            "keepAlive": {},
+            "noDelay": {},
+            "connectionName": {},
+            "disableClientInfo": {},
+            "clientInfoTag": {},
+            "password": {},
+            "autoResubscribe": {},
+            "autoResendUnfulfilledCommands": {},
+            "readOnly": {},
+            "stringNumbers": {},
+            "monitor": {},
+            "maxRetriesPerRequest": {},
+            "maxLoadingRetryTime": {},
+            "enableAutoPipelining": {},
+            "autoPipeliningIgnoredCommands": {},
+            "offlineQueue": {},
+            "commandQueue": {},
+            "enableOfflineQueue": {},
+            "enableReadyCheck": {},
+            "lazyConnect": {},
+            "scripts": {},
+            "name": {},
+            "role": {},
+            "sentinelUsername": {},
+            "sentinelPassword": {},
+            "sentinels": {},
+            "preferredSlaves": {},
+            "sentinelCommandTimeout": {},
+            "enableTLSForSentinelMode": {},
+            "sentinelTLS": {},
+            "natMap": {},
+            "updateSentinels": {},
+            "sentinelMaxConnections": {},
+            "failoverDetector": {},
+            "keyPrefix": {},
+            "showFriendlyErrorStack": {},
+            "Connector": {},
+            "retryStrategy": {},
+            "reconnectOnError": {},
+            "sentinelRetryStrategy": {},
+            "sentinelReconnectStrategy": {},
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "pass": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-secret": true
+            },
+            "username": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "family": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "x-null-as-unset": true,
+              "enum": [
+                0,
+                4,
+                6,
+                null
+              ]
+            },
+            "db": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "x-null-as-unset": true
+            },
+            "prefix": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-null-as-unset": true
+            }
+          },
+          "required": [
+            "host",
+            "port"
+          ],
+          "additionalProperties": false,
+          "x-null-as-unset": true,
+          "description": "Redis connection for job queues. Defaults to redis."
+        },
+        "redisForTimelines": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "path": {},
+            "tls": {},
+            "connectTimeout": {},
+            "disconnectTimeout": {},
+            "commandTimeout": {},
+            "socketTimeout": {},
+            "keepAlive": {},
+            "noDelay": {},
+            "connectionName": {},
+            "disableClientInfo": {},
+            "clientInfoTag": {},
+            "password": {},
+            "autoResubscribe": {},
+            "autoResendUnfulfilledCommands": {},
+            "readOnly": {},
+            "stringNumbers": {},
+            "monitor": {},
+            "maxRetriesPerRequest": {},
+            "maxLoadingRetryTime": {},
+            "enableAutoPipelining": {},
+            "autoPipeliningIgnoredCommands": {},
+            "offlineQueue": {},
+            "commandQueue": {},
+            "enableOfflineQueue": {},
+            "enableReadyCheck": {},
+            "lazyConnect": {},
+            "scripts": {},
+            "name": {},
+            "role": {},
+            "sentinelUsername": {},
+            "sentinelPassword": {},
+            "sentinels": {},
+            "preferredSlaves": {},
+            "sentinelCommandTimeout": {},
+            "enableTLSForSentinelMode": {},
+            "sentinelTLS": {},
+            "natMap": {},
+            "updateSentinels": {},
+            "sentinelMaxConnections": {},
+            "failoverDetector": {},
+            "keyPrefix": {},
+            "showFriendlyErrorStack": {},
+            "Connector": {},
+            "retryStrategy": {},
+            "reconnectOnError": {},
+            "sentinelRetryStrategy": {},
+            "sentinelReconnectStrategy": {},
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "pass": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-secret": true
+            },
+            "username": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "family": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "x-null-as-unset": true,
+              "enum": [
+                0,
+                4,
+                6,
+                null
+              ]
+            },
+            "db": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "x-null-as-unset": true
+            },
+            "prefix": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-null-as-unset": true
+            }
+          },
+          "required": [
+            "host",
+            "port"
+          ],
+          "additionalProperties": false,
+          "x-null-as-unset": true,
+          "description": "Redis connection for timelines. Defaults to redis."
+        },
+        "redisForReactions": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "path": {},
+            "tls": {},
+            "connectTimeout": {},
+            "disconnectTimeout": {},
+            "commandTimeout": {},
+            "socketTimeout": {},
+            "keepAlive": {},
+            "noDelay": {},
+            "connectionName": {},
+            "disableClientInfo": {},
+            "clientInfoTag": {},
+            "password": {},
+            "autoResubscribe": {},
+            "autoResendUnfulfilledCommands": {},
+            "readOnly": {},
+            "stringNumbers": {},
+            "monitor": {},
+            "maxRetriesPerRequest": {},
+            "maxLoadingRetryTime": {},
+            "enableAutoPipelining": {},
+            "autoPipeliningIgnoredCommands": {},
+            "offlineQueue": {},
+            "commandQueue": {},
+            "enableOfflineQueue": {},
+            "enableReadyCheck": {},
+            "lazyConnect": {},
+            "scripts": {},
+            "name": {},
+            "role": {},
+            "sentinelUsername": {},
+            "sentinelPassword": {},
+            "sentinels": {},
+            "preferredSlaves": {},
+            "sentinelCommandTimeout": {},
+            "enableTLSForSentinelMode": {},
+            "sentinelTLS": {},
+            "natMap": {},
+            "updateSentinels": {},
+            "sentinelMaxConnections": {},
+            "failoverDetector": {},
+            "keyPrefix": {},
+            "showFriendlyErrorStack": {},
+            "Connector": {},
+            "retryStrategy": {},
+            "reconnectOnError": {},
+            "sentinelRetryStrategy": {},
+            "sentinelReconnectStrategy": {},
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "pass": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-secret": true
+            },
+            "username": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "family": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "x-null-as-unset": true,
+              "enum": [
+                0,
+                4,
+                6,
+                null
+              ]
+            },
+            "db": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "x-null-as-unset": true
+            },
+            "prefix": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-null-as-unset": true
+            }
+          },
+          "required": [
+            "host",
+            "port"
+          ],
+          "additionalProperties": false,
+          "x-null-as-unset": true,
+          "description": "Redis connection for reactions. Defaults to redis."
+        },
+        "fulltextSearch": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "provider": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "x-null-as-unset": true,
+              "enum": [
+                "sqlLike",
+                "sqlPgroonga",
+                "meilisearch",
+                "elasticsearch",
+                null
+              ]
+            }
+          },
+          "required": [],
+          "additionalProperties": false,
+          "description": "Full-text search provider."
+        },
+        "meilisearch": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 65535
+                },
+                {
+                  "type": "string",
+                  "pattern": "^[0-9]+$"
+                }
+              ]
+            },
+            "apiKey": {
+              "type": "string",
+              "x-secret": true
+            },
+            "index": {
+              "type": "string"
+            },
+            "ssl": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "scope": {
+              "$ref": "#/$defs/scope"
+            },
+            "locale": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "host",
+            "port",
+            "apiKey",
+            "index"
+          ],
+          "additionalProperties": false,
+          "deprecated": true,
+          "x-deprecation": "scheduled-removal",
+          "description": "Scheduled for removal (https://github.com/bettaku/engawa/issues/325)"
+        },
+        "elasticsearch": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "user": {
+              "type": "string"
+            },
+            "pass": {
+              "type": "string",
+              "x-secret": true
+            },
+            "index": {
+              "type": "string"
+            },
+            "ssl": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "scope": {
+              "$ref": "#/$defs/scope"
+            },
+            "rejectUnauthorized": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "pingTimeout": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1
+            },
+            "requestTimeout": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1
+            }
+          },
+          "required": [
+            "host",
+            "port",
+            "user",
+            "pass",
+            "index"
+          ],
+          "additionalProperties": false,
+          "description": "Elasticsearch connection and indexing options."
+        },
+        "sentryForBackend": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "options": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "dsn": {
+                  "$ref": "#/$defs/optionalSecret",
+                  "x-secret": true
+                }
+              }
+            },
+            "enableNodeProfiling": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "options"
+          ],
+          "additionalProperties": false,
+          "description": "Backend Sentry SDK options and profiling."
+        },
+        "sentryForFrontend": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "options": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "dsn": {
+                  "$ref": "#/$defs/secret",
+                  "x-secret": true
+                }
+              },
+              "required": [
+                "dsn"
+              ]
+            },
+            "vueIntegration": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": true
+            },
+            "browserTracingIntegration": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": true
+            },
+            "replayIntegration": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "required": [
+            "options"
+          ],
+          "additionalProperties": false,
+          "description": "Browser Sentry options. Set an integration to null to enable its defaults."
+        },
+        "publishTarballInsteadOfProvideRepositoryUrl": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "Publish a source tarball at build time."
+        },
+        "setupPassword": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "x-secret": true,
+          "description": "Password required to create the initial administrator."
+        },
+        "proxy": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Proxy for outbound HTTP and HTTPS requests."
+        },
+        "proxySmtp": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Proxy for outbound SMTP connections."
+        },
+        "proxyBypassHosts": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Hosts that bypass the HTTP proxy."
+        },
+        "allowedPrivateNetworks": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Private networks allowed for fetching attachments."
+        },
+        "maxFileSize": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "x-null-as-unset": true,
+          "description": "Maximum upload or download size in bytes (default 262144000)."
+        },
+        "clusterLimit": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "Maximum number of worker processes."
+        },
+        "outgoingAddress": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Local address used for outgoing requests."
+        },
+        "outgoingAddressFamily": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "ipv4",
+            "ipv6",
+            "dual"
+          ],
+          "deprecated": true,
+          "x-deprecation": "no-effect",
+          "description": "Deprecated IP family selection. Has no effect."
+        },
+        "deliverJobConcurrency": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "Concurrent jobs per worker for the deliver queue."
+        },
+        "inboxJobConcurrency": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "Concurrent jobs per worker for the inbox queue."
+        },
+        "relationshipJobConcurrency": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "Concurrent jobs per worker for the relationship queue."
+        },
+        "deliverJobPerSec": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "Maximum jobs per second for the deliver queue."
+        },
+        "inboxJobPerSec": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "Maximum jobs per second for the inbox queue."
+        },
+        "relationshipJobPerSec": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "Maximum jobs per second for the relationship queue."
+        },
+        "deliverJobMaxAttempts": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "Maximum attempts per job for the deliver queue."
+        },
+        "inboxJobMaxAttempts": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "Maximum attempts per job for the inbox queue."
+        },
+        "cloudLogging": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "projectId": {
+              "type": "string"
+            },
+            "saKeyPath": {
+              "type": "string"
+            },
+            "logName": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "projectId",
+            "saKeyPath"
+          ],
+          "additionalProperties": false,
+          "description": "Google Cloud Logging project and service account configuration."
+        },
+        "apFileBaseUrl": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Override the ActivityPub file URL for object storage."
+        },
+        "mediaProxy": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "External media proxy URL."
+        },
+        "videoThumbnailGenerator": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "deprecated": true,
+          "x-deprecation": "scheduled-removal",
+          "description": "Scheduled for removal (https://github.com/bettaku/engawa/issues/326)"
+        },
+        "perChannelMaxNoteCacheCount": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "x-null-as-unset": true,
+          "deprecated": true,
+          "x-deprecation": "no-effect",
+          "description": "Deprecated channel note cache limit. Has no effect."
+        },
+        "perUserNotificationsMaxCount": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "x-null-as-unset": true,
+          "description": "Maximum notifications per user (default 500)."
+        },
+        "deactivateAntennaThreshold": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "x-null-as-unset": true,
+          "description": "Antenna inactivity threshold in milliseconds (default 604800000)."
+        },
+        "pidFile": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Path for the master process ID file."
+        },
+        "logging": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "sql": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "disableQueryTruncation": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "enableQueryParamLogging": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                }
+              },
+              "required": [],
+              "additionalProperties": false
+            }
+          },
+          "required": [],
+          "additionalProperties": false,
+          "description": "SQL query logging options."
+        },
+        "proxyRemoteFiles": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "deprecated": true,
+          "x-deprecation": "migration-only",
+          "description": "Legacy setting used only when migrating the database."
+        },
+        "signToActivityPubGet": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "deprecated": true,
+          "x-deprecation": "migration-only",
+          "description": "Legacy setting used only when migrating the database."
+        },
+        "disallowExternalApRedirect": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "deprecated": true,
+          "x-deprecation": "migration-only",
+          "description": "Legacy setting used only when migrating the database."
+        }
+      },
+      "required": [
+        "db",
+        "redis",
+        "id",
+        "url"
+      ],
+      "additionalProperties": false,
+      "if": {
+        "properties": {
+          "socket": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "socket"
+        ]
+      },
+      "else": {
+        "properties": {
+          "port": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          }
+        },
+        "required": [
+          "port"
+        ]
+      }
+    },
+    "secret": {
+      "type": "string",
+      "x-secret": true
+    },
+    "optionalSecret": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "x-secret": true
+    },
+    "scope": {
+      "anyOf": [
+        {
+          "enum": [
+            "local",
+            "global"
+          ]
+        },
+        {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "trustProxy": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "integer",
+          "minimum": 0
+        }
+      ]
+    }
+  }
+}

@@ -12,6 +12,7 @@
 		"migrate": "pnpm typeorm migration:run -d ormconfig.js",
 		"revert": "pnpm typeorm migration:revert -d ormconfig.js",
 		"cli": "node ./built/boot/cli.js",
+		"generate-config-schema": "node scripts/generate-config-schema.mjs",
 		"check:connect": "node ./scripts/check_connect.js",
 		"build": "swc src -d built -D --strip-leading-paths",
 		"build:test": "swc test-server -d built-test -D --config-file test-server/.swcrc --strip-leading-paths",

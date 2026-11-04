@@ -42,6 +42,14 @@ The second one is an easy mistake to make. An empty string counts as unset. If y
 
 This variable is also used by the migrations and by the asset build. Pass it to every command that should use the same config.
 
+### Checking the configuration
+
+After building the backend, run `pnpm check:config [path]` from the repository root. The check validates the YAML and the values supplied through the environment without connecting to PostgreSQL or Redis. Omit the path to check the same file the server loads. Use `--json` for machine-readable diagnostics. Exit codes are 0 for a valid configuration, 1 for errors and 2 for warnings only. With `--strict`, warnings also return 1.
+
+At startup, `CHERRYPICK_CONFIG_VALIDATION` defaults to `warn`, which reports problems and continues with the existing conversion rules. Use `error` to stop on invalid types, missing settings and out-of-range values. Unknown and deprecated keys still produce warnings. Use `off` to skip startup validation.
+
+The Docker health check reads a line beginning with `port:` from `.config/default.yml`. If you override the path or port using the environment or use flow-style YAML, adjust the container health check accordingly.
+
 ### What NODE_ENV changes
 
 `pnpm start` does not set `NODE_ENV=production` for you. The repository's Dockerfile does, but when you start the process directly you have to set it yourself.
@@ -71,7 +79,7 @@ To use the environment variable, omit the corresponding YAML key or set it to `n
 | `DATABASE_USER` | `db.user` | Empty string | PostgreSQL user name |
 | `DATABASE_PASSWORD` | `db.pass` | Empty string | PostgreSQL password |
 
-`PORT` is read with a base-10 `parseInt`, so give it an integer such as `3000`. When you use a UNIX socket, the YAML `socket` key is used instead.
+Set `PORT` to an integer from 1 to 65535 using decimal digits, for example `3000`. When you use a UNIX socket, the YAML `socket` key is used instead.
 
 For the database, the `db` object itself still has to exist in the YAML. `DATABASE_HOST`, `DATABASE_PORT` and `DATABASE_URL` are not interpreted by this config loader; set the target with `db.host` and `db.port` in the YAML. The fallback does not apply to `dbSlaves` either.
 
