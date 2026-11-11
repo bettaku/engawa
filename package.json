@@ -20,6 +20,7 @@
 	],
 	"private": true,
 	"scripts": {
+		"check:config": "node packages/backend/built/boot/config-check.js",
 		"build-pre": "node ./scripts/build-pre.js",
 		"build-assets": "node ./scripts/build-assets.mjs",
 		"build": "pnpm build-pre && pnpm -r build && pnpm build-assets",

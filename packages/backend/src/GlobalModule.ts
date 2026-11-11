@@ -21,7 +21,7 @@ import type { Provider, OnApplicationShutdown } from '@nestjs/common';
 
 const $config: Provider = {
 	provide: DI.config,
-	useValue: loadConfig(),
+	useFactory: loadConfig,
 };
 
 const $db: Provider = {
