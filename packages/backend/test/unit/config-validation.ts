@@ -11,6 +11,7 @@ import { describe, expect, it, afterAll } from 'vitest';
 import { load } from 'js-yaml';
 import { configPath, parseConfigSource } from '../../src/config/parse.js';
 import { createValidators, standardSchema } from '../../src/config/schema.js';
+import { convertRedisOptions } from '../../src/config.js';
 import { configPath as buildPath, developmentHost } from '../../../../scripts/config-path.mjs';
 import cases from '../fixtures/config/cases.json' with { type: 'json' };
 
@@ -37,8 +38,7 @@ describe('configuration validation', () => {
 
 	it.each(cases)('validates both stages of $file', c => {
 		const file = join(fixtures, c.file);
-		const input = load(readFileSync(file, 'utf8')) as typeof base;
-		input.id = input.id.toLowerCase();
+		const input = load(readFileSync(file, 'utf8'));
 		const { source, diagnostics } = parseConfigSource(file, { ...env, ...c.env });
 		expect(internal.input(input)).toBe(c.input);
 		expect(published.validate('config#/$defs/input', input)).toBe(c.input);
@@ -73,13 +73,61 @@ describe('configuration validation', () => {
 	});
 
 	it('allows driver options but warns about typos in Redis keys', () => {
-		expect(check({ redis: { ...base.redis, connectTimeout: 500, tls: { ca: 'example' }, prot: 6379 } }).diagnostics)
-			.toMatchObject([{ path: '/redis/prot', level: 'warning' }]);
+		const result = check({ redis: { ...base.redis, connectTimeout: 500, tls: { ca: 'example' }, pass: 'secret', prefix: 'app', prot: 6379 } });
+		expect(result.diagnostics).toMatchObject([{ path: '/redis/prot', level: 'warning' }]);
+		expect(result.source.redis).toMatchObject({ connectTimeout: 500, tls: { ca: 'example' }, pass: 'secret', prefix: 'app' });
+		expect(check({ redis: { ...base.redis, connectTimeout: 'abc' } }).diagnostics)
+			.toContainEqual(expect.objectContaining({ path: '/redis/connectTimeout', level: 'error' }));
+	});
+
+	it('accepts either a Redis socket path or host and port', () => {
+		expect(check({ redis: { path: '/run/redis.sock' } }).diagnostics).toEqual([]);
+		expect(published.validate('config#/$defs/input', { ...base, redis: { path: '/run/redis.sock' } })).toBe(true);
+		expect(check({ redis: { port: 6379 } }).diagnostics).toContainEqual(expect.objectContaining({ path: '/redis/host', level: 'error' }));
+	});
+
+	it('keeps explicit ioredis password and keyPrefix options', () => {
+		expect(convertRedisOptions({ host: 'redis', port: 6379 }, 'example.test')).toMatchObject({ prefix: 'example.test', keyPrefix: 'example.test:' });
+		expect(convertRedisOptions({ host: 'redis', port: 6379, password: 'secret', keyPrefix: 'app:' }, 'example.test'))
+			.toMatchObject({ password: 'secret', keyPrefix: 'app:' });
+		expect(convertRedisOptions({ host: 'redis', port: 6379, pass: 'pass', password: 'secret' }, 'example.test'))
+			.toMatchObject({ password: 'pass' });
+	});
+
+	it('limits Meilisearch string ports to the valid range', () => {
+		const meilisearch = { host: 'host', apiKey: 'key', index: 'idx' };
+		for (const [port, valid] of [['7700', true], ['65535', true], ['0', false], ['65536', false]] as const) {
+			const errors = check({ meilisearch: { ...meilisearch, port } }).diagnostics.filter(d => d.level === 'error');
+			expect(errors.length === 0).toBe(valid);
+		}
+	});
+
+	it('requires connection settings for the selected search engine', () => {
+		for (const provider of ['meilisearch', 'elasticsearch']) {
+			expect(check({ fulltextSearch: { provider } }).diagnostics)
+				.toContainEqual(expect.objectContaining({ path: '/' + provider, level: 'error' }));
+			expect(check({ fulltextSearch: { provider }, [provider]: null }).diagnostics)
+				.toContainEqual(expect.objectContaining({ path: '/' + provider, level: 'error' }));
+		}
+		expect(check({ fulltextSearch: null }).diagnostics).toEqual([]);
+		expect(published.validate('config#/$defs/input', { ...base, fulltextSearch: null })).toBe(true);
+		expect(published.validate('config#/$defs/input', { ...base, fulltextSearch: { provider: 'elasticsearch' } })).toBe(false);
+	});
+
+	it('treats a null outgoingAddressFamily as unset', () => {
+		expect(check({ outgoingAddressFamily: null }).diagnostics).toEqual([]);
+		expect(published.validate('config#/$defs/input', { ...base, outgoingAddressFamily: null })).toBe(true);
+	});
+
+	it('rejects non-HTTP URLs and unknown validation modes', () => {
+		expect(check({ url: 'file:///tmp/site' }).diagnostics)
+			.toContainEqual(expect.objectContaining({ path: '/url', level: 'error' }));
+		expect(() => parseConfigSource(path, { CHERRYPICK_CONFIG_VALIDATION: 'erorr' })).toThrow('CHERRYPICK_CONFIG_VALIDATION');
 	});
 
 	it('reports deprecated and unknown options as warnings with escaped JSON pointers', () => {
-		const { diagnostics } = check({ 'old/key~': 1, signToActivityPubGet: true, outgoingAddressFamily: 'dual', fulltextSearch: { provider: 'meilisearch' } });
-		expect(diagnostics.map(d => d.path).sort()).toEqual(['/fulltextSearch/provider', '/old~1key~0', '/outgoingAddressFamily', '/signToActivityPubGet']);
+		const { diagnostics } = check({ 'old/key~': 1, signToActivityPubGet: true, outgoingAddressFamily: 'dual', fulltextSearch: { provider: 'meilisearch' }, meilisearch: { host: 'host', port: 7700, apiKey: 'key', index: 'idx' } });
+		expect(diagnostics.map(d => d.path).sort()).toEqual(['/fulltextSearch/provider', '/meilisearch', '/old~1key~0', '/outgoingAddressFamily', '/signToActivityPubGet']);
 		expect(diagnostics.every(d => d.level === 'warning')).toBe(true);
 	});
 

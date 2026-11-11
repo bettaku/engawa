@@ -98,18 +98,18 @@ let cached: Config | undefined;
 export function loadConfig(): Config {
 	if (cached) return cached;
 	const mode = process.env.CHERRYPICK_CONFIG_VALIDATION;
-	const { source, rawUrl, diagnostics } = parseConfigSource(path);
+	const { source, diagnostics } = parseConfigSource(path);
 	if (mode === 'error' && diagnostics.some(d => d.level === 'error')) {
 		throw new ConfigValidationError(diagnostics);
 	}
 	if (cluster.isPrimary && process.env.NODE_ENV !== 'test') {
 		for (const diagnostic of diagnostics) console.warn(formatDiagnostic(diagnostic));
 	}
-	cached = deriveConfig(source, rawUrl);
+	cached = deriveConfig(source);
 	return cached;
 }
 
-function deriveConfig(config: ConfigInput, rawUrl: unknown): Config {
+function deriveConfig(config: ConfigInput): Config {
 	const meta = JSON.parse(fs.readFileSync(`${_dirname}/../../../built/meta.json`, 'utf-8'));
 
 	const frontendManifestExists = fs.existsSync(_dirname + '/../../../built/_frontend_vite_/manifest.json');
@@ -197,7 +197,7 @@ function deriveConfig(config: ConfigInput, rawUrl: unknown): Config {
 		videoThumbnailGenerator: config.videoThumbnailGenerator ?
 			config.videoThumbnailGenerator.endsWith('/') ? config.videoThumbnailGenerator.substring(0, config.videoThumbnailGenerator.length - 1) : config.videoThumbnailGenerator
 			: null,
-		userAgent: `Engawa/${version} (${rawUrl})`,
+		userAgent: `Engawa/${version} (${url.origin})`,
 		frontendEntry: resolveViteEntry(frontendManifest, 'src/_boot_.ts'),
 		frontendManifestExists: frontendManifestExists,
 		frontendEmbedEntry: resolveViteEntry(frontendEmbedManifest, 'src/boot.ts'),
@@ -218,13 +218,13 @@ function tryCreateUrl(url: string) {
 	}
 }
 
-function convertRedisOptions(options: RedisOptionsSource, host: string): RedisOptions & RedisOptionsSource {
+export function convertRedisOptions(options: RedisOptionsSource & RedisOptions, host: string): RedisOptions & RedisOptionsSource {
 	return {
 		...options,
-		password: options.pass,
+		password: options.pass ?? options.password,
 		prefix: options.prefix ?? host,
 		family: options.family ?? 0,
-		keyPrefix: `${options.prefix ?? host}:`,
+		keyPrefix: options.keyPrefix ?? `${options.prefix ?? host}:`,
 		db: options.db ?? 0,
 	};
 }

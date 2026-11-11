@@ -10,6 +10,10 @@ import type { ConfigInput, ConfigEffective } from './types.js';
 const string = { type: 'string' } as const;
 const integer = { type: 'integer', minimum: 0 } as const;
 const port = { ...integer, minimum: 1, maximum: 65535 };
+// Decimal string form of 1-65535.
+const portPattern =
+	'^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$';
+const timeout = { type: 'number', minimum: 0 } as const;
 const secret = { ...string, 'x-secret': true };
 const list = { type: 'array', items: string, nullable: true } as const;
 const text = { ...string, nullable: true } as const;
@@ -81,20 +85,31 @@ const redisDriverKeys = [
 	'sentinelRetryStrategy',
 	'sentinelReconnectStrategy',
 ] satisfies (keyof RedisOptions)[];
-const redis = object(
+const redisObject = object(
 	{
 		...Object.fromEntries(redisDriverKeys.map((key) => [key, {}])),
-		host: string,
-		port,
+		path: { ...string, ...unset, minLength: 1 },
+		connectTimeout: timeout,
+		disconnectTimeout: timeout,
+		commandTimeout: timeout,
+		socketTimeout: timeout,
+		host: { ...string, ...unset },
+		port: { ...port, ...unset },
 		pass: { ...secret, nullable: true },
 		username: text,
 		family: { ...integer, ...unset, enum: [0, 4, 6, null] },
 		db: { ...integer, ...unset },
 		prefix: { ...string, ...unset },
 	},
-	'host',
-	'port',
 );
+// ioredis ignores host and port when connecting through a Unix socket path.
+const redis = {
+	...redisObject,
+	anyOf: [
+		{ properties: { path: {} }, required: ['path'] },
+		{ properties: { host: {}, port: {} }, required: ['host', 'port'] },
+	],
+};
 const fallbackRedis = { ...redis, ...unset };
 const db = object(
 	{
@@ -152,7 +167,12 @@ const properties = {
 	},
 	id: {
 		...string,
-		enum: ['aid', 'aidx', 'meid', 'meidg', 'ulid', 'objectid'],
+		// The value is case-insensitive. Editors only see the published schema, so
+		// list the uppercase spellings used in existing configuration files too.
+		enum: [
+			'aid', 'aidx', 'meid', 'meidg', 'ulid', 'objectid',
+			'AID', 'AIDX', 'MEID', 'MEIDG', 'ULID', 'OBJECTID',
+		],
 		description: 'ID generation method.',
 	},
 	db: { ...db, description: 'Primary PostgreSQL connection.' },
@@ -205,7 +225,7 @@ const properties = {
 		...object(
 			{
 				host: string,
-				port: { anyOf: [port, { ...string, pattern: '^[0-9]+$' }] },
+				port: { anyOf: [port, { ...string, pattern: portPattern }] },
 				apiKey: secret,
 				index: string,
 				ssl: flag,
@@ -315,7 +335,8 @@ const properties = {
 	},
 	outgoingAddressFamily: {
 		...text,
-		enum: ['ipv4', 'ipv6', 'dual'],
+		...unset,
+		enum: ['ipv4', 'ipv6', 'dual', null],
 		...noEffect,
 		description: 'Deprecated IP family selection. Has no effect.',
 	},
@@ -403,12 +424,30 @@ const properties = {
 	disallowExternalApRedirect: migrationOnly,
 } as const;
 
-const input = object(
-	properties,
-	'db',
-	'redis',
-	'id',
-) satisfies JSONSchemaType<ConfigInput>;
+// Selecting an external search engine requires its connection settings.
+const requireSearchConnection = (provider: 'meilisearch' | 'elasticsearch') => ({
+	if: {
+		properties: {
+			fulltextSearch: {
+				type: 'object',
+				properties: { provider: { const: provider } },
+				required: ['provider'],
+			},
+		},
+		required: ['fulltextSearch'],
+	},
+	then: {
+		properties: { [provider]: { type: 'object' } },
+		required: [provider],
+	},
+});
+const input = {
+	...object(properties, 'db', 'redis', 'id'),
+	allOf: [
+		requireSearchConnection('meilisearch'),
+		requireSearchConnection('elasticsearch'),
+	],
+} satisfies JSONSchemaType<ConfigInput>;
 const effective = {
 	...object(
 		{

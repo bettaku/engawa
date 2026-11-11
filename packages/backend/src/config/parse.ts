@@ -170,6 +170,13 @@ export function parseConfigSource(
 	env = process.env,
 	mode = env.CHERRYPICK_CONFIG_VALIDATION ?? 'warn',
 ) {
+	if (!['warn', 'error', 'off'].includes(mode)) {
+		throw new ConfigValidationError([{
+			level: 'error',
+			path: '',
+			message: 'CHERRYPICK_CONFIG_VALIDATION must be one of warn, error or off.',
+		}]);
+	}
 	const data = readFileSync(path, 'utf8');
 	let raw: unknown;
 	try {
@@ -188,22 +195,20 @@ export function parseConfigSource(
 		validate(validators.input, input, diagnostics);
 		const effective = applyEnv(input, env, true);
 		validate(validators.effective, effective, diagnostics);
-		if (
-			record(effective) &&
-			typeof effective.url === 'string' &&
-			!URL.canParse(effective.url)
-		) {
-			diagnostics.push({
-				level: 'error',
-				path: '/url',
-				message: 'Invalid URL.',
-			});
+		if (record(effective) && typeof effective.url === 'string') {
+			const url = URL.parse(effective.url);
+			if (url === null || !['http:', 'https:'].includes(url.protocol)) {
+				diagnostics.push({
+					level: 'error',
+					path: '/url',
+					message: url === null ? 'Invalid URL.' : 'URL must use http or https.',
+				});
+			}
 		}
 		if (mode === 'error') source = effective;
 	}
 	return {
 		source: source as ConfigInput,
-		rawUrl: record(raw) ? raw.url : undefined,
 		diagnostics: [
 			...new Map(diagnostics.map((d) => [JSON.stringify(d), d])).values(),
 		],

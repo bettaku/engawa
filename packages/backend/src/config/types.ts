@@ -10,8 +10,9 @@ export type FulltextSearchProvider =
 	| "elasticsearch";
 
 export type RedisOptionsSource = {
-	host: string;
-	port: number;
+	host?: string;
+	port?: number;
+	path?: string;
 	family?: number;
 	pass?: string;
 	db?: number;
