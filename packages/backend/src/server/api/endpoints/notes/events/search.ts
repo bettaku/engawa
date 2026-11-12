@@ -21,6 +21,12 @@ export const meta = {
 
 	requireCredential: false,
 
+	// 未認証でも呼べる検索なので回数を制限する
+	limit: {
+		duration: 60 * 1000,
+		max: 60,
+	},
+
 	res: {
 		type: 'array',
 		optional: false, nullable: false,
@@ -60,12 +66,13 @@ export const paramDef = {
 		filters: {
 			type: 'array',
 			nullable: true,
+			maxItems: 10,
 			description: 'list of string -> [string] that filters events based on metadata. Each item in filters is applied as an AND',
 			items: {
 				type: 'object',
 				properties: {
-					key: { type: 'array', items: { type: 'string', nullable: false }, description: 'the metadata string property to filter on. Can filter on nested properties using an array. such as `["location", "postalCode"]`.' },
-					values: { type: 'array', items: { type: 'string', nullable: true }, description: 'The values to match the metadata against (case insensitive regex). Each item in this array is applied as an OR. Include null to indicate match on missing metadata' },
+					key: { type: 'array', maxItems: 5, items: { type: 'string', nullable: false, maxLength: 64 }, description: 'the metadata string property to filter on. Can filter on nested properties using an array. such as `["location", "postalCode"]`.' },
+					values: { type: 'array', maxItems: 10, items: { type: 'string', nullable: true, maxLength: 128 }, description: 'The values to match the metadata against (case insensitive partial match). Each item in this array is applied as an OR. Include null to indicate match on missing metadata' },
 				},
 			},
 		},
@@ -128,21 +135,27 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			if (ps.filters) {
 				const filters = ps.filters;
 
-				filters.forEach(f => {
+				filters.forEach((f, i) => {
 					if (!f.key || !f.values) throw new ApiError(meta.errors.invalidParam);
 					const filterKey = f.key;
-					if (filterKey.some(notAlphaNumeric)) throw new ApiError(meta.errors.invalidParam); // schema properties don't have special characters
+					if (filterKey.length < 1 || filterKey.some(notAlphaNumeric)) throw new ApiError(meta.errors.invalidParam); // schema properties don't have special characters
 					const filterValues = f.values as (string | null)[];
-					const matches = filterValues.filter(x => x !== null) as string[];
-					const hasNull = filterValues.length !== matches.length;
+					const matches = filterValues.filter(x => x !== null).map(m => m.trim()).filter(m => m.length > 0);
+					const hasNull = filterValues.some(x => x === null);
 					if (matches.length < 1) throw new ApiError(meta.errors.invalidParam);
+					// プレースホルダー名はクエリ内で一意にする
+					const keyParam = `filterKey${i}`;
+					const path = `event.metadata #>> :${keyParam}`;
 					query.andWhere(new Brackets((qb) => {
-						// regex match metadata values case insensitive
-						qb.where('event.metadata #>> :key ~* :values', { key: `{${filterKey.join(',')}}`, values: `(${ matches.map(m => m.trim()).filter(m => m.length).join('|') })` });
+						// 値は正規表現ではなく、大文字小文字を区別しない部分一致として扱う
+						// （呼び出し側の正規表現をDBで評価すると、未認証でもDBのCPUを長時間使わせられる）
+						matches.forEach((m, j) => {
+							qb.orWhere(`${path} ILIKE :filterValue${i}_${j}`, { [`filterValue${i}_${j}`]: `%${ sqlLikeEscape(m) }%` });
+						});
 						if (hasNull) {
-							qb.orWhere('NOT (event.metadata ? :key)', { key: filterKey });
+							qb.orWhere(`(${path}) IS NULL`);
 						}
-					}));
+					}), { [keyParam]: `{${filterKey.join(',')}}` });
 				});
 			}
 
@@ -169,7 +182,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			if (ps.offset) query.skip(ps.offset);
 
-			query.maxExecutionTime(250); // because we include regex expressions in where clause, defend against long running regex with timeout
 			const notes = await query.limit(ps.limit).getMany();
 
 			return await this.noteEntityService.packMany(notes, me);

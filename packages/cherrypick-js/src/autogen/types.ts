@@ -30319,7 +30319,7 @@ export interface operations {
                     filters?: {
                         /** @description the metadata string property to filter on. Can filter on nested properties using an array. such as `["location", "postalCode"]`. */
                         key?: string[];
-                        /** @description The values to match the metadata against (case insensitive regex). Each item in this array is applied as an OR. Include null to indicate match on missing metadata */
+                        /** @description The values to match the metadata against (case insensitive partial match). Each item in this array is applied as an OR. Include null to indicate match on missing metadata */
                         values?: (string | null)[];
                     }[] | null;
                     /**
