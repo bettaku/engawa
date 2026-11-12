@@ -16,6 +16,7 @@ import { extractHashtags } from '@/misc/extract-hashtags.js';
 import type { IMentionedRemoteUsers } from '@/models/Note.js';
 import { MiNote } from '@/models/Note.js';
 import { MiEvent } from '@/models/Event.js';
+import { sanitizeEventMetadata } from '@/misc/sanitize-event-metadata.js';
 import type { IEvent } from '@/models/Event.js';
 import type { BlockingsRepository, DriveFilesRepository, FollowingsRepository, InstancesRepository, MiFollowing, MiMeta, MutingsRepository, NotesRepository, NoteThreadMutingsRepository, UserListMembershipsRepository, UserProfilesRepository, UsersRepository } from '@/models/_.js';
 import type { MiDriveFile } from '@/models/DriveFile.js';
@@ -657,7 +658,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 							start: data.event!.start,
 							end: data.event!.end ?? undefined,
 							title: data.event!.title,
-							metadata: data.event!.metadata,
+							metadata: sanitizeEventMetadata(data.event!.metadata),
 							noteVisibility: insert.visibility,
 							userId: user.id,
 							userHost: user.host,

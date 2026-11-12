@@ -11,6 +11,7 @@ import * as mfm from 'mfc-js';
 import type { IMentionedRemoteUsers } from '@/models/Note.js';
 import { MiNote } from '@/models/Note.js';
 import { MiEvent } from '@/models/Event.js';
+import { sanitizeEventMetadata } from '@/misc/sanitize-event-metadata.js';
 import type { IEvent } from '@/models/Event.js';
 import type { NotesRepository, UsersRepository } from '@/models/_.js';
 import type { MiUser, MiLocalUser, MiRemoteUser } from '@/models/User.js';
@@ -224,7 +225,7 @@ export class NoteUpdateService implements OnApplicationShutdown {
 								title: data.event!.title,
 								start: data.event!.start,
 								end: data.event!.end ?? undefined,
-								metadata: data.event!.metadata,
+								metadata: sanitizeEventMetadata(data.event!.metadata),
 								noteVisibility: note.visibility,
 								userId: user.id,
 								userHost: user.host,
@@ -237,7 +238,7 @@ export class NoteUpdateService implements OnApplicationShutdown {
 							title: data.event!.title,
 							start: data.event!.start,
 							end: data.event!.end ?? undefined,
-							metadata: data.event!.metadata,
+							metadata: sanitizeEventMetadata(data.event!.metadata),
 							noteVisibility: note.visibility,
 							userId: user.id,
 							userHost: user.host,

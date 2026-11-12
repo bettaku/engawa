@@ -17,7 +17,7 @@
 ## x.x.x (unreleased)
 
 ### General
-- 
+- Security: イベントのURL・チケットURLに `javascript:` などのURLを指定すると、クリックした人のブラウザーでスクリプトが実行される問題を修正 (GHSA-whj5-86xj-r694)
 
 ### Client
 - 

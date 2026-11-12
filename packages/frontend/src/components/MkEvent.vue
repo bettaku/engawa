@@ -35,7 +35,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 		<template v-if="eventMetadata && 'url' in eventMetadata && eventMetadata.url">
 			<dt :class="$style.key">URL</dt>
-			<dd :class="$style.value"><a :href="eventMetadata.url as string">{{ eventMetadata.url }}</a></dd>
+			<dd :class="$style.value">
+				<a v-if="eventUrl" :href="eventUrl" rel="nofollow noopener" target="_blank">{{ eventMetadata.url }}</a>
+				<template v-else>{{ eventMetadata.url }}</template>
+			</dd>
 		</template>
 
 		<template v-if="eventMetadata && 'organizer' in eventMetadata && eventMetadata.organizer">
@@ -60,12 +63,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 
 		<template v-if="eventMetadata && 'performer' in eventMetadata && eventMetadata.performer">
 			<dt :class="$style.key">{{ i18n.ts._event.performers }}</dt>
-			<dd :class="$style.value">{{ (eventMetadata.performer as string[]).join(', ') }}</dd>
+			<dd :class="$style.value">{{ Array.isArray(eventMetadata.performer) ? eventMetadata.performer.join(', ') : eventMetadata.performer }}</dd>
 		</template>
 
 		<template v-if="eventMetadata && 'offers' in eventMetadata && (eventMetadata.offers as { url?: string })?.url">
 			<dt :class="$style.key">{{ i18n.ts._event.ticketsUrl }}</dt>
-			<dd :class="$style.value"><a :href="(eventMetadata.offers as { url: string }).url">{{ (eventMetadata.offers as { url: string }).url }}</a></dd>
+			<dd :class="$style.value">
+				<a v-if="ticketsUrl" :href="ticketsUrl" rel="nofollow noopener" target="_blank">{{ (eventMetadata.offers as { url: string }).url }}</a>
+				<template v-else>{{ (eventMetadata.offers as { url: string }).url }}</template>
+			</dd>
 		</template>
 
 		<template v-if="eventMetadata && 'isAccessibleForFree' in eventMetadata && eventMetadata.isAccessibleForFree">
@@ -100,6 +106,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 import { computed } from 'vue';
 import * as Misskey from 'cherrypick-js';
 import { i18n } from '@/i18n.js';
+import { safeHttpUrl } from '@/utility/safe-http-url.js';
 
 const props = defineProps<{
 	note: {
@@ -115,6 +122,10 @@ const props = defineProps<{
 const eventMetadata = computed(() => {
 	return props.note?.event?.metadata as Record<string, unknown> | undefined;
 });
+
+// メタデータは投稿者（リモートを含む）が自由に決められるので、http(s) 以外はリンクにしない
+const eventUrl = computed(() => safeHttpUrl(eventMetadata.value?.url));
+const ticketsUrl = computed(() => safeHttpUrl((eventMetadata.value?.offers as { url?: unknown } | null | undefined)?.url));
 </script>
 
 <style lang="scss" module>
