@@ -1,0 +1,366 @@
+table,op,via,method,file,line,apiCount,jobCount,streamCount,serverCount,jobs,serverClasses,apis
+,update,queryBuilder,Chart.clean,packages/backend/src/core/chart/core.ts,601,0,0,0,0,,,
+,update,queryBuilder,Chart.clean,packages/backend/src/core/chart/core.ts,607,0,0,0,0,,,
+,update,queryBuilder,Chart.save,packages/backend/src/core/chart/core.ts,510,0,0,0,0,,,
+,update,queryBuilder,Chart.save,packages/backend/src/core/chart/core.ts,515,0,0,0,0,,,
+,update,queryBuilder,Chart.tick,packages/backend/src/core/chart/core.ts,555,0,0,0,0,,,
+,update,queryBuilder,Chart.tick,packages/backend/src/core/chart/core.ts,560,0,0,0,0,,,
+(raw SQL),query,raw,EP:admin/get-index-stats.constructor,packages/backend/src/server/api/endpoints/admin/get-index-stats.ts,42,1,0,0,0,,,admin/get-index-stats
+(raw SQL),query,raw,EP:admin/get-table-stats.constructor,packages/backend/src/server/api/endpoints/admin/get-table-stats.ts,55,1,0,0,0,,,admin/get-table-stats
+(raw SQL),query,raw,EP:admin/server-info.constructor,packages/backend/src/server/api/endpoints/admin/server-info.ts,127,1,0,0,0,,,admin/server-info
+(raw SQL),query,raw,HealthServerService.createServer,packages/backend/src/server/HealthServerService.ts,50,0,0,0,1,,HealthServerService,
+abuse_report_resolver,insertOne,repository,EP:admin/abuse-report-resolver/create.constructor,packages/backend/src/server/api/endpoints/admin/abuse-report-resolver/create.ts,130,1,0,0,0,,,admin/abuse-report-resolver/create
+abuse_report_resolver,delete,repository,EP:admin/abuse-report-resolver/delete.constructor,packages/backend/src/server/api/endpoints/admin/abuse-report-resolver/delete.ts,50,1,0,0,0,,,admin/abuse-report-resolver/delete
+abuse_report_resolver,update,repository,EP:admin/abuse-report-resolver/update.constructor,packages/backend/src/server/api/endpoints/admin/abuse-report-resolver/update.ts,117,1,0,0,0,,,admin/abuse-report-resolver/update
+abuse_user_report,update,repository,AbuseReportService.forward,packages/backend/src/core/AbuseReportService.ts,135,1,0,0,0,,,admin/forward-abuse-user-report
+abuse_user_report,insertOne,repository,AbuseReportService.report,packages/backend/src/core/AbuseReportService.ts,66,1,1,0,0,inbox/(単一),,users/report-abuse
+abuse_user_report,update,repository,AbuseReportService.resolve,packages/backend/src/core/AbuseReportService.ts,102,1,0,0,0,,,admin/resolve-abuse-user-report
+abuse_user_report,update,repository,AbuseReportService.update,packages/backend/src/core/AbuseReportService.ts,163,1,0,0,0,,,admin/update-abuse-user-report
+abuse_user_report,update,repository,ReportAbuseProcessorService.process,packages/backend/src/queue/processors/ReportAbuseProcessorService.ts,88,0,1,0,0,db/reportAbuse,,
+AbuseReportNotificationRecipient,insert,repository,AbuseReportNotificationService.createRecipient,packages/backend/src/core/AbuseReportNotificationService.ts,280,1,0,0,0,,,admin/abuse-report/notification-recipient/create
+AbuseReportNotificationRecipient,delete,repository,AbuseReportNotificationService.deleteRecipient,packages/backend/src/core/AbuseReportNotificationService.ts,344,1,0,0,0,,,admin/abuse-report/notification-recipient/delete
+AbuseReportNotificationRecipient,delete,repository,AbuseReportNotificationService.removeUnauthorizedRecipientUsers,packages/backend/src/core/AbuseReportNotificationService.ts,390,4,1,0,0,inbox/(単一),,admin/abuse-report/notification-recipient/list; admin/abuse-report/notification-recipient/show; admin/resolve-abuse-user-report; users/report-abuse
+AbuseReportNotificationRecipient,update,repository,AbuseReportNotificationService.updateRecipient,packages/backend/src/core/AbuseReportNotificationService.ts,313,1,0,0,0,,,admin/abuse-report/notification-recipient/update
+access_token,update,repository,ApiServerService.createServer,packages/backend/src/server/api/ApiServerService.ts,163,0,0,0,1,,ApiServerService,
+access_token,update,repository,AuthenticateService.authenticate,packages/backend/src/server/api/AuthenticateService.ts,77,0,0,0,5,,ApiCallService; ApiServerService; AuthenticateService; ServerService; StreamingApiServerService,
+access_token,insert,repository,EP:auth/accept.constructor,packages/backend/src/server/api/endpoints/auth/accept.ts,82,1,0,0,0,,,auth/accept
+access_token,delete,repository,EP:i/revoke-token.constructor,packages/backend/src/server/api/endpoints/i/revoke-token.ts,47,1,0,0,0,,,i/revoke-token
+access_token,delete,repository,EP:i/revoke-token.constructor,packages/backend/src/server/api/endpoints/i/revoke-token.ts,56,1,0,0,0,,,i/revoke-token
+access_token,insert,repository,EP:miauth/gen-token.constructor,packages/backend/src/server/api/endpoints/miauth/gen-token.ts,63,1,0,0,0,,,miauth/gen-token
+ad,insertOne,repository,EP:admin/ad/create.constructor,packages/backend/src/server/api/endpoints/admin/ad/create.ts,54,1,0,0,0,,,admin/ad/create
+ad,delete,repository,EP:admin/ad/delete.constructor,packages/backend/src/server/api/endpoints/admin/ad/delete.ts,50,1,0,0,0,,,admin/ad/delete
+ad,update,repository,EP:admin/ad/update.constructor,packages/backend/src/server/api/endpoints/admin/ad/update.ts,60,1,0,0,0,,,admin/ad/update
+announcement,insertOne,repository,AnnouncementService.create,packages/backend/src/core/AnnouncementService.ts,70,1,1,0,0,system/checkModeratorsActivity,,admin/announcements/create
+announcement,delete,repository,AnnouncementService.delete,packages/backend/src/core/AnnouncementService.ts,163,1,0,0,0,,,admin/announcements/delete
+announcement,update,repository,AnnouncementService.read,packages/backend/src/core/AnnouncementService.ts,216,1,0,0,0,,,i/read-announcement
+announcement,update,repository,AnnouncementService.update,packages/backend/src/core/AnnouncementService.ts,124,1,0,0,0,,,admin/announcements/update
+announcement_read,insert,repository,AnnouncementService.read,packages/backend/src/core/AnnouncementService.ts,205,1,0,0,0,,,i/read-announcement
+antenna,update,queryBuilder,AntennaService.onMoveAccount,packages/backend/src/core/AntennaService.ts,240,1,0,0,0,,,i/move
+antenna,update,repository,CleanProcessorService.process,packages/backend/src/queue/processors/CleanProcessorService.ts,50,0,1,0,0,system/clean,,
+antenna,insertOne,repository,EP:antennas/create.constructor,packages/backend/src/server/api/endpoints/antennas/create.ts,142,1,0,0,0,,,antennas/create
+antenna,delete,repository,EP:antennas/delete.constructor,packages/backend/src/server/api/endpoints/antennas/delete.ts,55,1,0,0,0,,,antennas/delete
+antenna,update,repository,EP:antennas/notes.constructor,packages/backend/src/server/api/endpoints/antennas/notes.ts,91,1,0,0,0,,,antennas/notes
+antenna,update,repository,EP:antennas/update.constructor,packages/backend/src/server/api/endpoints/antennas/update.ts,141,1,0,0,0,,,antennas/update
+antenna,insertOne,repository,ImportAntennasProcessorService.process,packages/backend/src/queue/processors/ImportAntennasProcessorService.ts,85,0,1,0,0,db/importAntennas,,
+app,insertOne,repository,EP:app/create.constructor,packages/backend/src/server/api/endpoints/app/create.ts,57,1,0,0,0,,,app/create
+auth_session,update,repository,EP:auth/accept.constructor,packages/backend/src/server/api/endpoints/auth/accept.ts,93,1,0,0,0,,,auth/accept
+auth_session,insertOne,repository,EP:auth/session/generate.constructor,packages/backend/src/server/api/endpoints/auth/session/generate.ts,81,1,0,0,0,,,auth/session/generate
+auth_session,delete,repository,EP:auth/session/userkey.constructor,packages/backend/src/server/api/endpoints/auth/session/userkey.ts,110,1,0,0,0,,,auth/session/userkey
+avatar_decoration,insertOne,repository,AvatarDecorationService.create,packages/backend/src/core/AvatarDecorationService.ts,90,2,0,0,0,,,admin/avatar-decorations/copy; admin/avatar-decorations/create
+avatar_decoration,delete,repository,AvatarDecorationService.delete,packages/backend/src/core/AvatarDecorationService.ts,243,1,0,0,0,,,admin/avatar-decorations/delete
+avatar_decoration,update,repository,AvatarDecorationService.update,packages/backend/src/core/AvatarDecorationService.ts,112,2,0,0,0,,,admin/avatar-decorations/copy; admin/avatar-decorations/update
+blocking,insert,repository,UserBlockingService.block,packages/backend/src/core/UserBlockingService.ts,82,1,2,0,0,inbox/(単一); relationship/block,,blocking/create
+blocking,delete,repository,UserBlockingService.unblock,packages/backend/src/core/UserBlockingService.ts,174,2,3,0,0,inbox/(単一); relationship/follow; relationship/unblock,,blocking/delete; following/create
+chat_approval,insertOne,repository,ChatService.createMessageToUser,packages/backend/src/core/ChatService.ts,213,1,1,0,0,inbox/(単一),,chat/messages/create-to-user
+chat_message,insertOne,repository,ChatService.createMessageToRoom,packages/backend/src/core/ChatService.ts,309,1,1,0,0,inbox/(単一),,chat/messages/create-to-room
+chat_message,insertOne,repository,ChatService.createMessageToUser,packages/backend/src/core/ChatService.ts,209,1,1,0,0,inbox/(単一),,chat/messages/create-to-user
+chat_message,delete,repository,ChatService.deleteMessage,packages/backend/src/core/ChatService.ts,435,1,0,0,0,,,chat/messages/delete
+chat_message,update,queryBuilder,ChatService.react,packages/backend/src/core/ChatService.ts,1166,1,0,0,0,,,chat/messages/react
+chat_message,update,queryBuilder,ChatService.unreact,packages/backend/src/core/ChatService.ts,1210,1,0,0,0,,,chat/messages/unreact
+chat_room,insertOne,repository,ApInboxService.invite,packages/backend/src/core/activitypub/ApInboxService.ts,1310,0,1,0,0,inbox/(単一),,
+chat_room,insertOne,repository,ChatService.createRoom,packages/backend/src/core/ChatService.ts,635,1,0,0,0,,,chat/rooms/create
+chat_room,delete,repository,ChatService.deleteRoom,packages/backend/src/core/ChatService.ts,691,1,0,0,0,,,chat/rooms/delete
+chat_room,update,queryBuilder,ChatService.updateRoom,packages/backend/src/core/ChatService.ts,1046,1,0,0,0,,,chat/rooms/update
+chat_room_invitation,delete,repository,ApInboxService.acceptInvite,packages/backend/src/core/activitypub/ApInboxService.ts,337,0,1,0,0,inbox/(単一),,
+chat_room_invitation,insertOne,repository,ApInboxService.invite,packages/backend/src/core/activitypub/ApInboxService.ts,1337,0,1,0,0,inbox/(単一),,
+chat_room_invitation,delete,repository,ApInboxService.rejectInvite,packages/backend/src/core/activitypub/ApInboxService.ts,955,0,1,0,0,inbox/(単一),,
+chat_room_invitation,delete,repository,ApInboxService.undoInvite,packages/backend/src/core/activitypub/ApInboxService.ts,1092,0,1,0,0,inbox/(単一),,
+chat_room_invitation,delete,repository,ChatService.cancelRoomInvitation,packages/backend/src/core/ChatService.ts,933,1,0,0,0,,,chat/rooms/invitations/cancel
+chat_room_invitation,insertOne,repository,ChatService.createRoomInvitation,packages/backend/src/core/ChatService.ts,752,1,0,0,0,,,chat/rooms/invitations/create
+chat_room_invitation,update,repository,ChatService.ignoreRoomInvitation,packages/backend/src/core/ChatService.ts,882,1,0,0,0,,,chat/rooms/invitations/ignore
+chat_room_invitation,delete,repository,ChatService.joinToRoom,packages/backend/src/core/ChatService.ts,828,1,0,0,0,,,chat/rooms/join
+chat_room_invitation,delete,repository,ChatService.rejectRoomInvitation,packages/backend/src/core/ChatService.ts,891,1,0,0,0,,,chat/rooms/invitations/reject
+chat_room_membership,insertOne,repository,ApInboxService.acceptInvite,packages/backend/src/core/activitypub/ApInboxService.ts,353,0,1,0,0,inbox/(単一),,
+chat_room_membership,delete,repository,ApInboxService.remove,packages/backend/src/core/activitypub/ApInboxService.ts,995,0,1,0,0,inbox/(単一),,
+chat_room_membership,insertOne,repository,ChatService.joinToRoom,packages/backend/src/core/ChatService.ts,827,1,0,0,0,,,chat/rooms/join
+chat_room_membership,delete,repository,ChatService.leaveRoom,packages/backend/src/core/ChatService.ts,967,1,0,0,0,,,chat/rooms/leave
+chat_room_membership,update,repository,ChatService.muteRoom,packages/backend/src/core/ChatService.ts,1038,1,0,0,0,,,chat/rooms/mute
+clip,update,repository,ClipService.addNote,packages/backend/src/core/ClipService.ts,127,1,0,0,0,,,clips/add-note
+clip,insertOne,repository,ClipService.create,packages/backend/src/core/ClipService.ts,48,1,0,0,0,,,clips/create
+clip,delete,repository,ClipService.delete,packages/backend/src/core/ClipService.ts,88,1,0,0,0,,,clips/delete
+clip,update,repository,ClipService.update,packages/backend/src/core/ClipService.ts,70,1,0,0,0,,,clips/update
+clip_favorite,insert,repository,EP:clips/favorite.constructor,packages/backend/src/server/api/endpoints/clips/favorite.ts,76,1,0,0,0,,,clips/favorite
+clip_favorite,delete,repository,EP:clips/unfavorite.constructor,packages/backend/src/server/api/endpoints/clips/unfavorite.ts,68,1,0,0,0,,,clips/unfavorite
+clip_note,insert,repository,ClipService.addNote,packages/backend/src/core/ClipService.ts,110,1,0,0,0,,,clips/add-note
+clip_note,delete,repository,ClipService.removeNote,packages/backend/src/core/ClipService.ts,151,1,0,0,0,,,clips/remove-note
+drive_file,update,repository,ApImageService.createImage,packages/backend/src/core/activitypub/models/ApImageService.ts,83,0,0,0,0,,,
+drive_file,update,repository,DriveService.addFile,packages/backend/src/core/DriveService.ts,570,7,10,0,0,db/exportAntennas; db/exportBlocking; db/exportClips; db/exportCustomEmojis; db/exportFavorites; db/exportFollowing; db/exportMuting; db/exportNotes; db/exportUserLists; db/importCustomEmojis,,admin/avatar-decorations/copy; admin/emoji/add; admin/emoji/copy; admin/emoji/steal; admin/emoji/update; drive/files/create; drive/files/upload-from-url
+drive_file,insertOne,repository,DriveService.addFile,packages/backend/src/core/DriveService.ts,700,7,10,0,0,db/exportAntennas; db/exportBlocking; db/exportClips; db/exportCustomEmojis; db/exportFavorites; db/exportFollowing; db/exportMuting; db/exportNotes; db/exportUserLists; db/importCustomEmojis,,admin/avatar-decorations/copy; admin/emoji/add; admin/emoji/copy; admin/emoji/steal; admin/emoji/update; drive/files/create; drive/files/upload-from-url
+drive_file,update,repository,DriveService.deletePostProcess,packages/backend/src/core/DriveService.ts,876,11,14,0,0,db/deleteAccount; db/deleteDriveFiles; db/exportAntennas; db/exportBlocking; db/exportClips; db/exportCustomEmojis; db/exportFavorites; db/exportFollowing; db/exportMuting; db/exportNotes; db/exportUserLists; db/importCustomEmojis; db/truncateAccount; objectStorage/cleanRemoteFiles,,admin/avatar-decorations/copy; admin/delete-all-files-of-a-user; admin/drive/cleanup; admin/emoji/add; admin/emoji/copy; admin/emoji/steal; admin/emoji/update; admin/federation/delete-all-files; drive/files/create; drive/files/delete; drive/files/upload-from-url
+drive_file,delete,repository,DriveService.deletePostProcess,packages/backend/src/core/DriveService.ts,888,11,14,0,0,db/deleteAccount; db/deleteDriveFiles; db/exportAntennas; db/exportBlocking; db/exportClips; db/exportCustomEmojis; db/exportFavorites; db/exportFollowing; db/exportMuting; db/exportNotes; db/exportUserLists; db/importCustomEmojis; db/truncateAccount; objectStorage/cleanRemoteFiles,,admin/avatar-decorations/copy; admin/delete-all-files-of-a-user; admin/drive/cleanup; admin/emoji/add; admin/emoji/copy; admin/emoji/steal; admin/emoji/update; admin/federation/delete-all-files; drive/files/create; drive/files/delete; drive/files/upload-from-url
+drive_file,update,repository,DriveService.moveFiles,packages/backend/src/core/DriveService.ts,806,1,0,0,0,,,drive/files/move-bulk
+drive_file,insertOne,repository,DriveService.save,packages/backend/src/core/DriveService.ts,258,7,10,0,0,db/exportAntennas; db/exportBlocking; db/exportClips; db/exportCustomEmojis; db/exportFavorites; db/exportFollowing; db/exportMuting; db/exportNotes; db/exportUserLists; db/importCustomEmojis,,admin/avatar-decorations/copy; admin/emoji/add; admin/emoji/copy; admin/emoji/steal; admin/emoji/update; drive/files/create; drive/files/upload-from-url
+drive_file,insertOne,repository,DriveService.save,packages/backend/src/core/DriveService.ts,292,7,10,0,0,db/exportAntennas; db/exportBlocking; db/exportClips; db/exportCustomEmojis; db/exportFavorites; db/exportFollowing; db/exportMuting; db/exportNotes; db/exportUserLists; db/importCustomEmojis,,admin/avatar-decorations/copy; admin/emoji/add; admin/emoji/copy; admin/emoji/steal; admin/emoji/update; drive/files/create; drive/files/upload-from-url
+drive_file,update,repository,DriveService.updateFile,packages/backend/src/core/DriveService.ts,766,1,0,0,0,,,drive/files/update
+drive_folder,insertOne,repository,EP:drive/folders/create.constructor,packages/backend/src/server/api/endpoints/drive/folders/create.ts,78,1,0,0,0,,,drive/folders/create
+drive_folder,delete,repository,EP:drive/folders/delete.constructor,packages/backend/src/server/api/endpoints/drive/folders/delete.ts,74,1,0,0,0,,,drive/folders/delete
+drive_folder,update,repository,EP:drive/folders/update.constructor,packages/backend/src/server/api/endpoints/drive/folders/update.ts,122,1,0,0,0,,,drive/folders/update
+emoji,update,repository,ApNoteService.extractEmojis,packages/backend/src/core/activitypub/models/ApNoteService.ts,529,0,0,0,0,,,
+emoji,insertOne,repository,ApNoteService.extractEmojis,packages/backend/src/core/activitypub/models/ApNoteService.ts,551,0,0,0,0,,,
+emoji,insertOne,repository,CustomEmojiService.add,packages/backend/src/core/CustomEmojiService.ts,128,3,1,0,0,db/importCustomEmojis,,admin/emoji/add; admin/emoji/copy; admin/emoji/steal
+emoji,update,repository,CustomEmojiService.addAliasesBulk,packages/backend/src/core/CustomEmojiService.ts,255,1,0,0,0,,,admin/emoji/add-aliases-bulk
+emoji,delete,repository,CustomEmojiService.delete,packages/backend/src/core/CustomEmojiService.ts,340,1,0,0,0,,,admin/emoji/delete
+emoji,delete,repository,CustomEmojiService.deleteBulk,packages/backend/src/core/CustomEmojiService.ts,363,1,0,0,0,,,admin/emoji/delete-bulk
+emoji,update,repository,CustomEmojiService.removeAliasesBulk,packages/backend/src/core/CustomEmojiService.ts,291,1,0,0,0,,,admin/emoji/remove-aliases-bulk
+emoji,update,repository,CustomEmojiService.setAliasesBulk,packages/backend/src/core/CustomEmojiService.ts,270,1,0,0,0,,,admin/emoji/set-aliases-bulk
+emoji,update,repository,CustomEmojiService.setCategoryBulk,packages/backend/src/core/CustomEmojiService.ts,306,1,0,0,0,,,admin/emoji/set-category-bulk
+emoji,update,repository,CustomEmojiService.setLicenseBulk,packages/backend/src/core/CustomEmojiService.ts,322,1,0,0,0,,,admin/emoji/set-license-bulk
+emoji,update,repository,CustomEmojiService.update,packages/backend/src/core/CustomEmojiService.ts,205,1,0,0,0,,,admin/emoji/update
+emoji,delete,repository,ImportCustomEmojisProcessorService.process,packages/backend/src/queue/processors/ImportCustomEmojisProcessorService.ts,88,0,1,0,0,db/importCustomEmojis,,
+event,insert,entityManager,NoteCreateService.insertNote,packages/backend/src/core/NoteCreateService.ts,667,1,2,0,0,inbox/(単一); postScheduledNote/(単一),,notes/create
+event,delete,entityManager,NoteUpdateService.updateNote,packages/backend/src/core/NoteUpdateService.ts,222,1,0,0,0,,,notes/update
+event,insert,entityManager,NoteUpdateService.updateNote,packages/backend/src/core/NoteUpdateService.ts,233,1,0,0,0,,,notes/update
+event,insert,entityManager,NoteUpdateService.updateNote,packages/backend/src/core/NoteUpdateService.ts,246,1,0,0,0,,,notes/update
+event,delete,entityManager,NoteUpdateService.updateNote,packages/backend/src/core/NoteUpdateService.ts,248,1,0,0,0,,,notes/update
+flash,insertOne,repository,EP:flash/create.constructor,packages/backend/src/server/api/endpoints/flash/create.ts,62,1,0,0,0,,,flash/create
+flash,delete,repository,EP:flash/delete.constructor,packages/backend/src/server/api/endpoints/flash/delete.ts,67,1,0,0,0,,,flash/delete
+flash,increment,repository,EP:flash/like.constructor,packages/backend/src/server/api/endpoints/flash/like.ts,91,1,0,0,0,,,flash/like
+flash,decrement,repository,EP:flash/unlike.constructor,packages/backend/src/server/api/endpoints/flash/unlike.ts,71,1,0,0,0,,,flash/unlike
+flash,update,repository,EP:flash/update.constructor,packages/backend/src/server/api/endpoints/flash/update.ts,72,1,0,0,0,,,flash/update
+flash_like,insert,repository,EP:flash/like.constructor,packages/backend/src/server/api/endpoints/flash/like.ts,85,1,0,0,0,,,flash/like
+flash_like,delete,repository,EP:flash/unlike.constructor,packages/backend/src/server/api/endpoints/flash/unlike.ts,69,1,0,0,0,,,flash/unlike
+follow_request,delete,repository,UserBlockingService.cancelRequest,packages/backend/src/core/UserBlockingService.ts,109,1,2,0,0,inbox/(単一); relationship/block,,blocking/create
+follow_request,delete,repository,UserFollowingService.cancelFollowRequest,packages/backend/src/core/UserFollowingService.ts,574,1,1,0,0,inbox/(単一),,following/requests/cancel
+follow_request,delete,repository,UserFollowingService.createFollowRequest,packages/backend/src/core/UserFollowingService.ts,510,1,2,0,0,inbox/(単一); relationship/follow,,following/create
+follow_request,insertOne,repository,UserFollowingService.createFollowRequest,packages/backend/src/core/UserFollowingService.ts,515,1,2,0,0,inbox/(単一); relationship/follow,,following/create
+follow_request,delete,repository,UserFollowingService.insertFollowingDoc,packages/backend/src/core/UserFollowingService.ts,276,3,2,0,0,inbox/(単一); relationship/follow,,following/create; following/requests/accept; i/update
+follow_request,delete,repository,UserFollowingService.removeFollowRequest,packages/backend/src/core/UserFollowingService.ts,684,1,1,0,0,inbox/(単一),,following/requests/reject
+follow_request,delete,repository,UserSuspendService.postSuspend,packages/backend/src/core/UserSuspendService.ts,78,1,0,0,0,,,admin/suspend-user
+follow_request,delete,repository,UserSuspendService.postSuspend,packages/backend/src/core/UserSuspendService.ts,81,1,0,0,0,,,admin/suspend-user
+following,update,repository,ApPersonService.updatePerson,packages/backend/src/core/activitypub/models/ApPersonService.ts,792,0,0,0,0,,,
+following,update,repository,EP:following/update-all.constructor,packages/backend/src/server/api/endpoints/following/update-all.ts,44,1,0,0,0,,,following/update-all
+following,update,repository,EP:following/update.constructor,packages/backend/src/server/api/endpoints/following/update.ts,99,1,0,0,0,,,following/update
+following,update,repository,NoteCreateService.checkHibernation,packages/backend/src/core/NoteCreateService.ts,1148,1,2,0,0,inbox/(単一); postScheduledNote/(単一),,notes/create
+following,insert,repository,UserFollowingService.insertFollowingDoc,packages/backend/src/core/UserFollowingService.ts,243,3,2,0,0,inbox/(単一); relationship/follow,,following/create; following/requests/accept; i/update
+following,delete,repository,UserFollowingService.removeFollow,packages/backend/src/core/UserFollowingService.ts,705,0,1,0,0,inbox/(単一),,
+following,delete,repository,UserFollowingService.unfollow,packages/backend/src/core/UserFollowingService.ts,381,3,3,0,0,inbox/(単一); relationship/block; relationship/unfollow,,blocking/create; following/delete; following/invalidate
+following,update,repository,UserService.updateLastActiveDate,packages/backend/src/core/UserService.ts,44,0,0,0,2,,ServerService; StreamingApiServerService,
+gallery_like,insert,repository,EP:gallery/posts/like.constructor,packages/backend/src/server/api/endpoints/gallery/posts/like.ts,87,1,0,0,0,,,gallery/posts/like
+gallery_like,delete,repository,EP:gallery/posts/unlike.constructor,packages/backend/src/server/api/endpoints/gallery/posts/unlike.ts,74,1,0,0,0,,,gallery/posts/unlike
+gallery_post,insertOne,repository,EP:gallery/posts/create.constructor,packages/backend/src/server/api/endpoints/gallery/posts/create.ts,78,1,0,0,0,,,gallery/posts/create
+gallery_post,delete,repository,EP:gallery/posts/delete.constructor,packages/backend/src/server/api/endpoints/gallery/posts/delete.ts,67,1,0,0,0,,,gallery/posts/delete
+gallery_post,increment,repository,EP:gallery/posts/like.constructor,packages/backend/src/server/api/endpoints/gallery/posts/like.ts,98,1,0,0,0,,,gallery/posts/like
+gallery_post,decrement,repository,EP:gallery/posts/unlike.constructor,packages/backend/src/server/api/endpoints/gallery/posts/unlike.ts,81,1,0,0,0,,,gallery/posts/unlike
+gallery_post,update,repository,EP:gallery/posts/update.constructor,packages/backend/src/server/api/endpoints/gallery/posts/update.ts,80,1,0,0,0,,,gallery/posts/update
+hashtag,update,queryBuilder,HashtagService.updateHashtag,packages/backend/src/core/HashtagService.ts,68,2,2,0,0,inbox/(単一); postScheduledNote/(単一),,i/update; notes/create
+hashtag,insert,repository,HashtagService.updateHashtag,packages/backend/src/core/HashtagService.ts,125,2,2,0,0,inbox/(単一); postScheduledNote/(単一),,i/update; notes/create
+hashtag,insert,repository,HashtagService.updateHashtag,packages/backend/src/core/HashtagService.ts,142,2,2,0,0,inbox/(単一); postScheduledNote/(単一),,i/update; notes/create
+instance,decrement,repository,AccountMoveService.adjustFollowingCounts,packages/backend/src/core/AccountMoveService.ts,310,1,0,0,0,,,i/move
+instance,increment,repository,ApPersonService.createPerson,packages/backend/src/core/activitypub/models/ApPersonService.ts,530,0,0,0,0,,,
+instance,insertOne,repository,FederatedInstanceService.fetchOrRegister,packages/backend/src/core/FederatedInstanceService.ts,59,11,8,0,0,db/truncateAccount; deliver/(単一); inbox/(単一); postScheduledNote/(単一); relationship/block; relationship/follow; relationship/unfollow; scheduledNoteDelete/(単一),,admin/federation/refresh-remote-instance-metadata; blocking/create; following/create; following/delete; following/invalidate; following/requests/accept; i/move; i/update; notes/create; notes/delete; notes/unrenote
+instance,update,queryBuilder,FederatedInstanceService.update,packages/backend/src/core/FederatedInstanceService.ts,93,2,2,0,0,deliver/(単一); inbox/(単一),,admin/federation/refresh-remote-instance-metadata; admin/federation/update-instance
+instance,increment,repository,NoteCreateService.performUpdateNotesCount,packages/backend/src/core/NoteCreateService.ts,1180,0,0,0,0,,,
+instance,decrement,repository,NoteDeleteService.delete,packages/backend/src/core/NoteDeleteService.ts,102,2,3,0,0,db/truncateAccount; inbox/(単一); scheduledNoteDelete/(単一),,notes/delete; notes/unrenote
+instance,decrement,repository,UserFollowingService.decrementFollowing,packages/backend/src/core/UserFollowingService.ts,433,3,3,0,0,inbox/(単一); relationship/block; relationship/unfollow,,blocking/create; following/delete; following/invalidate
+instance,decrement,repository,UserFollowingService.decrementFollowing,packages/backend/src/core/UserFollowingService.ts,440,3,3,0,0,inbox/(単一); relationship/block; relationship/unfollow,,blocking/create; following/delete; following/invalidate
+instance,increment,repository,UserFollowingService.insertFollowingDoc,packages/backend/src/core/UserFollowingService.ts,313,3,2,0,0,inbox/(単一); relationship/follow,,following/create; following/requests/accept; i/update
+instance,increment,repository,UserFollowingService.insertFollowingDoc,packages/backend/src/core/UserFollowingService.ts,320,3,2,0,0,inbox/(単一); relationship/follow,,following/create; following/requests/accept; i/update
+meta,upsert,entityManager,MetaService.fetch,packages/backend/src/core/MetaService.ts,85,0,0,0,0,,,
+meta,update,entityManager,MetaService.update,packages/backend/src/core/MetaService.ts,115,4,1,0,2,system/checkModeratorsActivity,ApiServerService; SignupApiService,admin/accounts/create; admin/captcha/save; admin/roles/update-default-policies; admin/update-meta
+meta,save,entityManager,MetaService.update,packages/backend/src/core/MetaService.ts,117,4,1,0,2,system/checkModeratorsActivity,ApiServerService; SignupApiService,admin/accounts/create; admin/captcha/save; admin/roles/update-default-policies; admin/update-meta
+moderation_log,insert,repository,ModerationLogService.log,packages/backend/src/core/ModerationLogService.ts,27,62,17,0,0,db/deleteAccount; db/deleteDriveFiles; db/exportAntennas; db/exportBlocking; db/exportClips; db/exportCustomEmojis; db/exportFavorites; db/exportFollowing; db/exportMuting; db/exportNotes; db/exportUserLists; db/importCustomEmojis; db/truncateAccount; inbox/(単一); objectStorage/cleanRemoteFiles; scheduledNoteDelete/(単一); system/checkModeratorsActivity,,admin/abuse-report/notification-recipient/create; admin/abuse-report/notification-recipient/delete; admin/abuse-report/notification-recipient/update; admin/accounts/delete; admin/ad/create; admin/ad/delete; admin/ad/update; admin/announcements/create; admin/announcements/delete; admin/announcements/update; admin/avatar-decorations/copy; admin/avatar-decorations/create; admin/avatar-decorations/delete; admin/avatar-decorations/update; admin/delete-account
+muting,insert,repository,AccountMoveService.copyMutings,packages/backend/src/core/AccountMoveService.ts,207,1,0,0,0,,,i/move
+muting,insert,repository,UserMutingService.mute,packages/backend/src/core/UserMutingService.ts,28,2,1,0,0,db/importMuting,,blocking/create; mute/create
+muting,delete,repository,UserMutingService.unmute,packages/backend/src/core/UserMutingService.ts,42,1,1,0,0,system/checkExpiredMutings,,mute/delete
+note,delete,repository,AutoDeleteNotesProcessorService.process,packages/backend/src/queue/processors/AutoDeleteNotesProcessorService.ts,86,0,2,0,0,objectStorage/autoDeleteNotes; system/autoDeleteNotes,,
+note,delete,repository,CleanRemoteNotesProcessorService.process,packages/backend/src/queue/processors/CleanRemoteNotesProcessorService.ts,240,0,1,0,0,system/cleanRemoteNotes,,
+note,increment,repository,ClipService.addNote,packages/backend/src/core/ClipService.ts,131,1,0,0,0,,,clips/add-note
+note,decrement,repository,ClipService.removeNote,packages/backend/src/core/ClipService.ts,156,1,0,0,0,,,clips/remove-note
+note,delete,repository,DeleteAccountProcessorService.process,packages/backend/src/queue/processors/DeleteAccountProcessorService.ts,90,0,1,0,0,db/deleteAccount,,
+note,update,queryBuilder,NoteCreateService.incRenoteCount,packages/backend/src/core/NoteCreateService.ts,920,1,2,0,0,inbox/(単一); postScheduledNote/(単一),,notes/create
+note,insert,repository,NoteCreateService.insertNote,packages/backend/src/core/NoteCreateService.ts,675,1,2,0,0,inbox/(単一); postScheduledNote/(単一),,notes/create
+note,insert,entityManager,NoteCreateService.insertNote,packages/backend/src/core/NoteCreateService.ts,638,1,2,0,0,inbox/(単一); postScheduledNote/(単一),,notes/create
+note,increment,repository,NoteCreateService.saveReply,packages/backend/src/core/NoteCreateService.ts,961,1,2,0,0,inbox/(単一); postScheduledNote/(単一),,notes/create
+note,decrement,repository,NoteDeleteService.delete,packages/backend/src/core/NoteDeleteService.ts,67,2,3,0,0,db/truncateAccount; inbox/(単一); scheduledNoteDelete/(単一),,notes/delete; notes/unrenote
+note,delete,repository,NoteDeleteService.delete,packages/backend/src/core/NoteDeleteService.ts,113,2,3,0,0,db/truncateAccount; inbox/(単一); scheduledNoteDelete/(単一),,notes/delete; notes/unrenote
+note,update,repository,NoteUpdateService.updateNote,packages/backend/src/core/NoteUpdateService.ts,252,1,0,0,0,,,notes/update
+note,update,entityManager,NoteUpdateService.updateNote,packages/backend/src/core/NoteUpdateService.ts,179,1,0,0,0,,,notes/update
+note,increment,repository,PageService.create,packages/backend/src/core/PageService.ts,91,1,0,0,0,,,pages/create
+note,decrement,entityManager,PageService.delete,packages/backend/src/core/PageService.ts,195,1,1,0,0,db/deleteAccount,,pages/delete
+note,decrement,entityManager,PageService.update,packages/backend/src/core/PageService.ts,154,1,0,0,0,,,pages/update
+note,increment,entityManager,PageService.update,packages/backend/src/core/PageService.ts,157,1,0,0,0,,,pages/update
+note,update,queryBuilder,ReactionsBufferingService.bake,packages/backend/src/core/ReactionsBufferingService.ts,179,0,1,0,0,system/bakeBufferedReactions,,
+note,update,queryBuilder,ReactionService.create,packages/backend/src/core/ReactionService.ts,201,1,1,0,0,inbox/(単一),,notes/reactions/create
+note,update,queryBuilder,ReactionService.delete,packages/backend/src/core/ReactionService.ts,306,2,1,0,0,inbox/(単一),,notes/reactions/create; notes/reactions/delete
+note_draft,insertOne,repository,NoteDraftService.create,packages/backend/src/core/NoteDraftService.ts,84,1,0,0,0,,,notes/drafts/create
+note_draft,delete,repository,NoteDraftService.delete,packages/backend/src/core/NoteDraftService.ts,151,1,0,0,0,,,notes/drafts/delete
+note_draft,update,queryBuilder,NoteDraftService.update,packages/backend/src/core/NoteDraftService.ts,124,1,0,0,0,,,notes/drafts/update
+note_draft,remove,repository,PostScheduledNoteProcessorService.process,packages/backend/src/queue/processors/PostScheduledNoteProcessorService.ts,67,0,1,0,0,postScheduledNote/(単一),,
+note_favorite,insert,repository,EP:notes/favorites/create.constructor,packages/backend/src/server/api/endpoints/notes/favorites/create.ts,82,1,0,0,0,,,notes/favorites/create
+note_favorite,delete,repository,EP:notes/favorites/delete.constructor,packages/backend/src/server/api/endpoints/notes/favorites/delete.ts,69,1,0,0,0,,,notes/favorites/delete
+note_reaction,insert,repository,ReactionService.create,packages/backend/src/core/ReactionService.ts,175,1,1,0,0,inbox/(単一),,notes/reactions/create
+note_reaction,insert,repository,ReactionService.create,packages/backend/src/core/ReactionService.ts,186,1,1,0,0,inbox/(単一),,notes/reactions/create
+note_reaction,delete,repository,ReactionService.delete,packages/backend/src/core/ReactionService.ts,295,2,1,0,0,inbox/(単一),,notes/reactions/create; notes/reactions/delete
+note_thread_muting,insert,repository,EP:notes/thread-muting/create.constructor,packages/backend/src/server/api/endpoints/notes/thread-muting/create.ts,70,1,0,0,0,,,notes/thread-muting/create
+note_thread_muting,delete,repository,EP:notes/thread-muting/delete.constructor,packages/backend/src/server/api/endpoints/notes/thread-muting/delete.ts,51,1,0,0,0,,,notes/thread-muting/delete
+NoteHistory,insert,repository,NoteHistorySerivce.recordHistory,packages/backend/src/core/NoteHistoryService.ts,120,1,0,0,0,,,notes/update
+page,increment,repository,EP:pages/like.constructor,packages/backend/src/server/api/endpoints/pages/like.ts,91,1,0,0,0,,,pages/like
+page,decrement,repository,EP:pages/unlike.constructor,packages/backend/src/server/api/endpoints/pages/unlike.ts,71,1,0,0,0,,,pages/unlike
+page,update,repository,PageEntityService.pack,packages/backend/src/core/entities/PageEntityService.ts,86,0,0,0,0,,,
+page,insertOne,repository,PageService.create,packages/backend/src/core/PageService.ts,72,1,0,0,0,,,pages/create
+page,delete,entityManager,PageService.delete,packages/backend/src/core/PageService.ts,181,1,1,0,0,db/deleteAccount,,pages/delete
+page,update,entityManager,PageService.update,packages/backend/src/core/PageService.ts,130,1,0,0,0,,,pages/update
+page_like,insert,repository,EP:pages/like.constructor,packages/backend/src/server/api/endpoints/pages/like.ts,85,1,0,0,0,,,pages/like
+page_like,delete,repository,EP:pages/unlike.constructor,packages/backend/src/server/api/endpoints/pages/unlike.ts,69,1,0,0,0,,,pages/unlike
+password_reset_request,insert,repository,EP:request-reset-password.constructor,packages/backend/src/server/api/endpoints/request-reset-password.ts,86,1,0,0,0,,,request-reset-password
+password_reset_request,delete,repository,EP:reset-password.constructor,packages/backend/src/server/api/endpoints/reset-password.ts,62,1,0,0,0,,,reset-password
+poll,update,repository,ApQuestionService.updateQuestion,packages/backend/src/core/activitypub/models/ApQuestionService.ts,124,0,0,0,0,,,
+poll,insert,entityManager,NoteCreateService.insertNote,packages/backend/src/core/NoteCreateService.ts,652,1,2,0,0,inbox/(単一); postScheduledNote/(単一),,notes/create
+poll,delete,entityManager,NoteUpdateService.updateNote,packages/backend/src/core/NoteUpdateService.ts,184,1,0,0,0,,,notes/update
+poll,insert,entityManager,NoteUpdateService.updateNote,packages/backend/src/core/NoteUpdateService.ts,195,1,0,0,0,,,notes/update
+poll,insert,entityManager,NoteUpdateService.updateNote,packages/backend/src/core/NoteUpdateService.ts,208,1,0,0,0,,,notes/update
+poll,delete,entityManager,NoteUpdateService.updateNote,packages/backend/src/core/NoteUpdateService.ts,211,1,0,0,0,,,notes/update
+poll_vote,insertOne,repository,EP:notes/polls/vote.constructor,packages/backend/src/server/api/endpoints/notes/polls/vote.ts,147,1,0,0,0,,,notes/polls/vote
+poll_vote,insert,repository,PollService.vote,packages/backend/src/core/PollService.ts,75,0,0,0,0,,,
+promo_note,insert,repository,EP:admin/promo/create.constructor,packages/backend/src/server/api/endpoints/admin/promo/create.ts,64,1,0,0,0,,,admin/promo/create
+promo_read,insert,repository,EP:promo/read.constructor,packages/backend/src/server/api/endpoints/promo/read.ts,63,1,0,0,0,,,promo/read
+registration_ticket,insertOne,repository,EP:admin/invite/create.constructor,packages/backend/src/server/api/endpoints/admin/invite/create.ts,69,1,0,0,0,,,admin/invite/create
+registration_ticket,delete,repository,EP:admin/invite/revoke.constructor,packages/backend/src/server/api/endpoints/admin/invite/revoke.ts,32,1,0,0,0,,,admin/invite/revoke
+registration_ticket,insertOne,repository,EP:invite/create.constructor,packages/backend/src/server/api/endpoints/invite/create.ts,69,1,0,0,0,,,invite/create
+registration_ticket,delete,repository,EP:invite/delete.constructor,packages/backend/src/server/api/endpoints/invite/delete.ts,73,1,0,0,0,,,invite/delete
+registration_ticket,update,repository,SignupApiService.signup,packages/backend/src/server/api/SignupApiService.ts,207,0,0,0,2,,ApiServerService; SignupApiService,
+registration_ticket,update,repository,SignupApiService.signup,packages/backend/src/server/api/SignupApiService.ts,227,0,0,0,2,,ApiServerService; SignupApiService,
+registration_ticket,update,repository,SignupApiService.signupPending,packages/backend/src/server/api/SignupApiService.ts,276,0,0,0,2,,ApiServerService; SignupApiService,
+registry_item,delete,queryBuilder,RegistryApiService.remove,packages/backend/src/core/RegistryApiService.ts,135,1,0,0,0,,,i/registry/remove
+registry_item,update,repository,RegistryApiService.set,packages/backend/src/core/RegistryApiService.ts,43,1,0,0,0,,,i/registry/set
+registry_item,insert,repository,RegistryApiService.set,packages/backend/src/core/RegistryApiService.ts,48,1,0,0,0,,,i/registry/set
+relay,insertOne,repository,RelayService.addRelay,packages/backend/src/core/RelayService.ts,37,1,0,0,0,,,admin/relays/add
+relay,update,repository,RelayService.relayAccepted,packages/backend/src/core/RelayService.ts,78,0,1,0,0,inbox/(単一),,
+relay,update,repository,RelayService.relayRejected,packages/backend/src/core/RelayService.ts,87,0,1,0,0,inbox/(単一),,
+relay,delete,repository,RelayService.removeRelay,packages/backend/src/core/RelayService.ts,67,1,0,0,0,,,admin/relays/remove
+renote_muting,insert,repository,UserRenoteMutingService.mute,packages/backend/src/core/UserRenoteMutingService.ts,30,1,0,0,0,,,renote-mute/create
+renote_muting,delete,repository,UserRenoteMutingService.unmute,packages/backend/src/core/UserRenoteMutingService.ts,43,1,0,0,0,,,renote-mute/delete
+retention_aggregation,insert,repository,AggregateRetentionProcessorService.process,packages/backend/src/queue/processors/AggregateRetentionProcessorService.ts,55,0,1,0,0,system/aggregateRetention,,
+retention_aggregation,update,repository,AggregateRetentionProcessorService.process,packages/backend/src/queue/processors/AggregateRetentionProcessorService.ts,84,0,1,0,0,system/aggregateRetention,,
+role,update,repository,RoleService.assign,packages/backend/src/core/RoleService.ts,597,2,0,0,0,,,admin/roles/assign; i/move
+role,insertOne,repository,RoleService.create,packages/backend/src/core/RoleService.ts,678,1,0,0,0,,,admin/roles/create
+role,delete,repository,RoleService.delete,packages/backend/src/core/RoleService.ts,733,1,0,0,0,,,admin/roles/delete
+role,update,repository,RoleService.unassign,packages/backend/src/core/RoleService.ts,640,1,0,0,0,,,admin/roles/unassign
+role,update,repository,RoleService.update,packages/backend/src/core/RoleService.ts,714,1,0,0,0,,,admin/roles/update
+role_assignment,delete,repository,CleanProcessorService.process,packages/backend/src/queue/processors/CleanProcessorService.ts,63,0,1,0,0,system/clean,,
+role_assignment,delete,repository,RoleService.assign,packages/backend/src/core/RoleService.ts,581,2,0,0,0,,,admin/roles/assign; i/move
+role_assignment,insertOne,repository,RoleService.assign,packages/backend/src/core/RoleService.ts,590,2,0,0,0,,,admin/roles/assign; i/move
+role_assignment,delete,repository,RoleService.unassign,packages/backend/src/core/RoleService.ts,631,1,0,0,0,,,admin/roles/unassign
+role_assignment,delete,repository,RoleService.unassign,packages/backend/src/core/RoleService.ts,638,1,0,0,0,,,admin/roles/unassign
+signin,insert,repository,SigninApiService.signin,packages/backend/src/server/api/SigninApiService.ts,167,0,0,0,2,,ApiServerService; SigninApiService,
+signin,insertOne,repository,SigninService.signin,packages/backend/src/server/api/SigninService.ts,43,0,0,0,5,,ApiServerService; SigninApiService; SigninService; SigninWithPasskeyApiService; SignupApiService,
+signin,insert,repository,SigninWithPasskeyApiService.signin,packages/backend/src/server/api/SigninWithPasskeyApiService.ts,77,0,0,0,2,,ApiServerService; SigninWithPasskeyApiService,
+sw_subscription,insert,repository,EP:sw/register.constructor,packages/backend/src/server/api/endpoints/sw/register.ts,92,1,0,0,0,,,sw/register
+sw_subscription,delete,repository,EP:sw/unregister.constructor,packages/backend/src/server/api/endpoints/sw/unregister.ts,37,1,0,0,0,,,sw/unregister
+sw_subscription,update,repository,EP:sw/update-registration.constructor,packages/backend/src/server/api/endpoints/sw/update-registration.ts,79,1,0,0,0,,,sw/update-registration
+sw_subscription,delete,repository,PushNotificationService.pushNotification,packages/backend/src/core/PushNotificationService.ts,112,2,1,0,0,inbox/(単一),,chat/messages/create-to-room; chat/messages/create-to-user
+system_account,insert,entityManager,SystemAccountService.createCorrespondingUser,packages/backend/src/core/SystemAccountService.ts,168,0,0,0,0,,,
+system_webhook,update,repository,SystemWebhookDeliverProcessorService.process,packages/backend/src/queue/processors/SystemWebhookDeliverProcessorService.ts,59,0,1,0,0,systemWebhookDeliver/(単一),,
+system_webhook,update,repository,SystemWebhookDeliverProcessorService.process,packages/backend/src/queue/processors/SystemWebhookDeliverProcessorService.ts,68,0,1,0,0,systemWebhookDeliver/(単一),,
+system_webhook,insert,repository,SystemWebhookService.createSystemWebhook,packages/backend/src/core/SystemWebhookService.ts,122,1,0,0,0,,,admin/system-webhook/create
+system_webhook,delete,repository,SystemWebhookService.deleteSystemWebhook,packages/backend/src/core/SystemWebhookService.ts,181,1,0,0,0,,,admin/system-webhook/delete
+system_webhook,update,repository,SystemWebhookService.updateSystemWebhook,packages/backend/src/core/SystemWebhookService.ts,154,1,0,0,0,,,admin/system-webhook/update
+used_username,insert,entityManager,SystemAccountService.createCorrespondingUser,packages/backend/src/core/SystemAccountService.ts,163,0,0,0,0,,,
+user,update,repository,AccountMoveService.adjustFollowingCounts,packages/backend/src/core/AccountMoveService.ts,295,1,0,0,0,,,i/move
+user,decrement,repository,AccountMoveService.adjustFollowingCounts,packages/backend/src/core/AccountMoveService.ts,298,1,0,0,0,,,i/move
+user,decrement,repository,AccountMoveService.adjustFollowingCounts,packages/backend/src/core/AccountMoveService.ts,303,1,0,0,0,,,i/move
+user,update,repository,AccountMoveService.moveFromLocal,packages/backend/src/core/AccountMoveService.ts,86,1,0,0,0,,,i/move
+user,update,repository,ApInboxService.deleteActor,packages/backend/src/core/activitypub/ApInboxService.ts,797,0,1,0,0,inbox/(単一),,
+user,update,repository,ApPersonService.createPerson,packages/backend/src/core/activitypub/models/ApPersonService.ts,548,0,0,0,0,,,
+user,update,repository,ApPersonService.updatePerson,packages/backend/src/core/activitypub/models/ApPersonService.ts,756,0,0,0,0,,,
+user,update,repository,AvatarDecorationService.remoteUserUpdate,packages/backend/src/core/AvatarDecorationService.ts,162,0,0,0,0,,,
+user,update,repository,AvatarDecorationService.remoteUserUpdate,packages/backend/src/core/AvatarDecorationService.ts,232,0,0,0,0,,,
+user,delete,repository,DeleteAccountProcessorService.process,packages/backend/src/queue/processors/DeleteAccountProcessorService.ts,160,0,1,0,0,db/deleteAccount,,
+user,update,repository,DeleteAccountService.deleteAccount,packages/backend/src/core/DeleteAccountService.ts,95,3,0,0,0,,,admin/accounts/delete; admin/delete-account; i/delete-account
+user,update,repository,EP:admin/set-user-sensitive.constructor,packages/backend/src/server/api/endpoints/admin/set-user-sensitive.ts,60,1,0,0,0,,,admin/set-user-sensitive
+user,update,repository,EP:admin/unset-user-avatar.constructor,packages/backend/src/server/api/endpoints/admin/unset-user-avatar.ts,45,1,0,0,0,,,admin/unset-user-avatar
+user,update,repository,EP:admin/unset-user-banner.constructor,packages/backend/src/server/api/endpoints/admin/unset-user-banner.ts,45,1,0,0,0,,,admin/unset-user-banner
+user,update,repository,EP:admin/unset-user-sensitive.constructor,packages/backend/src/server/api/endpoints/admin/unset-user-sensitive.ts,60,1,0,0,0,,,admin/unset-user-sensitive
+user,update,repository,EP:i/regenerate-token.constructor,packages/backend/src/server/api/endpoints/i/regenerate-token.ts,54,1,0,0,0,,,i/regenerate-token
+user,update,repository,EP:i/update-auto-delete-settings.constructor,packages/backend/src/server/api/endpoints/i/update-auto-delete-settings.ts,60,1,0,0,0,,,i/update-auto-delete-settings
+user,update,repository,EP:i/update.constructor,packages/backend/src/server/api/endpoints/i/update.ts,531,1,0,0,0,,,i/update
+user,update,repository,NoteCreateService.checkHibernation,packages/backend/src/core/NoteCreateService.ts,1142,1,2,0,0,inbox/(単一); postScheduledNote/(単一),,notes/create
+user,update,queryBuilder,NoteCreateService.incNotesCountOfUser,packages/backend/src/core/NoteCreateService.ts,984,1,2,0,0,inbox/(単一); postScheduledNote/(単一),,notes/create
+user,update,repository,RemoteUserResolveService.resolveUser,packages/backend/src/core/RemoteUserResolveService.ts,100,0,0,0,0,,,
+user,update,repository,RemoteUserResolveService.resolveUser,packages/backend/src/core/RemoteUserResolveService.ts,118,0,0,0,0,,,
+user,insert,entityManager,SystemAccountService.createCorrespondingUser,packages/backend/src/core/SystemAccountService.ts,139,0,0,0,0,,,
+user,update,repository,SystemAccountService.updateCorrespondingUserProfile,packages/backend/src/core/SystemAccountService.ts,189,1,0,0,0,,,admin/update-proxy-account
+user,decrement,repository,UserFollowingService.decrementFollowing,packages/backend/src/core/UserFollowingService.ts,424,3,3,0,0,inbox/(単一); relationship/block; relationship/unfollow,,blocking/create; following/delete; following/invalidate
+user,decrement,repository,UserFollowingService.decrementFollowing,packages/backend/src/core/UserFollowingService.ts,425,3,3,0,0,inbox/(単一); relationship/block; relationship/unfollow,,blocking/create; following/delete; following/invalidate
+user,update,repository,UserFollowingService.decrementFollowing,packages/backend/src/core/UserFollowingService.ts,477,3,3,0,0,inbox/(単一); relationship/block; relationship/unfollow,,blocking/create; following/delete; following/invalidate
+user,increment,repository,UserFollowingService.insertFollowingDoc,packages/backend/src/core/UserFollowingService.ts,304,3,2,0,0,inbox/(単一); relationship/follow,,following/create; following/requests/accept; i/update
+user,increment,repository,UserFollowingService.insertFollowingDoc,packages/backend/src/core/UserFollowingService.ts,305,3,2,0,0,inbox/(単一); relationship/follow,,following/create; following/requests/accept; i/update
+user,update,queryBuilder,UserService.updateLastActiveDate,packages/backend/src/core/UserService.ts,29,0,0,0,2,,ServerService; StreamingApiServerService,
+user,update,repository,UserService.updateLastActiveDate,packages/backend/src/core/UserService.ts,41,0,0,0,2,,ServerService; StreamingApiServerService,
+user,update,repository,UserService.updateLastActiveDate,packages/backend/src/core/UserService.ts,51,0,0,0,2,,ServerService; StreamingApiServerService,
+user,update,repository,UserSuspendService.suspend,packages/backend/src/core/UserSuspendService.ts,41,1,0,0,0,,,admin/suspend-user
+user,update,repository,UserSuspendService.unsuspend,packages/backend/src/core/UserSuspendService.ts,59,1,0,0,0,,,admin/unsuspend-user
+user_group,insertOne,repository,EP:users/groups/create.constructor,packages/backend/src/server/api/endpoints/users/groups/create.ts,58,1,0,0,0,,,users/groups/create
+user_group,delete,repository,EP:users/groups/delete.constructor,packages/backend/src/server/api/endpoints/users/groups/delete.ts,54,1,0,0,0,,,users/groups/delete
+user_group,update,repository,EP:users/groups/transfer.constructor,packages/backend/src/server/api/endpoints/users/groups/transfer.ts,97,1,0,0,0,,,users/groups/transfer
+user_group,update,repository,EP:users/groups/update.constructor,packages/backend/src/server/api/endpoints/users/groups/update.ts,65,1,0,0,0,,,users/groups/update
+user_group_invitation,delete,repository,EP:users/groups/invitations/accept.constructor,packages/backend/src/server/api/endpoints/users/groups/invitations/accept.ts,69,1,0,0,0,,,users/groups/invitations/accept
+user_group_invitation,delete,repository,EP:users/groups/invitations/reject.constructor,packages/backend/src/server/api/endpoints/users/groups/invitations/reject.ts,56,1,0,0,0,,,users/groups/invitations/reject
+user_group_invitation,insertOne,repository,EP:users/groups/invite.constructor,packages/backend/src/server/api/endpoints/users/groups/invite.ts,112,1,0,0,0,,,users/groups/invite
+user_group_joining,insert,repository,EP:users/groups/create.constructor,packages/backend/src/server/api/endpoints/users/groups/create.ts,65,1,0,0,0,,,users/groups/create
+user_group_joining,insert,repository,EP:users/groups/invitations/accept.constructor,packages/backend/src/server/api/endpoints/users/groups/invitations/accept.ts,62,1,0,0,0,,,users/groups/invitations/accept
+user_group_joining,delete,repository,EP:users/groups/leave.constructor,packages/backend/src/server/api/endpoints/users/groups/leave.ts,67,1,0,0,0,,,users/groups/leave
+user_group_joining,delete,repository,EP:users/groups/pull.constructor,packages/backend/src/server/api/endpoints/users/groups/pull.ts,85,1,0,0,0,,,users/groups/pull
+user_ip,insert,queryBuilder,ApiCallService.logIp,packages/backend/src/server/api/ApiCallService.ts,297,0,0,0,2,,ApiCallService; ApiServerService,
+user_ip,delete,repository,CleanProcessorService.process,packages/backend/src/queue/processors/CleanProcessorService.ts,44,0,1,0,0,system/clean,,
+user_keypair,insert,entityManager,SystemAccountService.createCorrespondingUser,packages/backend/src/core/SystemAccountService.ts,151,0,0,0,0,,,
+user_list,insertOne,repository,EP:users/lists/create-from-public.constructor,packages/backend/src/server/api/endpoints/users/lists/create-from-public.ts,107,1,0,0,0,,,users/lists/create-from-public
+user_list,insertOne,repository,EP:users/lists/create.constructor,packages/backend/src/server/api/endpoints/users/lists/create.ts,68,1,0,0,0,,,users/lists/create
+user_list,delete,repository,EP:users/lists/delete.constructor,packages/backend/src/server/api/endpoints/users/lists/delete.ts,54,1,0,0,0,,,users/lists/delete
+user_list,update,repository,EP:users/lists/update.constructor,packages/backend/src/server/api/endpoints/users/lists/update.ts,65,1,0,0,0,,,users/lists/update
+user_list,insertOne,repository,ImportUserListsProcessorService.process,packages/backend/src/queue/processors/ImportUserListsProcessorService.ts,93,0,1,0,0,db/importUserLists,,
+user_list_favorite,insert,repository,EP:users/lists/favorite.constructor,packages/backend/src/server/api/endpoints/users/lists/favorite.ts,72,1,0,0,0,,,users/lists/favorite
+user_list_favorite,delete,repository,EP:users/lists/unfavorite.constructor,packages/backend/src/server/api/endpoints/users/lists/unfavorite.ts,68,1,0,0,0,,,users/lists/unfavorite
+user_list_membership,insert,repository,AccountMoveService.updateLists,packages/backend/src/core/AccountMoveService.ts,281,1,0,0,0,,,i/move
+user_list_membership,delete,repository,UserBlockingService.removeFromList,packages/backend/src/core/UserBlockingService.ts,150,1,2,0,0,inbox/(単一); relationship/block,,blocking/create
+user_list_membership,insert,repository,UserListService.addMember,packages/backend/src/core/UserListService.ts,102,2,1,0,0,db/importUserLists,,users/lists/create-from-public; users/lists/push
+user_list_membership,delete,repository,UserListService.removeMember,packages/backend/src/core/UserListService.ts,122,1,0,0,0,,,users/lists/pull
+user_list_membership,update,repository,UserListService.updateMembership,packages/backend/src/core/UserListService.ts,142,1,0,0,0,,,users/lists/update-membership
+user_memo,delete,repository,EP:users/update-memo.constructor,packages/backend/src/server/api/endpoints/users/update-memo.ts,60,1,0,0,0,,,users/update-memo
+user_memo,insert,repository,EP:users/update-memo.constructor,packages/backend/src/server/api/endpoints/users/update-memo.ts,74,1,0,0,0,,,users/update-memo
+user_memo,update,repository,EP:users/update-memo.constructor,packages/backend/src/server/api/endpoints/users/update-memo.ts,81,1,0,0,0,,,users/update-memo
+user_note_pining,delete,entityManager,ApPersonService.updateFeatured,packages/backend/src/core/activitypub/models/ApPersonService.ts,890,0,0,0,0,,,
+user_note_pining,insert,entityManager,ApPersonService.updateFeatured,packages/backend/src/core/activitypub/models/ApPersonService.ts,896,0,0,0,0,,,
+user_note_pining,insert,repository,NotePiningService.addPinned,packages/backend/src/core/NotePiningService.ts,73,1,1,0,0,inbox/(単一),,i/pin
+user_note_pining,delete,repository,NotePiningService.removePinned,packages/backend/src/core/NotePiningService.ts,102,1,1,0,0,inbox/(単一),,i/unpin
+user_pending,insertOne,repository,SignupApiService.signup,packages/backend/src/server/api/SignupApiService.ts,192,0,0,0,2,,ApiServerService; SignupApiService,
+user_pending,delete,repository,SignupApiService.signupPending,packages/backend/src/server/api/SignupApiService.ts,262,0,0,0,2,,ApiServerService; SignupApiService,
+user_profile,update,repository,AchievementService.create,packages/backend/src/core/AchievementService.ts,37,2,0,0,0,,,i/claim-achievement; notes/favorites/create
+user_profile,update,repository,ApPersonService.updatePerson,packages/backend/src/core/activitypub/models/ApPersonService.ts,775,0,0,0,0,,,
+user_profile,update,repository,EP:admin/reset-password.constructor,packages/backend/src/server/api/endpoints/admin/reset-password.ts,73,1,0,0,0,,,admin/reset-password
+user_profile,update,repository,EP:admin/set-user-sensitive.constructor,packages/backend/src/server/api/endpoints/admin/set-user-sensitive.ts,56,1,0,0,0,,,admin/set-user-sensitive
+user_profile,update,repository,EP:admin/unset-user-sensitive.constructor,packages/backend/src/server/api/endpoints/admin/unset-user-sensitive.ts,56,1,0,0,0,,,admin/unset-user-sensitive
+user_profile,update,repository,EP:admin/update-user-note.constructor,packages/backend/src/server/api/endpoints/admin/update-user-note.ts,49,1,0,0,0,,,admin/update-user-note
+user_profile,update,repository,EP:i.constructor,packages/backend/src/server/api/endpoints/i.ts,68,1,0,0,0,,,i
+user_profile,update,repository,EP:i/2fa/done.constructor,packages/backend/src/server/api/endpoints/i/2fa/done.ts,72,1,0,0,0,,,i/2fa/done
+user_profile,update,repository,EP:i/2fa/password-less.constructor,packages/backend/src/server/api/endpoints/i/2fa/password-less.ts,63,1,0,0,0,,,i/2fa/password-less
+user_profile,update,repository,EP:i/2fa/password-less.constructor,packages/backend/src/server/api/endpoints/i/2fa/password-less.ts,71,1,0,0,0,,,i/2fa/password-less
+user_profile,update,repository,EP:i/2fa/register.constructor,packages/backend/src/server/api/endpoints/i/2fa/register.ts,88,1,0,0,0,,,i/2fa/register
+user_profile,update,repository,EP:i/2fa/remove-key.constructor,packages/backend/src/server/api/endpoints/i/2fa/remove-key.ts,93,1,0,0,0,,,i/2fa/remove-key
+user_profile,update,repository,EP:i/2fa/unregister.constructor,packages/backend/src/server/api/endpoints/i/2fa/unregister.ts,70,1,0,0,0,,,i/2fa/unregister
+user_profile,update,repository,EP:i/change-password.constructor,packages/backend/src/server/api/endpoints/i/change-password.ts,62,1,0,0,0,,,i/change-password
+user_profile,update,repository,EP:i/update-email.constructor,packages/backend/src/server/api/endpoints/i/update-email.ts,113,1,0,0,0,,,i/update-email
+user_profile,update,repository,EP:i/update-email.constructor,packages/backend/src/server/api/endpoints/i/update-email.ts,130,1,0,0,0,,,i/update-email
+user_profile,update,repository,EP:i/update.constructor,packages/backend/src/server/api/endpoints/i/update.ts,535,1,0,0,0,,,i/update
+user_profile,update,queryBuilder,EP:i/update.verifyLink,packages/backend/src/server/api/endpoints/i/update.ts,587,1,0,0,0,,,i/update
+user_profile,update,repository,EP:reset-password.constructor,packages/backend/src/server/api/endpoints/reset-password.ts,58,1,0,0,0,,,reset-password
+user_profile,update,repository,EP:verify-email.constructor,packages/backend/src/server/api/endpoints/verify-email.ts,54,1,0,0,0,,,verify-email
+user_profile,save,repository,SigninApiService.signin,packages/backend/src/server/api/SigninApiService.ts,162,0,0,0,2,,ApiServerService; SigninApiService,
+user_profile,update,repository,SigninApiService.signin,packages/backend/src/server/api/SigninApiService.ts,214,0,0,0,2,,ApiServerService; SigninApiService,
+user_profile,update,repository,SigninApiService.signin,packages/backend/src/server/api/SigninApiService.ts,236,0,0,0,2,,ApiServerService; SigninApiService,
+user_profile,update,repository,SignupApiService.signupPending,packages/backend/src/server/api/SignupApiService.ts,268,0,0,0,2,,ApiServerService; SignupApiService,
+user_profile,insert,entityManager,SystemAccountService.createCorrespondingUser,packages/backend/src/core/SystemAccountService.ts,157,0,0,0,0,,,
+user_profile,update,repository,SystemAccountService.updateCorrespondingUserProfile,packages/backend/src/core/SystemAccountService.ts,196,1,0,0,0,,,admin/update-proxy-account
+user_profile,update,repository,UserAuthService.twoFactorAuthenticate,packages/backend/src/core/UserAuthService.ts,31,9,0,0,2,,ApiServerService; SigninApiService,i/2fa/key-done; i/2fa/register; i/2fa/register-key; i/2fa/remove-key; i/2fa/unregister; i/change-password; i/delete-account; i/truncate-account; i/update-email
+user_publickey,update,repository,ApPersonService.updatePerson,packages/backend/src/core/activitypub/models/ApPersonService.ts,761,0,0,0,0,,,
+user_security_key,insert,repository,EP:i/2fa/key-done.constructor,packages/backend/src/server/api/endpoints/i/2fa/key-done.ts,100,1,0,0,0,,,i/2fa/key-done
+user_security_key,delete,repository,EP:i/2fa/remove-key.constructor,packages/backend/src/server/api/endpoints/i/2fa/remove-key.ts,75,1,0,0,0,,,i/2fa/remove-key
+user_security_key,update,repository,EP:i/2fa/update-key.constructor,packages/backend/src/server/api/endpoints/i/2fa/update-key.ts,66,1,0,0,0,,,i/2fa/update-key
+user_security_key,update,repository,WebAuthnService.verifyAuthentication,packages/backend/src/core/WebAuthnService.ts,275,0,0,0,2,,ApiServerService; SigninApiService,
+user_security_key,update,repository,WebAuthnService.verifyAuthentication,packages/backend/src/core/WebAuthnService.ts,313,0,0,0,2,,ApiServerService; SigninApiService,
+user_security_key,update,repository,WebAuthnService.verifySignInWithPasskeyAuthentication,packages/backend/src/core/WebAuthnService.ts,232,0,0,0,2,,ApiServerService; SigninWithPasskeyApiService,
+webhook,insertOne,repository,EP:i/webhooks/create.constructor,packages/backend/src/server/api/endpoints/i/webhooks/create.ts,93,1,0,0,0,,,i/webhooks/create
+webhook,delete,repository,EP:i/webhooks/delete.constructor,packages/backend/src/server/api/endpoints/i/webhooks/delete.ts,57,1,0,0,0,,,i/webhooks/delete
+webhook,update,repository,EP:i/webhooks/update.constructor,packages/backend/src/server/api/endpoints/i/webhooks/update.ts,66,1,0,0,0,,,i/webhooks/update
+webhook,update,repository,UserWebhookDeliverProcessorService.process,packages/backend/src/queue/processors/UserWebhookDeliverProcessorService.ts,60,0,1,0,0,userWebhookDeliver/(単一),,
+webhook,update,repository,UserWebhookDeliverProcessorService.process,packages/backend/src/queue/processors/UserWebhookDeliverProcessorService.ts,67,0,1,0,0,userWebhookDeliver/(単一),,
