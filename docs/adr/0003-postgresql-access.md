@@ -13,7 +13,7 @@
 - 列名はキャメルケースで、SQLでは引用が要る（例: `note."userId"`）。
 - 配列の列を持つモデルが23ファイル、`jsonb`の列を持つモデルが15ファイルある。PostgreSQLのenum型は12ある（旧ブランチが2025-11時点のスキーマから生成した`sea_orm_active_enums.rs`による。現在の数は未確認）。
 - マイグレーションは`packages/backend/migration/`に407ファイルある。
-- 接続には`statement_timeout`（10秒）とreplicationの設定がある（`packages/backend/src/postgres.ts`）。
+- 接続には`statement_timeout`とreplicationの設定がある（`packages/backend/src/postgres.ts`）。`statement_timeout`の10秒は既定値で、設定の`db.extra.statement_timeout`で上書きできる（10秒を置いた後に`config.db.extra`を展開している）。
 - 検索はPGroongaの演算子（`&@~`）を使う経路がある（`SearchService`）。チャートはテーブル名を実行時に決める（棚卸し §3.3）。
 
 移行計画の制約は次のとおり。
@@ -81,7 +81,7 @@ RUST-05とRUST-06（`GET /api/emojis`）で確かめる。
 - [ ] **コンパイル時の検査の運用**: DBなしでビルドする方法（事前に保存したクエリ情報）の有無と、CIで「保存した情報がSQLと合っているか」を検査する方法。docs.rsの`sqlx`のマクロの説明で確認する。今回は未確認。
 - [ ] **動的なSQL**: 条件によって`WHERE`や`ORDER BY`が変わるクエリ（ページングの`sinceId` / `untilId`、検索）の書き方。組み立て方を1つに決め、プレースホルダーの番号の付け間違いを防ぐ。
 - [ ] **PGroonga**: `&@~`演算子を含むSQLを、コンパイル時の検査に通せるか。検査用のDBに拡張が要るか。
-- [ ] **接続**: `statement_timeout`、replication（読み取り先の振り分け）、接続の再確立、DB停止時の挙動（計画のフェーズ1の完了条件）。
+- [ ] **接続**: `statement_timeout`（既定の10秒と、`db.extra`で上書きした値の両方）、replication（読み取り先の振り分け）、接続の再確立、DB停止時の挙動（計画のフェーズ1の完了条件）。
 - [ ] **接続の中継**: PgBouncerなどを挟む構成でのプリペアドステートメントの扱い。現行の運用で中継を使っているかは未確認。
 - [ ] **発行されるSQLの比較**: `GET /api/emojis`で、TypeORMが発行するSQLとRustが発行するSQLの実行計画を比較する。
 

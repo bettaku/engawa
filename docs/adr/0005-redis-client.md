@@ -24,7 +24,7 @@
 
 そのほかの事実は次のとおり。
 
-- キーのprefixは、ioredisの`keyPrefix`で付けている。値は`${prefix ?? host}:`である（`config.ts`の`convertRedisOptions`）。BullMQのprefixは別で、`{prefix}:queue:{キュー名}`または`queue:{キュー名}`である（`queue/const.ts`）。
+- キーのprefixは、ioredisの`keyPrefix`で付けている。設定に`keyPrefix`があればその値を使い、なければ`${prefix ?? host}:`を使う（`config.ts`の`convertRedisOptions`）。BullMQのprefixは別で、`{prefix}:queue:{キュー名}`または`queue:{キュー名}`である（`queue/const.ts`）。
 - 接続のアドレスファミリーは既定で`0`（IPv4とIPv6の両方）である。
 - 直接呼ぶ箇所は108ある。多い順に、`pipeline` 24、イベントの`on` / `off` 23、`del` 8、`get` 7、`set` 7である。Streams（`xadd`、`xrange`、`xrevrange`、`xdel`、`xlen`）、リスト、セット、`scan`、`getdel`、`multi`も使う（RUST-01の棚卸し。`pipeline`と`multi`の中のコマンドは数えていない）。
 - アプリのコードが直接Luaを呼ぶ箇所（`eval`、`evalsha`、`defineCommand`）は、`packages/backend/src`にない。LuaはBullMQの内部で使われる。
@@ -79,8 +79,9 @@
    | リアクション | `redisForReactions` | フェーズ4 |
    | ジョブキュー | `redisForJobQueue` | 当面は作らない（[ADR-0006](0006-job-queue.md)） |
 
-3. prefixはadapterが付ける。ioredisの`keyPrefix`と同じキーになることを、Node.js版が書いたキーをRustが読み、その逆も行う試験で確かめる。prefixをクライアントの機能や呼び出し側に任せない。
+3. prefixはadapterが付ける。ioredisの`keyPrefix`と同じキーになることを、Node.js版が書いたキーをRustが読み、その逆も行う試験で確かめる。試験は、`keyPrefix`を明示した設定と、明示しない設定（`${prefix ?? host}:`になる）の両方で行う。prefixをクライアントの機能や呼び出し側に任せない。
 4. Pub/Subの購読は、再接続を検知したら「再購読し、関連するメモリ上のキャッシュを捨てる」処理をadapterに入れる（計画 §5.2）。クライアントが購読を自動で復元するかどうかに依存しない。
+   - 購読が切れている間は、無効化の通知が届かない。再接続のときにキャッシュを捨てるだけでは、切れている間、変更前の内容を使い続ける。このため、切断を検知した時点で、通知で無効化しているメモリ上のキャッシュを使わないようにし、再購読が済むまではDB（またはRedis）から読み直す。認証・認可の判断に使うキャッシュ（ユーザー、アクセストークン、ロール、停止状態など）には、必ずこれを適用する。対象のキャッシュの一覧と、切断を検知するまでの時間の上限は、下の検証で決める。
 5. 検証対象のサーバーは、単体のRedis 7と、単体のValkeyとする（要判断#1。2026-11-14決定）。Valkeyの版は、配布用のcomposeが使う9.0系と、RHEL 10系の標準リポジトリが配る版を対象にする（後者の版は未確認）。Rust版の結合試験は、RedisとValkeyの両方で回す。SentinelとRedis Clusterは「Rust版では未検証」とし、設定スキーマとドキュメントにそう書く。Valkey以外の互換サーバー（DragonflyDB、KeyDBなど）は検証対象にせず、「Rust版では未検証」と書く（要判断#4。2026-11-14決定）。
 6. 接続プールのクレート（`deadpool-redis`、`bb8-redis`）は、最初は入れない。`MultiplexedConnection`と`ConnectionManager`で足りるかを検証し、ブロックするコマンドやトランザクションで専用の接続が要ると分かったときに追加する。
 7. メモリ上のキャッシュ（現行の`MemoryKVCache`など、メモリだけのキャッシュ定義が19ある）に使うクレートは、このADRでは決めない。必要になった時点で決める。
@@ -91,6 +92,7 @@ RUST-05で確かめる。
 
 - [ ] **再接続**: Redisを止めて再開したとき、`ConnectionManager`が接続を戻すまでの時間と、その間のコマンドの挙動（待つ、失敗する）。ioredisの`maxRetriesPerRequest`と同じ意味の設定があるか。既定のタイムアウトの値と、現行との差。
 - [ ] **Pub/Subの再購読**: 再接続後に購読が戻るか。戻らないなら、adapterで再購読する。再接続を検知する方法を決める。
+- [ ] **購読が切れている間のキャッシュ**: 通知で無効化しているメモリ上のキャッシュを一覧にし、認証・認可に使うものを分ける。購読を切った状態で権限を変え（トークンの失効、ロールの変更、凍結）、切断を検知した後は変更前の権限で通らないことを確かめる。切断を検知するまでの時間の上限を測る。
 - [ ] **prefix**: ioredisの`keyPrefix`がキーに付くコマンドと、付かないもの（Pub/Subのチャネル名、`scan`のパターンと結果など）を一覧にし、Rust側で同じにする。現行の`redisForSub`は`config.host`をチャネル名に使っている。
 - [ ] **RESP2とRESP3**: どちらで接続するか。Redis 7とValkeyの両方で確認する。
 - [ ] **Valkeyでの動作**: この節の項目（再接続、Pub/Subの再購読、prefix、`pipeline`と`multi`）と、各フェーズの項目（値の形式、Streams、レート制限）を、Valkey 9.0でも確かめる。RedisとValkeyで結果が違う項目を一覧にする。`redis`クレートがValkeyをどこまで対象にしているかは未確認。

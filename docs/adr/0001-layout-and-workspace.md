@@ -47,7 +47,7 @@
    - 同じコードを別のバイナリ（運用CLIなど）が使い、依存を減らしたい
    - ビルド時間が計測で問題になり、分割で改善することを確かめた
    - 手続きマクロなど、技術的に別クレートが必要
-5. CIはpnpmのジョブと別のworkflowにする。`packages/backend-rs/**`と、共通の契約・fixtureの配置先が変わったときに動かす。内容は計画 §8.1のとおり、format、Clippy、unit / integration、契約比較、依存監査、releaseビルドとする。`Cargo.lock`と違う依存でビルドしないよう、`--locked`を付ける。このworkflowは、`packages/backend-rs/`を作る最初のPRから必須チェックにする（要判断#3。2026-11-14決定）。
+5. CIはpnpmのジョブと別のworkflowにする。workflowそのものは、すべてのPRで起動する。workflowをパスの条件（`on.pull_request.paths`）で絞ると、対象外のPRでは必須チェックが報告されず、PRをmergeできなくなるためである。workflowの中で変更されたパスを調べ、`packages/backend-rs/**`と、共通の契約・fixtureの配置先が変わっていないPRでは、Rustの重い処理を省いて、必須チェックを成功で終える。内容は計画 §8.1のとおり、format、Clippy、unit / integration、契約比較、依存監査、releaseビルドとする。`Cargo.lock`と違う依存でビルドしないよう、`--locked`を付ける。このworkflowは、`packages/backend-rs/`を作る最初のPRから必須チェックにする（要判断#3。2026-11-14決定）。
    - Dockerを使わないLinuxでのビルドも保証する（[ADR-0007](0007-toolchain-and-tls.md)の要判断#1。2026-11-14決定）ので、Dockerイメージのビルドとは別に、インストール手順のあるディストリビューションでreleaseビルドと起動の確認を行うジョブを置く。対象は、現行のドキュメント（`docs/src/content/docs/install/systemd-ubuntu.md`、`systemd-rhel.md`）が想定するUbuntu 24.04・Debian 12と、AlmaLinux 10・Rocky Linux 10・RHEL 10の系列とする。RHEL系はコンテナイメージの中でビルドする。どのイメージを代表にするかは[ADR-0007](0007-toolchain-and-tls.md)の検証で決める。このジョブは`amd64`だけで回す（[ADR-0007](0007-toolchain-and-tls.md)の要判断#6）。Debian 12は、Dockerのビルド（bookwormが土台）で兼ねられるならUbuntu 24.04で代表させる（同#8）。
    - このジョブはPRごとに回して始める。所要時間が10分を超えるようなら、`develop`へのmerge時と定期実行へ移す（要判断#6。2026-11-14決定）。
 6. ルートの`package.json`には、開発者が日常的に使う呼び出しだけを足す。CIはCargoを直接呼ぶ。
