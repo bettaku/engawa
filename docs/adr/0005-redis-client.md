@@ -2,11 +2,14 @@
 
 - 状態: 提案
 - 作成日: 2026-11-13
+- 更新: 2026-11-14（要判断の決定を記入）
 - 関連: [移行計画](../RUST_BACKEND_MIGRATION_PLAN.md) §3.2・§5.2、[ADR-0006](0006-job-queue.md)、[ADR-0007](0007-toolchain-and-tls.md)
 
 ## 背景
 
-現行は`ioredis` 5.8.1で、`GlobalModule`が用途別に6つの接続を作る。CIはRedis 7を使う。
+現行は`ioredis` 5.8.1で、`GlobalModule`が用途別に6つの接続を作る。
+
+サーバーは、場所によってRedisとValkeyが混ざっている。CI（`test-backend.yml`）とテスト用のcompose（`packages/backend/test/compose.yml`）は`redis:7`を使う。配布用のcomposeの例（`compose_example.yml`）と開発用のcompose（`compose.local-db.yml`）は`valkey/valkey:9.0-alpine`を使う。RHEL系のインストール手順は、RHEL 10系の標準リポジトリにRedisがないため、Valkeyを入れる手順になっている（`docs/src/content/docs/install/systemd-rhel.md`）。つまり、利用者の環境ではValkeyのほうが既定に近く、現行のNode.js版の自動テストはValkeyを通っていない。
 
 | 接続 | 設定 | 用途・特徴 |
 | --- | --- | --- |
@@ -78,8 +81,9 @@
 
 3. prefixはadapterが付ける。ioredisの`keyPrefix`と同じキーになることを、Node.js版が書いたキーをRustが読み、その逆も行う試験で確かめる。prefixをクライアントの機能や呼び出し側に任せない。
 4. Pub/Subの購読は、再接続を検知したら「再購読し、関連するメモリ上のキャッシュを捨てる」処理をadapterに入れる（計画 §5.2）。クライアントが購読を自動で復元するかどうかに依存しない。
-5. 接続プールのクレート（`deadpool-redis`、`bb8-redis`）は、最初は入れない。`MultiplexedConnection`と`ConnectionManager`で足りるかを検証し、ブロックするコマンドやトランザクションで専用の接続が要ると分かったときに追加する。
-6. メモリ上のキャッシュ（現行の`MemoryKVCache`など、メモリだけのキャッシュ定義が19ある）に使うクレートは、このADRでは決めない。必要になった時点で決める。
+5. 検証対象のサーバーは、単体のRedis 7と、単体のValkeyとする（要判断#1。2026-11-14決定）。Valkeyの版は、配布用のcomposeが使う9.0系と、RHEL 10系の標準リポジトリが配る版を対象にする（後者の版は未確認）。Rust版の結合試験は、RedisとValkeyの両方で回す。SentinelとRedis Clusterは「Rust版では未検証」とし、設定スキーマとドキュメントにそう書く。Valkey以外の互換サーバー（DragonflyDBなど）の扱いは、下の要判断#4とする。
+6. 接続プールのクレート（`deadpool-redis`、`bb8-redis`）は、最初は入れない。`MultiplexedConnection`と`ConnectionManager`で足りるかを検証し、ブロックするコマンドやトランザクションで専用の接続が要ると分かったときに追加する。
+7. メモリ上のキャッシュ（現行の`MemoryKVCache`など、メモリだけのキャッシュ定義が19ある）に使うクレートは、このADRでは決めない。必要になった時点で決める。
 
 ## 採用前に検証すること
 
@@ -88,7 +92,9 @@ RUST-05で確かめる。
 - [ ] **再接続**: Redisを止めて再開したとき、`ConnectionManager`が接続を戻すまでの時間と、その間のコマンドの挙動（待つ、失敗する）。ioredisの`maxRetriesPerRequest`と同じ意味の設定があるか。既定のタイムアウトの値と、現行との差。
 - [ ] **Pub/Subの再購読**: 再接続後に購読が戻るか。戻らないなら、adapterで再購読する。再接続を検知する方法を決める。
 - [ ] **prefix**: ioredisの`keyPrefix`がキーに付くコマンドと、付かないもの（Pub/Subのチャネル名、`scan`のパターンと結果など）を一覧にし、Rust側で同じにする。現行の`redisForSub`は`config.host`をチャネル名に使っている。
-- [ ] **RESP2とRESP3**: どちらで接続するか。Redis 7と、サポートする互換サーバー（下の要判断#1）で確認する。
+- [ ] **RESP2とRESP3**: どちらで接続するか。Redis 7とValkeyの両方で確認する。
+- [ ] **Valkeyでの動作**: この節の項目（再接続、Pub/Subの再購読、prefix、`pipeline`と`multi`）と、各フェーズの項目（値の形式、Streams、レート制限）を、Valkey 9.0でも確かめる。RedisとValkeyで結果が違う項目を一覧にする。`redis`クレートがValkeyをどこまで対象にしているかは未確認。
+- [ ] **SentinelとClusterが設定された場合の扱い**: 未検証の構成の設定を、起動時に検出して警告するか、起動を拒否するか（計画 §6の「未対応の設定を黙って無視しない」）。
 - [ ] **TLSとアドレスファミリー**: 現行の設定（ioredisの`tls`、`family`）で動いている構成に、同じ設定で接続できるか。TLSの実装は[ADR-0007](0007-toolchain-and-tls.md)に従う。
 - [ ] **`pipeline`と`multi`**: 現行の24か所の`pipeline`が、原子性を前提にしているか（`multi`を使うべきところで`pipeline`を使っていないか）を確認し、Rust側で同じ保証にする。
 - [ ] **接続数**: Node.js版との合計で、Redisの接続数の上限に収まるか（計画 §6）。
@@ -103,15 +109,20 @@ RUST-05で確かめる。
 
 - Rust側に、Node.js版と同じキーと値の形式を知っているコードが増える。形式を変えるときは、両方を同じPRで直す。adapterに閉じ込めることで、直す場所を限定する。
 - `bullmq-official`は`redis`クレートの版を`=1.8.1`と完全一致で指定している（[ADR-0006](0006-job-queue.md)）。将来これを採る場合、Redisクライアントの版を自由に上げられなくなる。adapterの外に`redis`クレートの型を出さないことで、版の制約の影響を小さくする。
+- Rust版の結合試験が、RedisとValkeyの2通りになる。CIの時間が増える。現行のNode.js版のCIはRedis 7だけで回っているので、Valkeyで見つかった差がRust版に固有か、Node.js版にもあるかを切り分ける手順が要る。
 - `redis`クレートは2.0系のプレリリースが出ている。1.x系から2.x系への移行で破壊的変更があると見込み、adapterの層で吸収する。
 
 ## 要判断
 
-| # | 判断すること | 選択肢 | 推奨 |
-| --- | --- | --- | --- |
-| 1 | サポートするRedisの構成 | (a) 単体のRedis 7だけ (b) Sentinel、Clusterも含める (c) Valkey、DragonflyDBなどの互換サーバーも含める | 本番と、利用者が実際に使っている構成を確認してから決める。現行のコードはClusterを使っていない。確認できるまでは(a)を検証対象とし、ほかは「Rust版では未検証」と明記する |
-| 2 | 用途別の接続を、Rust側でも設定どおりに分けるか | (a) 現行と同じ5つの設定を読む (b) 最初は`redis`だけ読み、ほかが設定されていたら起動を拒否する | (a)。設定の意味を変えない（計画 §6）。ただしフェーズ1〜2で使わない接続は作らない |
-| 3 | `fred`を再評価する条件 | (a) 再評価しない (b) 検証で`redis`クレートに不足が見つかり、かつ`fred`の更新が再開した場合に再評価する | (b) |
+| # | 判断すること | 選択肢 | 推奨 | 決定 | 決定日 |
+| --- | --- | --- | --- | --- | --- |
+| 1 | サポートするRedisの構成 | (a) 単体のRedis 7だけ (b) Sentinel、Clusterも含める (c) Valkey、DragonflyDBなどの互換サーバーも含める | 本番と、利用者が実際に使っている構成を確認してから決める。現行のコードはClusterを使っていない。確認できるまでは(a)を検証対象とし、ほかは「Rust版では未検証」と明記する | **決定（推奨と違う）**: 単体のRedis 7に加えて、Valkeyなどの互換サーバーを検証対象にする。SentinelとClusterは選ばれておらず、「Rust版では未検証」のままとする | 2026-11-14 |
+| 2 | 用途別の接続を、Rust側でも設定どおりに分けるか | (a) 現行と同じ5つの設定を読む (b) 最初は`redis`だけ読み、ほかが設定されていたら起動を拒否する | (a)。設定の意味を変えない（計画 §6）。ただしフェーズ1〜2で使わない接続は作らない | **決定**: (a)。現行と同じ5つの設定を読む | 2026-11-14 |
+| 3 | `fred`を再評価する条件 | (a) 再評価しない (b) 検証で`redis`クレートに不足が見つかり、かつ`fred`の更新が再開した場合に再評価する | (b) | **決定**: (b) | 2026-11-14 |
+| 4 | Valkey以外の互換サーバー（DragonflyDB、KeyDBなど）を検証対象にするか（2026-11-14の決定で新しく出た項目） | (a) Valkeyだけ (b) 利用実績のあるものを足す | (a)。リポジトリのcomposeとインストール手順に出てくる互換サーバーはValkeyだけである。ほかは「Rust版では未検証」と書く | 未決 | — |
+| 5 | Node.js版のCIにもValkeyを足すか（同上） | (a) 足す (b) Rust版の結合試験だけで回す | (a)。配布用のcomposeの既定がValkeyなのに、現行の自動テストが通っていない。Rust移行と別のPRで行う | 未決 | — |
+
+要判断#1の選択肢(c)は、「(a)に互換サーバーを足す」という意味で書いたもので、(b)のSentinel・Clusterを含まない。決定はこの読み方で反映した。
 
 ## 出典
 
@@ -125,4 +136,5 @@ RUST-05で確かめる。
 - `fred`のリポジトリの状態: <https://api.github.com/repos/aembke/fred.rs>（`archived: false`、`pushed_at: 2025-02-27`）
 - Redis Pub/Subの配送の保証（計画が参照する資料）: <https://redis.io/docs/latest/develop/pubsub/>
 - 現行: `packages/backend/src/GlobalModule.ts`、`packages/backend/src/config.ts`、`packages/backend/src/queue/const.ts`（コミット`5e8cc3b2cd`）、棚卸しの`redis-commands.csv`
-- 未確認: `redis`クレートの再接続後の購読の復元、ioredisの`keyPrefix`が付かないコマンドの一覧、本番のRedisの構成、互換サーバーでの動作
+- サーバーの指定: `compose_example.yml`、`compose.local-db.yml`、`packages/backend/test/compose.yml`、`.github/workflows/test-backend.yml`、`docs/src/content/docs/install/systemd-rhel.md`（コミット`5e8cc3b2cd`。2026-11-14確認）
+- 未確認: RHEL 10系が配るValkeyの版、`redis`クレートのValkeyへの対応の範囲、`redis`クレートの再接続後の購読の復元、ioredisの`keyPrefix`が付かないコマンドの一覧、本番のRedisの構成、互換サーバーでの動作
