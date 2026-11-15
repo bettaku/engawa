@@ -50,7 +50,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		super(meta, paramDef, async (ps, me) => {
 			const token = secureRndstr(32);
 			await this.cacheService.flashAccessTokensCache.set(token, {
-				user: me,
+				userId: me.id,
 				permissions: ps.permissions,
 			});
 			return {

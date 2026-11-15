@@ -12,7 +12,7 @@ import { DI } from '@/di-symbols.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { bindThis } from '@/decorators.js';
 import type { GlobalEvents } from '@/core/GlobalEventService.js';
-import type { FlashToken } from '@/misc/flash-token.js';
+import type { StoredFlashToken } from '@/misc/flash-token.js';
 import type { OnApplicationShutdown } from '@nestjs/common';
 
 @Injectable()
@@ -22,7 +22,7 @@ export class CacheService implements OnApplicationShutdown {
 	public localUserByIdCache: MemoryKVCache<MiLocalUser>;
 	public uriPersonCache: MemoryKVCache<MiUser | null>;
 	public userProfileCache: RedisKVCache<MiUserProfile>;
-	public flashAccessTokensCache: RedisKVCache<FlashToken | null>;
+	public flashAccessTokensCache: RedisKVCache<StoredFlashToken | null>;
 	public userMutingsCache: RedisKVCache<Set<string>>;
 	public userBlockingCache: RedisKVCache<Set<string>>;
 	public userBlockedCache: RedisKVCache<Set<string>>; // NOTE: 「被」Blockキャッシュ
@@ -117,7 +117,7 @@ export class CacheService implements OnApplicationShutdown {
 			fromRedisConverter: (value) => JSON.parse(value),
 		});
 
-		this.flashAccessTokensCache = new RedisKVCache<FlashToken | null>(this.redisClient, 'flashAccessTokens', {
+		this.flashAccessTokensCache = new RedisKVCache<StoredFlashToken | null>(this.redisClient, 'flashAccessTokens', {
 			lifetime: 1000 * 60 * 30, // 30m
 			memoryCacheLifetime: 1000 * 60, // 1m
 			fetcher: async (key) => null,
