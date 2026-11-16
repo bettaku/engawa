@@ -269,11 +269,11 @@ export const role = async (user: UserToken, role: Partial<misskey.entities.Role>
 		name: 'New Role',
 		target: 'manual',
 		policies: {
-			...Object.entries(DEFAULT_POLICIES).map(([k, v]) => [k, {
+			...Object.fromEntries(Object.entries(DEFAULT_POLICIES).map(([k, v]) => [k, {
 				priority: 0,
 				useDefault: true,
 				value: v,
-			}]),
+			}])),
 			...policies,
 		},
 		...role,

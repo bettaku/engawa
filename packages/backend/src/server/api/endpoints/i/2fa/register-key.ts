@@ -44,6 +44,7 @@ export const meta = {
 		properties: {
 			rp: {
 				type: 'object',
+				optional: false,
 				properties: {
 					id: {
 						type: 'string',
@@ -53,55 +54,71 @@ export const meta = {
 			},
 			user: {
 				type: 'object',
+				optional: false,
 				properties: {
 					id: {
 						type: 'string',
+						optional: false,
 					},
 					name: {
 						type: 'string',
+						optional: false,
 					},
 					displayName: {
 						type: 'string',
+						optional: false,
 					},
 				},
 			},
 			challenge: {
 				type: 'string',
+				optional: false,
 			},
 			pubKeyCredParams: {
 				type: 'array',
+				optional: false,
 				items: {
 					type: 'object',
+					optional: false,
 					properties: {
 						type: {
 							type: 'string',
+							optional: false,
 						},
 						alg: {
 							type: 'number',
+							optional: false,
 						},
 					},
 				},
 			},
 			timeout: {
 				type: 'number',
+				optional: true,
 				nullable: true,
 			},
 			excludeCredentials: {
 				type: 'array',
+				optional: true,
 				nullable: true,
 				items: {
 					type: 'object',
+					optional: false,
 					properties: {
 						id: {
 							type: 'string',
+							optional: false,
 						},
 						type: {
 							type: 'string',
+							optional: false,
 						},
 						transports: {
 							type: 'array',
+							optional: true,
 							items: {
 								type: 'string',
+								optional: false,
 								enum: [
 									'ble',
 									'cable',
@@ -118,10 +135,12 @@ export const meta = {
 			},
 			authenticatorSelection: {
 				type: 'object',
+				optional: true,
 				nullable: true,
 				properties: {
 					authenticatorAttachment: {
 						type: 'string',
+						optional: true,
 						enum: [
 							'cross-platform',
 							'platform',
@@ -129,9 +148,11 @@ export const meta = {
 					},
 					requireResidentKey: {
 						type: 'boolean',
+						optional: true,
 					},
 					userVerification: {
 						type: 'string',
+						optional: true,
 						enum: [
 							'discouraged',
 							'preferred',
@@ -142,6 +163,7 @@ export const meta = {
 			},
 			attestation: {
 				type: 'string',
+				optional: true,
 				nullable: true,
 				enum: [
 					'direct',
@@ -153,18 +175,22 @@ export const meta = {
 			},
 			extensions: {
 				type: 'object',
+				optional: true,
 				nullable: true,
 				properties: {
 					appid: {
 						type: 'string',
+						optional: true,
 						nullable: true,
 					},
 					credProps: {
 						type: 'boolean',
+						optional: true,
 						nullable: true,
 					},
 					hmacCreateSecret: {
 						type: 'boolean',
+						optional: true,
 						nullable: true,
 					},
 				},

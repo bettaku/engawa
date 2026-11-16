@@ -631,6 +631,8 @@ export class UserEntityService implements OnModuleInit {
 				achievements: profile!.achievements,
 				loggedInDays: profile!.loggedInDates.length,
 				policies: this.roleService.getUserPolicies(user.id),
+				autoDeleteNotesAfterDays: user.autoDeleteNotesAfterDays,
+				autoDeleteKeepFavorites: user.autoDeleteKeepFavorites,
 			} : {}),
 
 			...(opts.includeSecrets ? {
