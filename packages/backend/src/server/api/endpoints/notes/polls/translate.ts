@@ -15,6 +15,8 @@ import { RoleService } from '@/core/RoleService.js';
 import { MiMeta } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
 import type { PollsRepository } from '@/models/_.js';
+import { GetterService } from '@/server/api/GetterService.js';
+import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
 import { ApiError } from '../../../error.js';
 
 export const meta = {
@@ -40,6 +42,16 @@ export const meta = {
 	},
 
 	errors: {
+		noSuchNote: {
+			message: 'No such note.',
+			code: 'NO_SUCH_NOTE',
+			id: '0b6a7d2e-5f3c-4c1b-9d0a-7e1f4a8b2c93',
+		},
+		cannotTranslateInvisibleNote: {
+			message: 'Cannot translate invisible note.',
+			code: 'CANNOT_TRANSLATE_INVISIBLE_NOTE',
+			id: '3d9e1b7a-8c2f-4e5d-a6b0-1f2c3d4e5f60',
+		},
 		unavailable: {
 			message: 'Translate of polls unavailable.',
 			code: 'UNAVAILABLE',
@@ -73,6 +85,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 		private httpRequestService: HttpRequestService,
 		private roleService: RoleService,
+		private getterService: GetterService,
+		private noteEntityService: NoteEntityService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const policies = await this.roleService.getUserPolicies(me.id);
@@ -80,7 +94,21 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				throw new ApiError(meta.errors.unavailable);
 			}
 
-			const poll = await this.pollsRepository.findOneByOrFail({ noteId: ps.noteId });
+			// 翻訳の前に、アンケートが付いているノートを閲覧できるかを確認する
+			const note = await this.getterService.getNote(ps.noteId).catch(err => {
+				if (err.id === '9725d0ce-ba28-4dde-95a7-2cbb2c15de24') throw new ApiError(meta.errors.noSuchNote);
+				throw err;
+			});
+
+			if (!(await this.noteEntityService.isCurrentlyVisibleForMe(note, me.id))) {
+				throw new ApiError(meta.errors.cannotTranslateInvisibleNote);
+			}
+
+			const poll = await this.pollsRepository.findOneBy({ noteId: note.id });
+
+			if (poll == null) {
+				throw new ApiError(meta.errors.noSuchNote);
+			}
 
 			if (poll.choices == null) {
 				return;
