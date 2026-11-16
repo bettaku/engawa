@@ -496,7 +496,13 @@ export class ApiCallService implements OnApplicationShutdown {
 			this.logger.warn(`Response of ${ep.name} violates its contract (${violation.kind}): ${violation.errors.map(e => `${e.instancePath || '/'} ${e.message}`).join('; ')}`);
 
 			const reportPath = process.env.API_RES_VALIDATION_REPORT;
-			if (reportPath) appendViolationReport(reportPath, violation);
+			if (reportPath) {
+				appendViolationReport(reportPath, violation).catch((err: unknown) => {
+					// 記録できなかった違反は、次に起きたときに記録し直す
+					this.responseValidator?.forget(violation);
+					this.logger.warn(`Failed to write response violation report: ${err instanceof Error ? err.message : String(err)}`);
+				});
+			}
 		} catch (err) {
 			// 検証の失敗でAPIの応答を止めない
 			this.logger.warn(`Failed to validate response of ${ep.name}: ${err instanceof Error ? err.message : String(err)}`);

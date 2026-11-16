@@ -3,9 +3,12 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
+import * as path from 'node:path';
 import { describe, expect, test } from 'vitest';
 import type { Schema } from '@/misc/json-schema.js';
-import { ResponseValidator } from '@/server/api/response-validation.js';
+import { ResponseValidator, appendViolationReport } from '@/server/api/response-validation.js';
 import endpoints from '@/server/api/endpoints.js';
 
 function ep(res?: Schema) {
@@ -93,6 +96,39 @@ describe('ResponseValidator', () => {
 		expect(second).not.toBeNull();
 		if (second == null) return;
 		expect(validator.dedupe(second)).toBeNull();
+	});
+
+	test('forgetした違反は、dedupeでもう一度報告される', () => {
+		const validator = new ResponseValidator();
+		const violation = validator.validate(ep(), 204);
+		expect(violation).not.toBeNull();
+		if (violation == null) return;
+
+		expect(validator.dedupe(violation)).not.toBeNull();
+		expect(validator.dedupe(violation)).toBeNull();
+		validator.forget(violation);
+		expect(validator.dedupe(violation)).not.toBeNull();
+	});
+
+	test('appendViolationReportは呼び出した順にJSON Linesで追記する', async () => {
+		const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'res-validation-'));
+		const file = path.join(dir, 'report.jsonl');
+		const violations = ['a', 'b', 'c'].map(endpoint => ({ endpoint, kind: 'unexpected-body' as const, errors: [] }));
+
+		await Promise.all(violations.map(v => appendViolationReport(file, v)));
+
+		const lines = (await fs.readFile(file, 'utf-8')).trimEnd().split('\n').map(l => JSON.parse(l));
+		expect(lines).toStrictEqual(violations);
+		await fs.rm(dir, { recursive: true });
+	});
+
+	test('appendViolationReportは書き込みに失敗しても、後続の書き込みを続ける', async () => {
+		const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'res-validation-'));
+		const violation = { endpoint: 'a', kind: 'unexpected-body' as const, errors: [] };
+
+		await expect(appendViolationReport(path.join(dir, 'missing', 'report.jsonl'), violation)).rejects.toThrow();
+		await expect(appendViolationReport(path.join(dir, 'report.jsonl'), violation)).resolves.toBeUndefined();
+		await fs.rm(dir, { recursive: true });
 	});
 
 	test('すべてのエンドポイントのresをコンパイルできる', () => {

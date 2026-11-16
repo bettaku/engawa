@@ -132,12 +132,22 @@ export class ResponseValidator {
 	 */
 	public dedupe(violation: ResponseViolation): ResponseViolation | null {
 		const errors = violation.errors.filter(e => {
-			const key = [violation.endpoint, violation.kind, e.instancePath.replace(/\/\d+(?=\/|$)/g, '/*'), e.schemaPath, e.message].join('\n');
+			const key = dedupeKey(violation, e);
 			if (this.reported.has(key)) return false;
 			this.reported.add(key);
 			return true;
 		});
 		return errors.length > 0 ? { ...violation, errors } : null;
+	}
+
+	/**
+	 * `dedupe`が報告済みにした違反を、未報告に戻す。
+	 * レポートへの記録に失敗したとき、次に同じ違反が起きたら記録し直せるようにする。
+	 */
+	public forget(violation: ResponseViolation): void {
+		for (const e of violation.errors) {
+			this.reported.delete(dedupeKey(violation, e));
+		}
 	}
 
 	private getValidator(name: string, res: Schema): ValidateFunction | null {
@@ -152,11 +162,23 @@ export class ResponseValidator {
 	}
 }
 
+let reportQueue: Promise<void> = Promise.resolve();
+
 /**
  * 違反を1行1件のJSON（JSON Lines）としてファイルへ追記する。
+ *
+ * リクエストの処理を止めないように非同期で書き込む。書き込みは呼び出した順に行う。
  */
-export function appendViolationReport(path: string, violation: ResponseViolation): void {
-	fs.appendFileSync(path, JSON.stringify(violation) + '\n');
+export function appendViolationReport(path: string, violation: ResponseViolation): Promise<void> {
+	const line = JSON.stringify(violation) + '\n';
+	const written = reportQueue.then(() => fs.promises.appendFile(path, line));
+	// 1件の失敗で、後続の書き込みを止めない
+	reportQueue = written.catch(() => {});
+	return written;
+}
+
+function dedupeKey(violation: ResponseViolation, error: ResponseViolation['errors'][number]): string {
+	return [violation.endpoint, violation.kind, error.instancePath.replace(/\/\d+(?=\/|$)/g, '/*'), error.schemaPath, error.message].join('\n');
 }
 
 function qualifyRefs(schema: unknown): unknown {
