@@ -381,6 +381,13 @@ describe('User', () => {
 				);
 				strictEqual(followers.length, 1); // followed by Bob
 
+				// NOTE: リモートへのフォローは Accept が届くまで Bob 側で確定しないので、それも待つ
+				const bobFollowing = await waitFor(
+					async () => await bob.client.request('users/following', { userId: bob.id }),
+					following => following.length === 1,
+				);
+				strictEqual(bobFollowing.length, 1); // Bob follows Alice
+
 				await alice.client.request('i/delete-account', { password: alice.password });
 
 				const following = await waitFor(
@@ -423,6 +430,13 @@ describe('User', () => {
 					followers => followers.length === 1,
 				);
 				strictEqual(followers.length, 1); // followed by Bob
+
+				// NOTE: リモートへのフォローは Accept が届くまで Bob 側で確定しないので、それも待つ
+				const bobFollowing = await waitFor(
+					async () => await bob.client.request('users/following', { userId: bob.id }),
+					following => following.length === 1,
+				);
+				strictEqual(bobFollowing.length, 1); // Bob follows Alice
 
 				await bAdmin.client.request('admin/delete-account', { userId: aliceInB.id });
 				await sleep();
@@ -485,10 +499,19 @@ describe('User', () => {
 				);
 				strictEqual(followers.length, 1); // followed by Bob
 
-				await aAdmin.client.request('admin/suspend-user', { userId: alice.id });
-				await sleep();
+				// NOTE: リモートへのフォローは Accept が届くまで Bob 側で確定しないので、それも待つ
+				const bobFollowing = await waitFor(
+					async () => await bob.client.request('users/following', { userId: bob.id }),
+					following => following.length === 1,
+				);
+				strictEqual(bobFollowing.length, 1); // Bob follows Alice
 
-				const following = await bob.client.request('users/following', { userId: bob.id });
+				await aAdmin.client.request('admin/suspend-user', { userId: alice.id });
+
+				const following = await waitFor(
+					async () => await bob.client.request('users/following', { userId: bob.id }),
+					following => following.length === 0,
+				);
 				strictEqual(following.length, 0); // no following relation
 
 				await rejects(
