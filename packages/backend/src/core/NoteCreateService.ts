@@ -788,13 +788,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		}
 
 		if (data.deleteAt) {
-			const delay = data.deleteAt.getTime() - Date.now();
-			this.queueService.scheduledNoteDeleteQueue.add(note.id, {
-				noteId: note.id,
-			}, {
-				delay,
-				removeOnComplete: true,
-			});
+			await this.queueService.scheduleNoteDelete(note.id, data.deleteAt);
 		}
 
 		if (!silent) {
@@ -887,16 +881,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 				})();
 			}
 			//#endregion
-		}
-
-		if (data.deleteAt) {
-			const delay = data.deleteAt.getTime() - Date.now();
-			this.queueService.scheduledNoteDeleteQueue.add(note.id, {
-				noteId: note.id,
-			}, {
-				delay,
-				removeOnComplete: true,
-			});
 		}
 
 		if (user.isIndexable) this.index(note);

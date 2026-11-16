@@ -174,9 +174,13 @@ export class NoteUpdateService implements OnApplicationShutdown {
 			// Start transaction for any poll or event changes
 			const needsTransaction = note.hasPoll || values.hasPoll || note.hasEvent || values.hasEvent;
 
+			// 更新の直前に削除された場合（予約削除など）は、ノートなしとして扱う
+			let noteExists: boolean;
+
 			if (needsTransaction) {
-				await this.db.transaction(async transactionalEntityManager => {
-					await transactionalEntityManager.update(MiNote, { id: note.id }, values);
+				noteExists = await this.db.transaction(async transactionalEntityManager => {
+					const result = await transactionalEntityManager.update(MiNote, { id: note.id }, values);
+					if (result.affected === 0) return false;
 
 					if (note.hasPoll && values.hasPoll) {
 						const old_poll = await transactionalEntityManager.findOneBy(MiPoll, { noteId: note.id });
@@ -247,10 +251,15 @@ export class NoteUpdateService implements OnApplicationShutdown {
 					} else if (note.hasEvent && !values.hasEvent) {
 						await transactionalEntityManager.delete(MiEvent, { noteId: note.id });
 					}
+
+					return true;
 				});
 			} else {
-				await this.notesRepository.update({ id: note.id }, values);
+				const result = await this.notesRepository.update({ id: note.id }, values);
+				noteExists = result.affected !== 0;
 			}
+
+			if (!noteExists) return null;
 
 			await this.noteHistoryService.recordHistory(values, note, originalPoll, originalEvent, { updatedAt: data.updatedAt });
 
@@ -271,19 +280,15 @@ export class NoteUpdateService implements OnApplicationShutdown {
 		isIndexable: MiUser['isIndexable'];
 		isSensitive: MiUser['isSensitive'];
 	}, silent: boolean) {
+		// 予約削除のジョブをDBのdeleteAtに合わせる
+		if (note.deleteAt) {
+			await this.queueService.scheduleNoteDelete(note.id, note.deleteAt);
+		} else {
+			await this.queueService.cancelScheduledNoteDelete(note.id);
+		}
+
 		if (!silent) {
 			if (this.userEntityService.isLocalUser(user)) this.activeUsersChart.write(user);
-
-			if (note.deleteAt) {
-				const delay = note.deleteAt.getTime() - Date.now();
-				await this.queueService.scheduledNoteDeleteQueue.remove(note.id);
-				await this.queueService.scheduledNoteDeleteQueue.add(note.id, {
-					noteId: note.id,
-				}, {
-					delay,
-					removeOnComplete: true,
-				});
-			}
 
 			this.globalEventService.publishNoteStream(note, 'updated', { cw: note.cw, text: note.text, disableRightClick: note.disableRightClick, deleteAt: note.deleteAt });
 

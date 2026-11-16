@@ -249,6 +249,7 @@ export const queueTypes = [
 	'objectStorage',
 	'userWebhookDeliver',
 	'systemWebhookDeliver',
+	'scheduledNoteDelete',
 ] as const;
 
 type AvatarDecoration = {
