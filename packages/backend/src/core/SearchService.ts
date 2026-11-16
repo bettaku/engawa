@@ -4,7 +4,7 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Brackets, In } from 'typeorm';
+import { Brackets, In, type SelectQueryBuilder } from 'typeorm';
 import { Client as ElasticSearch } from '@elastic/elasticsearch';
 import { DI } from '@/di-symbols.js';
 import { type Config, FulltextSearchProvider } from '@/config.js';
@@ -330,6 +330,25 @@ export class SearchService {
 		}
 	}
 
+	/**
+	 * ノートの searchableBy（検索を許可する範囲）を満たすものだけに絞り込む
+	 */
+	@bindThis
+	private generateSearchableByQuery(query: SelectQueryBuilder<MiNote>, me: MiUser | null): void {
+		query.andWhere(new Brackets(qb => {
+			qb.where('note."searchableBy" = \'public\'');
+			if (me != null) {
+				qb.orWhere(new Brackets(qb2 => {
+					qb2.where('note."searchableBy" = \'followers\' AND (note."userId" IN (SELECT "followeeId" FROM following WHERE following."followerId" = :searchMeId) OR note."userId" = :searchMeId)')
+						.orWhere('note."searchableBy" = \'limited\' AND note."userId" = :searchMeId')
+						.orWhere('note."searchableBy" = \'reacted\' AND (note."userId" IN (SELECT "userId" FROM note_reaction) OR note."userId" = :searchMeId)');
+				}));
+			}
+		}));
+
+		if (me != null) query.setParameter('searchMeId', me.id);
+	}
+
 	@bindThis
 	private async searchNoteByLike(q: string, me: MiUser | null, opts: SearchOpts, pagination: SearchPagination): Promise<MiNote[]> {
 		const query = this.queryService.makePaginationQuery(this.notesRepository.createQueryBuilder('note'), pagination.sinceId, pagination.untilId);
@@ -338,15 +357,9 @@ export class SearchService {
 			query.andWhere('note.userId = :userId', { userId: opts.userId });
 		}
 
+		this.generateSearchableByQuery(query, me);
+
 		query
-			.andWhere(new Brackets(qb => {
-				qb.andWhere('note."searchableBy" = :public', { public: 'public' })
-					.orWhere(new Brackets(qb2 => {
-						qb2.where('note."searchableBy" = :followers AND (note."userId" IN (SELECT "followeeId" FROM following WHERE following."followerId" = :meId) OR note."userId" = :meId)', { followers: 'followers', meId: me?.id })
-							.orWhere('note."searchableBy" = :limited AND note."userId" = :meId', { limited: 'limited', meId: me?.id })
-							.orWhere('note."searchableBy" = :reacted AND (note."userId" IN (SELECT "userId" FROM note_reaction) OR note."userId" = :meId)', { reacted: 'reacted', meId: me?.id });
-					}));
-			}))
 			.leftJoinAndSelect('note.reply', 'reply')
 			.leftJoinAndSelect('note.renote', 'renote')
 			.leftJoinAndSelect('reply.user', 'replyUser')
@@ -360,11 +373,19 @@ export class SearchService {
 			}
 		}
 
-		if (this.provider === 'sqlPgroonga') {
-			query.andWhere('note."text" &@~ :q', { q: q });
-		} else {
-			query.andWhere('LOWER(note."text") LIKE :q', { q: `%${ sqlLikeEscape(q.toLowerCase())}%` });
-		}
+		// 本文とCWの一致は必ず1つの括弧にまとめる。
+		// 括弧なしの OR があると、公開範囲や検索許可の条件が一部の分岐にしか掛からなくなる。
+		const likeQ = `%${sqlLikeEscape(q.toLowerCase())}%`;
+		query.andWhere(new Brackets(qb => {
+			if (this.provider === 'sqlPgroonga') {
+				qb.where('note."text" &@~ :pgroongaQ', { pgroongaQ: q });
+			} else {
+				qb.where('LOWER(note."text") LIKE :likeQ', { likeQ });
+			}
+			if (!opts.excludeNsfw) {
+				qb.orWhere('LOWER(note.cw) LIKE :likeQ', { likeQ });
+			}
+		}));
 
 		if (opts.excludeBot) {
 			query.innerJoin('note.user', 'user')
@@ -378,14 +399,6 @@ export class SearchService {
 		if (opts.excludeNsfw) {
 			query.andWhere('note.cw IS NULL')
 				.andWhere('NOT EXISTS (SELECT 1 FROM drive_file df WHERE df.id = ANY(note.fileIds) AND df.isSensitive = TRUE)');
-		} else {
-			query.orWhere('LOWER(note.cw) LIKE :q', { q: `%${sqlLikeEscape(q.toLowerCase())}%` });
-		}
-
-		if (this.provider === 'sqlPgroonga') {
-			query.andWhere('note."text" &@~ :q', { q: q });
-		} else {
-			query.andWhere('LOWER(note."text") LIKE :q', { q: `%${ sqlLikeEscape(q.toLowerCase())}%` });
 		}
 
 		this.queryService.generateVisibilityQuery(query, me);
