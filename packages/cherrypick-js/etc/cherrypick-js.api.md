@@ -1846,8 +1846,10 @@ declare namespace entities {
         I2faRegisterKeyRequest,
         I2faRegisterKeyResponse,
         I2faRemoveKeyRequest,
+        I2faRemoveKeyResponse,
         I2faUnregisterRequest,
         I2faUpdateKeyRequest,
+        I2faUpdateKeyResponse,
         IAppsRequest,
         IAppsResponse,
         IAuthorizedAppsRequest,
@@ -2500,10 +2502,16 @@ type I2faRegisterResponse = operations['i___2fa___register']['responses']['200']
 type I2faRemoveKeyRequest = operations['i___2fa___remove-key']['requestBody']['content']['application/json'];
 
 // @public (undocumented)
+type I2faRemoveKeyResponse = operations['i___2fa___remove-key']['responses']['200']['content']['application/json'];
+
+// @public (undocumented)
 type I2faUnregisterRequest = operations['i___2fa___unregister']['requestBody']['content']['application/json'];
 
 // @public (undocumented)
 type I2faUpdateKeyRequest = operations['i___2fa___update-key']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type I2faUpdateKeyResponse = operations['i___2fa___update-key']['responses']['200']['content']['application/json'];
 
 // @public (undocumented)
 type IAppsRequest = operations['i___apps']['requestBody']['content']['application/json'];

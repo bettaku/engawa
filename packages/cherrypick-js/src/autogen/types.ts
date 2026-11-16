@@ -4431,10 +4431,6 @@ export type components = {
             email?: string | null;
             emailVerified?: boolean | null;
             securityKeysList?: {
-                /**
-                 * Format: id
-                 * @example xxxxxxxxxx
-                 */
                 id: string;
                 name: string;
                 /** Format: date-time */
@@ -5417,7 +5413,7 @@ export type components = {
             canEditMembersByModerator: boolean;
             policies: {
                 [key: string]: {
-                    value?: number | boolean;
+                    value?: number | boolean | string | string[];
                     priority?: number;
                     useDefault?: boolean;
                 };
@@ -24552,25 +24548,25 @@ export interface operations {
                             type: string;
                             alg: number;
                         }[];
-                        timeout: number | null;
-                        excludeCredentials: {
+                        timeout?: number | null;
+                        excludeCredentials?: {
                             id: string;
                             type: string;
-                            transports: ('ble' | 'cable' | 'hybrid' | 'internal' | 'nfc' | 'smart-card' | 'usb')[];
+                            transports?: ('ble' | 'cable' | 'hybrid' | 'internal' | 'nfc' | 'smart-card' | 'usb')[];
                         }[] | null;
-                        authenticatorSelection: {
+                        authenticatorSelection?: {
                             /** @enum {string} */
-                            authenticatorAttachment: 'cross-platform' | 'platform';
-                            requireResidentKey: boolean;
+                            authenticatorAttachment?: 'cross-platform' | 'platform';
+                            requireResidentKey?: boolean;
                             /** @enum {string} */
-                            userVerification: 'discouraged' | 'preferred' | 'required';
+                            userVerification?: 'discouraged' | 'preferred' | 'required';
                         } | null;
                         /** @enum {string|null} */
-                        attestation: 'direct' | 'enterprise' | 'indirect' | 'none' | null;
-                        extensions: {
-                            appid: string | null;
-                            credProps: boolean | null;
-                            hmacCreateSecret: boolean | null;
+                        attestation?: 'direct' | 'enterprise' | 'indirect' | 'none' | null;
+                        extensions?: {
+                            appid?: string | null;
+                            credProps?: boolean | null;
+                            hmacCreateSecret?: boolean | null;
                         } | null;
                     };
                 };
@@ -24633,10 +24629,13 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK (without any results) */
-            204: {
+            /** @description OK (with results) */
+            200: {
                 headers: {
                     [name: string]: unknown;
+                };
+                content: {
+                    'application/json': Record<string, never>;
                 };
             };
             /** @description Client error */
@@ -24759,10 +24758,13 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK (without any results) */
-            204: {
+            /** @description OK (with results) */
+            200: {
                 headers: {
                     [name: string]: unknown;
+                };
+                content: {
+                    'application/json': Record<string, never>;
                 };
             };
             /** @description Client error */
