@@ -16,6 +16,8 @@ import type { MiSystemWebhook, SystemWebhookEventType } from '@/models/SystemWeb
 import type { Config } from '@/config.js';
 import { DI } from '@/di-symbols.js';
 import { bindThis } from '@/decorators.js';
+import { LoggerService } from '@/core/LoggerService.js';
+import type Logger from '@/logger.js';
 import type { Antenna } from '@/server/api/endpoints/i/import-antennas.js';
 import { ApRequestCreator } from '@/core/activitypub/ApRequestService.js';
 import { type SystemWebhookPayload } from '@/core/SystemWebhookService.js';
@@ -100,6 +102,8 @@ const REPEATABLE_SYSTEM_JOB_DEF = [{
 
 @Injectable()
 export class QueueService implements OnModuleInit {
+	private logger: Logger;
+
 	constructor(
 		@Inject(DI.config)
 		private config: Config,
@@ -115,7 +119,11 @@ export class QueueService implements OnModuleInit {
 		@Inject('queue:userWebhookDeliver') public userWebhookDeliverQueue: UserWebhookDeliverQueue,
 		@Inject('queue:systemWebhookDeliver') public systemWebhookDeliverQueue: SystemWebhookDeliverQueue,
 		@Inject('queue:scheduledNoteDelete') public scheduledNoteDeleteQueue: ScheduledNoteDeleteQueue,
-	) { }
+
+		private loggerService: LoggerService,
+	) {
+		this.logger = this.loggerService.getLogger('queue');
+	}
 
 	async onModuleInit() {
 		console.log('[QueueService] onModuleInit: Setting up', REPEATABLE_SYSTEM_JOB_DEF.length, 'repeatable jobs');
@@ -760,6 +768,26 @@ export class QueueService implements OnModuleInit {
 	 */
 	public static scheduledNoteDeleteJobId(noteId: MiNote['id']): string {
 		return `scheduledNoteDelete-${noteId}`;
+	}
+
+	/**
+	 * 予約削除ジョブを、DBのdeleteAtに合わせる。deleteAtがあれば登録し直し、なければ取り消す。
+	 *
+	 * 失敗しても例外を投げず、記録だけする。ノートの作成・更新の後処理（配信、配送、索引）を止めないためである。
+	 * ジョブがずれたままでも、削除するかどうかは処理の時点でDBのdeleteAtから決まり、
+	 * 登録できなかった予約は照合ジョブ（reconcileScheduledNoteDeletes）が拾う。
+	 */
+	@bindThis
+	public async syncScheduledNoteDelete(noteId: MiNote['id'], deleteAt: Date | null): Promise<void> {
+		try {
+			if (deleteAt != null) {
+				await this.scheduleNoteDelete(noteId, deleteAt);
+			} else {
+				await this.cancelScheduledNoteDelete(noteId);
+			}
+		} catch (err) {
+			this.logger.error(`Failed to sync scheduled note delete job: ${noteId}`, { error: err });
+		}
 	}
 
 	/**

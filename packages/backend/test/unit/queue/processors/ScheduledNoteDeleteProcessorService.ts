@@ -63,7 +63,7 @@ describe('ScheduledNoteDeleteProcessorService', () => {
 			})
 			.then(x => usersRepository.findOneByOrFail(x.identifiers[0]));
 
-		await userProfilesRepository.save({
+		await userProfilesRepository.insert({
 			userId: id,
 		});
 
@@ -339,6 +339,31 @@ describe('ScheduledNoteDeleteProcessorService', () => {
 			await queueService.scheduleNoteDelete(note.id, fromNow(-HOUR));
 
 			expect((await getJob(note))?.opts.delay).toBe(0);
+		});
+
+		test('syncScheduledNoteDeleteは、キューの操作が失敗しても例外を投げない', async () => {
+			const note = await createNote({}, alice);
+			const queue = queueService.scheduledNoteDeleteQueue;
+			const remove = vi.spyOn(queue, 'remove').mockRejectedValue(new Error('redis is down'));
+			const add = vi.spyOn(queue, 'add').mockRejectedValue(new Error('redis is down'));
+
+			// 登録の失敗
+			await expect(queueService.syncScheduledNoteDelete(note.id, fromNow(HOUR))).resolves.toBeUndefined();
+			// 取り消しの失敗
+			await expect(queueService.syncScheduledNoteDelete(note.id, null)).resolves.toBeUndefined();
+
+			expect(remove).toHaveBeenCalledTimes(2);
+			expect(add).not.toHaveBeenCalled();
+		});
+
+		test('syncScheduledNoteDeleteは、deleteAtに合わせて登録・取り消しをする', async () => {
+			const note = await createNote({}, alice);
+
+			await queueService.syncScheduledNoteDelete(note.id, fromNow(HOUR));
+			expect(await (await getJob(note))?.getState()).toBe('delayed');
+
+			await queueService.syncScheduledNoteDelete(note.id, null);
+			expect(await getJob(note)).toBeUndefined();
 		});
 
 		test('管理画面のキュー一覧に含まれる', async () => {

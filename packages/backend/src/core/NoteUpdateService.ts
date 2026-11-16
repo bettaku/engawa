@@ -281,11 +281,7 @@ export class NoteUpdateService implements OnApplicationShutdown {
 		isSensitive: MiUser['isSensitive'];
 	}, silent: boolean) {
 		// 予約削除のジョブをDBのdeleteAtに合わせる
-		if (note.deleteAt) {
-			await this.queueService.scheduleNoteDelete(note.id, note.deleteAt);
-		} else {
-			await this.queueService.cancelScheduledNoteDelete(note.id);
-		}
+		await this.queueService.syncScheduledNoteDelete(note.id, note.deleteAt);
 
 		if (!silent) {
 			if (this.userEntityService.isLocalUser(user)) this.activeUsersChart.write(user);

@@ -788,7 +788,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		}
 
 		if (data.deleteAt) {
-			await this.queueService.scheduleNoteDelete(note.id, data.deleteAt);
+			await this.queueService.syncScheduledNoteDelete(note.id, data.deleteAt);
 		}
 
 		if (!silent) {
