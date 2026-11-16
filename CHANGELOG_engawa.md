@@ -30,8 +30,8 @@
 - Fix: リモートユーザーへのフォロー・解除や申請取消を繰り返すと、Activity IDの重複により解除が反映されない問題を修正 (#327)
 - Fix: 設定ファイルの `cloudLogging` が読み込まれず、Google Cloud Logging へのログ送信が常に無効になっていた問題を修正 (#354)
 	- これまで `cloudLogging` を設定していたサーバーでは、この更新からログの送信が始まります。不要な場合は設定ファイルから `cloudLogging` を削除してください
-- Fix: `i` などで返る自分のユーザー情報に、ノートの自動削除設定（`autoDeleteNotesAfterDays`・`autoDeleteKeepFavorites`）が含まれていなかった問題を修正
-- Fix: API仕様（`api.json`）とSDKの型が、実際の応答と食い違っていた箇所を修正
+- Fix: `i` などで返る自分のユーザー情報に、ノートの自動削除設定（`autoDeleteNotesAfterDays`・`autoDeleteKeepFavorites`）が含まれていなかった問題を修正 (#363)
+- Fix: API仕様（`api.json`）とSDKの型が、実際の応答と食い違っていた箇所を修正 (#363)
 	- `i/2fa/register-key`: 省略されることがあるプロパティを省略可にしました
 	- `i/2fa/update-key`・`i/2fa/remove-key`: 応答（空のオブジェクト）を仕様に記載しました
 	- `User`・`UserDetailed`: `oneOf` を `anyOf` にしました
