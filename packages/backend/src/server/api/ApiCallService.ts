@@ -22,6 +22,7 @@ import type { Config } from '@/config.js';
 import type { FlashToken } from '@/misc/flash-token.js';
 import { redactSecrets, scrubSecrets } from '@/misc/redact-secrets.js';
 import { ApiError } from './error.js';
+import { ResponseValidator, appendViolationReport } from './response-validation.js';
 import { RateLimiterService } from './RateLimiterService.js';
 import { ApiLoggerService } from './ApiLoggerService.js';
 import { AuthenticateService, AuthenticationError } from './AuthenticateService.js';
@@ -40,6 +41,11 @@ export class ApiCallService implements OnApplicationShutdown {
 	private logger: Logger;
 	private userIpHistories: Map<MiUser['id'], Set<string>>;
 	private userIpHistoriesClearIntervalId: NodeJS.Timeout;
+
+	// 応答の検証はtest・development環境だけで行う。本番では応答ごとの検証コストをかけない
+	private responseValidator: ResponseValidator | null = process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development'
+		? new ResponseValidator()
+		: null;
 
 	constructor(
 		@Inject(DI.meta)
@@ -464,14 +470,48 @@ export class ApiCallService implements OnApplicationShutdown {
 		}
 
 		// API invoking
-		if (this.config.sentryForBackend) {
-			return await Sentry.startSpan({
-				name: 'API: ' + ep.name,
-			}, () => ep.exec(data, user, token, flashToken, file, request.ip, request.headers)
-				.catch((err: Error) => this.#onExecError(ep, data, err, user?.id)));
-		} else {
-			return await ep.exec(data, user, token, flashToken, file, request.ip, request.headers)
-				.catch((err: Error) => this.#onExecError(ep, data, err, user?.id));
+		const exec = () => ep.exec(data, user, token, flashToken, file, request.ip, request.headers)
+			.catch((err: Error) => this.#onExecError(ep, data, err, user?.id));
+
+		const res = this.config.sentryForBackend
+			? await Sentry.startSpan({ name: 'API: ' + ep.name }, exec)
+			: await exec();
+
+		if (this.responseValidator != null) this.#reportResponseViolation(ep, res);
+
+		return res;
+	}
+
+	/**
+	 * 応答が`res`スキーマと一致しない場合に記録する。応答そのものは変えない。
+	 */
+	#reportResponseViolation(ep: IEndpoint, res: unknown): void {
+		if (this.responseValidator == null) return;
+
+		try {
+			const found = this.responseValidator.validate(ep, res);
+			if (found == null) return;
+
+			// 警告ログとレポートは、それぞれ別に重複を除く。レポートの書き込みに失敗しても、警告は繰り返さない
+			const toLog = this.responseValidator.dedupe(found, 'log');
+			if (toLog != null) {
+				this.logger.warn(`Response of ${ep.name} violates its contract (${toLog.kind}): ${toLog.errors.map(e => `${e.instancePath || '/'} ${e.message}`).join('; ')}`);
+			}
+
+			const reportPath = process.env.API_RES_VALIDATION_REPORT;
+			if (!reportPath) return;
+
+			const toReport = this.responseValidator.dedupe(found, 'report');
+			if (toReport != null) {
+				appendViolationReport(reportPath, toReport).catch((err: unknown) => {
+					// 記録できなかった違反は、次に起きたときに記録し直す
+					this.responseValidator?.forget(toReport, 'report');
+					this.logger.warn(`Failed to write response violation report: ${err instanceof Error ? err.message : String(err)}`);
+				});
+			}
+		} catch (err) {
+			// 検証の失敗でAPIの応答を止めない
+			this.logger.warn(`Failed to validate response of ${ep.name}: ${err instanceof Error ? err.message : String(err)}`);
 		}
 	}
 
