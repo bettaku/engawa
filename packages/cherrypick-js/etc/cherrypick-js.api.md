@@ -4042,7 +4042,7 @@ type QueueStats = {
 type QueueStatsLog = QueueStats[];
 
 // @public (undocumented)
-export const queueTypes: readonly ["system", "endedPollNotification", "postScheduledNote", "deliver", "inbox", "db", "relationship", "objectStorage", "userWebhookDeliver", "systemWebhookDeliver"];
+export const queueTypes: readonly ["system", "endedPollNotification", "postScheduledNote", "deliver", "inbox", "db", "relationship", "objectStorage", "userWebhookDeliver", "systemWebhookDeliver", "scheduledNoteDelete"];
 
 // @public (undocumented)
 type RenoteMuteCreateRequest = operations['renote-mute___create']['requestBody']['content']['application/json'];

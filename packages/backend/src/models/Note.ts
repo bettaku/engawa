@@ -37,6 +37,7 @@ export class MiNote {
 	})
 	public updatedAtHistory: Date[] | null;
 
+	@Index('IDX_note_deleteAt', { where: '"deleteAt" IS NOT NULL' })
 	@Column('timestamp with time zone', {
 		nullable: true,
 	})

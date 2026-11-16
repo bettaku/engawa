@@ -184,6 +184,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 					case 'clean': return this.cleanProcessorService.process();
 					case 'cleanRemoteNotes': return this.cleanRemoteNotesProcessorService.process(job);
 					case 'autoDeleteNotes': return this.autoDeleteNotesProcessorService.process(job);
+					case 'reconcileScheduledNoteDeletes': return this.scheduledNoteDeleteProcessorService.reconcile();
 					default: throw new Error(`unrecognized job type ${job.name} for system`);
 				}
 			};
@@ -558,11 +559,11 @@ export class QueueProcessorService implements OnApplicationShutdown {
 
 		//#region scheduled note delete
 		{
-			this.scheduledNoteDeleteQueueWorker = new Bull.Worker(QUEUE.SCHEDULED_NOTE_DELETE, (job) => {
+			this.scheduledNoteDeleteQueueWorker = new Bull.Worker(QUEUE.SCHEDULED_NOTE_DELETE, (job, token) => {
 				if (this.config.sentryForBackend) {
-					return Sentry.startSpan({ name: 'Queue: ScheduledNoteDelete' }, () => this.scheduledNoteDeleteProcessorService.process(job));
+					return Sentry.startSpan({ name: 'Queue: ScheduledNoteDelete' }, () => this.scheduledNoteDeleteProcessorService.process(job, token));
 				} else {
-					return this.scheduledNoteDeleteProcessorService.process(job);
+					return this.scheduledNoteDeleteProcessorService.process(job, token);
 				}
 			}, {
 				...baseWorkerOptions(this.config, QUEUE.SCHEDULED_NOTE_DELETE, this.redisForJobQueue),

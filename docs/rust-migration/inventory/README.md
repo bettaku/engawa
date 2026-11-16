@@ -207,7 +207,7 @@ engawaで追加した4つは、`admin/index/full`、`admin/index/reindex`、`adm
 | 3 | `objectStorage/autoDeleteNotes`の分岐 | cronは`system`キューにだけ登録される | 削除する（P1-3に含まれる） |
 | 4 | 内部イベント`mute`・`unmute`・`updateUserProfile` | 型はあるが発行箇所がない | 型を削除するか |
 | 5 | 内部イベント`unfollow`・`blockingCreated`・`blockingDeleted`・`policiesUpdated` | 発行するが購読箇所がない | 発行をやめるか。Rust側で購読する予定があるなら残す |
-| 6 | `scheduledNoteDelete`キュー | `QUEUE_TYPES`にないので管理画面から見えない | P1-1で登録する |
+| 6 | `scheduledNoteDelete`キュー | `QUEUE_TYPES`にないので管理画面から見えない | 対応済み（P1-1で登録した）。CSVは対象コミットの時点のままである |
 
 ### 6.2 抽出では決められなかったもの
 

@@ -9,12 +9,15 @@ import { MetricsTime, type JobType } from 'bullmq';
 import { parse as parseRedisInfo } from 'redis-info';
 import type { IActivity } from '@/core/activitypub/type.js';
 import type { MiDriveFile } from '@/models/DriveFile.js';
+import type { MiNote } from '@/models/Note.js';
 import type { MiAbuseUserReport } from '@/models/AbuseUserReport.js';
 import type { MiWebhook, WebhookEventTypes } from '@/models/Webhook.js';
 import type { MiSystemWebhook, SystemWebhookEventType } from '@/models/SystemWebhook.js';
 import type { Config } from '@/config.js';
 import { DI } from '@/di-symbols.js';
 import { bindThis } from '@/decorators.js';
+import { LoggerService } from '@/core/LoggerService.js';
+import type Logger from '@/logger.js';
 import type { Antenna } from '@/server/api/endpoints/i/import-antennas.js';
 import { ApRequestCreator } from '@/core/activitypub/ApRequestService.js';
 import { type SystemWebhookPayload } from '@/core/SystemWebhookService.js';
@@ -55,6 +58,7 @@ export const QUEUE_TYPES = [
 	'objectStorage',
 	'userWebhookDeliver',
 	'systemWebhookDeliver',
+	'scheduledNoteDelete',
 ] as const;
 
 const REPEATABLE_SYSTEM_JOB_DEF = [{
@@ -90,10 +94,16 @@ const REPEATABLE_SYSTEM_JOB_DEF = [{
 	name: 'autoDeleteNotes',
 	// 매일 오전 3시에 실행
 	pattern: '0 3 * * *',
+}, {
+	name: 'reconcileScheduledNoteDeletes',
+	// 削除予定時刻を過ぎても残っているノートを5分ごとに拾う
+	pattern: '*/5 * * * *',
 }];
 
 @Injectable()
 export class QueueService implements OnModuleInit {
+	private logger: Logger;
+
 	constructor(
 		@Inject(DI.config)
 		private config: Config,
@@ -109,7 +119,11 @@ export class QueueService implements OnModuleInit {
 		@Inject('queue:userWebhookDeliver') public userWebhookDeliverQueue: UserWebhookDeliverQueue,
 		@Inject('queue:systemWebhookDeliver') public systemWebhookDeliverQueue: SystemWebhookDeliverQueue,
 		@Inject('queue:scheduledNoteDelete') public scheduledNoteDeleteQueue: ScheduledNoteDeleteQueue,
-	) { }
+
+		private loggerService: LoggerService,
+	) {
+		this.logger = this.loggerService.getLogger('queue');
+	}
 
 	async onModuleInit() {
 		console.log('[QueueService] onModuleInit: Setting up', REPEATABLE_SYSTEM_JOB_DEF.length, 'repeatable jobs');
@@ -748,6 +762,75 @@ export class QueueService implements OnModuleInit {
 		});
 	}
 
+	/**
+	 * 予約削除ジョブのID。ノートごとに1つに固定し、延期・解除のときにIDで取り消せるようにする。
+	 * BullMQは整数だけのIDとコロンを含むIDを拒否するので、この形式にしている。
+	 */
+	public static scheduledNoteDeleteJobId(noteId: MiNote['id']): string {
+		return `scheduledNoteDelete-${noteId}`;
+	}
+
+	/**
+	 * 予約削除ジョブを、DBのdeleteAtに合わせる。deleteAtがあれば登録し直し、なければ取り消す。
+	 *
+	 * 失敗しても例外を投げず、記録だけする。ノートの作成・更新の後処理（配信、配送、索引）を止めないためである。
+	 * ジョブがずれたままでも、削除するかどうかは処理の時点でDBのdeleteAtから決まり、
+	 * 登録できなかった予約は照合ジョブ（reconcileScheduledNoteDeletes）が拾う。
+	 */
+	@bindThis
+	public async syncScheduledNoteDelete(noteId: MiNote['id'], deleteAt: Date | null): Promise<void> {
+		try {
+			if (deleteAt != null) {
+				await this.scheduleNoteDelete(noteId, deleteAt);
+			} else {
+				await this.cancelScheduledNoteDelete(noteId);
+			}
+		} catch (err) {
+			this.logger.error(`Failed to sync scheduled note delete job: ${noteId}`, { error: err });
+		}
+	}
+
+	/**
+	 * ノートの予約削除ジョブを登録する。すでにジョブがあれば、取り消してから登録し直す。
+	 *
+	 * 削除するかどうかはDBのdeleteAtで決まる。ジョブは実行のきっかけにすぎないので、
+	 * 実行中で取り消せなかった場合や登録に失敗した場合でも、誤って削除されることはない。
+	 */
+	@bindThis
+	public async scheduleNoteDelete(noteId: MiNote['id'], deleteAt: Date): Promise<void> {
+		await this.cancelScheduledNoteDelete(noteId);
+		await this.ensureNoteDeleteScheduled(noteId, deleteAt);
+	}
+
+	/**
+	 * ノートの予約削除ジョブがなければ登録する。すでにあれば何もしない。
+	 */
+	@bindThis
+	public async ensureNoteDeleteScheduled(noteId: MiNote['id'], deleteAt: Date): Promise<void> {
+		await this.scheduledNoteDeleteQueue.add(noteId, {
+			noteId,
+		}, {
+			jobId: QueueService.scheduledNoteDeleteJobId(noteId),
+			delay: Math.max(0, deleteAt.getTime() - Date.now()),
+			attempts: 3,
+			backoff: {
+				type: 'exponential',
+				delay: 10 * 1000,
+			},
+			removeOnComplete: true,
+			// 失敗したジョブが残っていても、再登録の前に同じIDで取り消すので妨げにならない
+			removeOnFail: {
+				age: 3600 * 24 * 7, // keep up to 7 days
+				count: 100,
+			},
+		});
+	}
+
+	@bindThis
+	public async cancelScheduledNoteDelete(noteId: MiNote['id']): Promise<void> {
+		await this.scheduledNoteDeleteQueue.remove(QueueService.scheduledNoteDeleteJobId(noteId));
+	}
+
 	@bindThis
 	private getQueue(type: typeof QUEUE_TYPES[number]): Bull.Queue {
 		switch (type) {
@@ -761,6 +844,7 @@ export class QueueService implements OnModuleInit {
 			case 'objectStorage': return this.objectStorageQueue;
 			case 'userWebhookDeliver': return this.userWebhookDeliverQueue;
 			case 'systemWebhookDeliver': return this.systemWebhookDeliverQueue;
+			case 'scheduledNoteDelete': return this.scheduledNoteDeleteQueue;
 			default: throw new Error(`Unrecognized queue type: ${type}`);
 		}
 	}
