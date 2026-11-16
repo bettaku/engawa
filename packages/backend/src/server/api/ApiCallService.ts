@@ -490,16 +490,22 @@ export class ApiCallService implements OnApplicationShutdown {
 
 		try {
 			const found = this.responseValidator.validate(ep, res);
-			const violation = found != null ? this.responseValidator.dedupe(found) : null;
-			if (violation == null) return;
+			if (found == null) return;
 
-			this.logger.warn(`Response of ${ep.name} violates its contract (${violation.kind}): ${violation.errors.map(e => `${e.instancePath || '/'} ${e.message}`).join('; ')}`);
+			// 警告ログとレポートは、それぞれ別に重複を除く。レポートの書き込みに失敗しても、警告は繰り返さない
+			const toLog = this.responseValidator.dedupe(found, 'log');
+			if (toLog != null) {
+				this.logger.warn(`Response of ${ep.name} violates its contract (${toLog.kind}): ${toLog.errors.map(e => `${e.instancePath || '/'} ${e.message}`).join('; ')}`);
+			}
 
 			const reportPath = process.env.API_RES_VALIDATION_REPORT;
-			if (reportPath) {
-				appendViolationReport(reportPath, violation).catch((err: unknown) => {
+			if (!reportPath) return;
+
+			const toReport = this.responseValidator.dedupe(found, 'report');
+			if (toReport != null) {
+				appendViolationReport(reportPath, toReport).catch((err: unknown) => {
 					// 記録できなかった違反は、次に起きたときに記録し直す
-					this.responseValidator?.forget(violation);
+					this.responseValidator?.forget(toReport, 'report');
 					this.logger.warn(`Failed to write response violation report: ${err instanceof Error ? err.message : String(err)}`);
 				});
 			}

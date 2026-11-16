@@ -90,24 +90,27 @@ describe('ResponseValidator', () => {
 		const first = validator.validate(ep(res), [1, 2]);
 		expect(first).not.toBeNull();
 		if (first == null) return;
-		expect(validator.dedupe(first)?.errors).toHaveLength(1);
+		expect(validator.dedupe(first, 'log')?.errors).toHaveLength(1);
 
 		const second = validator.validate(ep(res), [3]);
 		expect(second).not.toBeNull();
 		if (second == null) return;
-		expect(validator.dedupe(second)).toBeNull();
+		expect(validator.dedupe(second, 'log')).toBeNull();
 	});
 
-	test('forgetした違反は、dedupeでもう一度報告される', () => {
+	test('forgetした違反は、その報告先でだけもう一度報告される', () => {
 		const validator = new ResponseValidator();
 		const violation = validator.validate(ep(), 204);
 		expect(violation).not.toBeNull();
 		if (violation == null) return;
 
-		expect(validator.dedupe(violation)).not.toBeNull();
-		expect(validator.dedupe(violation)).toBeNull();
-		validator.forget(violation);
-		expect(validator.dedupe(violation)).not.toBeNull();
+		expect(validator.dedupe(violation, 'log')).not.toBeNull();
+		expect(validator.dedupe(violation, 'report')).not.toBeNull();
+		expect(validator.dedupe(violation, 'report')).toBeNull();
+
+		validator.forget(violation, 'report');
+		expect(validator.dedupe(violation, 'report')).not.toBeNull();
+		expect(validator.dedupe(violation, 'log')).toBeNull();
 	});
 
 	test('appendViolationReportは呼び出した順にJSON Linesで追記する', async () => {

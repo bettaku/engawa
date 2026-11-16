@@ -35,6 +35,9 @@ export type ResponseViolation = {
 	}[];
 };
 
+/** 違反の報告先。`log`は警告ログ、`report`はレポートファイル */
+export type ReportTarget = 'log' | 'report';
+
 type EndpointLike = {
 	name: string;
 	meta: { res?: Schema };
@@ -50,7 +53,7 @@ type EndpointLike = {
 export class ResponseValidator {
 	private ajv: InstanceType<typeof Ajv2020>;
 	private validators = new Map<string, ValidateFunction | null>();
-	private reported = new Set<string>();
+	private reported: Record<ReportTarget, Set<string>> = { log: new Set(), report: new Set() };
 
 	constructor() {
 		this.ajv = new Ajv2020({
@@ -128,25 +131,28 @@ export class ResponseValidator {
 	 * 同じ違反を繰り返し報告しないようにする。
 	 * 配列の添字だけが違うものは同じ違反として扱う。
 	 *
-	 * @returns まだ報告していない違反だけを残したもの。すべて報告済みなら`null`
+	 * 報告済みかどうかは、報告先（警告ログ・レポート）ごとに分けて持つ。
+	 *
+	 * @returns その報告先にまだ報告していない違反だけを残したもの。すべて報告済みなら`null`
 	 */
-	public dedupe(violation: ResponseViolation): ResponseViolation | null {
+	public dedupe(violation: ResponseViolation, target: ReportTarget): ResponseViolation | null {
+		const reported = this.reported[target];
 		const errors = violation.errors.filter(e => {
 			const key = dedupeKey(violation, e);
-			if (this.reported.has(key)) return false;
-			this.reported.add(key);
+			if (reported.has(key)) return false;
+			reported.add(key);
 			return true;
 		});
 		return errors.length > 0 ? { ...violation, errors } : null;
 	}
 
 	/**
-	 * `dedupe`が報告済みにした違反を、未報告に戻す。
+	 * `dedupe`が報告済みにした違反を、その報告先について未報告に戻す。
 	 * レポートへの記録に失敗したとき、次に同じ違反が起きたら記録し直せるようにする。
 	 */
-	public forget(violation: ResponseViolation): void {
+	public forget(violation: ResponseViolation, target: ReportTarget): void {
 		for (const e of violation.errors) {
-			this.reported.delete(dedupeKey(violation, e));
+			this.reported[target].delete(dedupeKey(violation, e));
 		}
 	}
 
