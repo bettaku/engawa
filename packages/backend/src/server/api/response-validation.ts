@@ -169,8 +169,11 @@ function qualifyRefs(schema: unknown): unknown {
 	]));
 }
 
-function describe(value: unknown): string {
+/**
+ * @param value `null`でも`undefined`でもない値
+ */
+function describe(value: NonNullable<unknown>): string {
 	if (Array.isArray(value)) return 'an array';
-	if (typeof value === 'object' && value !== null) return `an object (${Object.getPrototypeOf(value)?.constructor?.name ?? 'no prototype'})`;
+	if (typeof value === 'object') return `an object (${Object.getPrototypeOf(value)?.constructor?.name ?? 'no prototype'})`;
 	return `${typeof value} ${JSON.stringify(value)}`;
 }
