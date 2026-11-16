@@ -359,9 +359,10 @@ export class NoteUpdateService implements OnApplicationShutdown {
 
 	@bindThis
 	private reIndex(note: MiNote) {
-		if (note.text == null && note.cw == null) return;
-
-		this.searchService.unindexNote(note);
-		this.searchService.indexNote(note);
+		// 索引から消してから登録し直す。
+		// 本文がなくなった場合や、検索対象外の公開範囲になった場合は indexNote 側で登録されない。
+		this.searchService.unindexNote(note)
+			.catch(() => {})
+			.then(() => this.searchService.indexNote(note));
 	}
 }

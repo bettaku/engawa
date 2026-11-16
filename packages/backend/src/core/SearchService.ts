@@ -249,15 +249,14 @@ export class SearchService {
 
 	@bindThis
 	public async unindexNote(note: MiNote): Promise<void> {
-		if (!this.meilisearch || !this.elasticsearch) return;
-		if (!['home', 'public'].includes(note.visibility)) return;
+		if (!this.meilisearch && !this.elasticsearch) return;
 
 		switch (this.provider) {
 			case 'meilisearch':
 				await this.meilisearchNoteIndex?.deleteDocument(note.id);
 				break;
 			case 'elasticsearch':
-				await this.elasticsearch.delete({
+				await this.elasticsearch?.delete({
 					index: this.elasticsearchNoteIndex as string,
 					id: note.id,
 				}).catch((e) => {
@@ -479,6 +478,10 @@ export class SearchService {
 
 		query.where('note.id IN (:...noteIds)', { noteIds: res.hits.map(x => x.id) });
 
+		// 索引に登録した後で公開範囲や検索許可が変わったノートが残りうるので、DBの現在の状態で絞り込む
+		this.generateSearchableByQuery(query, me);
+		query.andWhere('user.isIndexable = TRUE');
+		this.queryService.generateVisibilityQuery(query, me);
 		this.queryService.generateBlockedHostQueryForNote(query);
 		this.queryService.generateSuspendedUserQueryForNote(query);
 
