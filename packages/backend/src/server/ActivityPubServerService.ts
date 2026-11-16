@@ -123,6 +123,20 @@ export class ActivityPubServerService {
 			return false;
 		}
 
+		if (await this.verifySigner(request) == null) {
+			return true;
+		}
+
+		reply.header('cache-control', 'private, max-age=0, must-revalidate');
+		return false;
+	}
+
+	/**
+	 * リクエストのHTTP Signatureを検証し、署名したリモートユーザーを返す。
+	 * 署名がない・検証できない・連合が許可されていないホストの場合は null を返す。
+	 */
+	@bindThis
+	private async verifySigner(request: FastifyRequest): Promise<MiRemoteUser | null> {
 		let signature;
 		try {
 			signature = httpSignature.parseRequest(request.raw, {
@@ -130,20 +144,18 @@ export class ActivityPubServerService {
 				authorizationHeaderName: 'signature',
 			});
 		} catch (e) {
-			return true;
+			return null;
 		}
 
 		const keyId = new URL(signature.keyId);
 		const keyHost = this.utilityService.toPuny(keyId.hostname);
 		if (!this.utilityService.isFederationAllowedHost(keyHost)) {
-			reply.code(403);
-			return true;
+			return null;
 		}
 
 		const keyIdLower = signature.keyId.toLowerCase();
 		if (keyIdLower.startsWith('acct:')) {
-			reply.code(401);
-			return true;
+			return null;
 		}
 
 		let authUser: {
@@ -158,33 +170,28 @@ export class ActivityPubServerService {
 				authUser = await this.apDbResolverService.getAuthUserFromApId(getApId(keyId.toString()));
 			} catch (e) {
 				// Resolveできなかったらreject
-				reply.code(403);
-				return true;
+				return null;
 			}
 		}
 
 		// 鍵がなかったらreject
 		if (authUser?.key == null) {
-			reply.code(403);
-			return true;
+			return null;
 		}
 
 		// 凍結されていたらreject
 		if (authUser.user.isSuspended) {
-			reply.code(403);
-			return true;
+			return null;
 		}
 
 		// Bot Protectionが有効かつauthUserがbotならreject
 		if (this.meta.enableBotProtectionForAuthorizedFetch && authUser.user.isBot) {
-			reply.code(403);
-			return true;
+			return null;
 		}
 
 		// 念の為もう一度チェック
 		if (authUser.user.host !== keyHost) {
-			reply.code(403);
-			return true;
+			return null;
 		}
 
 		// 鍵の検証
@@ -192,20 +199,17 @@ export class ActivityPubServerService {
 		if (!validatedHttpSignature) {
 			authUser.key = await this.apDbResolverService.refetchPublicKeyForApId(authUser.user);
 			if (authUser.key == null) {
-				reply.code(403);
-				return true;
+				return null;
 			}
 
 			validatedHttpSignature = httpSignature.verifySignature(signature, authUser.key.keyPem);
 		}
 
 		if (!validatedHttpSignature) {
-			reply.code(403);
-			return true;
+			return null;
 		}
 
-		reply.header('cache-control', 'private, max-age=0, must-revalidate');
-		return false;
+		return authUser.user;
 	}
 
 	@bindThis
@@ -849,7 +853,15 @@ export class ActivityPubServerService {
 				return;
 			}
 
-			reply.header('Cache-Control', 'public, max-age=180');
+			// 個人間のメッセージなので、受信者のサーバーが署名して取得する場合にだけ返す。
+			// ローカル同士のメッセージや、署名のない・無関係なサーバーからの取得には、存在しない場合と同じ応答を返す。
+			const signer = await this.verifySigner(request).catch(() => null);
+			if (signer == null || !toUsers.some(toUser => toUser.host != null && toUser.host === signer.host)) {
+				reply.code(404);
+				return;
+			}
+
+			reply.header('Cache-Control', 'private, no-store');
 			this.setResponseType(request, reply);
 			return this.apRendererService.addContext(await this.apRendererService.renderChatMessage(message, fromUser, toUsers));
 		});
