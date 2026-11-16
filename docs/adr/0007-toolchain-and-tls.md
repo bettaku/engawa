@@ -60,7 +60,7 @@
 
 現行のDockerイメージは、`node:24.19.0-bookworm`（実行は`-slim`）を土台に、`linux/amd64`と`linux/arm64`を、それぞれのアーキテクチャのランナーでビルドしている。
 
-Dockerを使わない配布は、systemdでの直接インストールの手順がドキュメントにある。想定するディストリビューションは、Ubuntu 24.04・Debian 12（`systemd-ubuntu.md`）と、AlmaLinux 10・Rocky Linux 10・RHEL 10（`systemd-rhel.md`。9系以前には対応しない）である。リリースにはソースのtarballを添付しており（`release-artifacts.yml`）、この手順ではサーバーの上でビルドする。Helmのchartと、開発者のOS（macOS、WSL）でのビルドの要否は、一覧になっていない。
+Dockerを使わない配布は、systemdでの直接インストールの手順がドキュメントにある。想定するディストリビューションは、Ubuntu 24.04・Debian 12（`systemd-ubuntu.md`）と、AlmaLinux 10・Rocky Linux 10・RHEL 10（`systemd-rhel.md`。9系以前には対応しない）である。リリースにはソースのtarballを添付しており（`release-artifacts.yml`）、この手順ではサーバーの上でビルドする。開発者のOS（macOS、WSL）でのビルドの要否は、一覧になっていない。
 
 ## 検討した選択肢
 
@@ -157,5 +157,5 @@ RUST-08または連合の移行時に確かめる。
 - `aws-lc-rs`のビルドの要件: <https://aws.github.io/aws-lc-rs/requirements/index.html>
 - `sqlx`と`redis`のTLSの機能: <https://docs.rs/crate/sqlx/0.9.0/features>、<https://docs.rs/crate/redis/1.8.1/features>
 - 現行: `Dockerfile`、`.github/workflows/docker-develop.yml`、`renovate.json5`（コミット`5e8cc3b2cd`）
-- 未確認: `aws-lc-rs`のビルドにCMakeが要るか（2つの資料が食い違う）、`redis`の`tls-rustls`が使う暗号の実装、2024 editionの依存解決がMSRVを考慮するか、公式のRustイメージのタグ、内向きのTLSを終端する場所、現行の設定でのTLSの利用状況、各ディストリビューションが配る`rustc`の版、RHEL 10系のコンテナイメージ、`rustls`とRHEL系の暗号ポリシー・FIPSモードの関係、Helmのchartでの扱い
+- 未確認: `aws-lc-rs`のビルドにCMakeが要るか（2つの資料が食い違う）、`redis`の`tls-rustls`が使う暗号の実装、2024 editionの依存解決がMSRVを考慮するか、公式のRustイメージのタグ、内向きのTLSを終端する場所、現行の設定でのTLSの利用状況、各ディストリビューションが配る`rustc`の版、RHEL 10系のコンテナイメージ、`rustls`とRHEL系の暗号ポリシー・FIPSモードの関係
 - インストール手順が想定するディストリビューション: `docs/src/content/docs/install/index.md`、`systemd-ubuntu.md`、`systemd-rhel.md`、`.github/workflows/release-artifacts.yml`（コミット`5e8cc3b2cd`。2026-11-14確認）
