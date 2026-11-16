@@ -39,7 +39,11 @@ describe('Notification', () => {
 			);
 		});
 
-		afterAll(async () => await bob.client.request('following/delete', { userId: aliceInB.id }));
+		afterAll(async () => {
+			// NOTE: a.test からの Accept が b.test に届くまではフォロー済みにならないので、配送を待ってから解除する
+			await sleep();
+			await bob.client.request('following/delete', { userId: aliceInB.id });
+		});
 	});
 
 	describe('Note', () => {
