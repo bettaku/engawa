@@ -20,6 +20,7 @@ import { bindThis } from '@/decorators.js';
 import { RoleService } from '@/core/RoleService.js';
 import type { Config } from '@/config.js';
 import type { FlashToken } from '@/misc/flash-token.js';
+import { redactSecrets, scrubSecrets } from '@/misc/redact-secrets.js';
 import { ApiError } from './error.js';
 import { RateLimiterService } from './RateLimiterService.js';
 import { ApiLoggerService } from './ApiLoggerService.js';
@@ -111,40 +112,45 @@ export class ApiCallService implements OnApplicationShutdown {
 			throw err;
 		} else {
 			const errId = randomUUID();
-			this.logger.error(`Internal error occurred in ${ep.name}: ${err.message}`, {
+
+			// パラメータにはパスワードやトークンが含まれうるので、ログや外部サービスには伏せた状態で渡す
+			const { redacted: ps, secrets } = redactSecrets(data);
+			const message = scrubSecrets(err.message, secrets);
+			const stack = scrubSecrets(err.stack, secrets);
+
+			this.logger.error(`Internal error occurred in ${ep.name}: ${message}`, {
 				ep: ep.name,
-				ps: data,
+				ps,
 				e: {
-					message: err.message,
+					message,
 					code: err.name,
-					stack: err.stack,
+					stack,
 					id: errId,
 				},
 			});
 
 			if (this.config.sentryForBackend) {
-				Sentry.captureMessage(`Internal error occurred in ${ep.name}: ${err.message}`, {
+				Sentry.captureMessage(`Internal error occurred in ${ep.name}: ${message}`, {
 					level: 'error',
 					user: {
 						id: userId,
 					},
 					extra: {
 						ep: ep.name,
-						ps: data,
+						ps,
 						e: {
-							message: err.message,
+							message,
 							code: err.name,
-							stack: err.stack,
+							stack,
 							id: errId,
 						},
 					},
 				});
 			}
 
+			// 内部の例外の内容はクライアントに返さない。追跡用のIDだけを返し、詳細はログで確認する
 			throw new ApiError(null, {
 				e: {
-					message: err.message,
-					code: err.name,
 					id: errId,
 				},
 			});
