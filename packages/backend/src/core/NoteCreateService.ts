@@ -16,6 +16,7 @@ import { extractHashtags } from '@/misc/extract-hashtags.js';
 import type { IMentionedRemoteUsers } from '@/models/Note.js';
 import { MiNote } from '@/models/Note.js';
 import { MiEvent } from '@/models/Event.js';
+import { getNoteDeliveryScope } from '@/misc/note-delivery-scope.js';
 import { sanitizeEventMetadata } from '@/misc/sanitize-event-metadata.js';
 import type { IEvent } from '@/models/Event.js';
 import type { BlockingsRepository, DriveFilesRepository, FollowingsRepository, InstancesRepository, MiFollowing, MiMeta, MutingsRepository, NotesRepository, NoteThreadMutingsRepository, UserListMembershipsRepository, UserProfilesRepository, UsersRepository } from '@/models/_.js';
@@ -401,6 +402,8 @@ export class NoteCreateService implements OnApplicationShutdown {
 		if (data.createdAt == null) data.createdAt = new Date();
 		if (data.visibility == null) data.visibility = 'public';
 		if (data.localOnly == null) data.localOnly = false;
+		// 「自分のみ」の投稿は、クライアントの指定に関わらず連合しない
+		if (data.visibility === 'private') data.localOnly = true;
 		if (data.disableRightClick == null) data.disableRightClick = false;
 
 		if (data.visibility === 'public') {
@@ -848,7 +851,8 @@ export class NoteCreateService implements OnApplicationShutdown {
 			nm.notify();
 
 			//#region AP deliver
-			if (!data.localOnly && this.userEntityService.isLocalUser(user)) {
+			const deliveryScope = getNoteDeliveryScope(note);
+			if (!data.localOnly && deliveryScope.federate && this.userEntityService.isLocalUser(user)) {
 				await (async () => {
 					const noteActivity = await this.renderNoteOrRenoteActivity(data, note);
 					const dm = this.apDeliverManagerService.createDeliverManager(user, noteActivity);
@@ -871,11 +875,11 @@ export class NoteCreateService implements OnApplicationShutdown {
 					}
 
 					// フォロワーに配送
-					if (['public', 'home', 'followers'].includes(note.visibility)) {
+					if (deliveryScope.followers) {
 						dm.addFollowersRecipe();
 					}
 
-					if (['public'].includes(note.visibility)) {
+					if (deliveryScope.relays) {
 						this.relayService.deliverToRelays(user, noteActivity);
 					}
 
