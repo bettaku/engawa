@@ -13,6 +13,8 @@ import { getNoteSummary } from '@/misc/get-note-summary.js';
 import type { MiMeta, MiSwSubscription, SwSubscriptionsRepository } from '@/models/_.js';
 import { bindThis } from '@/decorators.js';
 import { RedisKVCache } from '@/misc/cache.js';
+import { isAllowedPushEndpoint } from '@/misc/is-allowed-push-endpoint.js';
+import { HttpRequestService } from '@/core/HttpRequestService.js';
 
 // Defined also packages/sw/types.ts#L13
 type PushNotificationsTypes = {
@@ -62,6 +64,8 @@ export class PushNotificationService implements OnApplicationShutdown {
 
 		@Inject(DI.swSubscriptionsRepository)
 		private swSubscriptionsRepository: SwSubscriptionsRepository,
+
+		private httpRequestService: HttpRequestService,
 	) {
 		this.subscriptionsCache = new RedisKVCache<MiSwSubscription[]>(this.redisClient, 'userSwSubscriptions', {
 			lifetime: 1000 * 60 * 60 * 1, // 1h
@@ -88,6 +92,9 @@ export class PushNotificationService implements OnApplicationShutdown {
 				'readAllNotifications',
 			].includes(type) && !subscription.sendReadMessage) continue;
 
+			// 以前に登録された購読先も含めて、内部向けの宛先には送らない
+			if (!isAllowedPushEndpoint(subscription.endpoint)) continue;
+
 			const pushSubscription = {
 				endpoint: subscription.endpoint,
 				keys: {
@@ -101,8 +108,11 @@ export class PushNotificationService implements OnApplicationShutdown {
 				body: (type === 'notification' || type === 'unreadAntennaNote') ? truncateBody(type, body) : body,
 				userId,
 				dateTime: Date.now(),
-			}), {
+			}), this.config.proxy ? {
 				proxy: this.config.proxy,
+			} : {
+				// 接続先がプライベートアドレスなら切断する、共通のHTTPSエージェントを使う
+				agent: this.httpRequestService.getAgentForHttps(new URL(subscription.endpoint)),
 			}).catch((err: any) => {
 				//swLogger.info(err.statusCode);
 				//swLogger.info(err.headers);
