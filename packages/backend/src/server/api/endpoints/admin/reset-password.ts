@@ -10,6 +10,8 @@ import { DI } from '@/di-symbols.js';
 import { secureRndstr } from '@/misc/secure-rndstr.js';
 import { ModerationLogService } from '@/core/ModerationLogService.js';
 import { hashPassword } from '@/misc/password.js';
+import { RoleService } from '@/core/RoleService.js';
+import { ApiError } from '../../error.js';
 
 export const meta = {
 	tags: ['admin'],
@@ -17,6 +19,16 @@ export const meta = {
 	requireCredential: true,
 	requireModerator: true,
 	kind: 'write:admin:reset-password',
+
+	errors: {
+		cannotResetPasswordOfAdmin: {
+			message: 'Only administrators can reset the password of an administrator.',
+			code: 'CANNOT_RESET_PASSWORD_OF_ADMIN',
+			id: '6c2f1c1b-2a0e-4b2a-8d1f-0b7f0f6f2c35',
+			kind: 'permission',
+			httpStatusCode: 403,
+		},
+	},
 
 	res: {
 		type: 'object',
@@ -53,6 +65,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private userProfilesRepository: UserProfilesRepository,
 
 		private moderationLogService: ModerationLogService,
+		private roleService: RoleService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const user = await this.usersRepository.findOneBy({ id: ps.userId });
@@ -63,6 +76,11 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			if (this.serverSettings.rootUserId === user.id) {
 				throw new Error('cannot reset password of root');
+			}
+
+			// 管理者のパスワードは管理者にしか再設定させない（モデレーターが管理者になりすませないようにする）
+			if (await this.roleService.isAdministrator(user) && !(await this.roleService.isAdministrator(me))) {
+				throw new ApiError(meta.errors.cannotResetPasswordOfAdmin);
 			}
 
 			const passwd = secureRndstr(16);
