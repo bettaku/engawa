@@ -4,13 +4,13 @@
  */
 
 import { setImmediate } from 'node:timers/promises';
-import util from 'util';
 import { In, DataSource } from 'typeorm';
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import * as mfm from 'mfc-js';
 import type { IMentionedRemoteUsers } from '@/models/Note.js';
 import { MiNote } from '@/models/Note.js';
 import { MiEvent } from '@/models/Event.js';
+import { getNoteDeliveryScope } from '@/misc/note-delivery-scope.js';
 import { sanitizeEventMetadata } from '@/misc/sanitize-event-metadata.js';
 import type { IEvent } from '@/models/Event.js';
 import type { NotesRepository, UsersRepository } from '@/models/_.js';
@@ -288,7 +288,7 @@ export class NoteUpdateService implements OnApplicationShutdown {
 			this.globalEventService.publishNoteStream(note, 'updated', { cw: note.cw, text: note.text, disableRightClick: note.disableRightClick, deleteAt: note.deleteAt });
 
 			//#region AP deliver
-			if (this.userEntityService.isLocalUser(user) && !note.localOnly) {
+			if (this.userEntityService.isLocalUser(user) && getNoteDeliveryScope(note).federate) {
 				await (async () => {
 					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 					// @ts-expect-error
@@ -338,9 +338,16 @@ export class NoteUpdateService implements OnApplicationShutdown {
 
 	@bindThis
 	private async deliverToConcerned(user: { id: MiLocalUser['id']; host: null; }, note: MiNote, content: any) {
-		console.log('deliverToConcerned', util.inspect(content, { depth: null }));
-		await this.apDeliverManagerService.deliverToFollowers(user, content);
-		await this.relayService.deliverToRelays(user, content);
+		// 配送先は作成時と同じく、ノートの公開範囲に従う
+		const scope = getNoteDeliveryScope(note);
+		if (!scope.federate) return;
+
+		if (scope.followers) {
+			await this.apDeliverManagerService.deliverToFollowers(user, content);
+		}
+		if (scope.relays) {
+			await this.relayService.deliverToRelays(user, content);
+		}
 		const remoteUsers = await this.getMentionedRemoteUsers(note);
 		for (const remoteUser of remoteUsers) {
 			await this.apDeliverManagerService.deliverToUser(user, content, remoteUser);
