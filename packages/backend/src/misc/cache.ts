@@ -6,12 +6,53 @@
 import * as Redis from 'ioredis';
 import { bindThis } from '@/decorators.js';
 
+/**
+ * Redisに保存するキャッシュの値の形式の版（namespace）。
+ *
+ * - 1: `kvcache:<name>:<key>`、`singlecache:<name>`。値は呼び出し側の変換関数（多くはエンティティのJSON）
+ * - 2: `kvcache:v2:<name>:<key>`、`singlecache:v2:<name>`。値はキャッシュごとに定義したDTO（予定）
+ *
+ * 版を切り替える期間は、新旧の版のプロセスが同じキーを共有する。どちらの版のプロセスが値を更新・削除しても、
+ * もう一方の版のプロセスが古い値を読まないように、書き込み・削除のたびに**すべての版の**キーを消す。
+ * この処理を先に配布してから（第1リリース）、読み書きする版を切り替える（第2リリース）。
+ * 手順は docs/rust-migration/redis-keys.md を参照。
+ */
+export const CACHE_KEY_VERSIONS = [1, 2] as const;
+export type CacheKeyVersion = typeof CACHE_KEY_VERSIONS[number];
+
+/** 読み書きに使う版。第2リリースで2にする */
+export const CURRENT_CACHE_KEY_VERSION: CacheKeyVersion = 1;
+
+/**
+ * 版付けのキー。`version`が`null`のキャッシュは版を持たない（認証状態などDBから再生成できないもの）。
+ */
+export function kvCacheKey(name: string, key: string, version: CacheKeyVersion | null): string {
+	return version == null || version === 1 ? `kvcache:${name}:${key}` : `kvcache:v${version}:${name}:${key}`;
+}
+
+export function singleCacheKey(name: string, version: CacheKeyVersion | null): string {
+	return version == null || version === 1 ? `singlecache:${name}` : `singlecache:v${version}:${name}`;
+}
+
+/**
+ * MULTIを実行し、どれかのコマンドが失敗していたら例外を投げる。
+ * ioredisのexecは、個々のコマンドの失敗を結果の配列に入れて返すだけなので確認する
+ */
+async function execOrThrow(multi: Redis.ChainableCommander): Promise<void> {
+	const results = await multi.exec();
+	if (results == null) throw new Error('Redis transaction was aborted');
+	for (const [err] of results) {
+		if (err) throw err;
+	}
+}
+
 export class RedisKVCache<T> {
 	private readonly lifetime: number;
 	private readonly memoryCache: MemoryKVCache<T>;
 	private readonly fetcher: (key: string) => Promise<T>;
 	private readonly toRedisConverter: (value: T) => string;
 	private readonly fromRedisConverter: (value: string) => T | undefined;
+	private readonly version: CacheKeyVersion | null;
 
 	constructor(
 		private redisClient: Redis.Redis,
@@ -22,6 +63,11 @@ export class RedisKVCache<T> {
 			fetcher: RedisKVCache<T>['fetcher'];
 			toRedisConverter: RedisKVCache<T>['toRedisConverter'];
 			fromRedisConverter: RedisKVCache<T>['fromRedisConverter'];
+			/**
+			 * 読み書きするキーの版。省略すると`CURRENT_CACHE_KEY_VERSION`。
+			 * `null`にすると版を持たず、ほかの版のキーを消さない（DBから再生成できない値。P2-1の対象外）
+			 */
+			version?: CacheKeyVersion | null;
 		},
 	) {
 		this.lifetime = opts.lifetime;
@@ -29,23 +75,32 @@ export class RedisKVCache<T> {
 		this.fetcher = opts.fetcher;
 		this.toRedisConverter = opts.toRedisConverter;
 		this.fromRedisConverter = opts.fromRedisConverter;
+		this.version = opts.version === undefined ? CURRENT_CACHE_KEY_VERSION : opts.version;
+	}
+
+	/** 読み書きするキー */
+	private keyOf(key: string): string {
+		return kvCacheKey(this.name, key, this.version);
+	}
+
+	/** 値を変えたときに消す、ほかの版のキー */
+	private otherKeysOf(key: string): string[] {
+		if (this.version == null) return [];
+		return CACHE_KEY_VERSIONS.filter(v => v !== this.version).map(v => kvCacheKey(this.name, key, v));
 	}
 
 	@bindThis
 	public async set(key: string, value: T): Promise<void> {
 		this.memoryCache.set(key, value);
+		const multi = this.redisClient.multi();
 		if (this.lifetime === Infinity) {
-			await this.redisClient.set(
-				`kvcache:${this.name}:${key}`,
-				this.toRedisConverter(value),
-			);
+			multi.set(this.keyOf(key), this.toRedisConverter(value));
 		} else {
-			await this.redisClient.set(
-				`kvcache:${this.name}:${key}`,
-				this.toRedisConverter(value),
-				'EX', Math.round(this.lifetime / 1000),
-			);
+			multi.set(this.keyOf(key), this.toRedisConverter(value), 'EX', Math.round(this.lifetime / 1000));
 		}
+		const others = this.otherKeysOf(key);
+		if (others.length > 0) multi.del(...others);
+		await execOrThrow(multi);
 	}
 
 	@bindThis
@@ -53,7 +108,7 @@ export class RedisKVCache<T> {
 		const memoryCached = this.memoryCache.get(key);
 		if (memoryCached !== undefined) return memoryCached;
 
-		const cached = await this.redisClient.get(`kvcache:${this.name}:${key}`);
+		const cached = await this.redisClient.get(this.keyOf(key));
 		if (cached == null) return undefined;
 
 		const value = this.fromRedisConverter(cached);
@@ -67,7 +122,7 @@ export class RedisKVCache<T> {
 	@bindThis
 	public async delete(key: string): Promise<void> {
 		this.memoryCache.delete(key);
-		await this.redisClient.del(`kvcache:${this.name}:${key}`);
+		await this.redisClient.del(this.keyOf(key), ...this.otherKeysOf(key));
 	}
 
 	/**
@@ -117,6 +172,8 @@ export class RedisSingleCache<T> {
 	private readonly toRedisConverter: (value: T) => string;
 	private readonly fromRedisConverter: (value: string) => T | undefined;
 
+	private readonly version: CacheKeyVersion | null;
+
 	constructor(
 		private redisClient: Redis.Redis,
 		private name: string,
@@ -126,6 +183,8 @@ export class RedisSingleCache<T> {
 			fetcher: RedisSingleCache<T>['fetcher'];
 			toRedisConverter: RedisSingleCache<T>['toRedisConverter'];
 			fromRedisConverter: RedisSingleCache<T>['fromRedisConverter'];
+			/** `RedisKVCache`の`version`と同じ */
+			version?: CacheKeyVersion | null;
 		},
 	) {
 		this.lifetime = opts.lifetime;
@@ -133,23 +192,30 @@ export class RedisSingleCache<T> {
 		this.fetcher = opts.fetcher;
 		this.toRedisConverter = opts.toRedisConverter;
 		this.fromRedisConverter = opts.fromRedisConverter;
+		this.version = opts.version === undefined ? CURRENT_CACHE_KEY_VERSION : opts.version;
+	}
+
+	private get key(): string {
+		return singleCacheKey(this.name, this.version);
+	}
+
+	private get otherKeys(): string[] {
+		if (this.version == null) return [];
+		return CACHE_KEY_VERSIONS.filter(v => v !== this.version).map(v => singleCacheKey(this.name, v));
 	}
 
 	@bindThis
 	public async set(value: T): Promise<void> {
 		this.memoryCache.set(value);
+		const multi = this.redisClient.multi();
 		if (this.lifetime === Infinity) {
-			await this.redisClient.set(
-				`singlecache:${this.name}`,
-				this.toRedisConverter(value),
-			);
+			multi.set(this.key, this.toRedisConverter(value));
 		} else {
-			await this.redisClient.set(
-				`singlecache:${this.name}`,
-				this.toRedisConverter(value),
-				'EX', Math.round(this.lifetime / 1000),
-			);
+			multi.set(this.key, this.toRedisConverter(value), 'EX', Math.round(this.lifetime / 1000));
 		}
+		const others = this.otherKeys;
+		if (others.length > 0) multi.del(...others);
+		await execOrThrow(multi);
 	}
 
 	@bindThis
@@ -157,7 +223,7 @@ export class RedisSingleCache<T> {
 		const memoryCached = this.memoryCache.get();
 		if (memoryCached !== undefined) return memoryCached;
 
-		const cached = await this.redisClient.get(`singlecache:${this.name}`);
+		const cached = await this.redisClient.get(this.key);
 		if (cached == null) return undefined;
 
 		const value = this.fromRedisConverter(cached);
@@ -171,7 +237,7 @@ export class RedisSingleCache<T> {
 	@bindThis
 	public async delete(): Promise<void> {
 		this.memoryCache.delete();
-		await this.redisClient.del(`singlecache:${this.name}`);
+		await this.redisClient.del(this.key, ...this.otherKeys);
 	}
 
 	/**

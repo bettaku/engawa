@@ -123,6 +123,8 @@ export class CacheService implements OnApplicationShutdown {
 			fetcher: async (key) => null,
 			toRedisConverter: (value) => JSON.stringify(value),
 			fromRedisConverter: (value) => JSON.parse(value),
+			// 認証状態でDBから再生成できないので、版を切り替えない（P2-1の対象外。付録A）
+			version: null,
 		});
 		this.redisForSub.on('message', this.onMessage);
 	}
