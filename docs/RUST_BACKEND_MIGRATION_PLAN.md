@@ -38,13 +38,13 @@ CherryPick縁側フォークのバックエンドを、既存ユーザー・ク�
 | ジョブ・定期処理 | [QueueService](../packages/backend/src/core/QueueService.ts)、[QueueProcessorService](../packages/backend/src/queue/QueueProcessorService.ts)、[processors](../packages/backend/src/queue/processors)。BullMQと39のprocessorファイル | 再試行、遅延・定期ジョブ、ロック、失敗管理、並列度、予約投稿・自動削除 |
 | 連合 | [ActivityPubServerService](../packages/backend/src/server/ActivityPubServerService.ts)、[core/activitypub](../packages/backend/src/core/activitypub)、[InboxProcessorService](../packages/backend/src/queue/processors/InboxProcessorService.ts) | Actor / Object URI、署名鍵、署名検証、配送・再送、フォロー・移行・削除、拡張プロパティ |
 | メディア・外部接続 | [DriveService](../packages/backend/src/core/DriveService.ts)、[FileServerService](../packages/backend/src/server/FileServerService.ts)、[backend/package.json](../packages/backend/package.json) | ローカル／S3互換ストレージ、ファイルURL、画像・動画処理、URLプレビュー、メール、Web Push、Webhook |
-| 検索 | [SearchService](../packages/backend/src/core/SearchService.ts)、[config.ts](../packages/backend/src/config.ts) | `sqlLike`、`sqlPgroonga`、Meilisearch、Elasticsearchの各コード経路、公開範囲・検索許可、検索条件・索引更新 |
+| 検索 | [SearchService](../packages/backend/src/core/SearchService.ts)、[config.ts](../packages/backend/src/config.ts) | `sqlLike`、`sqlPgroonga`、Elasticsearchの各コード経路、公開範囲・検索許可、検索条件・索引更新（Meilisearchの経路は削除済み） |
 | その他の機能 | [CoreModule](../packages/backend/src/core/CoreModule.ts)、[ChatService](../packages/backend/src/core/ChatService.ts)、API一覧 | チャットとその連合、アンテナ、リスト、チャンネル、クリップ、ページ、ギャラリー、Play、ロール、モデレーション、インポート／エクスポート |
 | SDK・検証・配布 | [ルートpackage.json](../package.json)、[backend tests](../packages/backend/test)、[連合テスト](../packages/backend/test-federation/README.md)、[Dockerfile](../Dockerfile) | 型生成、既存テスト、Docker・systemd、更新・復旧手順 |
 
 448はファイル数であり、公開ルート数や移行工数を表すものではない。フェーズ0で実際のルート・ジョブ・定期処理を一覧化する。
 
-このフォーク固有の`private`公開範囲、`isIndexable`、予約・自動削除、チャット連合などを独立した受入項目にする。[フォーク差分資料](jp/Difference.md)と[変更履歴](../CHANGELOG_engawa.md)も参照するが、資料にはMeilisearch削除の記述がある一方で現行コードには経路が残っている。対応範囲はコード・設定仕様・運用実績を照合して確定し、資料の記述だけで機能を落とさない。
+このフォーク固有の`private`公開範囲、`isIndexable`、予約・自動削除、チャット連合などを独立した受入項目にする。[フォーク差分資料](jp/Difference.md)と[変更履歴](../CHANGELOG_engawa.md)も参照するが、対応範囲はコード・設定仕様・運用実績を照合して確定し、資料の記述だけで機能を落とさない。
 
 さらに、[ノート編集](../packages/backend/src/core/NoteUpdateService.ts)・[履歴](../packages/backend/src/core/NoteHistoryService.ts)・[下書き](../packages/backend/src/core/NoteDraftService.ts)、Bubbleやcatsを含むタイムライン、独自翻訳、リモートファイル用ストレージの分離を担当表に記載する。本家Misskeyの機能一覧だけを移行対象の根拠にしない。
 

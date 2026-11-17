@@ -57,10 +57,7 @@ function prepare(
 	warnings: Diagnostic[],
 ): unknown {
 	const deprecated = field['x-deprecation'];
-	if (
-		deprecated ||
-		(path === '/fulltextSearch/provider' && value === 'meilisearch')
-	) {
+	if (deprecated) {
 		const message =
 			deprecated === 'no-effect'
 				? 'This option has no effect.'
