@@ -183,7 +183,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 					case 'checkModeratorsActivity': return this.checkModeratorsActivityProcessorService.process();
 					case 'clean': return this.cleanProcessorService.process();
 					case 'cleanRemoteNotes': return this.cleanRemoteNotesProcessorService.process(job);
-					case 'autoDeleteNotes': return this.autoDeleteNotesProcessorService.process(job);
+					case 'autoDeleteNotes': return this.autoDeleteNotesProcessorService.process();
 					case 'reconcileScheduledNoteDeletes': return this.scheduledNoteDeleteProcessorService.reconcile();
 					case 'reconcileScheduledNotePosts': return this.postScheduledNoteProcessorService.reconcile();
 					default: throw new Error(`unrecognized job type ${job.name} for system`);
@@ -244,6 +244,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 					case 'importAntennas': return this.importAntennasProcessorService.process(job);
 					case 'deleteAccount': return this.deleteAccountProcessorService.process(job);
 					case 'truncateAccount': return this.truncateAccountProcessorService.process(job);
+					case 'autoDeleteUserNotes': return this.autoDeleteNotesProcessorService.processUser(job);
 					case 'reportAbuse': return this.reportAbuseProcessorService.process(job);
 					default: throw new Error(`unrecognized job type ${job.name} for db`);
 				}
@@ -492,7 +493,6 @@ export class QueueProcessorService implements OnApplicationShutdown {
 				switch (job.name) {
 					case 'deleteFile': return this.deleteFileProcessorService.process(job);
 					case 'cleanRemoteFiles': return this.cleanRemoteFilesProcessorService.process(job);
-					case 'autoDeleteNotes': return this.autoDeleteNotesProcessorService.process(job);
 					default: throw new Error(`unrecognized job type ${job.name} for objectStorage`);
 				}
 			};
