@@ -11,48 +11,29 @@ import { bindThis } from '@/decorators.js';
 import type { MiUser, NotesRepository } from '@/models/_.js';
 import type { Config } from '@/config.js';
 import { PER_NOTE_REACTION_USER_PAIR_CACHE_MAX } from '@/const.js';
-import type { GlobalEvents } from '@/core/GlobalEventService.js';
-import type { OnApplicationShutdown } from '@nestjs/common';
+import type Logger from '@/logger.js';
+import { LoggerService } from '@/core/LoggerService.js';
 
 const REDIS_DELTA_PREFIX = 'reactionsBufferDeltas';
 const REDIS_PAIR_PREFIX = 'reactionsBufferPairs';
 
 @Injectable()
-export class ReactionsBufferingService implements OnApplicationShutdown {
+export class ReactionsBufferingService {
+	private logger: Logger;
+
 	constructor(
 		@Inject(DI.config)
 		private config: Config,
-
-		@Inject(DI.redisForSub)
-		private redisForSub: Redis.Redis,
 
 		@Inject(DI.redisForReactions)
 		private redisForReactions: Redis.Redis, // TODO: 専用のRedisインスタンスにする
 
 		@Inject(DI.notesRepository)
 		private notesRepository: NotesRepository,
+
+		loggerService: LoggerService,
 	) {
-		this.redisForSub.on('message', this.onMessage);
-	}
-
-	@bindThis
-	private async onMessage(_: string, data: string) {
-		const obj = JSON.parse(data);
-
-		if (obj.channel === 'internal') {
-			const { type, body } = obj.message as GlobalEvents['internal']['payload'];
-			switch (type) {
-				case 'metaUpdated': {
-					// リアクションバッファリングが有効→無効になったら即bake
-					if (body.before != null && body.before.enableReactionsBuffering && !body.after.enableReactionsBuffering) {
-						this.bake();
-					}
-					break;
-				}
-				default:
-					break;
-			}
-		}
+		this.logger = loggerService.getLogger('reactions-buffering');
 	}
 
 	@bindThis
@@ -169,6 +150,7 @@ export class ReactionsBufferingService implements OnApplicationShutdown {
 		}
 		await pipeline.exec();
 
+		let failed = 0;
 		// TODO: SQL一個にまとめたい
 		for (const [noteId, buffered] of bufferedMap) {
 			const sql = Object.entries(buffered.deltas)
@@ -176,13 +158,49 @@ export class ReactionsBufferingService implements OnApplicationShutdown {
 					`jsonb_set("reactions", '{${reaction}}', (COALESCE("reactions"->>'${reaction}', '0')::int + ${count})::text::jsonb)`)
 				.join(' || ');
 
-			this.notesRepository.createQueryBuilder().update()
-				.set({
-					reactions: () => sql,
-					reactionAndUserPairCache: buffered.pairs.map(x => x.join('/')),
-				})
-				.where('id = :id', { id: noteId })
-				.execute();
+			try {
+				await this.notesRepository.createQueryBuilder().update()
+					.set({
+						reactions: () => sql,
+						reactionAndUserPairCache: buffered.pairs.map(x => x.join('/')),
+					})
+					.where('id = :id', { id: noteId })
+					.execute();
+			} catch (err) {
+				// 差分キーは削除済みなので、反映できなかった差分を戻して次回に再試行する。後続のノートは処理を続ける
+				failed++;
+				this.logger.error(`Failed to bake buffered reactions of ${noteId}`, { err });
+				await this.restoreBuffered(noteId, buffered);
+			}
+		}
+
+		if (failed > 0) {
+			throw new Error(`Failed to bake buffered reactions of ${failed} note(s). They will be retried on the next run.`);
+		}
+	}
+
+	/**
+	 * 反映できなかった差分とペアを、次回に再試行できるようバッファへ戻す。
+	 * その間に届いたリアクションの差分には加算し、ペアは古いものとして先頭側に入れる。
+	 */
+	@bindThis
+	private async restoreBuffered(noteId: MiNote['id'], buffered: { deltas: Record<string, number>; pairs: ([MiUser['id'], string])[] }): Promise<void> {
+		try {
+			const multi = this.redisForReactions.multi();
+			for (const [reaction, count] of Object.entries(buffered.deltas)) {
+				multi.hincrby(`${REDIS_DELTA_PREFIX}:${noteId}`, reaction, count);
+			}
+			for (let i = 0; i < buffered.pairs.length; i++) {
+				multi.zadd(`${REDIS_PAIR_PREFIX}:${noteId}`, 'NX', i, buffered.pairs[i].join('/'));
+			}
+			multi.zremrangebyrank(`${REDIS_PAIR_PREFIX}:${noteId}`, 0, -(PER_NOTE_REACTION_USER_PAIR_CACHE_MAX + 1));
+			const results = await multi.exec();
+			if (results == null) throw new Error('Transaction was aborted');
+			for (const [err] of results) {
+				if (err) throw err;
+			}
+		} catch (err) {
+			this.logger.error(`Failed to restore buffered reactions of ${noteId}. Lost deltas: ${JSON.stringify(buffered.deltas)}`, { err });
 		}
 	}
 
@@ -197,15 +215,5 @@ export class ReactionsBufferingService implements OnApplicationShutdown {
 			}
 		}
 		return reactions;
-	}
-
-	@bindThis
-	public dispose(): void {
-		this.redisForSub.off('message', this.onMessage);
-	}
-
-	@bindThis
-	public onApplicationShutdown(signal?: string | undefined): void {
-		this.dispose();
 	}
 }
