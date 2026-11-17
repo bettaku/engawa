@@ -15,6 +15,7 @@ import { IdService } from '@/core/IdService.js';
 import { CoreModule } from '@/core/CoreModule.js';
 import { GlobalModule } from '@/GlobalModule.js';
 import { LoggerService } from '@/core/LoggerService.js';
+import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
 import { ReactionsBufferingService, addReactionDeltasSql } from '@/core/ReactionsBufferingService.js';
 import { secureRndstr } from '@/misc/secure-rndstr.js';
 
@@ -126,15 +127,19 @@ describe('ReactionsBufferingService', () => {
 			const note = await createNote();
 			const bob = await createUser();
 			await react(note, '👍', bob);
-			// バッファリングを無効にした後、バッファを使わない経路で🍮に変えた
+			// バッファリングを無効にした後、バッファを使わない経路で🍮に変えた（👍を-1、🍮を+1）
 			await noteReactionsRepository.update({ noteId: note.id, userId: bob.id }, { reaction: '🍮' });
-			await notesRepository.update(note.id, { reactions: { '🍮': 1 }, reactionAndUserPairCache: [`${bob.id}/🍮`] });
+			await notesRepository.update(note.id, { reactions: { '👍': -1, '🍮': 1 }, reactionAndUserPairCache: [`${bob.id}/🍮`] });
 
 			await service.bake();
 
 			const baked = await notesRepository.findOneByOrFail({ id: note.id });
-			expect(baked.reactions).toEqual({ '👍': 1, '🍮': 1 });
+			expect(baked.reactions).toEqual({ '👍': 0, '🍮': 1 });
 			expect(baked.reactionAndUserPairCache).toEqual([`${bob.id}/🍮`]);
+			// 合計1件・キャッシュ1件なので、キャッシュだけで自分のリアクションを決める
+			const noteEntityService = app.get(NoteEntityService);
+			noteEntityService.onModuleInit();
+			expect(await noteEntityService.populateMyReaction(baked, bob.id)).toBe('🍮');
 		});
 
 		test('同じバッチの取り出しが再送されても、取り出し済みの差分を上書きしない', async () => {
@@ -163,6 +168,25 @@ describe('ReactionsBufferingService', () => {
 			await react(note, 'b');
 
 			await service.takeOut(note.id, batch.batchId);
+			expect((await service.get(note.id)).deltas).toEqual({ b: 1 });
+
+			await service.bake();
+
+			expect(await reactionsOf(note)).toEqual({ a: 1, b: 1 });
+		});
+
+		test('期限を過ぎて届いた取り出しの再送は、印が消えていても何もしない', async () => {
+			const note = await createNote();
+			await react(note, 'a');
+			const batch = await service.takeOut(note.id);
+			assert.ok(batch != null);
+			await service.applyBatch(batch);
+			await service.cleanupBatch(batch);
+			// 印の期限が切れた後に、同じEVALの再送が届いた
+			await redis.del(`reactionsBufferProcessing:${note.id}:${batch.batchId}:taken`);
+			await react(note, 'b');
+
+			expect(await service.takeOut(note.id, batch.batchId, Date.now() - 60 * 1000)).toBeNull();
 			expect((await service.get(note.id)).deltas).toEqual({ b: 1 });
 
 			await service.bake();

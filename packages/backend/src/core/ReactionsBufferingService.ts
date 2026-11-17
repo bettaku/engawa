@@ -22,19 +22,30 @@ const REDIS_PROCESSING_PREFIX = 'reactionsBufferProcessing';
 const REDIS_PROCESSING_SET = 'reactionsBufferProcessingBatches';
 
 /**
- * 取り出しの済んだバッチの印を残す期間。ioredisは再接続のときに応答のなかったコマンドを再送するので、
- * 同じバッチの取り出しが遅れて再実行されても、印があれば何もしない。
+ * 取り出しを実行してよい期限（呼び出しからの時間）。ioredisは再接続のときに応答のなかったコマンドを再送し、
+ * `maxRetriesPerRequest: null`では再送までの時間に上限がない。期限を過ぎて実行された取り出しは何もしない。
+ */
+const TAKE_OUT_DEADLINE_MS = 1000 * 60 * 60;
+
+/**
+ * 取り出しの済んだバッチの印を残す期間。期限（TAKE_OUT_DEADLINE_MS）より長くする。
+ * 期限内に同じバッチの取り出しが再送されても、印があれば何もしない。
  */
 const TAKE_OUT_MARKER_TTL_SECONDS = 60 * 60 * 24;
 
 /**
  * KEYS: 差分キー、ペアキー、processingの差分キー、processingのペアキー、バッチの集合、取り出し済みの印
- * ARGV: バッチの集合に登録する値、印の有効期間（秒）
+ * ARGV: バッチの集合に登録する値、印の有効期間（秒）、実行してよい期限（UNIXミリ秒）
  *
- * 同じバッチで再実行されたとき（再送）は、取り出し済みのprocessingキーを上書きしないよう、何もせずに1を返す。
- * 後始末の後に再送が届いても、印は後始末で消さないので同じように扱う。
+ * - 期限を過ぎていれば何もせずに0を返す（遅れて届いた再送が、新しい差分を古いバッチで取り出さないように）
+ * - 同じバッチで再実行されたとき（期限内の再送）は、取り出し済みのprocessingキーを上書きしないよう、何もせずに1を返す。
+ *   印は後始末で消さないので、後始末の後に再送が届いても同じように扱う
  */
 const TAKE_OUT_SCRIPT = `
+local now = redis.call('TIME')
+if tonumber(now[1]) * 1000 + math.floor(tonumber(now[2]) / 1000) > tonumber(ARGV[3]) then
+	return 0
+end
 if redis.call('EXISTS', KEYS[6]) == 1 then
 	return 1
 end
@@ -260,7 +271,7 @@ export class ReactionsBufferingService {
 	 * @returns 差分がなければnull
 	 */
 	@bindThis
-	public async takeOut(noteId: MiNote['id'], batchId: string = randomUUID()): Promise<BufferedBatch | null> {
+	public async takeOut(noteId: MiNote['id'], batchId: string = randomUUID(), deadline: number = Date.now() + TAKE_OUT_DEADLINE_MS): Promise<BufferedBatch | null> {
 		const batch: BufferedBatch = { noteId, batchId };
 		const keys = processingKeysOf(batch);
 		const moved = await this.redisForReactions.eval(
@@ -274,6 +285,7 @@ export class ReactionsBufferingService {
 			keys.takenMarker,
 			batchMemberOf(batch),
 			TAKE_OUT_MARKER_TTL_SECONDS,
+			deadline,
 		);
 		return moved === 1 ? batch : null;
 	}
