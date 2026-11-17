@@ -317,6 +317,18 @@ describe('NoteDeleteService', () => {
 			expect(await repliesCountOf(parent)).toBe(0);
 		});
 
+		test('公開範囲がspecifiedの純粋なRenoteは、配送せずに他の副作用を実行する', async () => {
+			const target = await createNote({}, carol);
+			const renote = await createNote({ text: null, renoteId: target.id, renoteUserId: carol.id, visibility: 'specified' }, alice);
+
+			const deleted = await service.deleteMany(alice, [renote], { effects: ALL_NOTE_DELETE_EFFECTS });
+
+			expect(deleted).toHaveLength(1);
+			expect(deliverToFollowers).not.toHaveBeenCalled();
+			expect(deletedEventsOf(renote)).toHaveLength(1);
+			expect(unindexNote).toHaveBeenCalledTimes(1);
+		});
+
 		test('空の配列では何もしない', async () => {
 			expect(await service.deleteMany(alice, [], { effects: ALL_NOTE_DELETE_EFFECTS })).toEqual([]);
 		});

@@ -326,6 +326,10 @@ export class NoteDeleteService {
 
 			const renote = context.renote;
 
+			// 公開範囲がspecifiedの純粋なRenoteは、作成時もrenderAnnounceが例外を投げるのでAnnounceを配送していない。
+			// 取り消す配送がないので、何も配送しない
+			if (renote && !['public', 'home', 'followers'].includes(note.visibility)) return;
+
 			const content = this.apRendererService.addContext(renote
 				? this.apRendererService.renderUndo(this.apRendererService.renderAnnounce(renote.uri ?? `${this.config.url}/notes/${renote.id}`, note), user)
 				: this.apRendererService.renderDelete(this.apRendererService.renderTombstone(`${this.config.url}/notes/${note.id}`), user));
