@@ -11,12 +11,16 @@ import { bindThis } from '@/decorators.js';
 import type { MiUser, NotesRepository } from '@/models/_.js';
 import type { Config } from '@/config.js';
 import { PER_NOTE_REACTION_USER_PAIR_CACHE_MAX } from '@/const.js';
+import type Logger from '@/logger.js';
+import { LoggerService } from '@/core/LoggerService.js';
 
 const REDIS_DELTA_PREFIX = 'reactionsBufferDeltas';
 const REDIS_PAIR_PREFIX = 'reactionsBufferPairs';
 
 @Injectable()
 export class ReactionsBufferingService {
+	private logger: Logger;
+
 	constructor(
 		@Inject(DI.config)
 		private config: Config,
@@ -26,7 +30,10 @@ export class ReactionsBufferingService {
 
 		@Inject(DI.notesRepository)
 		private notesRepository: NotesRepository,
+
+		loggerService: LoggerService,
 	) {
+		this.logger = loggerService.getLogger('reactions-buffering');
 	}
 
 	@bindThis
@@ -143,6 +150,7 @@ export class ReactionsBufferingService {
 		}
 		await pipeline.exec();
 
+		let failed = 0;
 		// TODO: SQL一個にまとめたい
 		for (const [noteId, buffered] of bufferedMap) {
 			const sql = Object.entries(buffered.deltas)
@@ -150,13 +158,37 @@ export class ReactionsBufferingService {
 					`jsonb_set("reactions", '{${reaction}}', (COALESCE("reactions"->>'${reaction}', '0')::int + ${count})::text::jsonb)`)
 				.join(' || ');
 
-			await this.notesRepository.createQueryBuilder().update()
-				.set({
-					reactions: () => sql,
-					reactionAndUserPairCache: buffered.pairs.map(x => x.join('/')),
-				})
-				.where('id = :id', { id: noteId })
-				.execute();
+			try {
+				await this.notesRepository.createQueryBuilder().update()
+					.set({
+						reactions: () => sql,
+						reactionAndUserPairCache: buffered.pairs.map(x => x.join('/')),
+					})
+					.where('id = :id', { id: noteId })
+					.execute();
+			} catch (err) {
+				// 差分キーは削除済みなので、反映できなかった差分を戻して次回に再試行する。後続のノートは処理を続ける
+				failed++;
+				this.logger.error(`Failed to bake buffered reactions of ${noteId}`, { err });
+				await this.restoreDeltas(noteId, buffered.deltas);
+			}
+		}
+
+		if (failed > 0) {
+			throw new Error(`Failed to bake buffered reactions of ${failed} note(s). They will be retried on the next run.`);
+		}
+	}
+
+	@bindThis
+	private async restoreDeltas(noteId: MiNote['id'], deltas: Record<string, number>): Promise<void> {
+		try {
+			const pipeline = this.redisForReactions.pipeline();
+			for (const [reaction, count] of Object.entries(deltas)) {
+				pipeline.hincrby(`${REDIS_DELTA_PREFIX}:${noteId}`, reaction, count);
+			}
+			await pipeline.exec();
+		} catch (err) {
+			this.logger.error(`Failed to restore buffered reactions of ${noteId}. Lost deltas: ${JSON.stringify(deltas)}`, { err });
 		}
 	}
 

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import { vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import type { MiMeta, MiNote, MiUser, NotesRepository, UsersRepository } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
@@ -73,5 +74,42 @@ describe('BakeBufferedReactionsProcessorService', () => {
 		const baked = await notesRepository.findOneByOrFail({ id: note.id });
 		expect(baked.reactions).toEqual({ '👍': 1 });
 		expect((await reactionsBufferingService.get(note.id)).deltas).toEqual({});
+	});
+
+	test('1件のノートの反映に失敗しても、後続のノートを反映し、失敗した差分は次回に再試行する', async () => {
+		const failing = await createNote();
+		const other = await createNote();
+		await reactionsBufferingService.create(failing.id, alice.id, '👍', []);
+		await reactionsBufferingService.create(other.id, alice.id, '👍', []);
+
+		const createQueryBuilder = notesRepository.createQueryBuilder.bind(notesRepository);
+		const spy = vi.spyOn(notesRepository, 'createQueryBuilder').mockImplementation(((alias?: string) => {
+			const qb = createQueryBuilder(alias);
+			const update = qb.update.bind(qb);
+			qb.update = ((...args: Parameters<typeof qb.update>) => {
+				const uqb = update(...args);
+				const where = uqb.where.bind(uqb);
+				uqb.where = ((...whereArgs: Parameters<typeof uqb.where>) => {
+					const params = whereArgs[1] as { id?: string } | undefined;
+					if (params?.id === failing.id) {
+						uqb.execute = () => Promise.reject(new Error('injected failure'));
+					}
+					return where(...whereArgs);
+				}) as typeof uqb.where;
+				return uqb;
+			}) as typeof qb.update;
+			return qb;
+		}) as typeof notesRepository.createQueryBuilder);
+
+		await expect(service.process()).rejects.toThrow();
+		spy.mockRestore();
+
+		expect((await notesRepository.findOneByOrFail({ id: other.id })).reactions).toEqual({ '👍': 1 });
+		expect((await notesRepository.findOneByOrFail({ id: failing.id })).reactions).toEqual({});
+		expect((await reactionsBufferingService.get(failing.id)).deltas).toEqual({ '👍': 1 });
+
+		await service.process();
+
+		expect((await notesRepository.findOneByOrFail({ id: failing.id })).reactions).toEqual({ '👍': 1 });
 	});
 });
