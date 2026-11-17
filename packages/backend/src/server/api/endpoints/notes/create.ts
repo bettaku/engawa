@@ -58,6 +58,12 @@ export const meta = {
 			id: 'be9529e9-fe72-4de0-ae43-0b363c4938af',
 		},
 
+		cannotPureRenoteWithSpecifiedVisibility: {
+			message: 'You can not create a pure Renote with specified visibility. Add text, files or a poll to quote it instead.',
+			code: 'CANNOT_PURE_RENOTE_WITH_SPECIFIED_VISIBILITY',
+			id: '022be62d-802d-49e0-a8bb-f1568a511e1d',
+		},
+
 		noSuchReplyTarget: {
 			message: 'No such reply target.',
 			code: 'NO_SUCH_REPLY_TARGET',
@@ -304,6 +310,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 						throw new ApiError(meta.errors.cannotRenoteDueToVisibility);
 					} else if (err.id === '48d7a997-da5c-4716-b3c3-92db3f37bf7d') {
 						throw new ApiError(meta.errors.cannotRenoteDueToVisibility);
+					} else if (err.id === 'a093350c-a7cf-4293-8dbd-497fb1426e74') {
+						throw new ApiError(meta.errors.cannotPureRenoteWithSpecifiedVisibility);
 					} else if (err.id === 'b060f9a6-8909-4080-9e0b-94d9fa6f6a77') {
 						throw new ApiError(meta.errors.noSuchChannel);
 					} else if (err.id === '7e435f4a-780d-4cfc-a15a-42519bd6fb67') {

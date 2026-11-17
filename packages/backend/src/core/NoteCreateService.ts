@@ -476,6 +476,13 @@ export class NoteCreateService implements OnApplicationShutdown {
 			}
 		}
 
+		// 公開範囲が specified の純粋なRenoteは作らない（Announceとして配送・削除できないため）。引用は許可する
+		// 作成元（API・予約投稿・AP受信）は Option の形で渡ってくるので、misc/is-renote.ts と同期している
+		// this.isRenote / this.isQuote で判定する
+		if (this.isRenote(data) && !this.isQuote(data) && data.visibility === 'specified') {
+			throw new IdentifiableError('a093350c-a7cf-4293-8dbd-497fb1426e74', 'Cannot create pure renote with specified visibility');
+		}
+
 		// Check blocking
 		if (this.isRenote(data) && !this.isQuote(data)) {
 			if (data.renote.userHost === null) {

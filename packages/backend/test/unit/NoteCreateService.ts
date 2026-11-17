@@ -4,6 +4,7 @@
  */
 
 import { Test } from '@nestjs/testing';
+import { afterEach, vi } from 'vitest';
 
 import { CoreModule } from '@/core/CoreModule.js';
 import { NoteCreateService } from '@/core/NoteCreateService.js';
@@ -11,6 +12,7 @@ import { GlobalModule } from '@/GlobalModule.js';
 import { MiNote } from '@/models/Note.js';
 import { IPoll } from '@/models/Poll.js';
 import { MiDriveFile } from '@/models/DriveFile.js';
+import { IdentifiableError } from '@/misc/identifiable-error.js';
 
 describe('NoteCreateService', () => {
 	let noteCreateService: NoteCreateService;
@@ -144,6 +146,89 @@ describe('NoteCreateService', () => {
 			const note = { renote: base, files: [file] };
 			expect(noteCreateService['isRenote'](note)).toBe(true);
 			expect(noteCreateService['isQuote'](note)).toBe(true);
+		});
+	});
+
+	describe('specified visibility pure renote', () => {
+		const user = {
+			id: 'some-user-id',
+			username: 'alice',
+			host: null,
+			isBot: false,
+			isCat: false,
+			isIndexable: false,
+			isSensitive: false,
+		};
+
+		const renoteTarget = {
+			id: 'renote-target-id',
+			userId: 'another-user-id',
+			userHost: null,
+			visibility: 'public',
+			localOnly: false,
+		} as MiNote;
+
+		const visibleUser = { id: 'visible-user-id', username: 'bob', host: null, uri: null };
+
+		function stubInsert() {
+			// DBへの書き込みと後処理は止め、作成処理が insert まで到達したかだけを見る
+			const target = noteCreateService as unknown as {
+				insertNote: () => Promise<MiNote>;
+				postNoteCreated: () => Promise<void>;
+			};
+			const insertNote = vi.spyOn(target, 'insertNote').mockImplementation(async () => ({ id: 'created-note-id' }) as MiNote);
+			const postNoteCreated = vi.spyOn(target, 'postNoteCreated').mockImplementation(async () => {});
+			return { insertNote, postNoteCreated };
+		}
+
+		// 後処理は setImmediate 経由で呼ばれるので、モックを戻す前に走らせておく
+		const flushPostCreated = () => new Promise(resolve => setImmediate(resolve));
+
+		afterEach(async () => {
+			await flushPostCreated();
+			vi.restoreAllMocks();
+		});
+
+		test('pure renote with specified visibility should be rejected', async () => {
+			const { insertNote } = stubInsert();
+
+			const err = await noteCreateService.create(user, {
+				renote: renoteTarget,
+				visibility: 'specified',
+				visibleUsers: [visibleUser],
+			}).catch(e => e);
+
+			expect(err).toBeInstanceOf(IdentifiableError);
+			expect((err as IdentifiableError).id).toBe('a093350c-a7cf-4293-8dbd-497fb1426e74');
+			expect(insertNote).not.toHaveBeenCalled();
+		});
+
+		test('quote with specified visibility should be allowed', async () => {
+			const { insertNote, postNoteCreated } = stubInsert();
+
+			await noteCreateService.create(user, {
+				renote: renoteTarget,
+				text: 'quote text',
+				visibility: 'specified',
+				visibleUsers: [visibleUser],
+			});
+			await flushPostCreated();
+
+			expect(insertNote).toHaveBeenCalledOnce();
+			expect(postNoteCreated).toHaveBeenCalledOnce();
+		});
+
+		test('pure renote with non-specified visibility should be allowed', async () => {
+			const { insertNote, postNoteCreated } = stubInsert();
+
+			await noteCreateService.create(user, {
+				renote: renoteTarget,
+				visibility: 'home',
+			});
+			await flushPostCreated();
+
+			expect(insertNote).toHaveBeenCalledOnce();
+			expect(postNoteCreated).toHaveBeenCalledOnce();
 		});
 	});
 });
