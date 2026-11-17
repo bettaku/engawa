@@ -25,6 +25,8 @@ import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { bindThis } from '@/decorators.js';
 import { SearchService } from '@/core/SearchService.js';
 import { ModerationLogService } from '@/core/ModerationLogService.js';
+import { LoggerService } from '@/core/LoggerService.js';
+import type Logger from '@/logger.js';
 import { isQuote, isRenote } from '@/misc/is-renote.js';
 
 type NoteAuthor = { id: MiUser['id']; uri: MiUser['uri']; host: MiUser['host']; isBot: MiUser['isBot']; };
@@ -99,6 +101,8 @@ export type ScheduledNoteDeleteResult =
  */
 @Injectable()
 export class NoteDeleteService {
+	private logger: Logger;
+
 	constructor(
 		@Inject(DI.config)
 		private config: Config,
@@ -129,7 +133,10 @@ export class NoteDeleteService {
 		private notesChart: NotesChart,
 		private perUserNotesChart: PerUserNotesChart,
 		private instanceChart: InstanceChart,
-	) {}
+		private loggerService: LoggerService,
+	) {
+		this.logger = this.loggerService.getLogger('note-delete');
+	}
 
 	/**
 	 * 投稿を削除します。
@@ -182,7 +189,8 @@ export class NoteDeleteService {
 			return notes.filter(note => deletedIds.has(note.id));
 		}
 
-		const fullNotes = notes as MiNote[];
+		// 同じノートが重複して渡されても、副作用は1回だけ実行する
+		const fullNotes = [...new Map((notes as MiNote[]).map(note => [note.id, note])).values()];
 		const { effects } = options;
 
 		// 配送先は、行を消す前に読んでおく
@@ -194,8 +202,13 @@ export class NoteDeleteService {
 		const deletedIds = await this.deleteRows(this.db.manager, fullNotes.map(note => note.id), user.id);
 		const deletedNotes = fullNotes.filter(note => deletedIds.has(note.id));
 
+		// 行の削除は確定済みなので、1件の副作用が失敗しても、他のノートの副作用は続ける
 		for (const note of deletedNotes) {
-			await this.runEffects(user, note, contexts.get(note.id) ?? EMPTY_CONTEXT, effects);
+			try {
+				await this.runEffects(user, note, contexts.get(note.id) ?? EMPTY_CONTEXT, effects);
+			} catch (err) {
+				this.logger.error(`Failed to run delete effects of note ${note.id}`, { error: err });
+			}
 		}
 
 		return deletedNotes;

@@ -273,6 +273,34 @@ describe('NoteDeleteService', () => {
 			expect(await exists(note)).toBe(true);
 		});
 
+		test('同じノートが重複して渡されても、副作用は1回だけ実行する', async () => {
+			const parent = await createNote({ repliesCount: 1 }, carol);
+			const note = await createNote({ replyId: parent.id, replyUserId: carol.id }, alice);
+
+			const deleted = await service.deleteMany(alice, [note, note], { effects: ALL_NOTE_DELETE_EFFECTS });
+
+			expect(deleted).toHaveLength(1);
+			expect(deletedEventsOf(note)).toHaveLength(1);
+			expect(deliverToFollowers).toHaveBeenCalledTimes(1);
+			expect(await repliesCountOf(parent)).toBe(0);
+		});
+
+		test('1件の副作用が失敗しても、他のノートの副作用は実行する', async () => {
+			const failing = await createNote({}, alice);
+			const other = await createNote({}, alice);
+			publishNoteStream.mockImplementation((n) => {
+				if (n.id === failing.id) throw new Error('boom');
+			});
+
+			const deleted = await service.deleteMany(alice, [failing, other], { effects: ALL_NOTE_DELETE_EFFECTS });
+
+			expect(deleted).toHaveLength(2);
+			expect(await exists(failing)).toBe(false);
+			expect(await exists(other)).toBe(false);
+			expect(deletedEventsOf(other)).toHaveLength(1);
+			expect(unindexNote.mock.calls.map(([n]) => n.id)).toEqual([other.id]);
+		});
+
 		test('空の配列では何もしない', async () => {
 			expect(await service.deleteMany(alice, [], { effects: ALL_NOTE_DELETE_EFFECTS })).toEqual([]);
 		});
