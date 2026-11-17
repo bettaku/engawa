@@ -6,7 +6,7 @@
 import { vi } from 'vitest';
 import type * as Redis from 'ioredis';
 import { Test, TestingModule } from '@nestjs/testing';
-import type { MiMeta, MiNote, MiUser, NotesRepository, UsersRepository } from '@/models/_.js';
+import type { MiMeta, MiNote, MiUser, NoteReactionsRepository, NotesRepository, UsersRepository } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
 import { IdService } from '@/core/IdService.js';
 import { CoreModule } from '@/core/CoreModule.js';
@@ -84,6 +84,7 @@ describe('BakeBufferedReactionsProcessorService', () => {
 	test('1件のノートの反映に失敗しても、後続のノートを反映し、失敗したバッチは次回に再試行する', async () => {
 		const failing = await createNote();
 		const other = await createNote();
+		await app.get<NoteReactionsRepository>(DI.noteReactionsRepository).insert({ id: idService.gen(), noteId: failing.id, userId: alice.id, reaction: '👍' });
 		await reactionsBufferingService.create(failing.id, alice.id, '👍', []);
 		await reactionsBufferingService.create(other.id, alice.id, '👍', []);
 

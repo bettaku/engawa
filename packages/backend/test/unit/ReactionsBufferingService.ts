@@ -8,7 +8,7 @@ import { vi } from 'vitest';
 import * as Redis from 'ioredis';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DataSource, EntityManager } from 'typeorm';
-import type { MiNote, MiUser, NotesRepository, UsersRepository } from '@/models/_.js';
+import type { MiNote, MiUser, NoteReactionsRepository, NotesRepository, UsersRepository } from '@/models/_.js';
 import type { Config } from '@/config.js';
 import { DI } from '@/di-symbols.js';
 import { IdService } from '@/core/IdService.js';
@@ -25,6 +25,7 @@ describe('ReactionsBufferingService', () => {
 	let db: DataSource;
 	let redis: Redis.Redis;
 	let notesRepository: NotesRepository;
+	let noteReactionsRepository: NoteReactionsRepository;
 	let usersRepository: UsersRepository;
 	let alice: MiUser;
 
@@ -52,8 +53,11 @@ describe('ReactionsBufferingService', () => {
 		return (await notesRepository.findOneByOrFail({ id: note.id })).reactions;
 	}
 
+	/** ReactionServiceと同じく、note_reactionの行を作ってからバッファに記録する */
 	async function react(note: Pick<MiNote, 'id'>, reaction: string, user?: MiUser) {
-		await service.create(note.id, (user ?? await createUser()).id, reaction, []);
+		const reactor = user ?? await createUser();
+		await noteReactionsRepository.insert({ id: idService.gen(), noteId: note.id, userId: reactor.id, reaction });
+		await service.create(note.id, reactor.id, reaction, []);
 	}
 
 	async function processingBatches(): Promise<string[]> {
@@ -62,7 +66,8 @@ describe('ReactionsBufferingService', () => {
 
 	async function processingKeysOf(note: Pick<MiNote, 'id'>): Promise<string[]> {
 		const keyPrefix = redis.options.keyPrefix ?? '';
-		return await redis.keys(`${keyPrefix}reactionsBufferProcessing:${note.id}:*`);
+		// 取り出し済みの印（:taken）は再送に備えて後始末で消さず、期限で消える
+		return (await redis.keys(`${keyPrefix}reactionsBufferProcessing:${note.id}:*`)).filter(key => !key.endsWith(':taken'));
 	}
 
 	beforeAll(async () => {
@@ -77,6 +82,7 @@ describe('ReactionsBufferingService', () => {
 		db = app.get(DI.db);
 		redis = app.get(DI.redisForReactions);
 		notesRepository = app.get(DI.notesRepository);
+		noteReactionsRepository = app.get(DI.noteReactionsRepository);
 		usersRepository = app.get(DI.usersRepository);
 
 		alice = await createUser();
@@ -114,6 +120,54 @@ describe('ReactionsBufferingService', () => {
 			await service.bake();
 
 			expect((await notesRepository.findOneByOrFail({ id: note.id })).reactionAndUserPairCache).toEqual([`${bob.id}/👍`]);
+		});
+
+		test('ペアのキャッシュは、バッファのスナップショットではなくnote_reactionから作り直す', async () => {
+			const note = await createNote();
+			const bob = await createUser();
+			await react(note, '👍', bob);
+			// バッファリングを無効にした後、バッファを使わない経路で🍮に変えた
+			await noteReactionsRepository.update({ noteId: note.id, userId: bob.id }, { reaction: '🍮' });
+			await notesRepository.update(note.id, { reactions: { '🍮': 1 }, reactionAndUserPairCache: [`${bob.id}/🍮`] });
+
+			await service.bake();
+
+			const baked = await notesRepository.findOneByOrFail({ id: note.id });
+			expect(baked.reactions).toEqual({ '👍': 1, '🍮': 1 });
+			expect(baked.reactionAndUserPairCache).toEqual([`${bob.id}/🍮`]);
+		});
+
+		test('同じバッチの取り出しが再送されても、取り出し済みの差分を上書きしない', async () => {
+			const note = await createNote();
+			await react(note, 'a');
+			const batch = await service.takeOut(note.id);
+			assert.ok(batch != null);
+			await react(note, 'b');
+
+			// ioredisが再接続のときに同じEVALを再送した
+			expect(await service.takeOut(note.id, batch.batchId)).toEqual(batch);
+			expect((await service.get(note.id)).deltas).toEqual({ b: 1 });
+
+			await service.bake();
+
+			expect(await reactionsOf(note)).toEqual({ a: 1, b: 1 });
+		});
+
+		test('後始末の後に同じバッチの取り出しが再送されても、新しい差分を取り込まない', async () => {
+			const note = await createNote();
+			await react(note, 'a');
+			const batch = await service.takeOut(note.id);
+			assert.ok(batch != null);
+			await service.applyBatch(batch);
+			await service.cleanupBatch(batch);
+			await react(note, 'b');
+
+			await service.takeOut(note.id, batch.batchId);
+			expect((await service.get(note.id)).deltas).toEqual({ b: 1 });
+
+			await service.bake();
+
+			expect(await reactionsOf(note)).toEqual({ a: 1, b: 1 });
 		});
 
 		test('取り出した後に届いたリアクションは、次のバッチで反映する', async () => {

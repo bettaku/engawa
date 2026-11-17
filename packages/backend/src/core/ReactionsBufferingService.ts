@@ -22,13 +22,26 @@ const REDIS_PROCESSING_PREFIX = 'reactionsBufferProcessing';
 const REDIS_PROCESSING_SET = 'reactionsBufferProcessingBatches';
 
 /**
- * KEYS: 差分キー、ペアキー、processingの差分キー、processingのペアキー、バッチの集合
- * ARGV: バッチの集合に登録する値
+ * 取り出しの済んだバッチの印を残す期間。ioredisは再接続のときに応答のなかったコマンドを再送するので、
+ * 同じバッチの取り出しが遅れて再実行されても、印があれば何もしない。
+ */
+const TAKE_OUT_MARKER_TTL_SECONDS = 60 * 60 * 24;
+
+/**
+ * KEYS: 差分キー、ペアキー、processingの差分キー、processingのペアキー、バッチの集合、取り出し済みの印
+ * ARGV: バッチの集合に登録する値、印の有効期間（秒）
+ *
+ * 同じバッチで再実行されたとき（再送）は、取り出し済みのprocessingキーを上書きしないよう、何もせずに1を返す。
+ * 後始末の後に再送が届いても、印は後始末で消さないので同じように扱う。
  */
 const TAKE_OUT_SCRIPT = `
+if redis.call('EXISTS', KEYS[6]) == 1 then
+	return 1
+end
 if redis.call('EXISTS', KEYS[1]) == 0 then
 	return 0
 end
+redis.call('SET', KEYS[6], '1', 'EX', ARGV[2])
 redis.call('RENAME', KEYS[1], KEYS[3])
 if redis.call('EXISTS', KEYS[2]) == 1 then
 	redis.call('RENAME', KEYS[2], KEYS[4])
@@ -47,6 +60,7 @@ function processingKeysOf(batch: BufferedBatch) {
 	return {
 		deltas: `${base}:deltas`,
 		pairs: `${base}:pairs`,
+		takenMarker: `${base}:taken`,
 	};
 }
 
@@ -246,18 +260,20 @@ export class ReactionsBufferingService {
 	 * @returns 差分がなければnull
 	 */
 	@bindThis
-	public async takeOut(noteId: MiNote['id']): Promise<BufferedBatch | null> {
-		const batch: BufferedBatch = { noteId, batchId: randomUUID() };
+	public async takeOut(noteId: MiNote['id'], batchId: string = randomUUID()): Promise<BufferedBatch | null> {
+		const batch: BufferedBatch = { noteId, batchId };
 		const keys = processingKeysOf(batch);
 		const moved = await this.redisForReactions.eval(
 			TAKE_OUT_SCRIPT,
-			5,
+			6,
 			`${REDIS_DELTA_PREFIX}:${noteId}`,
 			`${REDIS_PAIR_PREFIX}:${noteId}`,
 			keys.deltas,
 			keys.pairs,
 			REDIS_PROCESSING_SET,
+			keys.takenMarker,
 			batchMemberOf(batch),
+			TAKE_OUT_MARKER_TTL_SECONDS,
 		);
 		return moved === 1 ? batch : null;
 	}
@@ -268,12 +284,7 @@ export class ReactionsBufferingService {
 	@bindThis
 	public async applyBatch(batch: BufferedBatch): Promise<void> {
 		const keys = processingKeysOf(batch);
-		const [[deltasErr, rawDeltas], [pairsErr, rawPairs]] = (await this.redisForReactions.pipeline()
-			.hgetall(keys.deltas)
-			.zrange(keys.pairs, 0, -1)
-			.exec()) as [[Error | null, Record<string, string>], [Error | null, string[]]];
-		if (deltasErr) throw deltasErr;
-		if (pairsErr) throw pairsErr;
+		const rawDeltas = await this.redisForReactions.hgetall(keys.deltas);
 
 		// processingキーはコミットした後にしか消さないので、キーがなければ適用済み
 		if (Object.keys(rawDeltas).length === 0) return;
@@ -290,12 +301,18 @@ export class ReactionsBufferingService {
 			);
 			if (inserted.length === 0) return;
 
+			// ペアのキャッシュは、バッファのペア（リアクションした時点のスナップショット）ではなく、
+			// note_reactionから作り直す。スナップショットで置き換えると、バッファを使わない経路で
+			// 変更されたペアを古い値に戻してしまう
 			await em.createQueryBuilder().update(MiNote)
 				.set({
 					reactions: () => addReactionDeltasSql('reactionDeltas'),
-					reactionAndUserPairCache: rawPairs,
+					reactionAndUserPairCache: () => 'ARRAY(SELECT "nr"."userId" || \'/\' || "nr"."reaction" FROM "note_reaction" "nr" WHERE "nr"."noteId" = :id ORDER BY "nr"."id" DESC LIMIT :pairCacheMax)',
 				})
-				.setParameter('reactionDeltas', JSON.stringify(deltas))
+				.setParameters({
+					reactionDeltas: JSON.stringify(deltas),
+					pairCacheMax: PER_NOTE_REACTION_USER_PAIR_CACHE_MAX,
+				})
 				.where('id = :id', { id: batch.noteId })
 				.execute();
 		});
