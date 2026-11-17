@@ -38,6 +38,10 @@ type NoteAuthor = { id: MiUser['id']; uri: MiUser['uri']; host: MiUser['host']; 
 export type NoteDeleteEffects = {
 	/** 返信先のrepliesCountを減らす */
 	repliesCount: boolean;
+	/** Renote先（引用を含む）のrenoteCountを、作成時に加算した場合と同じ条件で減らす */
+	renoteCount: boolean;
+	/** 投稿者のnotesCountを減らす */
+	notesCount: boolean;
 	/** ストリームに削除を流す */
 	stream: boolean;
 	/** ローカルのノートなら、Delete（引用でないRenoteならUndo Announce）を配送する */
@@ -53,6 +57,8 @@ export type NoNoteDeleteEffects = { readonly [K in keyof NoteDeleteEffects]: fal
 
 export const ALL_NOTE_DELETE_EFFECTS: Readonly<NoteDeleteEffects> = Object.freeze({
 	repliesCount: true,
+	renoteCount: true,
+	notesCount: true,
 	stream: true,
 	deliver: true,
 	stats: true,
@@ -61,16 +67,20 @@ export const ALL_NOTE_DELETE_EFFECTS: Readonly<NoteDeleteEffects> = Object.freez
 
 export const NO_NOTE_DELETE_EFFECTS: NoNoteDeleteEffects = Object.freeze({
 	repliesCount: false,
+	renoteCount: false,
+	notesCount: false,
 	stream: false,
 	deliver: false,
 	stats: false,
 	unindex: false,
 });
 
-/** `delete`の`quiet`。返信数と検索索引だけを整合させ、外部に見える副作用は出さない */
+/** `delete`の`quiet`。カウンタと検索索引だけを整合させ、外部に見える副作用は出さない */
 const QUIET_NOTE_DELETE_EFFECTS: Readonly<NoteDeleteEffects> = Object.freeze({
 	...NO_NOTE_DELETE_EFFECTS,
 	repliesCount: true,
+	renoteCount: true,
+	notesCount: true,
 	unindex: true,
 });
 
@@ -312,6 +322,23 @@ export class NoteDeleteService {
 			if (note.replyId) {
 				await this.notesRepository.decrement({ id: note.replyId }, 'repliesCount', 1);
 			}
+		});
+
+		await step('renoteCount', async () => {
+			// 作成時（NoteCreateService.incRenoteCount）と同じ条件: Renote先の投稿者以外で、botでない投稿者のRenote・引用
+			if (note.renoteId == null || user.isBot) return;
+			await this.notesRepository.createQueryBuilder().update()
+				.set({ renoteCount: () => 'GREATEST("renoteCount" - 1, 0)' })
+				.where('id = :renoteId', { renoteId: note.renoteId })
+				.andWhere('"userId" != :authorId', { authorId: note.userId })
+				.execute();
+		});
+
+		await step('notesCount', async () => {
+			await this.usersRepository.createQueryBuilder().update()
+				.set({ notesCount: () => 'GREATEST("notesCount" - 1, 0)' })
+				.where('id = :userId', { userId: user.id })
+				.execute();
 		});
 
 		await step('stream', () => {

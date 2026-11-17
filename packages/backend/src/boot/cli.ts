@@ -9,6 +9,7 @@ import { NestFactory } from '@nestjs/core';
 import { CommandModule } from '@/cli/CommandModule.js';
 import { NestLogger } from '@/NestLogger.js';
 import { CommandService } from '@/cli/CommandService.js';
+import { COUNTER_NAMES, CounterConsistencyService, type CounterName } from '@/core/CounterConsistencyService.js';
 
 process.title = 'Engawa Cli';
 
@@ -28,6 +29,27 @@ switch (command) {
 		console.log('Available commands:');
 		console.log('  help - Displays this help message');
 		console.log('  reset-captcha - Resets the captcha');
+		console.log('  check-counters [counter...] - Checks denormalized counters (exits with 1 if any mismatch is found)');
+		console.log('  repair-counters [counter...] - Recounts and repairs denormalized counters');
+		console.log(`    counters: ${COUNTER_NAMES.join(', ')}`);
+		break;
+	}
+	case 'check-counters':
+	case 'repair-counters': {
+		const counters = process.argv.slice(3);
+		const unknown = counters.filter(c => !(COUNTER_NAMES as string[]).includes(c));
+		if (unknown.length > 0) {
+			console.error(`Unknown counters: ${unknown.join(', ')}`);
+			console.error(`Available counters: ${COUNTER_NAMES.join(', ')}`);
+			process.exit(1);
+		}
+		const service = app.get(CounterConsistencyService);
+		const targets = counters.length > 0 ? counters as CounterName[] : COUNTER_NAMES;
+		const reports = command === 'repair-counters' ? await service.repair(targets) : await service.check(targets);
+		for (const report of reports) {
+			console.log(JSON.stringify(report));
+		}
+		if (command === 'check-counters' && reports.some(r => r.mismatched > 0)) process.exit(1);
 		break;
 	}
 	case 'ping': {

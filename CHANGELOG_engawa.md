@@ -55,6 +55,10 @@
 - Enhance: 削除予定のジョブが失われても、削除予定時刻を過ぎたノートを5分ごとに確認して削除するようになりました
 - Enhance: コントロールパネルのジョブキューに、ノートの予約削除（`scheduledNoteDelete`）を表示するようになりました
 	- `admin/queue/*` の `queue` に `scheduledNoteDelete` を指定できます
+- Fix: ノートを削除しても、Renote先のRenote数と投稿者のノート数が減らない問題を修正
+- Enhance: 非正規化されたカウンタ（ノートの返信数・Renote数・クリップ数、ローカルユーザーのノート数・フォロー数・フォロワー数）を確認・修復するコマンドを追加
+	- `pnpm --filter backend cli check-counters` でずれを確認し（ずれがあると終了コード1）、`pnpm --filter backend cli repair-counters` で数え直して修復します。カウンタ名を指定すると、そのカウンタだけを対象にします
+	- これまでの不具合でずれた値は、更新後に `repair-counters` を実行すると直ります
 - Fix: リモートユーザーへのフォロー・解除や申請取消を繰り返すと、Activity IDの重複により解除が反映されない問題を修正 (#327)
 - Fix: 設定ファイルの `cloudLogging` が読み込まれず、Google Cloud Logging へのログ送信が常に無効になっていた問題を修正 (#354)
 	- これまで `cloudLogging` を設定していたサーバーでは、この更新からログの送信が始まります。不要な場合は設定ファイルから `cloudLogging` を削除してください
