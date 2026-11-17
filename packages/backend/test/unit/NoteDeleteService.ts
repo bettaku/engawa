@@ -298,7 +298,23 @@ describe('NoteDeleteService', () => {
 			expect(await exists(failing)).toBe(false);
 			expect(await exists(other)).toBe(false);
 			expect(deletedEventsOf(other)).toHaveLength(1);
-			expect(unindexNote.mock.calls.map(([n]) => n.id)).toEqual([other.id]);
+			// 失敗したノートでも、ストリーム以外の副作用は実行する
+			expect(unindexNote.mock.calls.map(([n]) => n.id).sort()).toEqual([failing.id, other.id].sort());
+		});
+
+		test('配送が失敗しても、同じノートの残りの副作用は実行する', async () => {
+			const parent = await createNote({ repliesCount: 1 }, carol);
+			const note = await createNote({ replyId: parent.id, replyUserId: carol.id }, alice);
+			deliverToFollowers.mockImplementation(() => {
+				throw new Error('boom');
+			});
+
+			const deleted = await service.deleteMany(alice, [note], { effects: ALL_NOTE_DELETE_EFFECTS });
+
+			expect(deleted).toHaveLength(1);
+			expect(deletedEventsOf(note)).toHaveLength(1);
+			expect(unindexNote).toHaveBeenCalledTimes(1);
+			expect(await repliesCountOf(parent)).toBe(0);
 		});
 
 		test('空の配列では何もしない', async () => {

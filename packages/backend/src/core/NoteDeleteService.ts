@@ -202,13 +202,9 @@ export class NoteDeleteService {
 		const deletedIds = await this.deleteRows(this.db.manager, fullNotes.map(note => note.id), user.id);
 		const deletedNotes = fullNotes.filter(note => deletedIds.has(note.id));
 
-		// 行の削除は確定済みなので、1件の副作用が失敗しても、他のノートの副作用は続ける
+		// runEffectsは副作用ごとに失敗を切り分けるので、1件が失敗しても他のノートの副作用は続く
 		for (const note of deletedNotes) {
-			try {
-				await this.runEffects(user, note, contexts.get(note.id) ?? EMPTY_CONTEXT, effects);
-			} catch (err) {
-				this.logger.error(`Failed to run delete effects of note ${note.id}`, { error: err });
-			}
+			await this.runEffects(user, note, contexts.get(note.id) ?? EMPTY_CONTEXT, effects);
 		}
 
 		return deletedNotes;
@@ -294,22 +290,40 @@ export class NoteDeleteService {
 		};
 	}
 
+	/**
+	 * 削除を確定したノートの副作用を実行する。
+	 * 行の削除は確定済みで、再試行しても副作用の対象に戻らない。そのため、副作用ごとに失敗を切り分け、
+	 * 1つが失敗しても（例: 配送の組み立てが例外を投げる）残りの副作用は実行する。この関数は例外を投げない。
+	 */
 	@bindThis
 	private async runEffects(user: NoteAuthor, note: MiNote, context: NoteDeleteEffectsContext, effects: Readonly<NoteDeleteEffects>) {
 		const deletedAt = new Date();
 
-		if (effects.repliesCount && note.replyId) {
-			await this.notesRepository.decrement({ id: note.replyId }, 'repliesCount', 1);
-		}
+		const step = async (name: keyof NoteDeleteEffects, fn: () => unknown) => {
+			if (!effects[name]) return;
+			try {
+				await fn();
+			} catch (err) {
+				this.logger.error(`Failed to run delete effect "${name}" of note ${note.id}`, { error: err });
+			}
+		};
 
-		if (effects.stream) {
+		await step('repliesCount', async () => {
+			if (note.replyId) {
+				await this.notesRepository.decrement({ id: note.replyId }, 'repliesCount', 1);
+			}
+		});
+
+		await step('stream', () => {
 			this.globalEventService.publishNoteStream(note, 'deleted', {
 				deletedAt: deletedAt,
 			});
-		}
+		});
 
-		//#region ローカルの投稿なら削除アクティビティを配送
-		if (effects.deliver && this.userEntityService.isLocalUser(user) && !note.localOnly) {
+		// ローカルの投稿なら削除アクティビティを配送
+		await step('deliver', () => {
+			if (!this.userEntityService.isLocalUser(user) || note.localOnly) return;
+
 			const renote = context.renote;
 
 			const content = this.apRendererService.addContext(renote
@@ -317,10 +331,9 @@ export class NoteDeleteService {
 				: this.apRendererService.renderDelete(this.apRendererService.renderTombstone(`${this.config.url}/notes/${note.id}`), user));
 
 			this.deliverToConcerned(user, content, context.remoteUsers);
-		}
-		//#endregion
+		});
 
-		if (effects.stats) {
+		await step('stats', () => {
 			this.notesChart.update(note, false);
 			if (this.meta.enableChartsForRemoteUser || (user.host == null)) {
 				this.perUserNotesChart.update(user, note, false);
@@ -336,11 +349,11 @@ export class NoteDeleteService {
 					});
 				}
 			}
-		}
+		});
 
-		if (effects.unindex) {
+		await step('unindex', () => {
 			this.searchService.unindexNote(note);
-		}
+		});
 	}
 
 	@bindThis
