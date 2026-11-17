@@ -598,6 +598,25 @@ export class QueueService implements OnModuleInit {
 		});
 	}
 
+	/** ユーザーごとの自動削除ジョブのjobId。同じユーザーのジョブが待機中・実行中なら重ねて登録しない */
+	public static autoDeleteUserNotesJobId(userId: ThinUser['id']) {
+		return `autoDeleteUserNotes-${userId}`;
+	}
+
+	@bindThis
+	public createAutoDeleteUserNotesJobs(users: ThinUser[]) {
+		return this.dbQueue.addBulk(users.map(user => ({
+			name: 'autoDeleteUserNotes',
+			data: { user: { id: user.id } },
+			opts: {
+				jobId: QueueService.autoDeleteUserNotesJobId(user.id),
+				// 同じjobIdのジョブが残っていると翌日の登録が無視されるので、終わったら消す
+				removeOnComplete: true,
+				removeOnFail: true,
+			},
+		})));
+	}
+
 	@bindThis
 	public createReportAbuseJob(report: MiAbuseUserReport) {
 		return this.dbQueue.add('reportAbuse', report);
