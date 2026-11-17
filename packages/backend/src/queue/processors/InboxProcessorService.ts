@@ -246,6 +246,9 @@ export class InboxProcessorService implements OnApplicationShutdown {
 				if (e.id === '85ab9bd7-3a41-4530-959d-f07073900109') {
 					return 'actor has been suspended';
 				}
+				if (e.id === 'a093350c-a7cf-4293-8dbd-497fb1426e74') { // specified visibility pure renote
+					return 'skip: pure renote with specified visibility is not supported';
+				}
 				if (e.id === 'd450b8a9-48e4-4dab-ae36-f4db763fda7c') { // invalid Note
 					return e.message;
 				}
