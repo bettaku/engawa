@@ -64,7 +64,9 @@ export class PostScheduledNoteProcessorService {
 	@bindThis
 	public async process(job: Bull.Job<PostScheduledNoteJobData>, token?: string, isRetryAfterConflict = false): Promise<string> {
 		const draftId = job.data.noteDraftId;
-		const draft = await this.noteDraftsRepository.findOne({ where: { id: draftId }, relations: ['user'] });
+		// ドラフトを読む前に行の版を取る。読んだ後に更新されていれば、markPostedで版が合わずにやり直しになる
+		const version = await this.getDraftVersion(draftId);
+		const draft = version == null ? null : await this.noteDraftsRepository.findOne({ where: { id: draftId }, relations: ['user'] });
 
 		if (draft == null) {
 			return 'skipped: draft not found';
@@ -121,11 +123,12 @@ export class PostScheduledNoteProcessorService {
 				deleteAt: draft.deleteAt ? new Date(draft.deleteAt) : null,
 				searchableBy: draft.searchableBy,
 			}, {
-				onInserted: (manager, inserted) => this.markPosted(manager, draftId, inserted.id),
+				// draftがnullでなければversionもnullでない
+				onInserted: (manager, inserted) => this.markPosted(manager, draftId, version ?? '', inserted.id),
 			});
 		} catch (err) {
 			if (err instanceof IdentifiableError && err.id === ALREADY_HANDLED_ERROR_ID) {
-				// 別のworkerが先に投稿したか、予約が変更された。ドラフトを読み直して判断する
+				// 別のworkerが先に投稿したか、ドラフトが変更・削除された。ドラフトを読み直して判断する
 				if (isRetryAfterConflict) throw new Error(`Scheduled note draft ${draftId} changed repeatedly while posting`);
 				return await this.process(job, token, true);
 			}
@@ -199,16 +202,32 @@ export class PostScheduledNoteProcessorService {
 	}
 
 	/**
+	 * ドラフトの行の版。PostgreSQLのxmin（行を最後に書き込んだトランザクションのID）を使う。
+	 * 行が更新されるたびに変わるので、読み取った後の更新を検出できる。
+	 */
+	@bindThis
+	private async getDraftVersion(draftId: MiNoteDraft['id']): Promise<string | null> {
+		const rows: { version: string }[] = await this.noteDraftsRepository.query(
+			'SELECT xmin::text AS version FROM note_draft WHERE id = $1',
+			[draftId],
+		);
+		return rows.length > 0 ? rows[0].version : null;
+	}
+
+	/**
 	 * ノートのinsertと同じトランザクションの中で、ドラフトを「投稿済み」にする。
+	 * ドラフトが読み取った版のままで、まだ投稿できる状態のときだけ成功する。
 	 * できなければ例外を投げ、ノートのinsertごとロールバックさせる。
 	 */
 	@bindThis
-	private async markPosted(manager: EntityManager, draftId: MiNoteDraft['id'], noteId: MiNote['id']): Promise<void> {
-		// ドラフトの更新・削除と競合した場合、行ロックで先の操作の確定を待ってから条件を評価し直す
+	private async markPosted(manager: EntityManager, draftId: MiNoteDraft['id'], version: string, noteId: MiNote['id']): Promise<void> {
+		// ドラフトの更新・削除と競合した場合、行ロックで先の操作の確定を待ってから条件を評価し直す。
+		// 本文や公開範囲の更新でも版が変わるので、変更前の内容でノートを確定することはない
 		const result = await manager.createQueryBuilder()
 			.update(MiNoteDraft)
 			.set({ postedNoteId: noteId, postedAt: () => 'now()' })
 			.where('id = :draftId', { draftId })
+			.andWhere('xmin::text = :version', { version })
 			.andWhere('"postedAt" IS NULL')
 			.andWhere('"isActuallyScheduled" = true')
 			.andWhere('"scheduledAt" <= :now', { now: new Date() })
@@ -282,17 +301,14 @@ export class PostScheduledNoteProcessorService {
 			await this.queueService.cancelScheduledNotePost(draftId);
 		}
 
-		const result = await this.noteDraftsRepository.createQueryBuilder()
+		// 登録できたときだけ回数を数える。Redisの障害で登録に失敗した分は数えず、次回の照合でやり直す
+		await this.queueService.ensureNotePostScheduled(draftId, new Date());
+
+		await this.noteDraftsRepository.createQueryBuilder()
 			.update()
 			.set({ postAttempts: () => '"postAttempts" + 1' })
 			.where('id = :id', { id: draftId })
-			.andWhere('"postedAt" IS NULL')
-			.andWhere('"isActuallyScheduled" = true')
-			.andWhere('"postAttempts" < :max', { max: MAX_SCHEDULED_POST_REQUEUES })
 			.execute();
-		if (result.affected !== 1) return false;
-
-		await this.queueService.ensureNotePostScheduled(draftId, new Date());
 		return true;
 	}
 }

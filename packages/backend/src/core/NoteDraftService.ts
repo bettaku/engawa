@@ -4,7 +4,7 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { In } from 'typeorm';
+import { In, IsNull } from 'typeorm';
 import type { noteVisibilities, noteReactionAcceptances } from '@/types.js';
 import { DI } from '@/di-symbols.js';
 import type { MiNoteDraft, NoteDraftsRepository, MiNote, MiDriveFile, UsersRepository, DriveFilesRepository, NotesRepository, BlockingsRepository } from '@/models/_.js';
@@ -61,8 +61,10 @@ export class NoteDraftService {
 		//#region check draft limit
 		const policies = await this.roleService.getUserPolicies(me.id);
 
+		// 予約投稿で投稿済み（後処理の待ち）のドラフトは、一覧と同じく数えない
 		const currentCount = await this.noteDraftsRepository.countBy({
 			userId: me.id,
+			postedAt: IsNull(),
 		});
 		if (currentCount >= policies.noteDraftLimit) {
 			throw new IdentifiableError('9ee33bbe-fde3-4c71-9b51-e50492c6b9c8', 'Too many drafts');
@@ -72,6 +74,7 @@ export class NoteDraftService {
 			const currentScheduledCount = await this.noteDraftsRepository.countBy({
 				userId: me.id,
 				isActuallyScheduled: true,
+				postedAt: IsNull(),
 			});
 			if (currentScheduledCount >= policies.scheduledNoteLimit) {
 				throw new IdentifiableError('c3275f19-4558-4c59-83e1-4f684b5fab66', 'Too many scheduled notes');
@@ -112,6 +115,7 @@ export class NoteDraftService {
 			const currentScheduledCount = await this.noteDraftsRepository.countBy({
 				userId: me.id,
 				isActuallyScheduled: true,
+				postedAt: IsNull(),
 			});
 			if (currentScheduledCount >= policies.scheduledNoteLimit) {
 				throw new IdentifiableError('bacdf856-5c51-4159-b88a-804fa5103be5', 'Too many scheduled notes');

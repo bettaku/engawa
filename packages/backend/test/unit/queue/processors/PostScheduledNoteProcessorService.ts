@@ -351,6 +351,23 @@ describe('PostScheduledNoteProcessorService', () => {
 			expect(job?.opts.delay).toBeGreaterThan(HOUR - MINUTE);
 		});
 
+		test('ノートの作成中にドラフトの本文が編集されたら、編集後の内容で1回だけ投稿する', async () => {
+			const draft = await createDraft({ visibility: 'public' });
+			const original = noteCreateService.fetchAndCreate;
+			vi.spyOn(noteCreateService, 'fetchAndCreate').mockImplementationOnce(async (...args) => {
+				await noteDraftsRepository.update(draft.id, { text: 'edited', visibility: 'home' });
+				return await original(...args);
+			});
+
+			await service.process(fakeJob(draft));
+
+			expect(await notesOf(draft)).toHaveLength(0);
+			const notes = await notesRepository.findBy({ userId: alice.id, text: 'edited' });
+			expect(notes).toHaveLength(1);
+			expect(notes[0].visibility).toBe('home');
+			expect(await findDraft(draft)).toBeNull();
+		});
+
 		test('予約が解除されたドラフトは投稿しない', async () => {
 			const draft = await createDraft({ isActuallyScheduled: false });
 
@@ -471,6 +488,17 @@ describe('PostScheduledNoteProcessorService', () => {
 			expect((await findDraft(draft))?.postAttempts).toBe(0);
 		});
 
+		test('投稿済みのドラフトは、ドラフトと予約の上限に数えない', async () => {
+			// 既定の上限は、予約3件・ドラフト10件
+			for (let i = 0; i < 10; i++) {
+				await createDraft({ scheduledAt: fromNow(HOUR), postedAt: new Date(), postedNoteId: idService.gen() });
+			}
+
+			const draft = await noteDraftService.create(me(), options({ isActuallyScheduled: true, scheduledAt: fromNow(HOUR) }));
+
+			expect(await findDraft(draft)).not.toBeNull();
+		});
+
 		test('投稿済みのドラフトは更新できない', async () => {
 			const draft = await createDraft({ postedAt: new Date(), postedNoteId: idService.gen() });
 
@@ -580,6 +608,18 @@ describe('PostScheduledNoteProcessorService', () => {
 			await queueService.cancelScheduledNotePost(draft.id);
 			expect(await service.reconcile()).toBe('finished: 0, requeued: 0, failed: 0');
 			expect(await getJob(draft)).toBeUndefined();
+		});
+
+		test('ジョブの登録に失敗しても、登録し直す回数を消費しない', async () => {
+			const draft = await createDraft({ scheduledAt: fromNow(-2 * MINUTE) });
+			const add = vi.spyOn(queueService.postScheduledNoteQueue, 'add').mockRejectedValueOnce(new Error('redis is down'));
+
+			expect(await service.reconcile()).toBe('finished: 0, requeued: 0, failed: 1');
+			expect((await findDraft(draft))?.postAttempts).toBe(0);
+
+			add.mockRestore();
+			expect(await service.reconcile()).toBe('finished: 0, requeued: 1, failed: 0');
+			expect((await findDraft(draft))?.postAttempts).toBe(1);
 		});
 
 		test('後処理の前に止まった投稿済みのドラフトを片付ける', async () => {
