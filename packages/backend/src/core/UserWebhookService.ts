@@ -9,7 +9,7 @@ import { MiUser, type WebhooksRepository } from '@/models/_.js';
 import { MiWebhook, WebhookEventTypes } from '@/models/Webhook.js';
 import { DI } from '@/di-symbols.js';
 import { bindThis } from '@/decorators.js';
-import { GlobalEvents } from '@/core/GlobalEventService.js';
+import { GlobalEvents, isInternalEventRef } from '@/core/GlobalEventService.js';
 import type { Packed } from '@/misc/json-schema.js';
 import { QueueService } from '@/core/QueueService.js';
 import type { OnApplicationShutdown } from '@nestjs/common';
@@ -104,6 +104,26 @@ export class UserWebhookService implements OnApplicationShutdown {
 		}
 
 		const { type, body } = obj.message as GlobalEvents['internal']['payload'];
+		switch (type) {
+			case 'webhookCreated':
+			case 'webhookUpdated':
+			case 'webhookDeleted': {
+				if (!isInternalEventRef(body)) break;
+				// 新本文は値を持たないので、DBから読み直す。削除済みや無効なら一覧から外す
+				if (!this.activeWebhooksFetched) break;
+				const webhook = type === 'webhookDeleted' ? null : await this.webhooksRepository.findOneBy({ id: body.id });
+				this.activeWebhooks = this.activeWebhooks.filter(a => a.id !== body.id);
+				if (webhook != null && webhook.active) {
+					this.activeWebhooks.push(webhook);
+				}
+				return;
+			}
+			default:
+				break;
+		}
+
+		// 旧本文（エンティティ全体）
+		if (isInternalEventRef(body)) return;
 		switch (type) {
 			case 'webhookCreated': {
 				if (body.active) {

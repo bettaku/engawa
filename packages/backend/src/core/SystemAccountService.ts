@@ -11,8 +11,9 @@ import * as Redis from 'ioredis';
 import * as argon2 from 'argon2';
 import { MiLocalUser, MiUser } from '@/models/User.js';
 import { MiSystemAccount, MiUsedUsername, MiUserKeypair, MiUserProfile, type UsersRepository, type SystemAccountsRepository } from '@/models/_.js';
-import type { MiMeta, UserProfilesRepository } from '@/models/_.js';
-import type { GlobalEvents } from '@/core/GlobalEventService.js';
+import type { UserProfilesRepository } from '@/models/_.js';
+import { isInternalEventRef, type GlobalEvents } from '@/core/GlobalEventService.js';
+import { MiMeta } from '@/models/Meta.js';
 import { MemoryKVCache } from '@/misc/cache.js';
 import { DI } from '@/di-symbols.js';
 import { bindThis } from '@/decorators.js';
@@ -61,12 +62,21 @@ export class SystemAccountService implements OnApplicationShutdown {
 			const { type, body } = obj.message as GlobalEvents['internal']['payload'];
 			switch (type) {
 				case 'metaUpdated': {
-					if (body.before != null && body.before.name !== body.after.name) {
-						for (const account of SYSTEM_ACCOUNT_TYPES) {
-							await this.updateCorrespondingUserProfile(account, {
-								name: body.after.name,
-							});
-						}
+					let name: string | null;
+					if (isInternalEventRef(body)) {
+						// 新本文は値を持たないので、変わった列にnameがあるときだけDBから読む
+						if (!body.changedKeys.includes('name')) break;
+						const meta = await this.usersRepository.manager.getRepository(MiMeta).findOne({ where: {}, order: { id: 'DESC' } });
+						if (meta == null) break;
+						name = meta.name;
+					} else {
+						if (body.before == null || body.before.name === body.after.name) break;
+						name = body.after.name;
+					}
+					for (const account of SYSTEM_ACCOUNT_TYPES) {
+						await this.updateCorrespondingUserProfile(account, {
+							name,
+						});
 					}
 					break;
 				}

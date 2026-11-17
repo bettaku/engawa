@@ -7,7 +7,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import * as Redis from 'ioredis';
 import { In } from 'typeorm';
 import { FanoutTimelineService } from '@/core/FanoutTimelineService.js';
-import type { GlobalEvents } from '@/core/GlobalEventService.js';
+import { isInternalEventRef, type GlobalEvents } from '@/core/GlobalEventService.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { UtilityService } from '@/core/UtilityService.js';
 import { bindThis } from '@/decorators.js';
@@ -60,6 +60,19 @@ export class AntennaService implements OnApplicationShutdown {
 
 		if (obj.channel === 'internal') {
 			const { type, body } = obj.message as GlobalEvents['internal']['payload'];
+			if (isInternalEventRef(body) && (type === 'antennaCreated' || type === 'antennaUpdated' || type === 'antennaDeleted')) {
+				// 新本文は値を持たないので、DBから読み直す。削除済みや無効なら一覧から外す
+				if (!this.antennasFetched) return;
+				const antenna = type === 'antennaDeleted' ? null : await this.antennasRepository.findOneBy({ id: body.id });
+				this.antennas = this.antennas.filter(a => a.id !== body.id);
+				if (antenna != null && antenna.isActive) {
+					this.antennas.push(antenna);
+				}
+				return;
+			}
+
+			// 旧本文（エンティティ全体）
+			if (isInternalEventRef(body)) return;
 			switch (type) {
 				case 'antennaCreated':
 					this.antennas.push(deserializeAntenna(body));
