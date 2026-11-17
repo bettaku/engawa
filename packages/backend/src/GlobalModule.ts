@@ -18,6 +18,7 @@ import { RepositoryModule } from './models/RepositoryModule.js';
 import { allSettled } from './misc/promise-tracker.js';
 import { GlobalEvents } from './core/GlobalEventService.js';
 import type { Provider, OnApplicationShutdown } from '@nestjs/common';
+import { onRedisReconnected } from '@/misc/redis-reconnected.js';
 
 const $config: Provider = {
 	provide: DI.config,
@@ -190,6 +191,19 @@ const $meta: Provider = {
 		}
 
 		redisForSub.on('message', onMessage);
+
+		// Pub/Subが切れている間のmetaUpdatedを受け取れていないので、つなぎ直したときにDBから読み直す
+		onRedisReconnected(redisForSub, () => {
+			db.getRepository(MiMeta).findOne({ where: {}, order: { id: 'DESC' } }).then(latest => {
+				if (latest == null) return;
+				for (const key in latest) {
+					(meta as any)[key] = (latest as any)[key];
+				}
+				meta.rootUser = null;
+			}).catch(err => {
+				console.error('Failed to reload meta after Redis reconnection', err);
+			});
+		});
 
 		return meta;
 	},

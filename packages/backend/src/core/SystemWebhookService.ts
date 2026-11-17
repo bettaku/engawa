@@ -19,6 +19,7 @@ import { Packed } from '@/misc/json-schema.js';
 import { AbuseReportResolveType } from '@/models/AbuseUserReport.js';
 import { ModeratorInactivityRemainingTime } from '@/queue/processors/CheckModeratorsActivityProcessorService.js';
 import type { OnApplicationShutdown } from '@nestjs/common';
+import { onRedisReconnected } from '@/misc/redis-reconnected.js';
 
 export type AbuseReportPayload = {
 	id: string;
@@ -51,6 +52,7 @@ export type SystemWebhookPayload<T extends SystemWebhookEventType> =
 
 @Injectable()
 export class SystemWebhookService implements OnApplicationShutdown {
+	private readonly offRedisReconnected: () => void;
 	private activeSystemWebhooksFetched = false;
 	private activeSystemWebhooks: MiSystemWebhook[] = [];
 
@@ -65,6 +67,7 @@ export class SystemWebhookService implements OnApplicationShutdown {
 		private globalEventService: GlobalEventService,
 	) {
 		this.redisForSub.on('message', this.onMessage);
+		this.offRedisReconnected = onRedisReconnected(this.redisForSub, this.onRedisReconnected);
 	}
 
 	@bindThis
@@ -248,8 +251,17 @@ export class SystemWebhookService implements OnApplicationShutdown {
 		}
 	}
 
+	/**
+	 * Pub/Subをつなぎ直したとき。切れている間のイベントを受け取れていないので、イベントで更新しているキャッシュを捨てる
+	 */
+	@bindThis
+	private onRedisReconnected(): void {
+		this.activeSystemWebhooksFetched = false;
+	}
+
 	@bindThis
 	public dispose(): void {
+		this.offRedisReconnected();
 		this.redisForSub.off('message', this.onMessage);
 	}
 

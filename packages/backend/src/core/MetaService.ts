@@ -13,9 +13,11 @@ import { bindThis } from '@/decorators.js';
 import type { GlobalEvents } from '@/core/GlobalEventService.js';
 import { FeaturedService } from '@/core/FeaturedService.js';
 import type { OnApplicationShutdown } from '@nestjs/common';
+import { onRedisReconnected } from '@/misc/redis-reconnected.js';
 
 @Injectable()
 export class MetaService implements OnApplicationShutdown {
+	private readonly offRedisReconnected: () => void;
 	private cache: MiMeta | undefined;
 	private intervalId: NodeJS.Timeout;
 
@@ -41,6 +43,7 @@ export class MetaService implements OnApplicationShutdown {
 		}
 
 		this.redisForSub.on('message', this.onMessage);
+		this.offRedisReconnected = onRedisReconnected(this.redisForSub, this.onRedisReconnected);
 	}
 
 	@bindThis
@@ -149,8 +152,17 @@ export class MetaService implements OnApplicationShutdown {
 		return updated;
 	}
 
+	/**
+	 * Pub/Subをつなぎ直したとき。切れている間のイベントを受け取れていないので、イベントで更新しているキャッシュを捨てる
+	 */
+	@bindThis
+	private onRedisReconnected(): void {
+		this.cache = undefined;
+	}
+
 	@bindThis
 	public dispose(): void {
+		this.offRedisReconnected();
 		clearInterval(this.intervalId);
 		this.redisForSub.off('message', this.onMessage);
 	}

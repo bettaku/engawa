@@ -236,6 +236,11 @@ export interface InternalEventTypes {
 	unmute: { muterId: MiUser['id']; muteeId: MiUser['id']; };
 	userListMemberAdded: { userListId: MiUserList['id']; memberId: MiUser['id']; };
 	userListMemberRemoved: { userListId: MiUserList['id']; memberId: MiUser['id']; };
+	/**
+	 * キャッシュ`cache`のキー`key`（`null`ならすべて）の値が変わった。受け取ったプロセスはメモリ層から消す。
+	 * `origin`は発行したプロセスのID（自分が発行したイベントを見分ける）
+	 */
+	cacheInvalidated: { cache: string; key: string | null; origin: string; };
 }
 
 type EventTypesToEventPayload<T> = EventUnionFromDictionary<UndefinedAsNullAll<SerializedAll<T>>>;

@@ -10,6 +10,7 @@ import { createHash } from 'node:crypto';
 import { DI } from '@/di-symbols.js';
 import type { MiUserProfile, UserProfilesRepository, UsersRepository } from '@/models/_.js';
 import { bindThis } from '@/decorators.js';
+import { CacheService } from '@/core/CacheService.js';
 
 @Injectable()
 export class UserAuthService {
@@ -22,6 +23,7 @@ export class UserAuthService {
 
 		@Inject(DI.userProfilesRepository)
 		private userProfilesRepository: UserProfilesRepository,
+		private cacheService: CacheService,
 	) {
 	}
 
@@ -31,6 +33,7 @@ export class UserAuthService {
 			await this.userProfilesRepository.update({ userId: profile.userId }, {
 				twoFactorBackupSecret: profile.twoFactorBackupSecret.filter((secret) => secret !== token),
 			});
+			await this.cacheService.userProfileCache.delete(profile.userId);
 		} else {
 			if (!await this.validateOtp(profile.userId, profile.twoFactorSecret!, token)) {
 				throw new Error('authentication failed');
