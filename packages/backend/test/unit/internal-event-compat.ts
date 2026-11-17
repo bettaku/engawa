@@ -34,7 +34,7 @@ import { UserWebhookService } from '@/core/UserWebhookService.js';
 import { SystemWebhookService } from '@/core/SystemWebhookService.js';
 import { AntennaService } from '@/core/AntennaService.js';
 import { MetaService } from '@/core/MetaService.js';
-import { SystemAccountService } from '@/core/SystemAccountService.js';
+import { SYSTEM_ACCOUNT_TYPES, SystemAccountService } from '@/core/SystemAccountService.js';
 import { secureRndstr } from '@/misc/secure-rndstr.js';
 
 async function waitFor(condition: () => Promise<boolean> | boolean, timeout = 5000) {
@@ -259,7 +259,9 @@ describe('内部イベントの新本文（P2-3 第1リリース）', () => {
 		test('新本文で名前が変わったときだけ、システムアカウントの名前を更新する', async () => {
 			const meta = app.get<MiMeta>(DI.meta);
 			const systemAccountService = app.get(SystemAccountService);
-			const actor = await systemAccountService.fetch('actor');
+			// イベントの処理がアカウントを作り始めないように、すべてのシステムアカウントを先に作っておく
+			const accounts = await Promise.all(SYSTEM_ACCOUNT_TYPES.map(type => systemAccountService.fetch(type)));
+			const actor = accounts[0];
 
 			const name = `name-${secureRndstr(8)}`;
 			await metasRepository.update(meta.id, { name });
@@ -269,7 +271,10 @@ describe('内部イベントの新本文（P2-3 第1リリース）', () => {
 			expect((await usersRepository.findOneByOrFail({ id: actor.id })).name).not.toBe(name);
 
 			globalEventService.publishInternalEvent('metaUpdated', { v: 2, changedKeys: ['name'] });
-			await waitFor(async () => (await usersRepository.findOneByOrFail({ id: actor.id })).name === name);
+			// すべてのアカウントの更新を待つ。途中でテストを終えると、アプリを閉じた後に処理が続く
+			for (const account of accounts) {
+				await waitFor(async () => (await usersRepository.findOneByOrFail({ id: account.id })).name === name);
+			}
 		});
 	});
 });

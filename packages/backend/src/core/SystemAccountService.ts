@@ -73,10 +73,15 @@ export class SystemAccountService implements OnApplicationShutdown {
 						if (body.before == null || body.before.name === body.after.name) break;
 						name = body.after.name;
 					}
-					for (const account of SYSTEM_ACCOUNT_TYPES) {
-						await this.updateCorrespondingUserProfile(account, {
-							name,
-						});
+					// イベントの処理なので、失敗しても例外を投げない（処理されないrejectionにしない）
+					try {
+						for (const account of SYSTEM_ACCOUNT_TYPES) {
+							await this.updateCorrespondingUserProfile(account, {
+								name,
+							});
+						}
+					} catch (err) {
+						console.error('Failed to update the names of system accounts', err);
 					}
 					break;
 				}
