@@ -11,20 +11,15 @@ import { bindThis } from '@/decorators.js';
 import type { MiUser, NotesRepository } from '@/models/_.js';
 import type { Config } from '@/config.js';
 import { PER_NOTE_REACTION_USER_PAIR_CACHE_MAX } from '@/const.js';
-import type { GlobalEvents } from '@/core/GlobalEventService.js';
-import type { OnApplicationShutdown } from '@nestjs/common';
 
 const REDIS_DELTA_PREFIX = 'reactionsBufferDeltas';
 const REDIS_PAIR_PREFIX = 'reactionsBufferPairs';
 
 @Injectable()
-export class ReactionsBufferingService implements OnApplicationShutdown {
+export class ReactionsBufferingService {
 	constructor(
 		@Inject(DI.config)
 		private config: Config,
-
-		@Inject(DI.redisForSub)
-		private redisForSub: Redis.Redis,
 
 		@Inject(DI.redisForReactions)
 		private redisForReactions: Redis.Redis, // TODO: 専用のRedisインスタンスにする
@@ -32,27 +27,6 @@ export class ReactionsBufferingService implements OnApplicationShutdown {
 		@Inject(DI.notesRepository)
 		private notesRepository: NotesRepository,
 	) {
-		this.redisForSub.on('message', this.onMessage);
-	}
-
-	@bindThis
-	private async onMessage(_: string, data: string) {
-		const obj = JSON.parse(data);
-
-		if (obj.channel === 'internal') {
-			const { type, body } = obj.message as GlobalEvents['internal']['payload'];
-			switch (type) {
-				case 'metaUpdated': {
-					// リアクションバッファリングが有効→無効になったら即bake
-					if (body.before != null && body.before.enableReactionsBuffering && !body.after.enableReactionsBuffering) {
-						this.bake();
-					}
-					break;
-				}
-				default:
-					break;
-			}
-		}
 	}
 
 	@bindThis
@@ -176,7 +150,7 @@ export class ReactionsBufferingService implements OnApplicationShutdown {
 					`jsonb_set("reactions", '{${reaction}}', (COALESCE("reactions"->>'${reaction}', '0')::int + ${count})::text::jsonb)`)
 				.join(' || ');
 
-			this.notesRepository.createQueryBuilder().update()
+			await this.notesRepository.createQueryBuilder().update()
 				.set({
 					reactions: () => sql,
 					reactionAndUserPairCache: buffered.pairs.map(x => x.join('/')),
@@ -197,15 +171,5 @@ export class ReactionsBufferingService implements OnApplicationShutdown {
 			}
 		}
 		return reactions;
-	}
-
-	@bindThis
-	public dispose(): void {
-		this.redisForSub.off('message', this.onMessage);
-	}
-
-	@bindThis
-	public onApplicationShutdown(signal?: string | undefined): void {
-		this.dispose();
 	}
 }
