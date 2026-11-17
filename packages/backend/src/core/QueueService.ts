@@ -10,6 +10,7 @@ import { parse as parseRedisInfo } from 'redis-info';
 import type { IActivity } from '@/core/activitypub/type.js';
 import type { MiDriveFile } from '@/models/DriveFile.js';
 import type { MiNote } from '@/models/Note.js';
+import type { MiNoteDraft } from '@/models/NoteDraft.js';
 import type { MiAbuseUserReport } from '@/models/AbuseUserReport.js';
 import type { MiWebhook, WebhookEventTypes } from '@/models/Webhook.js';
 import type { MiSystemWebhook, SystemWebhookEventType } from '@/models/SystemWebhook.js';
@@ -97,6 +98,10 @@ const REPEATABLE_SYSTEM_JOB_DEF = [{
 }, {
 	name: 'reconcileScheduledNoteDeletes',
 	// 削除予定時刻を過ぎても残っているノートを5分ごとに拾う
+	pattern: '*/5 * * * *',
+}, {
+	name: 'reconcileScheduledNotePosts',
+	// 予約時刻を過ぎても投稿されていないドラフトと、後処理が終わっていない投稿済みのドラフトを5分ごとに拾う
 	pattern: '*/5 * * * *',
 }];
 
@@ -829,6 +834,75 @@ export class QueueService implements OnModuleInit {
 	@bindThis
 	public async cancelScheduledNoteDelete(noteId: MiNote['id']): Promise<void> {
 		await this.scheduledNoteDeleteQueue.remove(QueueService.scheduledNoteDeleteJobId(noteId));
+	}
+
+	/**
+	 * 予約投稿ジョブのID。ドラフトごとに1つに固定し、変更・取り消しのときにIDで取り消せるようにする。
+	 * BullMQは整数だけのIDとコロンを含むIDを拒否するので、この形式にしている。
+	 */
+	public static postScheduledNoteJobId(draftId: MiNoteDraft['id']): string {
+		return `postScheduledNote-${draftId}`;
+	}
+
+	/**
+	 * 予約投稿ジョブを、ドラフトの予約に合わせる。予約があれば登録し直し、なければ取り消す。
+	 *
+	 * 失敗しても例外を投げず、記録だけする。ドラフトの保存自体は成功しているためである。
+	 * 投稿するかどうかは処理の時点でDBのドラフトから決まり、登録できなかった予約は
+	 * 照合ジョブ（reconcileScheduledNotePosts）が拾う。
+	 */
+	@bindThis
+	public async syncScheduledNotePost(draftId: MiNoteDraft['id'], scheduledAt: Date | null): Promise<void> {
+		try {
+			if (scheduledAt != null) {
+				await this.scheduleNotePost(draftId, scheduledAt);
+			} else {
+				await this.cancelScheduledNotePost(draftId);
+			}
+		} catch (err) {
+			this.logger.error(`Failed to sync scheduled note post job: ${draftId}`, { error: err });
+		}
+	}
+
+	/**
+	 * 予約投稿ジョブを登録する。すでにジョブがあれば、取り消してから登録し直す。
+	 *
+	 * 投稿するかどうかはDBのドラフトで決まる。ジョブは実行のきっかけにすぎないので、
+	 * 実行中で取り消せなかった場合でも、変更前の時刻に投稿されることはない。
+	 */
+	@bindThis
+	public async scheduleNotePost(draftId: MiNoteDraft['id'], scheduledAt: Date): Promise<void> {
+		await this.cancelScheduledNotePost(draftId);
+		await this.ensureNotePostScheduled(draftId, scheduledAt);
+	}
+
+	/**
+	 * 予約投稿ジョブがなければ登録する。すでにあれば（失敗・完了したものを含む）何もしない。
+	 */
+	@bindThis
+	public async ensureNotePostScheduled(draftId: MiNoteDraft['id'], scheduledAt: Date): Promise<void> {
+		await this.postScheduledNoteQueue.add(draftId, {
+			noteDraftId: draftId,
+		}, {
+			jobId: QueueService.postScheduledNoteJobId(draftId),
+			delay: Math.max(0, scheduledAt.getTime() - Date.now()),
+			attempts: 5,
+			backoff: {
+				type: 'exponential',
+				delay: 30 * 1000,
+			},
+			removeOnComplete: true,
+			// 失敗したジョブは調査のために残す。同じIDでの登録を妨げるので、再登録の前に取り消す
+			removeOnFail: {
+				age: 3600 * 24 * 7, // keep up to 7 days
+				count: 100,
+			},
+		});
+	}
+
+	@bindThis
+	public async cancelScheduledNotePost(draftId: MiNoteDraft['id']): Promise<void> {
+		await this.postScheduledNoteQueue.remove(QueueService.postScheduledNoteJobId(draftId));
 	}
 
 	@bindThis

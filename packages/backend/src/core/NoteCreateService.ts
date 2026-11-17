@@ -6,6 +6,7 @@
 import { setImmediate } from 'node:timers/promises';
 import * as mfm from 'mfc-js';
 import { In, DataSource, IsNull, LessThan } from 'typeorm';
+import type { EntityManager } from 'typeorm';
 import * as Redis from 'ioredis';
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import RE2 from 're2';
@@ -154,6 +155,18 @@ type Option = {
 	searchableBy?: string[] | string;
 };
 
+/**
+ * 内部の処理だけが指定する作成オプション。APIからは指定できない。
+ */
+export type NoteCreateInternalOptions = {
+	/**
+	 * ノートのinsertと同じトランザクションの中で、insertの後に呼ばれる。
+	 * 例外を投げると、ノートのinsertを含むトランザクション全体がロールバックし、
+	 * 後処理（配信・配送・索引など）も行われない。
+	 */
+	onInserted?: (manager: EntityManager, note: MiNote) => Promise<void>;
+};
+
 @Injectable()
 export class NoteCreateService implements OnApplicationShutdown {
 	#shutdownController = new AbortController();
@@ -262,7 +275,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		apEmojis?: string[] | null;
 		deleteAt?: Date | null;
 		searchableBy?: string[] | string;
-	}): Promise<MiNote> {
+	}, internalOptions: NoteCreateInternalOptions = {}): Promise<MiNote> {
 		const visibleUsers = data.visibleUserIds.length > 0 ? await this.usersRepository.findBy({
 			id: In(data.visibleUserIds),
 		}) : [];
@@ -386,7 +399,8 @@ export class NoteCreateService implements OnApplicationShutdown {
 			apHashtags: data.apHashtags,
 			apEmojis: data.apEmojis,
 			deleteAt: data.deleteAt,
-		});
+			searchableBy: data.searchableBy,
+		}, false, internalOptions);
 	}
 
 	@bindThis
@@ -398,7 +412,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		isCat: MiUser['isCat'];
 		isIndexable: MiUser['isIndexable'];
 		isSensitive: MiUser['isSensitive'];
-	}, data: Option, silent = false): Promise<MiNote> {
+	}, data: Option, silent = false, internalOptions: NoteCreateInternalOptions = {}): Promise<MiNote> {
 		if (data.createdAt == null) data.createdAt = new Date();
 		if (data.visibility == null) data.visibility = 'public';
 		if (data.localOnly == null) data.localOnly = false;
@@ -561,7 +575,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 			throw new IdentifiableError('9f466dab-c856-48cd-9e65-ff90ff750580', 'Note contains too many mentions');
 		}
 
-		const note = await this.insertNote(user, data, tags, emojis, mentionedUsers);
+		const note = await this.insertNote(user, data, tags, emojis, mentionedUsers, internalOptions.onInserted);
 
 		setImmediate('post created', { signal: this.#shutdownController.signal }).then(
 			() => this.postNoteCreated(note, user, data, silent, tags!, mentionedUsers!),
@@ -572,7 +586,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 	}
 
 	@bindThis
-	private async insertNote(user: { id: MiUser['id']; host: MiUser['host']; }, data: Option, tags: string[], emojis: string[], mentionedUsers: MinimumUser[]) {
+	private async insertNote(user: { id: MiUser['id']; host: MiUser['host']; }, data: Option, tags: string[], emojis: string[], mentionedUsers: MinimumUser[], onInserted?: NoteCreateInternalOptions['onInserted']) {
 		const insert = new MiNote({
 			id: this.idService.gen(data.createdAt?.getTime()),
 			fileIds: data.files ? data.files.map(file => file.id) : [],
@@ -635,7 +649,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 		// 投稿を作成
 		try {
-			if (insert.hasPoll || insert.hasEvent) {
+			if (insert.hasPoll || insert.hasEvent || onInserted != null) {
 				// Start transaction
 				await this.db.transaction(async transactionalEntityManager => {
 					await transactionalEntityManager.insert(MiNote, insert);
@@ -673,6 +687,10 @@ export class NoteCreateService implements OnApplicationShutdown {
 					if (insert.visibility === 'private') {
 						insert.localOnly = true;
 					}
+
+					if (onInserted != null) {
+						await onInserted(transactionalEntityManager, insert);
+					}
 				});
 			} else {
 				await this.notesRepository.insert(insert);
@@ -690,6 +708,9 @@ export class NoteCreateService implements OnApplicationShutdown {
 				err.name = 'duplicated';
 				throw err;
 			}
+
+			// onInsertedが意図して投げた例外は、呼び出し元が扱う
+			if (e instanceof IdentifiableError) throw e;
 
 			console.error(e);
 
