@@ -304,10 +304,15 @@ export class ReactionsBufferingService {
 	@bindThis
 	public async cleanupBatch(batch: BufferedBatch): Promise<void> {
 		const keys = processingKeysOf(batch);
-		await this.redisForReactions.multi()
+		// 失敗しても、バッチは集合に残り、次回に台帳で適用済みと判定して後始末だけをやり直す
+		const results = await this.redisForReactions.multi()
 			.del(keys.deltas, keys.pairs)
 			.srem(REDIS_PROCESSING_SET, batchMemberOf(batch))
 			.exec();
+		if (results == null) throw new Error('Transaction was aborted');
+		for (const [err] of results) {
+			if (err) throw err;
+		}
 	}
 
 	@bindThis

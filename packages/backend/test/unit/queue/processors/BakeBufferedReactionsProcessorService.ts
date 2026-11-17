@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import { vi } from 'vitest';
+import type * as Redis from 'ioredis';
 import { Test, TestingModule } from '@nestjs/testing';
 import type { MiMeta, MiNote, MiUser, NotesRepository, UsersRepository } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
@@ -73,5 +75,63 @@ describe('BakeBufferedReactionsProcessorService', () => {
 		const baked = await notesRepository.findOneByOrFail({ id: note.id });
 		expect(baked.reactions).toEqual({ '👍': 1 });
 		expect((await reactionsBufferingService.get(note.id)).deltas).toEqual({});
+	});
+
+	async function processingBatches(): Promise<string[]> {
+		return await app.get<Redis.Redis>(DI.redisForReactions).smembers('reactionsBufferProcessingBatches');
+	}
+
+	test('1件のノートの反映に失敗しても、後続のノートを反映し、失敗したバッチは次回に再試行する', async () => {
+		const failing = await createNote();
+		const other = await createNote();
+		await reactionsBufferingService.create(failing.id, alice.id, '👍', []);
+		await reactionsBufferingService.create(other.id, alice.id, '👍', []);
+
+		// @bindThisのメソッドは最初の参照でインスタンスのプロパティになるので、その後でspyする
+		const applyBatch = reactionsBufferingService.applyBatch;
+		vi.spyOn(reactionsBufferingService, 'applyBatch').mockImplementation(batch =>
+			batch.noteId === failing.id ? Promise.reject(new Error('injected failure')) : applyBatch(batch));
+
+		await expect(service.process()).rejects.toThrow(/1 batch/);
+		vi.restoreAllMocks();
+
+		expect((await notesRepository.findOneByOrFail({ id: other.id })).reactions).toEqual({ '👍': 1 });
+		expect((await notesRepository.findOneByOrFail({ id: failing.id })).reactions).toEqual({});
+		expect((await processingBatches()).some(m => m.startsWith(`${failing.id}:`))).toBe(true);
+
+		await service.process();
+
+		const baked = await notesRepository.findOneByOrFail({ id: failing.id });
+		expect(baked.reactions).toEqual({ '👍': 1 });
+		expect(baked.reactionAndUserPairCache).toEqual([`${alice.id}/👍`]);
+		expect((await processingBatches()).some(m => m.startsWith(`${failing.id}:`))).toBe(false);
+	});
+
+	test('後始末のRedisのコマンドが失敗しても、後続のノートを反映し、再実行で二重に加算しない', async () => {
+		const first = await createNote();
+		const second = await createNote();
+		await reactionsBufferingService.create(first.id, alice.id, '👍', []);
+		await reactionsBufferingService.create(second.id, alice.id, '👍', []);
+
+		const redis = app.get<Redis.Redis>(DI.redisForReactions);
+		const multi = redis.multi.bind(redis);
+		vi.spyOn(redis, 'multi').mockImplementationOnce((() => {
+			const m = multi();
+			m.exec = (() => Promise.resolve([[new Error('injected command failure'), null]])) as typeof m.exec;
+			return m;
+		}) as typeof redis.multi);
+
+		await expect(service.process()).rejects.toThrow(/1 batch/);
+		vi.restoreAllMocks();
+
+		// どちらもコミット済み。後始末に失敗したバッチは集合に残る
+		expect((await notesRepository.findOneByOrFail({ id: first.id })).reactions).toEqual({ '👍': 1 });
+		expect((await notesRepository.findOneByOrFail({ id: second.id })).reactions).toEqual({ '👍': 1 });
+
+		await service.process();
+
+		expect((await notesRepository.findOneByOrFail({ id: first.id })).reactions).toEqual({ '👍': 1 });
+		expect((await notesRepository.findOneByOrFail({ id: second.id })).reactions).toEqual({ '👍': 1 });
+		expect((await processingBatches()).some(m => m.startsWith(`${first.id}:`) || m.startsWith(`${second.id}:`))).toBe(false);
 	});
 });
