@@ -4,6 +4,7 @@
  */
 
 import { vi } from 'vitest';
+import type * as Redis from 'ioredis';
 import { Test, TestingModule } from '@nestjs/testing';
 import type { MiMeta, MiNote, MiUser, NotesRepository, UsersRepository } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
@@ -81,9 +82,46 @@ describe('BakeBufferedReactionsProcessorService', () => {
 		const other = await createNote();
 		await reactionsBufferingService.create(failing.id, alice.id, '👍', []);
 		await reactionsBufferingService.create(other.id, alice.id, '👍', []);
+		failUpdateOf(failing.id);
 
+		await expect(service.process()).rejects.toThrow();
+		vi.restoreAllMocks();
+
+		expect((await notesRepository.findOneByOrFail({ id: other.id })).reactions).toEqual({ '👍': 1 });
+		expect((await notesRepository.findOneByOrFail({ id: failing.id })).reactions).toEqual({});
+		expect(await reactionsBufferingService.get(failing.id)).toEqual({ deltas: { '👍': 1 }, pairs: [[alice.id, '👍']] });
+
+		await service.process();
+
+		const baked = await notesRepository.findOneByOrFail({ id: failing.id });
+		expect(baked.reactions).toEqual({ '👍': 1 });
+		expect(baked.reactionAndUserPairCache).toEqual([`${alice.id}/👍`]);
+	});
+
+	test('差分をバッファへ戻すRedisのコマンドが失敗しても、後続のノートを反映する', async () => {
+		const failing = await createNote();
+		const other = await createNote();
+		await reactionsBufferingService.create(failing.id, alice.id, '👍', []);
+		await reactionsBufferingService.create(other.id, alice.id, '👍', []);
+		failUpdateOf(failing.id);
+
+		const redis = app.get<Redis.Redis>(DI.redisForReactions);
+		const multi = redis.multi.bind(redis);
+		vi.spyOn(redis, 'multi').mockImplementation((() => {
+			const m = multi();
+			m.exec = (() => Promise.resolve([[new Error('injected command failure'), null]])) as typeof m.exec;
+			return m;
+		}) as typeof redis.multi);
+
+		await expect(service.process()).rejects.toThrow(/1 note/);
+		vi.restoreAllMocks();
+
+		expect((await notesRepository.findOneByOrFail({ id: other.id })).reactions).toEqual({ '👍': 1 });
+	});
+
+	function failUpdateOf(noteId: MiNote['id']) {
 		const createQueryBuilder = notesRepository.createQueryBuilder.bind(notesRepository);
-		const spy = vi.spyOn(notesRepository, 'createQueryBuilder').mockImplementation(((alias?: string) => {
+		vi.spyOn(notesRepository, 'createQueryBuilder').mockImplementation(((alias?: string) => {
 			const qb = createQueryBuilder(alias);
 			const update = qb.update.bind(qb);
 			qb.update = ((...args: Parameters<typeof qb.update>) => {
@@ -91,7 +129,7 @@ describe('BakeBufferedReactionsProcessorService', () => {
 				const where = uqb.where.bind(uqb);
 				uqb.where = ((...whereArgs: Parameters<typeof uqb.where>) => {
 					const params = whereArgs[1] as { id?: string } | undefined;
-					if (params?.id === failing.id) {
+					if (params?.id === noteId) {
 						uqb.execute = () => Promise.reject(new Error('injected failure'));
 					}
 					return where(...whereArgs);
@@ -100,16 +138,5 @@ describe('BakeBufferedReactionsProcessorService', () => {
 			}) as typeof qb.update;
 			return qb;
 		}) as typeof notesRepository.createQueryBuilder);
-
-		await expect(service.process()).rejects.toThrow();
-		spy.mockRestore();
-
-		expect((await notesRepository.findOneByOrFail({ id: other.id })).reactions).toEqual({ '👍': 1 });
-		expect((await notesRepository.findOneByOrFail({ id: failing.id })).reactions).toEqual({});
-		expect((await reactionsBufferingService.get(failing.id)).deltas).toEqual({ '👍': 1 });
-
-		await service.process();
-
-		expect((await notesRepository.findOneByOrFail({ id: failing.id })).reactions).toEqual({ '👍': 1 });
-	});
+	}
 });

@@ -170,7 +170,7 @@ export class ReactionsBufferingService {
 				// 差分キーは削除済みなので、反映できなかった差分を戻して次回に再試行する。後続のノートは処理を続ける
 				failed++;
 				this.logger.error(`Failed to bake buffered reactions of ${noteId}`, { err });
-				await this.restoreDeltas(noteId, buffered.deltas);
+				await this.restoreBuffered(noteId, buffered);
 			}
 		}
 
@@ -179,16 +179,28 @@ export class ReactionsBufferingService {
 		}
 	}
 
+	/**
+	 * 反映できなかった差分とペアを、次回に再試行できるようバッファへ戻す。
+	 * その間に届いたリアクションの差分には加算し、ペアは古いものとして先頭側に入れる。
+	 */
 	@bindThis
-	private async restoreDeltas(noteId: MiNote['id'], deltas: Record<string, number>): Promise<void> {
+	private async restoreBuffered(noteId: MiNote['id'], buffered: { deltas: Record<string, number>; pairs: ([MiUser['id'], string])[] }): Promise<void> {
 		try {
-			const pipeline = this.redisForReactions.pipeline();
-			for (const [reaction, count] of Object.entries(deltas)) {
-				pipeline.hincrby(`${REDIS_DELTA_PREFIX}:${noteId}`, reaction, count);
+			const multi = this.redisForReactions.multi();
+			for (const [reaction, count] of Object.entries(buffered.deltas)) {
+				multi.hincrby(`${REDIS_DELTA_PREFIX}:${noteId}`, reaction, count);
 			}
-			await pipeline.exec();
+			for (let i = 0; i < buffered.pairs.length; i++) {
+				multi.zadd(`${REDIS_PAIR_PREFIX}:${noteId}`, 'NX', i, buffered.pairs[i].join('/'));
+			}
+			multi.zremrangebyrank(`${REDIS_PAIR_PREFIX}:${noteId}`, 0, -(PER_NOTE_REACTION_USER_PAIR_CACHE_MAX + 1));
+			const results = await multi.exec();
+			if (results == null) throw new Error('Transaction was aborted');
+			for (const [err] of results) {
+				if (err) throw err;
+			}
 		} catch (err) {
-			this.logger.error(`Failed to restore buffered reactions of ${noteId}. Lost deltas: ${JSON.stringify(deltas)}`, { err });
+			this.logger.error(`Failed to restore buffered reactions of ${noteId}. Lost deltas: ${JSON.stringify(buffered.deltas)}`, { err });
 		}
 	}
 
