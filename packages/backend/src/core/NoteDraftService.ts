@@ -19,7 +19,7 @@ import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
 import { QueueService } from '@/core/QueueService.js';
 import type { IEvent } from '@/models/Event.js';
 
-export type NoteDraftOptions = Omit<MiNoteDraft, 'id' | 'userId' | 'user' | 'reply' | 'renote'>;
+export type NoteDraftOptions = Omit<MiNoteDraft, 'id' | 'userId' | 'user' | 'reply' | 'renote' | 'postedNoteId' | 'postedAt' | 'postAttempts'>;
 
 @Injectable()
 export class NoteDraftService {
@@ -88,7 +88,7 @@ export class NoteDraftService {
 		});
 
 		if (draft.scheduledAt && draft.isActuallyScheduled) {
-			this.schedule(draft);
+			await this.queueService.syncScheduledNotePost(draft.id, draft.scheduledAt);
 		}
 
 		return draft;
@@ -121,18 +121,24 @@ export class NoteDraftService {
 
 		await this.validate(me, data);
 
-		const updatedDraft = await this.noteDraftsRepository.createQueryBuilder().update()
-			.set(data)
+		// 投稿済み（後処理の待ち）のドラフトは、すでに存在しないものとして扱う。
+		// 予約投稿の照合で登録し直した回数は、利用者が更新したら0に戻す
+		const updatedDraft: MiNoteDraft | undefined = await this.noteDraftsRepository.createQueryBuilder().update()
+			.set({ ...data, postAttempts: 0 })
 			.where('id = :id', { id: draftId })
+			.andWhere('"postedAt" IS NULL')
 			.returning('*')
 			.execute()
 			.then((response) => response.raw[0]);
 
-		this.clearSchedule(draftId).then(() => {
-			if (updatedDraft.scheduledAt != null && updatedDraft.isActuallyScheduled) {
-				this.schedule(updatedDraft);
-			}
-		});
+		if (updatedDraft == null) {
+			throw new IdentifiableError('49cd6b9d-848e-41ee-b0b9-adaca711a6b1', 'No such note draft');
+		}
+
+		await this.queueService.syncScheduledNotePost(
+			draftId,
+			updatedDraft.scheduledAt != null && updatedDraft.isActuallyScheduled ? new Date(updatedDraft.scheduledAt) : null,
+		);
 
 		return updatedDraft;
 	}
@@ -150,7 +156,7 @@ export class NoteDraftService {
 
 		await this.noteDraftsRepository.delete(draft.id);
 
-		this.clearSchedule(draftId);
+		await this.queueService.syncScheduledNotePost(draftId, null);
 	}
 
 	@bindThis
@@ -278,38 +284,5 @@ export class NoteDraftService {
 			}
 		}
 		//#endregion
-	}
-
-	@bindThis
-	public async schedule(draft: MiNoteDraft): Promise<void> {
-		if (!draft.isActuallyScheduled) return;
-		if (draft.scheduledAt == null) return;
-		if (draft.scheduledAt.getTime() <= Date.now()) return;
-
-		const delay = draft.scheduledAt.getTime() - Date.now();
-		this.queueService.postScheduledNoteQueue.add(draft.id, {
-			noteDraftId: draft.id,
-		}, {
-			delay,
-			removeOnComplete: {
-				age: 3600 * 24 * 7, // keep up to 7 days
-				count: 30,
-			},
-			removeOnFail: {
-				age: 3600 * 24 * 7, // keep up to 7 days
-				count: 100,
-			},
-		});
-	}
-
-	@bindThis
-	public async clearSchedule(draftId: MiNoteDraft['id']): Promise<void> {
-		// TODO: 線形探索なのをどうにかする
-		const jobs = await this.queueService.postScheduledNoteQueue.getJobs(['delayed', 'waiting', 'active']);
-		for (const job of jobs) {
-			if (job.data.noteDraftId === draftId) {
-				await job.remove();
-			}
-		}
 	}
 }

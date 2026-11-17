@@ -57,7 +57,9 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const query = this.queryService.makePaginationQuery<MiNoteDraft>(this.noteDraftsRepository.createQueryBuilder('drafts'), ps.sinceId, ps.untilId, ps.sinceDate, ps.untilDate)
-				.andWhere('drafts.userId = :meId', { meId: me.id });
+				.andWhere('drafts.userId = :meId', { meId: me.id })
+				// 予約投稿で投稿済み（後処理の待ち）のドラフトは含めない
+				.andWhere('drafts.postedAt IS NULL');
 
 			if (ps.scheduled === true) {
 				query.andWhere('drafts.isActuallyScheduled = true');
