@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import { vi } from 'vitest';
 import * as Redis from 'ioredis';
 import { Test, TestingModule } from '@nestjs/testing';
 import type { BlockingsRepository, MiUser, UsersRepository } from '@/models/_.js';
@@ -85,6 +86,8 @@ describe('RedisKVCache / RedisSingleCache', () => {
 	});
 
 	test('寿命が1秒に満たないキャッシュは作れない', () => {
+		// メモリ層のGCのタイマーを作る前に拒否する
+		const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
 		expect(() => new RedisKVCache<string>(redis, 'test', {
 			lifetime: 400,
 			memoryCacheLifetime: -1,
@@ -99,6 +102,7 @@ describe('RedisKVCache / RedisSingleCache', () => {
 			toRedisConverter: (value) => value,
 			fromRedisConverter: (value) => value,
 		})).toThrow('at least 1 second');
+		expect(setIntervalSpy).not.toHaveBeenCalled();
 	});
 
 	test('set はほかの版のキーを同じMULTIで消す', async () => {
