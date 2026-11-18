@@ -364,6 +364,10 @@ export class RedisSingleCache<T> {
 
 export class MemoryKVCache<T> {
 	private readonly cache = new Map<string, { date: number; value: T; }>();
+	/**
+	 * 取得中（fetcherの完了待ち）のキーごとの印。取得中にそのキーが書き換えられたり消されたりしたら印を付け、取得した値（古いかもしれない）をキャッシュしない
+	 */
+	private readonly pendingFetches = new Map<string, Set<{ invalidated: boolean }>>();
 	private readonly gcIntervalHandle = setInterval(() => this.gc(), 1000 * 60 * 3); // 3m
 
 	constructor(
@@ -376,10 +380,46 @@ export class MemoryKVCache<T> {
 	 * @deprecated これを直接呼び出すべきではない。InternalEventなどで変更を全てのプロセス/マシンに通知するべき
 	 */
 	public set(key: string, value: T): void {
+		this.invalidatePendingFetches(key);
+		this.store(key, value);
+	}
+
+	private store(key: string, value: T): void {
 		this.cache.set(key, {
 			date: Date.now(),
 			value,
 		});
+	}
+
+	private invalidatePendingFetches(key: string | null): void {
+		const targets = key == null ? this.pendingFetches.values() : [this.pendingFetches.get(key) ?? []];
+		for (const fetches of targets) {
+			for (const fetch of fetches) fetch.invalidated = true;
+		}
+	}
+
+	/**
+	 * fetcherを呼び、取得中にキーが書き換えられたり消されたりしていなければ、結果をキャッシュする
+	 */
+	private async fetchAndStore<V extends T | undefined>(key: string, fetcher: () => Promise<V>): Promise<V> {
+		const pending = { invalidated: false };
+		let fetches = this.pendingFetches.get(key);
+		if (fetches == null) {
+			fetches = new Set();
+			this.pendingFetches.set(key, fetches);
+		}
+		fetches.add(pending);
+		let value: V;
+		try {
+			value = await fetcher();
+		} finally {
+			fetches.delete(pending);
+			if (fetches.size === 0 && this.pendingFetches.get(key) === fetches) this.pendingFetches.delete(key);
+		}
+		if (value !== undefined && !pending.invalidated) {
+			this.store(key, value as T);
+		}
+		return value;
 	}
 
 	@bindThis
@@ -395,11 +435,13 @@ export class MemoryKVCache<T> {
 
 	@bindThis
 	public delete(key: string): void {
+		this.invalidatePendingFetches(key);
 		this.cache.delete(key);
 	}
 
 	@bindThis
 	public clear(): void {
+		this.invalidatePendingFetches(null);
 		this.cache.clear();
 	}
 
@@ -423,9 +465,7 @@ export class MemoryKVCache<T> {
 		}
 
 		// Cache MISS
-		const value = await fetcher();
-		this.set(key, value);
-		return value;
+		return await this.fetchAndStore(key, fetcher);
 	}
 
 	/**
@@ -448,11 +488,7 @@ export class MemoryKVCache<T> {
 		}
 
 		// Cache MISS
-		const value = await fetcher();
-		if (value !== undefined) {
-			this.set(key, value);
-		}
-		return value;
+		return await this.fetchAndStore(key, fetcher);
 	}
 
 	@bindThis
@@ -482,6 +518,8 @@ export class MemoryKVCache<T> {
 export class MemorySingleCache<T> {
 	private cachedAt: number | null = null;
 	private value: T | undefined;
+	/** set・deleteのたびに進める。取得中に進んだら、取得した値（古いかもしれない）をキャッシュしない */
+	private generation = 0;
 
 	constructor(
 		private lifetime: number,
@@ -489,8 +527,25 @@ export class MemorySingleCache<T> {
 
 	@bindThis
 	public set(value: T): void {
+		this.generation++;
+		this.store(value);
+	}
+
+	private store(value: T): void {
 		this.cachedAt = Date.now();
 		this.value = value;
+	}
+
+	/**
+	 * fetcherを呼び、取得中にset・deleteされていなければ、結果をキャッシュする
+	 */
+	private async fetchAndStore<V extends T | undefined>(fetcher: () => Promise<V>): Promise<V> {
+		const generation = this.generation;
+		const value = await fetcher();
+		if (value !== undefined && generation === this.generation) {
+			this.store(value as T);
+		}
+		return value;
 	}
 
 	@bindThis
@@ -506,6 +561,7 @@ export class MemorySingleCache<T> {
 
 	@bindThis
 	public delete() {
+		this.generation++;
 		this.value = undefined;
 		this.cachedAt = null;
 	}
@@ -530,9 +586,7 @@ export class MemorySingleCache<T> {
 		}
 
 		// Cache MISS
-		const value = await fetcher();
-		this.set(value);
-		return value;
+		return await this.fetchAndStore(fetcher);
 	}
 
 	/**
@@ -555,10 +609,6 @@ export class MemorySingleCache<T> {
 		}
 
 		// Cache MISS
-		const value = await fetcher();
-		if (value !== undefined) {
-			this.set(value);
-		}
-		return value;
+		return await this.fetchAndStore(fetcher);
 	}
 }

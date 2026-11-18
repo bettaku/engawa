@@ -19,6 +19,8 @@ import { onRedisReconnected } from '@/misc/redis-reconnected.js';
 export class MetaService implements OnApplicationShutdown {
 	private readonly offRedisReconnected: () => void;
 	private cache: MiMeta | undefined;
+	/** キャッシュを捨てる・置き換えるたびに進める。それより前に始めたDBの読み込みの結果はキャッシュしない */
+	private cacheGeneration = 0;
 	private intervalId: NodeJS.Timeout;
 
 	constructor(
@@ -35,9 +37,9 @@ export class MetaService implements OnApplicationShutdown {
 
 		if (process.env.NODE_ENV !== 'test') {
 			this.intervalId = setInterval(() => {
-				this.fetch(true).then(meta => {
-					// fetch内でもセットしてるけど仕様変更の可能性もあるため一応
-					this.cache = meta;
+				// キャッシュはfetchの中で更新する（読み込み中にイベントで更新されていれば更新しない）
+				this.fetch(true).catch(err => {
+					console.error('Failed to refresh the meta cache', err);
 				});
 			}, 1000 * 60 * 5);
 		}
@@ -56,13 +58,13 @@ export class MetaService implements OnApplicationShutdown {
 				case 'metaUpdated': {
 					if (isInternalEventRef(body)) {
 						// 新本文は値を持たないので、次の取得でDBから読み直す
-						this.cache = undefined;
+						this.setCache(undefined);
 						break;
 					}
-					this.cache = { // TODO: このあたりのデシリアライズ処理は各modelファイル内に関数としてexportしたい
+					this.setCache({ // TODO: このあたりのデシリアライズ処理は各modelファイル内に関数としてexportしたい
 						...(body.after),
 						rootUser: null, // joinなカラムは通常取ってこないので
-					};
+					});
 					break;
 				}
 				default:
@@ -75,6 +77,11 @@ export class MetaService implements OnApplicationShutdown {
 	public async fetch(noCache = false): Promise<MiMeta> {
 		if (!noCache && this.cache) return this.cache;
 
+		const generation = this.cacheGeneration;
+		const cacheIfNotChanged = (meta: MiMeta) => {
+			if (generation === this.cacheGeneration) this.setCache(meta);
+		};
+
 		return await this.db.transaction(async transactionalEntityManager => {
 			// 過去のバグでレコードが複数出来てしまっている可能性があるので新しいIDを優先する
 			const metas = await transactionalEntityManager.find(MiMeta, {
@@ -86,7 +93,7 @@ export class MetaService implements OnApplicationShutdown {
 			const meta = metas[0];
 
 			if (meta) {
-				this.cache = meta;
+				cacheIfNotChanged(meta);
 				return meta;
 			} else {
 				// metaが空のときfetchMetaが同時に呼ばれるとここが同時に呼ばれてしまうことがあるのでフェイルセーフなupsertを使う
@@ -100,7 +107,7 @@ export class MetaService implements OnApplicationShutdown {
 					)
 					.then((x) => transactionalEntityManager.findOneByOrFail(MiMeta, x.identifiers[0]));
 
-				this.cache = saved;
+				cacheIfNotChanged(saved);
 				return saved;
 			}
 		});
@@ -162,7 +169,13 @@ export class MetaService implements OnApplicationShutdown {
 	 */
 	@bindThis
 	private onRedisReconnected(): void {
-		this.cache = undefined;
+		this.setCache(undefined);
+	}
+
+	@bindThis
+	private setCache(meta: MiMeta | undefined): void {
+		this.cacheGeneration++;
+		this.cache = meta;
 	}
 
 	@bindThis

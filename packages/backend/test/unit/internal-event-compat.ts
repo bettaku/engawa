@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import { vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import type {
 	AntennasRepository,
@@ -36,6 +37,7 @@ import { AntennaService } from '@/core/AntennaService.js';
 import { MetaService } from '@/core/MetaService.js';
 import { SYSTEM_ACCOUNT_TYPES, SystemAccountService } from '@/core/SystemAccountService.js';
 import { secureRndstr } from '@/misc/secure-rndstr.js';
+import type { ReloadableList } from '@/misc/reloadable-list.js';
 
 async function waitFor(condition: () => Promise<boolean> | boolean, timeout = 5000) {
 	const start = Date.now();
@@ -205,6 +207,11 @@ describe('内部イベントの新本文（P2-3 第1リリース）', () => {
 			globalEventService.publishInternalEvent('systemWebhookUpdated', toInternalEventRef({ id } as MiSystemWebhook));
 			await waitFor(async () => !(await service.fetchActiveSystemWebhooks()).some(w => w.id === id));
 
+			// 一覧に載った状態から削除する（載っていなければ、削除の処理がなくても成り立つので）
+			await systemWebhooksRepository.update(id, { isActive: true });
+			globalEventService.publishInternalEvent('systemWebhookUpdated', toInternalEventRef({ id } as MiSystemWebhook));
+			await waitFor(async () => (await service.fetchActiveSystemWebhooks()).some(w => w.id === id));
+
 			await systemWebhooksRepository.delete(id);
 			globalEventService.publishInternalEvent('systemWebhookDeleted', toInternalEventRef({ id } as MiSystemWebhook));
 			await waitFor(async () => !(await service.fetchActiveSystemWebhooks()).some(w => w.id === id));
@@ -212,14 +219,24 @@ describe('内部イベントの新本文（P2-3 第1リリース）', () => {
 	});
 
 	describe('アンテナ', () => {
+		const antennaList = (service: AntennaService) => (service as unknown as { antennas: ReloadableList<MiAntenna> }).antennas;
+
 		test('新本文で、有効なアンテナの一覧をDBから読み直す。無効なアンテナは加えない', async () => {
 			const service = app.get(AntennaService);
 			await service.getAntennas();
 
 			const id = idService.gen();
 			await antennasRepository.insert({ id, userId: alice.id, name: 'antenna', src: 'all', keywords: [['a']], excludeKeywords: [], users: [], isActive: false, withFile: false, lastUsedAt: new Date() });
-			globalEventService.publishInternalEvent('antennaCreated', toInternalEventRef({ id } as MiAntenna));
-			// 無効なアンテナは加えないので、反映を待てない。後のイベントと順序が保たれることで確かめる
+			// 自分のプロセスに届いて一覧が捨てられるのを待ってから、無効なアンテナが一覧にないことを確かめる
+			const invalidate = vi.spyOn(antennaList(service), 'invalidate');
+			try {
+				globalEventService.publishInternalEvent('antennaCreated', toInternalEventRef({ id } as MiAntenna));
+				await waitFor(() => invalidate.mock.calls.length > 0);
+			} finally {
+				invalidate.mockRestore();
+			}
+			expect((await service.getAntennas()).some(a => a.id === id)).toBe(false);
+
 			await antennasRepository.update(id, { isActive: true, name: 'activated' });
 			globalEventService.publishInternalEvent('antennaUpdated', toInternalEventRef({ id } as MiAntenna));
 			await waitFor(async () => (await service.getAntennas()).find(a => a.id === id)?.name === 'activated');
@@ -228,6 +245,49 @@ describe('内部イベントの新本文（P2-3 第1リリース）', () => {
 			await antennasRepository.delete(id);
 			globalEventService.publishInternalEvent('antennaDeleted', toInternalEventRef({ id } as MiAntenna));
 			await waitFor(async () => !(await service.getAntennas()).some(a => a.id === id));
+		});
+
+		test('一覧の取得中に新本文が届いたら、取得した一覧（古いかもしれない）を保存せず、待っている呼び出し元にも返さない', async () => {
+			const service = app.get(AntennaService);
+			const id = idService.gen();
+			await antennasRepository.insert({ id, userId: alice.id, name: 'antenna', src: 'all', keywords: [['a']], excludeKeywords: [], users: [], isActive: true, withFile: false, lastUsedAt: new Date() });
+			globalEventService.publishInternalEvent('antennaCreated', toInternalEventRef({ id } as MiAntenna));
+			await waitFor(async () => (await service.getAntennas()).some(a => a.id === id));
+
+			// 一覧を捨てた状態で取得を始め、削除前の行を読んだところで止める
+			antennaList(service).invalidate();
+			const findBy = antennasRepository.findBy.bind(antennasRepository);
+			let release!: () => void;
+			const released = new Promise<void>(r => { release = r; });
+			let markRead!: () => void;
+			const readDone = new Promise<void>(r => { markRead = r; });
+			const spy = vi.spyOn(antennasRepository, 'findBy').mockImplementationOnce(async (where) => {
+				const rows = await findBy(where);
+				markRead();
+				await released;
+				return rows;
+			});
+			try {
+				const fetching = service.getAntennas();
+				// 削除前の行を読み終えてから削除する
+				await readDone;
+
+				// 自分のプロセスにも届いて一覧が捨てられるのを待つ
+				const invalidate = vi.spyOn(antennaList(service), 'invalidate');
+				await antennasRepository.delete(id);
+				globalEventService.publishInternalEvent('antennaDeleted', toInternalEventRef({ id } as MiAntenna));
+				await waitFor(() => invalidate.mock.calls.length > 0);
+				invalidate.mockRestore();
+				release();
+
+				// 読み込み中に削除が届いたので、待っていた呼び出し元も削除済みのアンテナを受け取らない
+				expect((await fetching).some(a => a.id === id)).toBe(false);
+				expect((await service.getAntennas()).some(a => a.id === id)).toBe(false);
+			} finally {
+				// 失敗したときも、止めている取得を終わらせる
+				release();
+				spy.mockRestore();
+			}
 		});
 	});
 

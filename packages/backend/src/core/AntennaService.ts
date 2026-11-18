@@ -11,6 +11,9 @@ import { isInternalEventRef, type GlobalEvents } from '@/core/GlobalEventService
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { UtilityService } from '@/core/UtilityService.js';
 import { bindThis } from '@/decorators.js';
+import { LoggerService } from '@/core/LoggerService.js';
+import type Logger from '@/logger.js';
+import { ReloadableList, replaceById } from '@/misc/reloadable-list.js';
 import { DI } from '@/di-symbols.js';
 import * as Acct from '@/misc/acct.js';
 import type { Packed } from '@/misc/json-schema.js';
@@ -26,8 +29,8 @@ import { onRedisReconnected } from '@/misc/redis-reconnected.js';
 @Injectable()
 export class AntennaService implements OnApplicationShutdown {
 	private readonly offRedisReconnected: () => void;
-	private antennasFetched: boolean;
-	private antennas: MiAntenna[];
+	private readonly logger: Logger;
+	private readonly antennas: ReloadableList<MiAntenna>;
 
 	constructor(
 		@Inject(DI.redisForTimelines)
@@ -49,9 +52,13 @@ export class AntennaService implements OnApplicationShutdown {
 		private utilityService: UtilityService,
 		private globalEventService: GlobalEventService,
 		private fanoutTimelineService: FanoutTimelineService,
+		loggerService: LoggerService,
 	) {
-		this.antennasFetched = false;
-		this.antennas = [];
+		this.logger = loggerService.getLogger('antenna');
+		this.antennas = new ReloadableList(
+			() => this.antennasRepository.findBy({ isActive: true }),
+			{ onError: err => this.logger.error('Failed to load active antennas', { e: err }) },
+		);
 
 		this.redisForSub.on('message', this.onRedisMessage);
 		this.offRedisReconnected = onRedisReconnected(this.redisForSub, this.onRedisReconnected);
@@ -64,34 +71,23 @@ export class AntennaService implements OnApplicationShutdown {
 		if (obj.channel === 'internal') {
 			const { type, body } = obj.message as GlobalEvents['internal']['payload'];
 			if (isInternalEventRef(body) && (type === 'antennaCreated' || type === 'antennaUpdated' || type === 'antennaDeleted')) {
-				// 新本文は値を持たないので、DBから読み直す。削除済みや無効なら一覧から外す
-				if (!this.antennasFetched) return;
-				const antenna = type === 'antennaDeleted' ? null : await this.antennasRepository.findOneBy({ id: body.id });
-				this.antennas = this.antennas.filter(a => a.id !== body.id);
-				if (antenna != null && antenna.isActive) {
-					this.antennas.push(antenna);
-				}
+				// 新本文は値を持たないので、一覧を捨てて次の取得でDBから読み直す。
+				// 1件ずつ読み直すと、読み込み中に届いた後続のイベントや、取得中の一覧との順序が入れ替わる
+				this.antennas.invalidate();
 				return;
 			}
 
-			// 旧本文（エンティティ全体）
+			// 旧本文（エンティティ全体）。読み込み済みの一覧に差分を反映する（読み込み中の一覧は保存しない）
 			if (isInternalEventRef(body)) return;
 			switch (type) {
 				case 'antennaCreated':
-					this.antennas.push(deserializeAntenna(body));
+				case 'antennaUpdated':
+				case 'antennaDeleted': {
+					// 旧本文の作成・更新は、これまでどおり無効なアンテナも一覧に入れる
+					const antenna = type === 'antennaDeleted' ? null : deserializeAntenna(body);
+					this.antennas.modify(antennas => replaceById(antennas, body.id, antenna));
 					break;
-				case 'antennaUpdated': {
-					const idx = this.antennas.findIndex(a => a.id === body.id);
-					if (idx >= 0) {
-						this.antennas[idx] = deserializeAntenna(body);
-					} else {
-						this.antennas.push(deserializeAntenna(body));
-					}
 				}
-					break;
-				case 'antennaDeleted':
-					this.antennas = this.antennas.filter(a => a.id !== body.id);
-					break;
 				default:
 					break;
 			}
@@ -100,7 +96,13 @@ export class AntennaService implements OnApplicationShutdown {
 
 	@bindThis
 	public async addNoteToAntennas(note: MiNote, noteUser: { id: MiUser['id']; username: string; host: string | null; isBot: boolean; }): Promise<void> {
-		const antennas = await this.getAntennas();
+		let antennas: MiAntenna[];
+		try {
+			antennas = await this.getAntennas();
+		} catch {
+			// 再試行しても読み込めなかった（ログは読み込み側で出している）。呼び出し元はこの処理を待たないので、ここで止める
+			return;
+		}
 		const antennasWithMatchResult = await Promise.all(antennas.map(antenna => this.checkHitAntenna(antenna, note, noteUser).then(hit => [antenna, hit] as const)));
 		const matchedAntennas = antennasWithMatchResult.filter(([, hit]) => hit).map(([antenna]) => antenna);
 
@@ -223,14 +225,7 @@ export class AntennaService implements OnApplicationShutdown {
 
 	@bindThis
 	public async getAntennas() {
-		if (!this.antennasFetched) {
-			this.antennas = await this.antennasRepository.findBy({
-				isActive: true,
-			});
-			this.antennasFetched = true;
-		}
-
-		return this.antennas;
+		return await this.antennas.get();
 	}
 
 	@bindThis
@@ -273,7 +268,7 @@ export class AntennaService implements OnApplicationShutdown {
 	 */
 	@bindThis
 	private onRedisReconnected(): void {
-		this.antennasFetched = false;
+		this.antennas.invalidate();
 	}
 
 	@bindThis
