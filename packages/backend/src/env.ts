@@ -7,6 +7,8 @@ const envOption = {
 	onlyQueue: false,
 	onlyServer: false,
 	noDaemons: false,
+	/** queueプロセスの起動時に定期ジョブを登録しない（QueueService.registerJobSchedulers） */
+	noJobSchedulers: false,
 	disableClustering: false,
 	verbose: false,
 	withLogTime: false,

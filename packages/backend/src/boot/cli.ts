@@ -9,6 +9,7 @@ import { NestFactory } from '@nestjs/core';
 import { CommandModule } from '@/cli/CommandModule.js';
 import { NestLogger } from '@/NestLogger.js';
 import { CommandService } from '@/cli/CommandService.js';
+import { QueueService } from '@/core/QueueService.js';
 import { COUNTER_NAMES, CounterConsistencyService, type CounterName } from '@/core/CounterConsistencyService.js';
 
 process.title = 'Engawa Cli';
@@ -52,6 +53,7 @@ switch (command) {
 		console.log('    while notes, follows or clips are being written. For a reliable result, stop writes, wait for running');
 		console.log('    jobs to finish, then repair and check again.');
 		console.log('  bake-reactions - Applies buffered reactions to the database (stop the queue processes first)');
+		console.log('  register-job-schedulers - Registers the repeatable system jobs (for queue processes started with CP_NO_JOB_SCHEDULERS)');
 		break;
 	}
 	case 'check-counters':
@@ -84,6 +86,13 @@ switch (command) {
 	case 'bake-reactions': {
 		await commandService.bakeReactions();
 		console.log('Buffered reactions have been baked.');
+		break;
+	}
+	case 'register-job-schedulers': {
+		const result = await app.get(QueueService).registerJobSchedulers();
+		console.log(`Upserted: ${result.upserted.join(', ')}`);
+		console.log(`Removed: ${result.removed.length > 0 ? result.removed.join(', ') : '(none)'}`);
+		if (result.kept.length > 0) console.log(`Kept unknown schedulers: ${result.kept.join(', ')}`);
 		break;
 	}
 	default: {

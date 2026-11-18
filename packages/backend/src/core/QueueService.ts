@@ -4,7 +4,7 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { MetricsTime, type JobType } from 'bullmq';
 import { parse as parseRedisInfo } from 'redis-info';
 import type { IActivity } from '@/core/activitypub/type.js';
@@ -62,7 +62,7 @@ export const QUEUE_TYPES = [
 	'scheduledNoteDelete',
 ] as const;
 
-const REPEATABLE_SYSTEM_JOB_DEF = [{
+export const REPEATABLE_SYSTEM_JOB_DEF: readonly { name: string; pattern: string; }[] = [{
 	name: 'tickCharts',
 	pattern: '55 * * * *',
 }, {
@@ -105,8 +105,37 @@ const REPEATABLE_SYSTEM_JOB_DEF = [{
 	pattern: '*/5 * * * *',
 }];
 
+/**
+ * 以前の版で登録していて、いまは使わない定期ジョブの名前。
+ *
+ * registerJobSchedulersは、ここにある名前のスケジューラーだけを削除する。
+ * 定期ジョブをREPEATABLE_SYSTEM_JOB_DEFから外すときは、その名前をここへ移す。
+ */
+export const OBSOLETE_SYSTEM_JOB_SCHEDULER_NAMES: readonly string[] = [];
+
+/**
+ * 登録済みのスケジューラーを削除するかどうか。
+ *
+ * - 既知の旧名（キーまたは名前がOBSOLETE_SYSTEM_JOB_SCHEDULER_NAMESにある）なら削除する
+ * - 旧形式（`add(…, { repeat })`）で登録された、このアプリの定期ジョブなら削除する。
+ *   同じ名前のJob Schedulerと二重に実行されるためである。旧形式のキーは、ジョブ名と異なる
+ *   （BullMQ 5のハッシュ、またはそれ以前の`name:id:endDate:tz:pattern`）
+ * - それ以外（知らない名前）は削除しない
+ *
+ * 定義にある名前の定期ジョブを、別のキーで登録したもの（別の実装が登録したものを含む）も削除する。
+ * 定期ジョブの担当を別の実装へ移すときは、先にREPEATABLE_SYSTEM_JOB_DEFから外す。
+ */
+export function shouldRemoveJobScheduler(scheduler: { key: string; name?: string | null; }): boolean {
+	if (OBSOLETE_SYSTEM_JOB_SCHEDULER_NAMES.includes(scheduler.key)) return true;
+	const name = scheduler.name ?? scheduler.key;
+	if (OBSOLETE_SYSTEM_JOB_SCHEDULER_NAMES.includes(name)) return true;
+	const isLegacyRepeatable = scheduler.key !== name;
+	if (isLegacyRepeatable && REPEATABLE_SYSTEM_JOB_DEF.some(def => def.name === name)) return true;
+	return false;
+}
+
 @Injectable()
-export class QueueService implements OnModuleInit {
+export class QueueService {
 	private logger: Logger;
 
 	constructor(
@@ -130,42 +159,58 @@ export class QueueService implements OnModuleInit {
 		this.logger = this.loggerService.getLogger('queue');
 	}
 
-	async onModuleInit() {
-		console.log('[QueueService] onModuleInit: Setting up', REPEATABLE_SYSTEM_JOB_DEF.length, 'repeatable jobs');
-		try {
-			for (const def of REPEATABLE_SYSTEM_JOB_DEF) {
-				console.log('[QueueService] Setting up repeatable job:', def.name, 'pattern:', def.pattern);
-				const result = await this.systemQueue.upsertJobScheduler(def.name, {
-					pattern: def.pattern,
-					immediately: false,
-				}, {
-					name: def.name,
-					opts: {
-						// 期限ではなくcountで設定したいが、ジョブごとではなくキュー全体でカウントされるため、高頻度で実行されるジョブによって低頻度で実行されるジョブのログが消えることになる
-						removeOnComplete: {
-							age: 3600 * 24 * 7, // keep up to 7 days
-						},
-						removeOnFail: {
-							age: 3600 * 24 * 7, // keep up to 7 days
-						},
+	/**
+	 * 定期ジョブ（system queueのJob Scheduler）を登録する。
+	 *
+	 * queueプロセスの起動時（`CP_NO_JOB_SCHEDULERS`を設定していない場合）と、CLIの`register-job-schedulers`だけが呼ぶ。
+	 * serverプロセスでは呼ばない。Redisに障害があってもserverの起動を妨げないためである。
+	 *
+	 * 定義にあるものはupsertする。削除するのは、既知の旧名（OBSOLETE_SYSTEM_JOB_SCHEDULER_NAMES）と、
+	 * 旧形式（`add(…, { repeat })`）で登録されたこのアプリの定期ジョブだけである。
+	 * 知らない名前のスケジューラーは消さない（新旧の版の混在や、別の実装が登録したものを消さないため）。
+	 */
+	@bindThis
+	public async registerJobSchedulers(): Promise<{ upserted: string[]; removed: string[]; kept: string[]; }> {
+		const upserted: string[] = [];
+		for (const def of REPEATABLE_SYSTEM_JOB_DEF) {
+			await this.systemQueue.upsertJobScheduler(def.name, {
+				pattern: def.pattern,
+				immediately: false,
+			}, {
+				name: def.name,
+				opts: {
+					// 期限ではなくcountで設定したいが、ジョブごとではなくキュー全体でカウントされるため、高頻度で実行されるジョブによって低頻度で実行されるジョブのログが消えることになる
+					removeOnComplete: {
+						age: 3600 * 24 * 7, // keep up to 7 days
 					},
-				});
-				console.log('[QueueService] Result:', def.name, result);
-			}
-
-			// 古いバージョンで作成され現在使われなくなったrepeatableジョブをクリーンアップ
-			const schedulers = await this.systemQueue.getJobSchedulers();
-			console.log('[QueueService] Found', schedulers.length, 'existing schedulers');
-			for (const scheduler of schedulers) {
-				if (!REPEATABLE_SYSTEM_JOB_DEF.some(def => def.name === scheduler.key)) {
-					await this.systemQueue.removeJobScheduler(scheduler.key);
-				}
-			}
-			console.log('[QueueService] onModuleInit: All repeatable jobs set up successfully');
-		} catch (error) {
-			console.error('[QueueService] ERROR in onModuleInit:', error);
-			throw error;
+					removeOnFail: {
+						age: 3600 * 24 * 7, // keep up to 7 days
+					},
+				},
+			});
+			upserted.push(def.name);
 		}
+
+		const removed: string[] = [];
+		const kept: string[] = [];
+		const schedulers = await this.systemQueue.getJobSchedulers();
+		for (const scheduler of schedulers) {
+			// 旧形式でハッシュ化されたキーは、名前を復元できないので対象にしない
+			if (scheduler == null) continue;
+			if (shouldRemoveJobScheduler(scheduler)) {
+				await this.systemQueue.removeJobScheduler(scheduler.key);
+				removed.push(scheduler.key);
+			} else if (!REPEATABLE_SYSTEM_JOB_DEF.some(def => def.name === scheduler.key)) {
+				kept.push(scheduler.key);
+			}
+		}
+
+		this.logger.info(`Job schedulers registered: ${upserted.length} upserted, ${removed.length} removed${removed.length > 0 ? ` (${removed.join(', ')})` : ''}`);
+		if (kept.length > 0) {
+			this.logger.warn(`Unknown job schedulers were kept: ${kept.join(', ')}`);
+		}
+
+		return { upserted, removed, kept };
 	}
 
 	@bindThis
