@@ -347,9 +347,6 @@ importers:
       juice:
         specifier: 11.0.3
         version: 11.0.3
-      meilisearch:
-        specifier: 0.53.0
-        version: 0.53.0
       mfc-js:
         specifier: 0.1.0
         version: 0.1.0
@@ -8454,9 +8451,6 @@ packages:
 
   mediabunny@1.23.0:
     resolution: {integrity: sha512-mWdhhdRquePfTgZ+18DLCFWmqwO6oGP/YudmRU8Puh+whMUJ3VSb9KMAHPl2utim66ixKdZw+DbmdqBfBxRp0A==}
-
-  meilisearch@0.53.0:
-    resolution: {integrity: sha512-nG4VXbEOSzUmtbfsgOo+t6yX1ECEgXaT4hC0ap9MBpQGK5xwT+NWYDENYsKWR75cVaWaAqva+ok4zHlgtdXlLw==}
 
   memoizerific@1.11.3:
     resolution: {integrity: sha512-/EuHYwAPdLtXwAwSZkh/Gutery6pD2KYd44oQLhAvQp/50mpyduZh8Q7PYHXTCJ+wuXxt7oij2LXyIJOOYFPog==}
@@ -19710,8 +19704,6 @@ snapshots:
     dependencies:
       '@types/dom-mediacapture-transform': 0.1.11
       '@types/dom-webcodecs': 0.1.13
-
-  meilisearch@0.53.0: {}
 
   memoizerific@1.11.3:
     dependencies:

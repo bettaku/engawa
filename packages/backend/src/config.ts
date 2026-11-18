@@ -28,7 +28,6 @@ export type Config = {
 	dbReplications: boolean | undefined;
 	dbSlaves: ConfigInput['dbSlaves'];
 	fulltextSearch?: ConfigInput['fulltextSearch'];
-	meilisearch: ConfigInput['meilisearch'];
 	elasticsearch: ConfigInput['elasticsearch'];
 	proxy: string | undefined;
 	proxySmtp: string | undefined;
@@ -110,6 +109,11 @@ export function loadConfig(): Config {
 }
 
 function deriveConfig(config: ConfigInput): Config {
+	// Meilisearchは削除した。黙ってSQLでの検索に切り替えると、検索の挙動が変わったことに気づけないので起動しない
+	if ((config.fulltextSearch?.provider as string | undefined) === 'meilisearch') {
+		throw new Error('fulltextSearch.provider "meilisearch" is no longer supported. Use "sqlPgroonga" or "elasticsearch" instead. See CHANGELOG_engawa.md for migration.');
+	}
+
 	const meta = JSON.parse(fs.readFileSync(`${_dirname}/../../../built/meta.json`, 'utf-8'));
 
 	const frontendManifestExists = fs.existsSync(_dirname + '/../../../built/_frontend_vite_/manifest.json');
@@ -164,7 +168,6 @@ function deriveConfig(config: ConfigInput): Config {
 		dbReplications: config.dbReplications,
 		dbSlaves: config.dbSlaves,
 		fulltextSearch: config.fulltextSearch,
-		meilisearch: config.meilisearch,
 		elasticsearch: config.elasticsearch,
 		redis,
 		redisForPubsub: config.redisForPubsub ? convertRedisOptions(config.redisForPubsub, host) : redis,

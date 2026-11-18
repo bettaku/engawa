@@ -617,6 +617,22 @@ export class QueueService implements OnModuleInit {
 		})));
 	}
 
+	/**
+	 * ノートの検索索引を、実行時点のDBの状態に合わせるジョブを登録する。
+	 *
+	 * ジョブはノートIDだけを持つ。同じノートのジョブが重なっても、後から実行したジョブがDBの最新状態を書くので、
+	 * 重複を取り除かない（実行中のジョブはDBを読み終えている場合があり、取り除くと最新状態が反映されない）。
+	 */
+	@bindThis
+	public createSyncNoteIndexJob(noteId: MiNote['id']) {
+		return this.dbQueue.add('syncNoteIndex', { noteId }, {
+			attempts: 5,
+			backoff: { type: 'exponential', delay: 10 * 1000 },
+			removeOnComplete: true,
+			removeOnFail: { age: 7 * 24 * 60 * 60, count: 1000 },
+		});
+	}
+
 	@bindThis
 	public createReportAbuseJob(report: MiAbuseUserReport) {
 		return this.dbQueue.add('reportAbuse', report);

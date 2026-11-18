@@ -990,9 +990,13 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 	@bindThis
 	private index(note: MiNote) {
+		// 作成時に索引の対象外であることが明らかなノートは、ジョブを登録しない（索引から消すものもない）
 		if (note.text == null && note.cw == null) return;
+		if (!['home', 'public'].includes(note.visibility)) return;
 
-		this.searchService.indexNote(note);
+		this.searchService.requestSyncNoteIndex(note.id).catch(err => {
+			console.error(`Failed to request search index sync of note ${note.id}`, err);
+		});
 	}
 
 	@bindThis

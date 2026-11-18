@@ -64,6 +64,11 @@ export type DbJobMap = {
 	deleteAccount: DbUserDeleteJobData;
 	truncateAccount: DbUserTruncateJobData;
 	autoDeleteUserNotes: DbJobDataWithUser;
+	syncNoteIndex: DbSyncNoteIndexJobData;
+};
+
+export type DbSyncNoteIndexJobData = {
+	noteId: MiNote['id'];
 };
 
 export type DbJobDataWithUser = {

@@ -6,7 +6,6 @@
 export type FulltextSearchProvider =
 	| "sqlLike"
 	| "sqlPgroonga"
-	| "meilisearch"
 	| "elasticsearch";
 
 export type RedisOptionsSource = {
@@ -53,15 +52,6 @@ export type ConfigInput = {
 	redisForReactions?: RedisOptionsSource;
 	fulltextSearch?: {
 		provider?: FulltextSearchProvider;
-	};
-	meilisearch?: {
-		host: string;
-		port: number | string;
-		apiKey: string;
-		ssl?: boolean;
-		index: string;
-		locale?: string[];
-		scope?: "local" | "global" | string[];
 	};
 	elasticsearch?: {
 		host: string;
