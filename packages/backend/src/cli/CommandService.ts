@@ -9,6 +9,7 @@ import { DI } from '@/di-symbols.js';
 import type Logger from '@/logger.js';
 import { bindThis } from '@/decorators.js';
 import { MetaService } from '@/core/MetaService.js';
+import { ReactionsBufferingService } from '@/core/ReactionsBufferingService.js';
 
 @Injectable()
 export class CommandService {
@@ -19,6 +20,7 @@ export class CommandService {
 		private config: Config,
 
 		private metaService: MetaService,
+		private reactionsBufferingService: ReactionsBufferingService,
 	) {
 	}
 
@@ -45,5 +47,14 @@ export class CommandService {
 			turnstileSecretKey: null,
 			enableTestcaptcha: false,
 		});
+	}
+
+	/**
+	 * バッファしたリアクションをDBへ反映する。取り出したまま残ったバッチ（processingキー）も処理する。
+	 * 切り戻しの前に、queueプロセスを止めてから実行する。
+	 */
+	@bindThis
+	public async bakeReactions() {
+		await this.reactionsBufferingService.bake();
 	}
 }

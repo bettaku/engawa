@@ -10,9 +10,6 @@ import type { ConfigInput, ConfigEffective } from './types.js';
 const string = { type: 'string' } as const;
 const integer = { type: 'integer', minimum: 0 } as const;
 const port = { ...integer, minimum: 1, maximum: 65535 };
-// Decimal string form of 1-65535.
-const portPattern =
-	'^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$';
 const timeout = { type: 'number', minimum: 0 } as const;
 const secret = { ...string, 'x-secret': true };
 const list = { type: 'array', items: string, nullable: true } as const;
@@ -215,30 +212,11 @@ const properties = {
 			provider: {
 				...string,
 				...unset,
-				enum: ['sqlLike', 'sqlPgroonga', 'meilisearch', 'elasticsearch', null],
+				enum: ['sqlLike', 'sqlPgroonga', 'elasticsearch', null],
 			},
 		}),
 		nullable: true,
 		description: 'Full-text search provider.',
-	},
-	meilisearch: {
-		...object(
-			{
-				host: string,
-				port: { anyOf: [port, { ...string, pattern: portPattern }] },
-				apiKey: secret,
-				index: string,
-				ssl: flag,
-				scope,
-				locale: list,
-			},
-			'host',
-			'port',
-			'apiKey',
-			'index',
-		),
-		nullable: true,
-		...removal(325),
 	},
 	elasticsearch: {
 		...object(
@@ -425,7 +403,7 @@ const properties = {
 } as const;
 
 // Selecting an external search engine requires its connection settings.
-const requireSearchConnection = (provider: 'meilisearch' | 'elasticsearch') => ({
+const requireSearchConnection = (provider: 'elasticsearch') => ({
 	if: {
 		properties: {
 			fulltextSearch: {
@@ -444,7 +422,6 @@ const requireSearchConnection = (provider: 'meilisearch' | 'elasticsearch') => (
 const input = {
 	...object(properties, 'db', 'redis', 'id'),
 	allOf: [
-		requireSearchConnection('meilisearch'),
 		requireSearchConnection('elasticsearch'),
 	],
 } satisfies JSONSchemaType<ConfigInput>;

@@ -94,16 +94,8 @@ describe('configuration validation', () => {
 			.toMatchObject({ password: 'pass' });
 	});
 
-	it('limits Meilisearch string ports to the valid range', () => {
-		const meilisearch = { host: 'host', apiKey: 'key', index: 'idx' };
-		for (const [port, valid] of [['7700', true], ['65535', true], ['0', false], ['65536', false]] as const) {
-			const errors = check({ meilisearch: { ...meilisearch, port } }).diagnostics.filter(d => d.level === 'error');
-			expect(errors.length === 0).toBe(valid);
-		}
-	});
-
 	it('requires connection settings for the selected search engine', () => {
-		for (const provider of ['meilisearch', 'elasticsearch']) {
+		for (const provider of ['elasticsearch']) {
 			expect(check({ fulltextSearch: { provider } }).diagnostics)
 				.toContainEqual(expect.objectContaining({ path: '/' + provider, level: 'error' }));
 			expect(check({ fulltextSearch: { provider }, [provider]: null }).diagnostics)
@@ -112,6 +104,11 @@ describe('configuration validation', () => {
 		expect(check({ fulltextSearch: null }).diagnostics).toEqual([]);
 		expect(published.validate('config#/$defs/input', { ...base, fulltextSearch: null })).toBe(true);
 		expect(published.validate('config#/$defs/input', { ...base, fulltextSearch: { provider: 'elasticsearch' } })).toBe(false);
+	});
+
+	it('rejects the removed Meilisearch provider', () => {
+		expect(check({ fulltextSearch: { provider: 'meilisearch' } }).diagnostics)
+			.toContainEqual(expect.objectContaining({ path: '/fulltextSearch/provider', level: 'error' }));
 	});
 
 	it('treats a null outgoingAddressFamily as unset', () => {
@@ -126,8 +123,8 @@ describe('configuration validation', () => {
 	});
 
 	it('reports deprecated and unknown options as warnings with escaped JSON pointers', () => {
-		const { diagnostics } = check({ 'old/key~': 1, signToActivityPubGet: true, outgoingAddressFamily: 'dual', fulltextSearch: { provider: 'meilisearch' }, meilisearch: { host: 'host', port: 7700, apiKey: 'key', index: 'idx' } });
-		expect(diagnostics.map(d => d.path).sort()).toEqual(['/fulltextSearch/provider', '/meilisearch', '/old~1key~0', '/outgoingAddressFamily', '/signToActivityPubGet']);
+		const { diagnostics } = check({ 'old/key~': 1, signToActivityPubGet: true, outgoingAddressFamily: 'dual', meilisearch: { host: 'host', port: 7700, apiKey: 'key', index: 'idx' } });
+		expect(diagnostics.map(d => d.path).sort()).toEqual(['/meilisearch', '/old~1key~0', '/outgoingAddressFamily', '/signToActivityPubGet']);
 		expect(diagnostics.every(d => d.level === 'warning')).toBe(true);
 	});
 

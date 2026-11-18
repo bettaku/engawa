@@ -140,7 +140,8 @@ export class MetaEntityService {
 			mediaProxy: this.config.mediaProxy,
 			enableUrlPreview: instance.urlPreviewEnabled,
 			urlPreviewEndpoint: instance.directSummalyProxy ? (instance.urlPreviewSummaryProxyUrl || `${this.config.url}/url` ) : `${this.config.url}/url`,
-			noteSearchableScope: (this.config.meilisearch == null || this.config.meilisearch.scope !== 'local') ? 'global' : 'local',
+			// Elasticsearchは既定でローカルのノートだけを索引に入れる。SQLでの検索はすべてのノートが対象になる
+			noteSearchableScope: (this.config.fulltextSearch?.provider === 'elasticsearch' && (this.config.elasticsearch?.scope ?? 'local') === 'local') ? 'local' : 'global',
 			maxFileSize: this.config.maxFileSize,
 			statusUrl: instance.statusUrl,
 			federation: this.meta.federation,

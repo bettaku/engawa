@@ -28,7 +28,7 @@ describe('NoteDeleteService', () => {
 
 	let publishNoteStream: MockInstance<GlobalEventService['publishNoteStream']>;
 	let deliverToFollowers: MockInstance<ApDeliverManagerService['deliverToFollowers']>;
-	let unindexNote: MockInstance<SearchService['unindexNote']>;
+	let requestSyncNoteIndex: MockInstance<SearchService['requestSyncNoteIndex']>;
 
 	// Local users
 	let alice: MiUser;
@@ -118,8 +118,8 @@ describe('NoteDeleteService', () => {
 		vi.spyOn(apDeliverManagerService, 'deliverToUsers').mockResolvedValue(undefined);
 
 		const searchService = app.get(SearchService);
-		void searchService.unindexNote;
-		unindexNote = vi.spyOn(searchService, 'unindexNote').mockResolvedValue(undefined);
+		void searchService.requestSyncNoteIndex;
+		requestSyncNoteIndex = vi.spyOn(searchService, 'requestSyncNoteIndex').mockResolvedValue(undefined);
 	});
 
 	afterEach(async () => {
@@ -143,7 +143,7 @@ describe('NoteDeleteService', () => {
 			expect(await exists(note)).toBe(false);
 			expect(deletedEventsOf(note)).toHaveLength(1);
 			expect(deliverToFollowers).toHaveBeenCalledTimes(1);
-			expect(unindexNote).toHaveBeenCalledTimes(1);
+			expect(requestSyncNoteIndex).toHaveBeenCalledTimes(1);
 			expect(await repliesCountOf(parent)).toBe(0);
 		});
 
@@ -171,7 +171,7 @@ describe('NoteDeleteService', () => {
 
 			expect(deletedEventsOf(note)).toHaveLength(0);
 			expect(deliverToFollowers).not.toHaveBeenCalled();
-			expect(unindexNote).not.toHaveBeenCalled();
+			expect(requestSyncNoteIndex).not.toHaveBeenCalled();
 			expect(await repliesCountOf(parent)).toBe(0);
 		});
 
@@ -184,7 +184,7 @@ describe('NoteDeleteService', () => {
 			expect(await exists(note)).toBe(false);
 			expect(deletedEventsOf(note)).toHaveLength(0);
 			expect(deliverToFollowers).not.toHaveBeenCalled();
-			expect(unindexNote).toHaveBeenCalledTimes(1);
+			expect(requestSyncNoteIndex).toHaveBeenCalledTimes(1);
 			expect(await repliesCountOf(parent)).toBe(0);
 		});
 	});
@@ -206,7 +206,7 @@ describe('NoteDeleteService', () => {
 				expect(deletedEventsOf(note)).toHaveLength(0);
 			}
 			expect(deliverToFollowers).not.toHaveBeenCalled();
-			expect(unindexNote).toHaveBeenCalledTimes(2);
+			expect(requestSyncNoteIndex).toHaveBeenCalledTimes(2);
 			expect(await repliesCountOf(parent)).toBe(0);
 		});
 
@@ -262,7 +262,7 @@ describe('NoteDeleteService', () => {
 				expect(await exists(note)).toBe(false);
 			}
 			expect(publishNoteStream).not.toHaveBeenCalled();
-			expect(unindexNote).not.toHaveBeenCalled();
+			expect(requestSyncNoteIndex).not.toHaveBeenCalled();
 		});
 
 		test('投稿者を指定せずに副作用を指定すると、何も削除せずに失敗する', async () => {
@@ -299,7 +299,7 @@ describe('NoteDeleteService', () => {
 			expect(await exists(other)).toBe(false);
 			expect(deletedEventsOf(other)).toHaveLength(1);
 			// 失敗したノートでも、ストリーム以外の副作用は実行する
-			expect(unindexNote.mock.calls.map(([n]) => n.id).sort()).toEqual([failing.id, other.id].sort());
+			expect(requestSyncNoteIndex.mock.calls.map(([id]) => id).sort()).toEqual([failing.id, other.id].sort());
 		});
 
 		test('配送が失敗しても、同じノートの残りの副作用は実行する', async () => {
@@ -313,7 +313,7 @@ describe('NoteDeleteService', () => {
 
 			expect(deleted).toHaveLength(1);
 			expect(deletedEventsOf(note)).toHaveLength(1);
-			expect(unindexNote).toHaveBeenCalledTimes(1);
+			expect(requestSyncNoteIndex).toHaveBeenCalledTimes(1);
 			expect(await repliesCountOf(parent)).toBe(0);
 		});
 
@@ -326,7 +326,7 @@ describe('NoteDeleteService', () => {
 			expect(deleted).toHaveLength(1);
 			expect(deliverToFollowers).not.toHaveBeenCalled();
 			expect(deletedEventsOf(renote)).toHaveLength(1);
-			expect(unindexNote).toHaveBeenCalledTimes(1);
+			expect(requestSyncNoteIndex).toHaveBeenCalledTimes(1);
 		});
 
 		test('空の配列では何もしない', async () => {
