@@ -35,6 +35,19 @@ export function singleCacheKey(name: string, version: CacheKeyVersion | null): s
 }
 
 /**
+ * キャッシュの無効化を全プロセスに伝える仕組み（実装は`CacheInvalidationService`）。
+ *
+ * `RedisKVCache`・`RedisSingleCache`は、値を書き込む・削除するときに`publish`し、
+ * ほかのプロセスは受け取ったキーをメモリ層から消す。`key`が`null`なら、そのキャッシュのメモリ層をすべて消す
+ * （`RedisSingleCache`の無効化と、Pub/Subの再接続時）。
+ */
+export interface CacheInvalidationBus {
+	publish(cache: string, key: string | null): void;
+	/** 購読をやめる関数を返す */
+	subscribe(cache: string, listener: (key: string | null) => void): () => void;
+}
+
+/**
  * MULTIを実行し、どれかのコマンドが失敗していたら例外を投げる。
  * ioredisのexecは、個々のコマンドの失敗を結果の配列に入れて返すだけなので確認する
  */
@@ -65,6 +78,8 @@ export class RedisKVCache<T> {
 	private readonly toRedisConverter: (value: T) => string;
 	private readonly fromRedisConverter: (value: string) => T | undefined;
 	private readonly version: CacheKeyVersion | null;
+	private readonly invalidation: CacheInvalidationBus | null;
+	private readonly unsubscribe: (() => void) | null;
 
 	constructor(
 		private redisClient: Redis.Redis,
@@ -80,6 +95,11 @@ export class RedisKVCache<T> {
 			 * `null`にすると版を持たず、ほかの版のキーを消さない（DBから再生成できない値。P2-1の対象外）
 			 */
 			version?: CacheKeyVersion | null;
+			/**
+			 * 値を書き込む・削除したことを、ほかのプロセスに伝える仕組み。
+			 * 省略すると、ほかのプロセスのメモリ層はmemoryCacheLifetimeが過ぎるまで古い値を返す
+			 */
+			invalidation?: CacheInvalidationBus | null;
 		},
 	) {
 		// メモリ層（GCのタイマーを持つ）を作る前に検証する。例外で作成に失敗したときにタイマーが残らないように
@@ -90,6 +110,14 @@ export class RedisKVCache<T> {
 		this.toRedisConverter = opts.toRedisConverter;
 		this.fromRedisConverter = opts.fromRedisConverter;
 		this.version = opts.version === undefined ? CURRENT_CACHE_KEY_VERSION : opts.version;
+		this.invalidation = opts.invalidation ?? null;
+		this.unsubscribe = this.invalidation?.subscribe(this.name, (key) => {
+			if (key == null) {
+				this.memoryCache.clear();
+			} else {
+				this.memoryCache.delete(key);
+			}
+		}) ?? null;
 	}
 
 	/** 読み書きするキー */
@@ -104,14 +132,16 @@ export class RedisKVCache<T> {
 	}
 
 	/**
-	 * 値を書き込み、ほかの版のキーを消す（値が変わったとき）
+	 * 値を書き込み、ほかの版のキーとほかのプロセスのメモリ層から消す（値が変わったとき）
 	 */
 	@bindThis
 	public async set(key: string, value: T): Promise<void> {
 		await this.write(key, value, true);
+		this.invalidation?.publish(this.name, key);
 	}
 
 	/**
+	 * Redisとこのプロセスのメモリ層に書き込む。ほかのプロセスには伝えない。
 	 * @param invalidateOthers ほかの版のキーも消すか。DBから読んだ値で埋めるだけのとき（キャッシュミス）は、
 	 *   値は変わっていないので消さない（版の異なるプロセスが互いのキャッシュを消し合わないように）
 	 */
@@ -145,8 +175,21 @@ export class RedisKVCache<T> {
 		return value;
 	}
 
+	/**
+	 * 値を削除し、ほかのプロセスのメモリ層からも消す
+	 */
 	@bindThis
 	public async delete(key: string): Promise<void> {
+		await this.evict(key);
+		this.invalidation?.publish(this.name, key);
+	}
+
+	/**
+	 * Redisとこのプロセスのメモリ層から消す。ほかのプロセスには伝えない。
+	 * ほかのプロセスが変更を通知してきたが、Redisを消したかどうか分からないとき（旧版のイベント）に使う
+	 */
+	@bindThis
+	public async evict(key: string): Promise<void> {
 		this.memoryCache.delete(key);
 		await this.redisClient.del(this.keyOf(key), ...this.otherKeysOf(key));
 	}
@@ -167,17 +210,19 @@ export class RedisKVCache<T> {
 		}
 
 		// Cache MISS
+		// DBから読んだ値なので、ほかのプロセスのメモリ層は消さない
 		const value = await this.fetcher(key);
 		await this.write(key, value, false);
 		return value;
 	}
 
+	/**
+	 * DBから読み直して書き込み、ほかのプロセスのメモリ層から消す
+	 */
 	@bindThis
 	public async refresh(key: string) {
 		const value = await this.fetcher(key);
 		await this.set(key, value);
-
-		// TODO: イベント発行して他プロセスのメモリキャッシュも更新できるようにする
 	}
 
 	@bindThis
@@ -187,6 +232,7 @@ export class RedisKVCache<T> {
 
 	@bindThis
 	public dispose() {
+		this.unsubscribe?.();
 		this.memoryCache.dispose();
 	}
 }
@@ -199,6 +245,8 @@ export class RedisSingleCache<T> {
 	private readonly fromRedisConverter: (value: string) => T | undefined;
 
 	private readonly version: CacheKeyVersion | null;
+	private readonly invalidation: CacheInvalidationBus | null;
+	private readonly unsubscribe: (() => void) | null;
 
 	constructor(
 		private redisClient: Redis.Redis,
@@ -211,6 +259,8 @@ export class RedisSingleCache<T> {
 			fromRedisConverter: RedisSingleCache<T>['fromRedisConverter'];
 			/** `RedisKVCache`の`version`と同じ */
 			version?: CacheKeyVersion | null;
+			/** `RedisKVCache`の`invalidation`と同じ */
+			invalidation?: CacheInvalidationBus | null;
 		},
 	) {
 		ttlSeconds(opts.lifetime);
@@ -220,6 +270,8 @@ export class RedisSingleCache<T> {
 		this.toRedisConverter = opts.toRedisConverter;
 		this.fromRedisConverter = opts.fromRedisConverter;
 		this.version = opts.version === undefined ? CURRENT_CACHE_KEY_VERSION : opts.version;
+		this.invalidation = opts.invalidation ?? null;
+		this.unsubscribe = this.invalidation?.subscribe(this.name, () => this.memoryCache.delete()) ?? null;
 	}
 
 	private get key(): string {
@@ -234,6 +286,7 @@ export class RedisSingleCache<T> {
 	@bindThis
 	public async set(value: T): Promise<void> {
 		await this.write(value, true);
+		this.invalidation?.publish(this.name, null);
 	}
 
 	/** `RedisKVCache`の`write`と同じ */
@@ -271,6 +324,7 @@ export class RedisSingleCache<T> {
 	public async delete(): Promise<void> {
 		this.memoryCache.delete();
 		await this.redisClient.del(this.key, ...this.otherKeys);
+		this.invalidation?.publish(this.name, null);
 	}
 
 	/**
@@ -298,8 +352,11 @@ export class RedisSingleCache<T> {
 	public async refresh() {
 		const value = await this.fetcher();
 		await this.set(value);
+	}
 
-		// TODO: イベント発行して他プロセスのメモリキャッシュも更新できるようにする
+	@bindThis
+	public dispose() {
+		this.unsubscribe?.();
 	}
 }
 
@@ -339,6 +396,11 @@ export class MemoryKVCache<T> {
 	@bindThis
 	public delete(key: string): void {
 		this.cache.delete(key);
+	}
+
+	@bindThis
+	public clear(): void {
+		this.cache.clear();
 	}
 
 	/**

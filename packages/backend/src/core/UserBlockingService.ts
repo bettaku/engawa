@@ -21,6 +21,7 @@ import { UserWebhookService } from '@/core/UserWebhookService.js';
 import { bindThis } from '@/decorators.js';
 import { CacheService } from '@/core/CacheService.js';
 import { UserFollowingService } from '@/core/UserFollowingService.js';
+import { UserListService } from '@/core/UserListService.js';
 
 @Injectable()
 export class UserBlockingService implements OnModuleInit {
@@ -53,6 +54,7 @@ export class UserBlockingService implements OnModuleInit {
 		private webhookService: UserWebhookService,
 		private apRendererService: ApRendererService,
 		private loggerService: LoggerService,
+		private userListService: UserListService,
 	) {
 		this.logger = this.loggerService.getLogger('user-block');
 	}
@@ -152,6 +154,7 @@ export class UserBlockingService implements OnModuleInit {
 				userId: user.id,
 			});
 		}
+		await this.userListService.invalidateMembersCache(userLists.map(x => x.id));
 	}
 
 	@bindThis

@@ -29,6 +29,7 @@ import { RateLimiterService } from './RateLimiterService.js';
 import { SigninService } from './SigninService.js';
 import type { AuthenticationResponseJSON } from '@simplewebauthn/server';
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { CacheService } from '@/core/CacheService.js';
 
 @Injectable()
 export class SigninApiService {
@@ -57,6 +58,7 @@ export class SigninApiService {
 		private userAuthService: UserAuthService,
 		private webAuthnService: WebAuthnService,
 		private captchaService: CaptchaService,
+		private cacheService: CacheService,
 	) {
 	}
 
@@ -160,6 +162,7 @@ export class SigninApiService {
 		if (same && isOldAlgorithm(profile.password!)) {
 			profile.password = await hashPassword(password);
 			await this.userProfilesRepository.save(profile);
+			await this.cacheService.userProfileCache.delete(profile.userId);
 		}
 
 		const fail = async (status?: number, failure?: { id: string; }) => {
@@ -213,7 +216,7 @@ export class SigninApiService {
 					const newHash = await hashPassword(password);
 					this.userProfilesRepository.update(user.id, {
 						password: newHash,
-					});
+					}).then(() => this.cacheService.userProfileCache.delete(user.id));
 				}
 				return this.signinService.signin(request, reply, user);
 			} else {
@@ -235,7 +238,7 @@ export class SigninApiService {
 					const newHash = await hashPassword(password);
 					this.userProfilesRepository.update(user.id, {
 						password: newHash,
-					});
+					}).then(() => this.cacheService.userProfileCache.delete(user.id));
 				}
 				await this.userAuthService.twoFactorAuthenticate(profile, token);
 			} catch (e) {

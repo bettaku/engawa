@@ -9,6 +9,7 @@ import type { UserProfilesRepository, PasswordResetRequestsRepository } from '@/
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import { DI } from '@/di-symbols.js';
 import { IdService } from '@/core/IdService.js';
+import { CacheService } from '@/core/CacheService.js';
 
 export const meta = {
 	tags: ['reset password'],
@@ -41,6 +42,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private userProfilesRepository: UserProfilesRepository,
 
 		private idService: IdService,
+		private cacheService: CacheService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const req = await this.passwordResetRequestsRepository.findOneByOrFail({
@@ -58,6 +60,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			await this.userProfilesRepository.update(req.userId, {
 				password: hash,
 			});
+			await this.cacheService.userProfileCache.delete(req.userId);
 
 			this.passwordResetRequestsRepository.delete(req.id);
 		});

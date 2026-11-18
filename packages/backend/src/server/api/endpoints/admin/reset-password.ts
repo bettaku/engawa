@@ -12,6 +12,7 @@ import { ModerationLogService } from '@/core/ModerationLogService.js';
 import { hashPassword } from '@/misc/password.js';
 import { RoleService } from '@/core/RoleService.js';
 import { ApiError } from '../../error.js';
+import { CacheService } from '@/core/CacheService.js';
 
 export const meta = {
 	tags: ['admin'],
@@ -66,6 +67,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 		private moderationLogService: ModerationLogService,
 		private roleService: RoleService,
+		private cacheService: CacheService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const user = await this.usersRepository.findOneBy({ id: ps.userId });
@@ -93,6 +95,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			}, {
 				password: hash,
 			});
+			await this.cacheService.userProfileCache.delete(user.id);
 
 			this.moderationLogService.log(me, 'resetPassword', {
 				userId: user.id,

@@ -8,6 +8,7 @@ import type { UserProfilesRepository, UsersRepository } from '@/models/_.js';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import { DI } from '@/di-symbols.js';
 import { ModerationLogService } from '@/core/ModerationLogService.js';
+import { CacheService } from '@/core/CacheService.js';
 
 export const meta = {
 	tags: ['admin'],
@@ -36,6 +37,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private userProfilesRepository: UserProfilesRepository,
 
 		private moderationLogService: ModerationLogService,
+		private cacheService: CacheService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const user = await this.usersRepository.findOneBy({ id: ps.userId });
@@ -49,6 +51,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			await this.userProfilesRepository.update({ userId: user.id }, {
 				moderationNote: ps.text,
 			});
+			await this.cacheService.userProfileCache.delete(user.id);
 
 			this.moderationLogService.log(me, 'updateUserNote', {
 				userId: user.id,

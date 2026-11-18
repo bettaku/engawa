@@ -21,6 +21,7 @@ import type { Serialized } from '@/types.js';
 import { DriveService } from '@/core/DriveService.js';
 import Logger from '@/logger.js';
 import { LoggerService } from './LoggerService.js';
+import { CacheInvalidationService } from '@/core/CacheInvalidationService.js';
 
 const parseEmojiStrRegexp = /^([-\w]+)(?:@([\w.-]+))?$/;
 
@@ -86,6 +87,7 @@ export class CustomEmojiService implements OnApplicationShutdown {
 		private globalEventService: GlobalEventService,
 		private driveService: DriveService,
 		private loggerService: LoggerService,
+		private cacheInvalidationService: CacheInvalidationService,
 	) {
 		this.emojisCache = new MemoryKVCache<MiEmoji | null>(1000 * 60 * 60 * 12); // 12h
 
@@ -100,6 +102,7 @@ export class CustomEmojiService implements OnApplicationShutdown {
 					updatedAt: x.updatedAt ? new Date(x.updatedAt) : null,
 				}]));
 			},
+			invalidation: this.cacheInvalidationService,
 		});
 
 		this.logger = loggerService.getLogger('customEmojiService');
@@ -633,6 +636,7 @@ export class CustomEmojiService implements OnApplicationShutdown {
 	@bindThis
 	public dispose(): void {
 		this.emojisCache.dispose();
+		this.localEmojisCache.dispose();
 	}
 
 	@bindThis

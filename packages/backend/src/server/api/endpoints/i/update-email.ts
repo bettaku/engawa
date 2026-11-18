@@ -16,6 +16,7 @@ import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { L_CHARS, secureRndstr } from '@/misc/secure-rndstr.js';
 import { UserAuthService } from '@/core/UserAuthService.js';
 import { ApiError } from '../../error.js';
+import { CacheService } from '@/core/CacheService.js';
 
 export const meta = {
 	requireCredential: true,
@@ -79,6 +80,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private emailService: EmailService,
 		private userAuthService: UserAuthService,
 		private globalEventService: GlobalEventService,
+		private cacheService: CacheService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const token = ps.token;
@@ -115,6 +117,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				emailVerified: false,
 				emailVerifyCode: null,
 			});
+			await this.cacheService.userProfileCache.delete(me.id);
 
 			const iObj = await this.userEntityService.pack(me.id, me, {
 				schema: 'MeDetailed',
@@ -130,6 +133,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				await this.userProfilesRepository.update(me.id, {
 					emailVerifyCode: code,
 				});
+				await this.cacheService.userProfileCache.delete(me.id);
 
 				const link = `${this.config.url}/verify-email/${code}`;
 
