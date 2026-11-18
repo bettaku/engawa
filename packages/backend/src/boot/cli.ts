@@ -48,8 +48,9 @@ switch (command) {
 		console.log('  check-counters [counter...] - Checks denormalized counters (exits with 1 if any mismatch is found)');
 		console.log('  repair-counters [counter...] - Recounts and repairs denormalized counters');
 		console.log(`    counters: ${COUNTER_NAMES.join(', ')}`);
-		console.log('    Repairing while notes, follows or clips are being written may leave a few rows off by one.');
-		console.log('    Run check-counters again afterwards, or repair while writes are stopped.');
+		console.log('    Checks and repairs are not synchronized with ordinary counter updates, so counters may still drift');
+		console.log('    while notes, follows or clips are being written. For a reliable result, stop writes, wait for running');
+		console.log('    jobs to finish, then repair and check again.');
 		console.log('  bake-reactions - Applies buffered reactions to the database (stop the queue processes first)');
 		break;
 	}
