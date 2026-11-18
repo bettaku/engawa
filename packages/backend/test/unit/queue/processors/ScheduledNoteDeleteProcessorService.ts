@@ -296,7 +296,7 @@ describe('ScheduledNoteDeleteProcessorService', () => {
 			await queueService.scheduleNoteDelete(note.id, fromNow(HOUR));
 
 			const job = await getJob(note);
-			expect(job?.data).toEqual({ noteId: note.id });
+			expect(job?.data).toEqual({ v: 1, noteId: note.id });
 			expect(await job?.getState()).toBe('delayed');
 			expect(job?.opts.delay).toBeGreaterThan(HOUR - MINUTE);
 			expect(job?.opts.delay).toBeLessThanOrEqual(HOUR);

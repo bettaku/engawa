@@ -30,6 +30,7 @@ import { MiNote } from '@/models/Note.js';
 import { MiMeta } from '@/models/Meta.js';
 import { DI } from '@/di-symbols.js';
 import { QueueLoggerService } from '../QueueLoggerService.js';
+import { toParsedSignature } from '../inbox-job-data.js';
 import type { InboxJobData } from '../types.js';
 
 type UpdateInstanceJob = {
@@ -64,7 +65,7 @@ export class InboxProcessorService implements OnApplicationShutdown {
 
 	@bindThis
 	public async process(job: Bull.Job<InboxJobData>): Promise<string> {
-		const signature = job.data.signature;	// HTTP-signature
+		const signature = toParsedSignature(job.data);	// HTTP-signature（v1はそのまま、v2は組み立て直す）
 		let activity = job.data.activity;
 
 		//#region Log

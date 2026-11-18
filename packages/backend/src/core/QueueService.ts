@@ -21,12 +21,14 @@ import { LoggerService } from '@/core/LoggerService.js';
 import type Logger from '@/logger.js';
 import type { Antenna } from '@/server/api/endpoints/i/import-antennas.js';
 import { ApRequestCreator } from '@/core/activitypub/ApRequestService.js';
+import { JOB_DATA_VERSION } from '@/queue/job-version.js';
 import { type SystemWebhookPayload } from '@/core/SystemWebhookService.js';
 import type { Packed } from '@/misc/json-schema.js';
 import { type UserWebhookPayload } from './UserWebhookService.js';
 import type {
 	DbJobData,
 	DeliverJobData,
+	InboxJobData,
 	RelationshipJobData,
 	SystemWebhookDeliverJobData,
 	ThinUser,
@@ -178,6 +180,7 @@ export class QueueService {
 				immediately: false,
 			}, {
 				name: def.name,
+				data: { v: JOB_DATA_VERSION },
 				opts: {
 					// 期限ではなくcountで設定したいが、ジョブごとではなくキュー全体でカウントされるため、高頻度で実行されるジョブによって低頻度で実行されるジョブのログが消えることになる
 					removeOnComplete: {
@@ -222,6 +225,7 @@ export class QueueService {
 		const digest = ApRequestCreator.createDigest(contentBody);
 
 		const data: DeliverJobData = {
+			v: JOB_DATA_VERSION,
 			user: {
 				id: user.id,
 			},
@@ -280,6 +284,7 @@ export class QueueService {
 		await this.deliverQueue.addBulk(Array.from(inboxes.entries(), d => ({
 			name: d[0].replace('https://', '').replace('/inbox', ''),
 			data: {
+				v: JOB_DATA_VERSION,
 				user,
 				content: contentBody,
 				digest,
@@ -294,7 +299,8 @@ export class QueueService {
 
 	@bindThis
 	public inbox(activity: IActivity, signature: httpSignature.IParsedSignature) {
-		const data = {
+		const data: InboxJobData = {
+			v: JOB_DATA_VERSION,
 			activity: activity,
 			signature,
 		};
@@ -320,6 +326,7 @@ export class QueueService {
 	@bindThis
 	public createDeleteDriveFilesJob(user: ThinUser) {
 		return this.dbQueue.add('deleteDriveFiles', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 		}, {
 			removeOnComplete: {
@@ -336,6 +343,7 @@ export class QueueService {
 	@bindThis
 	public createExportCustomEmojisJob(user: ThinUser) {
 		return this.dbQueue.add('exportCustomEmojis', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 		}, {
 			removeOnComplete: {
@@ -352,6 +360,7 @@ export class QueueService {
 	@bindThis
 	public createExportNotesJob(user: ThinUser) {
 		return this.dbQueue.add('exportNotes', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 		}, {
 			removeOnComplete: {
@@ -368,6 +377,7 @@ export class QueueService {
 	@bindThis
 	public createExportClipsJob(user: ThinUser) {
 		return this.dbQueue.add('exportClips', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 		}, {
 			removeOnComplete: {
@@ -384,6 +394,7 @@ export class QueueService {
 	@bindThis
 	public createExportFavoritesJob(user: ThinUser) {
 		return this.dbQueue.add('exportFavorites', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 		}, {
 			removeOnComplete: {
@@ -400,6 +411,7 @@ export class QueueService {
 	@bindThis
 	public createExportFollowingJob(user: ThinUser, excludeMuting = false, excludeInactive = false) {
 		return this.dbQueue.add('exportFollowing', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 			excludeMuting,
 			excludeInactive,
@@ -418,6 +430,7 @@ export class QueueService {
 	@bindThis
 	public createExportMuteJob(user: ThinUser) {
 		return this.dbQueue.add('exportMuting', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 		}, {
 			removeOnComplete: {
@@ -434,6 +447,7 @@ export class QueueService {
 	@bindThis
 	public createExportBlockingJob(user: ThinUser) {
 		return this.dbQueue.add('exportBlocking', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 		}, {
 			removeOnComplete: {
@@ -450,6 +464,7 @@ export class QueueService {
 	@bindThis
 	public createExportUserListsJob(user: ThinUser) {
 		return this.dbQueue.add('exportUserLists', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 		}, {
 			removeOnComplete: {
@@ -466,6 +481,7 @@ export class QueueService {
 	@bindThis
 	public createExportAntennasJob(user: ThinUser) {
 		return this.dbQueue.add('exportAntennas', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 		}, {
 			removeOnComplete: {
@@ -482,6 +498,7 @@ export class QueueService {
 	@bindThis
 	public createImportFollowingJob(user: ThinUser, fileId: MiDriveFile['id'], withReplies?: boolean) {
 		return this.dbQueue.add('importFollowing', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 			fileId: fileId,
 			withReplies,
@@ -506,6 +523,7 @@ export class QueueService {
 	@bindThis
 	public createImportMutingJob(user: ThinUser, fileId: MiDriveFile['id']) {
 		return this.dbQueue.add('importMuting', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 			fileId: fileId,
 		}, {
@@ -523,6 +541,7 @@ export class QueueService {
 	@bindThis
 	public createImportBlockingJob(user: ThinUser, fileId: MiDriveFile['id']) {
 		return this.dbQueue.add('importBlocking', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 			fileId: fileId,
 		}, {
@@ -551,7 +570,7 @@ export class QueueService {
 	} {
 		return {
 			name,
-			data,
+			data: { ...data, v: JOB_DATA_VERSION },
 			opts: {
 				removeOnComplete: {
 					age: 3600 * 24 * 7, // keep up to 7 days
@@ -568,6 +587,7 @@ export class QueueService {
 	@bindThis
 	public createImportUserListsJob(user: ThinUser, fileId: MiDriveFile['id']) {
 		return this.dbQueue.add('importUserLists', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 			fileId: fileId,
 		}, {
@@ -585,6 +605,7 @@ export class QueueService {
 	@bindThis
 	public createImportCustomEmojisJob(user: ThinUser, fileId: MiDriveFile['id']) {
 		return this.dbQueue.add('importCustomEmojis', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 			fileId: fileId,
 		}, {
@@ -602,6 +623,7 @@ export class QueueService {
 	@bindThis
 	public createImportAntennasJob(user: ThinUser, antenna: Antenna) {
 		return this.dbQueue.add('importAntennas', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 			antenna,
 		}, {
@@ -619,6 +641,7 @@ export class QueueService {
 	@bindThis
 	public createDeleteAccountJob(user: ThinUser, opts: { soft?: boolean; } = {}) {
 		return this.dbQueue.add('deleteAccount', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 			soft: opts.soft,
 		}, {
@@ -636,6 +659,7 @@ export class QueueService {
 	@bindThis
 	public createTruncateAccountJob(user: ThinUser) {
 		return this.dbQueue.add('truncateAccount', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 		}, {
 			removeOnComplete: true,
@@ -652,7 +676,7 @@ export class QueueService {
 	public createAutoDeleteUserNotesJobs(users: ThinUser[]) {
 		return this.dbQueue.addBulk(users.map(user => ({
 			name: 'autoDeleteUserNotes',
-			data: { user: { id: user.id } },
+			data: { v: JOB_DATA_VERSION, user: { id: user.id } },
 			opts: {
 				jobId: QueueService.autoDeleteUserNotesJobId(user.id),
 				// 同じjobIdのジョブが残っていると翌日の登録が無視されるので、終わったら消す
@@ -670,7 +694,7 @@ export class QueueService {
 	 */
 	@bindThis
 	public createSyncNoteIndexJob(noteId: MiNote['id']) {
-		return this.dbQueue.add('syncNoteIndex', { noteId }, {
+		return this.dbQueue.add('syncNoteIndex', { v: JOB_DATA_VERSION, noteId }, {
 			attempts: 5,
 			backoff: { type: 'exponential', delay: 10 * 1000 },
 			removeOnComplete: true,
@@ -722,6 +746,7 @@ export class QueueService {
 		return {
 			name,
 			data: {
+				v: JOB_DATA_VERSION,
 				from: { id: data.from.id },
 				to: { id: data.to.id },
 				silent: data.silent,
@@ -745,6 +770,7 @@ export class QueueService {
 	@bindThis
 	public createDeleteObjectStorageFileJob(key: string) {
 		return this.objectStorageQueue.add('deleteFile', {
+			v: JOB_DATA_VERSION,
 			key: key,
 		}, {
 			removeOnComplete: {
@@ -760,7 +786,7 @@ export class QueueService {
 
 	@bindThis
 	public createCleanRemoteFilesJob() {
-		return this.objectStorageQueue.add('cleanRemoteFiles', {}, {
+		return this.objectStorageQueue.add('cleanRemoteFiles', { v: JOB_DATA_VERSION }, {
 			removeOnComplete: {
 				age: 3600 * 24 * 7, // keep up to 7 days
 				count: 30,
@@ -784,6 +810,7 @@ export class QueueService {
 		opts?: { attempts?: number },
 	) {
 		const data: UserWebhookDeliverJobData = {
+			v: JOB_DATA_VERSION,
 			type,
 			content,
 			webhookId: webhook.id,
@@ -822,6 +849,7 @@ export class QueueService {
 		opts?: { attempts?: number },
 	) {
 		const data: SystemWebhookDeliverJobData = {
+			v: JOB_DATA_VERSION,
 			type,
 			content,
 			webhookId: webhook.id,
@@ -893,6 +921,7 @@ export class QueueService {
 	@bindThis
 	public async ensureNoteDeleteScheduled(noteId: MiNote['id'], deleteAt: Date): Promise<void> {
 		await this.scheduledNoteDeleteQueue.add(noteId, {
+			v: JOB_DATA_VERSION,
 			noteId,
 		}, {
 			jobId: QueueService.scheduledNoteDeleteJobId(noteId),
@@ -962,6 +991,7 @@ export class QueueService {
 	@bindThis
 	public async ensureNotePostScheduled(draftId: MiNoteDraft['id'], scheduledAt: Date): Promise<void> {
 		await this.postScheduledNoteQueue.add(draftId, {
+			v: JOB_DATA_VERSION,
 			noteDraftId: draftId,
 		}, {
 			jobId: QueueService.postScheduledNoteJobId(draftId),
