@@ -13,7 +13,8 @@ export const DEFAULT_RELOAD_RETRY_DELAYS: readonly number[] = [100, 500, 2000];
  *
  * - 読み込みは、同時に呼ばれても1つにまとめる（全員が同じ読み込みを待つ）
  * - 読み込みに失敗したら、`retryDelays` の間隔で再試行する。すべて失敗したら `onError` を呼び、例外を投げる
- * - 読み込み中に捨てられたり（`invalidate`）差分更新されたり（`modify`）したら、読み込んだ一覧（その変更を含まない）は保存しない
+ * - 読み込み中に捨てられたり（`invalidate`）差分更新されたり（`modify`）したら、読み込んだ一覧（その変更を含まない）は保存せず、
+ *   待っている呼び出し元にも返さずに読み直す
  */
 export class ReloadableList<T> {
 	private items: T[] = [];
@@ -34,14 +35,18 @@ export class ReloadableList<T> {
 	 * 一覧を返す。読み込んでいなければDBから読み込む
 	 */
 	public async get(): Promise<T[]> {
-		if (this.loaded) return this.items;
+		for (;;) {
+			if (this.loaded) return this.items;
 
-		// 捨てる前に始めた読み込みは、捨てた変更を含まないので待たない
-		if (this.loading == null || this.loading.generation !== this.generation) {
+			// 捨てる前に始めた読み込みは、捨てた変更を含まないので待たない
 			const generation = this.generation;
-			this.loading = { generation, promise: this.load(generation) };
+			if (this.loading == null || this.loading.generation !== generation) {
+				this.loading = { generation, promise: this.load(generation) };
+			}
+			const items = await this.loading.promise;
+			if (generation === this.generation) return items;
+			// 待っている間に捨てられたか差分更新された。読み込んだ一覧はその変更を含まない（削除済みの行を含みうる）ので、読み直す
 		}
-		return await this.loading.promise;
 	}
 
 	/**

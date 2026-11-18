@@ -56,21 +56,23 @@ describe('ReloadableList', () => {
 		expect(await list.get()).toEqual(['x']);
 	});
 
-	test('読み込み中に捨てたら、その読み込みの結果は保存せず、後の取得は新しく読み込む', async () => {
+	test('読み込み中に捨てたら、その読み込みの結果は保存せず、待っている呼び出し元にも返さない', async () => {
 		const first = deferred<string[]>();
 		const fetcher = vi.fn()
 			.mockImplementationOnce(() => first.promise)
 			.mockResolvedValueOnce(['new']);
 		const list = new ReloadableList<string>(fetcher);
 
-		const stale = list.get();
+		const waiting = list.get();
 		list.invalidate();
 		// 捨てる前に始めた読み込みは待たない
 		expect(await list.get()).toEqual(['new']);
 
 		first.resolve(['old']);
-		expect(await stale).toEqual(['old']);
+		// 先に待っていた呼び出し元も、捨てた後の一覧を受け取る
+		expect(await waiting).toEqual(['new']);
 		expect(await list.get()).toEqual(['new']);
+		expect(fetcher).toHaveBeenCalledTimes(2);
 	});
 
 	test('読み込み中に差分更新したら、その読み込みの結果は保存しない', async () => {
@@ -80,11 +82,11 @@ describe('ReloadableList', () => {
 			.mockResolvedValueOnce(['fresh']);
 		const list = new ReloadableList<string>(fetcher);
 
-		const stale = list.get();
+		const waiting = list.get();
 		list.modify(items => [...items, 'added']);
 		first.resolve(['old']);
-		await stale;
 
+		expect(await waiting).toEqual(['fresh']);
 		expect(await list.get()).toEqual(['fresh']);
 	});
 

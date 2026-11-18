@@ -247,7 +247,7 @@ describe('内部イベントの新本文（P2-3 第1リリース）', () => {
 			await waitFor(async () => !(await service.getAntennas()).some(a => a.id === id));
 		});
 
-		test('一覧の取得中に新本文が届いたら、取得した一覧（古いかもしれない）を保存しない', async () => {
+		test('一覧の取得中に新本文が届いたら、取得した一覧（古いかもしれない）を保存せず、待っている呼び出し元にも返さない', async () => {
 			const service = app.get(AntennaService);
 			const id = idService.gen();
 			await antennasRepository.insert({ id, userId: alice.id, name: 'antenna', src: 'all', keywords: [['a']], excludeKeywords: [], users: [], isActive: true, withFile: false, lastUsedAt: new Date() });
@@ -280,7 +280,8 @@ describe('内部イベントの新本文（P2-3 第1リリース）', () => {
 				invalidate.mockRestore();
 				release();
 
-				expect((await fetching).some(a => a.id === id)).toBe(true);
+				// 読み込み中に削除が届いたので、待っていた呼び出し元も削除済みのアンテナを受け取らない
+				expect((await fetching).some(a => a.id === id)).toBe(false);
 				expect((await service.getAntennas()).some(a => a.id === id)).toBe(false);
 			} finally {
 				// 失敗したときも、止めている取得を終わらせる
