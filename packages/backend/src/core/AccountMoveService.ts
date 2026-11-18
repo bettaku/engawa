@@ -26,6 +26,7 @@ import PerUserFollowingChart from '@/core/chart/charts/per-user-following.js';
 import { SystemAccountService } from '@/core/SystemAccountService.js';
 import { RoleService } from '@/core/RoleService.js';
 import { AntennaService } from '@/core/AntennaService.js';
+import { UserListService } from '@/core/UserListService.js';
 
 @Injectable()
 export class AccountMoveService {
@@ -65,6 +66,7 @@ export class AccountMoveService {
 		private systemAccountService: SystemAccountService,
 		private roleService: RoleService,
 		private antennaService: AntennaService,
+		private userListService: UserListService,
 	) {
 	}
 
@@ -279,6 +281,7 @@ export class AccountMoveService {
 
 		const arrayToInsert = Array.from(newMemberships.entries()).map(entry => ({ ...entry[1], id: entry[0] }));
 		await this.userListMembershipsRepository.insert(arrayToInsert);
+		await this.userListService.invalidateMembersCache(arrayToInsert.map(x => x.userListId));
 
 		// Have the proxy account follow the new account in the same way as UserListService.push
 		if (this.userEntityService.isRemoteUser(dst)) {

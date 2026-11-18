@@ -748,6 +748,7 @@ export class ApPersonService implements OnModuleInit {
 			birthday: bday?.[0] ?? null,
 			location: person['vcard:Address'] ?? null,
 		});
+		await this.cacheService.userProfileCache.delete(exist.id);
 
 		this.globalEventService.publishInternalEvent('remoteUserUpdated', { id: exist.id });
 

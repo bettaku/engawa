@@ -21,11 +21,14 @@ import { generateNativeUserToken } from '@/misc/token.js';
 import { IdService } from '@/core/IdService.js';
 import { genRsaKeyPair } from '@/misc/gen-key-pair.js';
 import type { OnApplicationShutdown } from '@nestjs/common';
+import { onRedisReconnected } from '@/misc/redis-reconnected.js';
+import { CacheService } from '@/core/CacheService.js';
 
 export const SYSTEM_ACCOUNT_TYPES = ['actor', 'relay', 'proxy'] as const;
 
 @Injectable()
 export class SystemAccountService implements OnApplicationShutdown {
+	private readonly offRedisReconnected: () => void;
 	private cache: MemoryKVCache<MiLocalUser>;
 
 	constructor(
@@ -48,10 +51,12 @@ export class SystemAccountService implements OnApplicationShutdown {
 		private userProfilesRepository: UserProfilesRepository,
 
 		private idService: IdService,
+		private cacheService: CacheService,
 	) {
 		this.cache = new MemoryKVCache<MiLocalUser>(1000 * 60 * 10); // 10m
 
 		this.redisForSub.on('message', this.onMessage);
+		this.offRedisReconnected = onRedisReconnected(this.redisForSub, this.onRedisReconnected);
 	}
 
 	@bindThis
@@ -209,6 +214,7 @@ export class SystemAccountService implements OnApplicationShutdown {
 
 		if (Object.keys(profileUpdates).length > 0) {
 			await this.userProfilesRepository.update(user.id, profileUpdates);
+			await this.cacheService.userProfileCache.delete(user.id);
 		}
 
 		const updated = await this.usersRepository.findOneByOrFail({ id: user.id }) as MiLocalUser;
@@ -217,8 +223,17 @@ export class SystemAccountService implements OnApplicationShutdown {
 		return updated;
 	}
 
+	/**
+	 * Pub/Subをつなぎ直したとき。切れている間のイベントを受け取れていないので、イベントで更新しているキャッシュを捨てる
+	 */
+	@bindThis
+	private onRedisReconnected(): void {
+		this.cache.clear();
+	}
+
 	@bindThis
 	public dispose(): void {
+		this.offRedisReconnected();
 		this.redisForSub.off('message', this.onMessage);
 		this.cache.dispose();
 	}

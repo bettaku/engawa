@@ -20,6 +20,7 @@ import { L_CHARS, secureRndstr } from '@/misc/secure-rndstr.js';
 import { SigninService } from './SigninService.js';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import { hashPassword } from '@/misc/password.js';
+import { CacheService } from '@/core/CacheService.js';
 
 @Injectable()
 export class SignupApiService {
@@ -51,6 +52,7 @@ export class SignupApiService {
 		private signupService: SignupService,
 		private signinService: SigninService,
 		private emailService: EmailService,
+		private cacheService: CacheService,
 	) {
 	}
 
@@ -270,6 +272,7 @@ export class SignupApiService {
 				emailVerified: true,
 				emailVerifyCode: null,
 			});
+			await this.cacheService.userProfileCache.delete(profile.userId);
 
 			const ticket = await this.registrationTicketsRepository.findOneBy({ pendingUserId: pendingUser.id });
 			if (ticket) {

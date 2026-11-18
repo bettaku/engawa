@@ -21,9 +21,11 @@ import type { MiUser } from '@/models/User.js';
 import { CacheService } from '@/core/CacheService.js';
 import { deserializeAntenna } from '@/core/deserializeAntenna.js';
 import type { OnApplicationShutdown } from '@nestjs/common';
+import { onRedisReconnected } from '@/misc/redis-reconnected.js';
 
 @Injectable()
 export class AntennaService implements OnApplicationShutdown {
+	private readonly offRedisReconnected: () => void;
 	private antennasFetched: boolean;
 	private antennas: MiAntenna[];
 
@@ -52,6 +54,7 @@ export class AntennaService implements OnApplicationShutdown {
 		this.antennas = [];
 
 		this.redisForSub.on('message', this.onRedisMessage);
+		this.offRedisReconnected = onRedisReconnected(this.redisForSub, this.onRedisReconnected);
 	}
 
 	@bindThis
@@ -265,8 +268,17 @@ export class AntennaService implements OnApplicationShutdown {
 		}
 	}
 
+	/**
+	 * Pub/Subをつなぎ直したとき。切れている間のイベントを受け取れていないので、イベントで更新しているキャッシュを捨てる
+	 */
+	@bindThis
+	private onRedisReconnected(): void {
+		this.antennasFetched = false;
+	}
+
 	@bindThis
 	public dispose(): void {
+		this.offRedisReconnected();
 		this.redisForSub.off('message', this.onRedisMessage);
 	}
 
