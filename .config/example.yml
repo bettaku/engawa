@@ -221,24 +221,9 @@ fulltextSearch:
   #   You need to install pgroonga and configure it as a PostgreSQL extension.
   #   In addition to the above, you need to create a pgroonga index on the text column of the note table.
   #   see: https://pgroonga.github.io/tutorial/
-  # - meilisearch (deprecated; scheduled for removal)
-  #   Use Meilisearch.
-  #   You need to install Meilisearch and configure.
+  # - elasticsearch
+  #   Use Elasticsearch. Set "elasticsearch" below.
   provider: sqlLike
-
-# For Meilisearch settings.
-# If you select "meilisearch" for "fulltextSearch.provider", it must be set.
-# You can set scope to local (default value) or global
-# (include notes from remote).
-
-# Deprecated; scheduled for removal (bettaku/engawa#325).
-#meilisearch:
-#  host: localhost
-#  port: 7700
-#  apiKey: ''
-#  ssl: true
-#  index: ''
-#  scope: local
 
 #   ┌───────────────────────────┐
 #───┘ ElasticSearch configuration └─────────────────────────────

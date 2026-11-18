@@ -367,10 +367,10 @@ export class NoteUpdateService implements OnApplicationShutdown {
 
 	@bindThis
 	private reIndex(note: MiNote) {
-		// 索引から消してから登録し直す。
-		// 本文がなくなった場合や、検索対象外の公開範囲になった場合は indexNote 側で登録されない。
-		this.searchService.unindexNote(note)
-			.catch(() => {})
-			.then(() => this.searchService.indexNote(note));
+		// 索引の更新はジョブで行い、実行時点のDBの状態を反映する。
+		// 本文がなくなった場合や、検索対象外の公開範囲になった場合は、ジョブが索引から削除する。
+		this.searchService.requestSyncNoteIndex(note.id).catch(err => {
+			console.error(`Failed to request search index sync of note ${note.id}`, err);
+		});
 	}
 }

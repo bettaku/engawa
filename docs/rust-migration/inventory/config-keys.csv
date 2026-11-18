@@ -298,16 +298,7 @@ redisForReactions.family,integer|null,,,0|4|6|,
 redisForReactions.db,integer|null,,,,
 redisForReactions.prefix,string|null,,,,
 fulltextSearch,object|null,,,,Full-text search provider.
-fulltextSearch.provider,string|null,,,sqlLike|sqlPgroonga|meilisearch|elasticsearch|,
-meilisearch,object|null,,,,Scheduled for removal (https://github.com/bettaku/engawa/issues/325)
-meilisearch.host,string,,,,
-meilisearch.port,anyOf,,,,
-meilisearch.apiKey,string,,,,
-meilisearch.index,string,,,,
-meilisearch.ssl,boolean|null,,,,
-meilisearch.scope,anyOf,,,,
-meilisearch.locale,array|null,,,,
-meilisearch.locale[],string,,,,
+fulltextSearch.provider,string|null,,,sqlLike|sqlPgroonga|elasticsearch|,
 elasticsearch,object|null,,,,Elasticsearch connection and indexing options.
 elasticsearch.host,string,,,,
 elasticsearch.port,integer,,,,
