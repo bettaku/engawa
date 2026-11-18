@@ -4,6 +4,7 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
+import { In } from 'typeorm';
 import type { ClipNotesRepository, ClipsRepository, FollowingsRepository, MiNote, MiUser, NotesRepository, UsersRepository, UserProfilesRepository } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
 import { IdService } from '@/core/IdService.js';
@@ -255,6 +256,41 @@ describe('CounterConsistencyService', () => {
 		// 残りは32766件
 		await noteDeleteService.deleteMany(bob, [await notesRepository.findOneByOrFail({ id: 'rn2' })], { effects });
 		expect((await notesRepository.findOneByOrFail({ id: parent.id })).renoteCount).toBe(32766);
+	});
+
+	test('同じRenote先へのRenoteをまとめて削除しても、上限に丸めたRenote数を数え直した値から引かない', async () => {
+		const alice = await createUser({ host: null });
+		const bob = await createUser({ host: null });
+		const parent = await createNote({}, alice);
+
+		await notesRepository.query(
+			'INSERT INTO "note" ("id", "userId", "renoteId", "renoteUserId", "visibility") SELECT \'rb\' || g, $1, $2, $3, \'public\' FROM generate_series(1, 32768) g',
+			[bob.id, parent.id, alice.id],
+		);
+		await service.repair(['note.renoteCount']);
+
+		const effects = { ...NO_NOTE_DELETE_EFFECTS, renoteCount: true };
+		const targets = await notesRepository.findBy({ id: In(['rb1', 'rb2']) });
+		await noteDeleteService.deleteMany(bob, targets, { effects });
+
+		// 残りは32766件
+		expect((await notesRepository.findOneByOrFail({ id: parent.id })).renoteCount).toBe(32766);
+	});
+
+	test('同じRenote先へのRenoteをまとめて削除すると、件数分だけ減らす', async () => {
+		const alice = await createUser({ host: null });
+		const bob = await createUser({ host: null });
+		const parent = await createNote({}, alice);
+		const renotes = [
+			await createNote({ renoteId: parent.id, renoteUserId: alice.id, text: null }, bob),
+			await createNote({ renoteId: parent.id, renoteUserId: alice.id, text: null }, bob),
+			await createNote({ renoteId: parent.id, renoteUserId: alice.id, text: null }, bob),
+		];
+		await service.repair(['note.renoteCount']);
+
+		await noteDeleteService.deleteMany(bob, renotes.slice(0, 2), { effects: { ...NO_NOTE_DELETE_EFFECTS, renoteCount: true } });
+
+		expect((await notesRepository.findOneByOrFail({ id: parent.id })).renoteCount).toBe(1);
 	});
 
 	test('0以下のbatchSizeは受け付けない', async () => {

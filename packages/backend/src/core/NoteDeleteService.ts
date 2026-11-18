@@ -213,6 +213,8 @@ export class NoteDeleteService {
 		const deletedIds = await this.deleteRows(this.db.manager, fullNotes.map(note => note.id), user.id);
 		const deletedNotes = fullNotes.filter(note => deletedIds.has(note.id));
 
+		if (effects.renoteCount) await this.decrementRenoteCounts(user, deletedNotes);
+
 		// runEffectsは副作用ごとに失敗を切り分けるので、1件が失敗しても他のノートの副作用は続く
 		for (const note of deletedNotes) {
 			await this.runEffects(user, note, contexts.get(note.id) ?? EMPTY_CONTEXT, effects);
@@ -257,6 +259,7 @@ export class NoteDeleteService {
 			return { deleted: false, deleteAt: current?.deleteAt ?? null };
 		}
 
+		if (effects.renoteCount) await this.decrementRenoteCounts(confirmed.user, [confirmed.note]);
 		await this.runEffects(confirmed.user, confirmed.note, confirmed.context, effects);
 
 		return { deleted: true };
@@ -302,6 +305,38 @@ export class NoteDeleteService {
 	}
 
 	/**
+	 * 削除を確定したノートのRenote先のrenoteCountを減らす。
+	 *
+	 * 作成時（NoteCreateService.incRenoteCount）と同じ条件（Renote先の投稿者以外で、botでない投稿者のRenote・引用）で数える。
+	 * 上限（smallint）に丸めてある値は、引くと実際の件数より少なくなるので、行を削除した後の残りを数え直す。
+	 * 同じRenote先へのRenoteをまとめて削除したときに、数え直した値からさらに引かないよう、Renote先ごとに1回だけ更新する。
+	 * この関数は例外を投げない。
+	 */
+	@bindThis
+	private async decrementRenoteCounts(user: NoteAuthor, notes: MiNote[]) {
+		if (user.isBot) return;
+
+		const counts = new Map<MiNote['id'], number>();
+		for (const note of notes) {
+			if (note.renoteId == null) continue;
+			counts.set(note.renoteId, (counts.get(note.renoteId) ?? 0) + 1);
+		}
+
+		for (const [renoteId, count] of counts) {
+			try {
+				await this.notesRepository.createQueryBuilder().update()
+					.set({ renoteCount: () => `CASE WHEN "renoteCount" >= ${SMALLINT_MAX} THEN LEAST(${renoteCountSql('"note"')}, ${SMALLINT_MAX}) ELSE GREATEST("renoteCount" - :renoteDecrement, 0) END` })
+					.where('id = :renoteId', { renoteId })
+					.andWhere('"userId" != :authorId', { authorId: user.id })
+					.setParameter('renoteDecrement', count)
+					.execute();
+			} catch (err) {
+				this.logger.error(`Failed to decrement renoteCount of note ${renoteId}`, { error: err });
+			}
+		}
+	}
+
+	/**
 	 * 削除を確定したノートの副作用を実行する。
 	 * 行の削除は確定済みで、再試行しても副作用の対象に戻らない。そのため、副作用ごとに失敗を切り分け、
 	 * 1つが失敗しても（例: 配送の組み立てが例外を投げる）残りの副作用は実行する。この関数は例外を投げない。
@@ -325,16 +360,7 @@ export class NoteDeleteService {
 			}
 		});
 
-		await step('renoteCount', async () => {
-			// 作成時（NoteCreateService.incRenoteCount）と同じ条件: Renote先の投稿者以外で、botでない投稿者のRenote・引用
-			if (note.renoteId == null || user.isBot) return;
-			// 上限（smallint）に丸めてある値は、1を引くと実際の件数より少なくなるので、残りを数え直す
-			await this.notesRepository.createQueryBuilder().update()
-				.set({ renoteCount: () => `CASE WHEN "renoteCount" >= ${SMALLINT_MAX} THEN LEAST(${renoteCountSql('"note"')}, ${SMALLINT_MAX}) ELSE GREATEST("renoteCount" - 1, 0) END` })
-				.where('id = :renoteId', { renoteId: note.renoteId })
-				.andWhere('"userId" != :authorId', { authorId: note.userId })
-				.execute();
-		});
+		// renoteCountは、まとめて削除したノートをRenote先ごとに集計して減らす（decrementRenoteCounts）
 
 		await step('notesCount', async () => {
 			await this.usersRepository.createQueryBuilder().update()
