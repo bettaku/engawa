@@ -25,7 +25,15 @@ type CounterDefinition = {
 	max?: number;
 };
 
-const SMALLINT_MAX = 32767;
+export const SMALLINT_MAX = 32767;
+
+/**
+ * ノート`outer`のrenoteCountの正しい値を求めるSQLの式。
+ * NoteCreateService.incRenoteCount: Renote先の投稿者以外で、botでない投稿者のRenote・引用だけを数える
+ */
+export function renoteCountSql(outer: string): string {
+	return `(SELECT COUNT(*) FROM "note" r INNER JOIN "user" ru ON ru."id" = r."userId" WHERE r."renoteId" = ${outer}."id" AND r."userId" != ${outer}."userId" AND ru."isBot" = FALSE)`;
+}
 
 export const COUNTERS = {
 	'note.repliesCount': {
@@ -37,8 +45,7 @@ export const COUNTERS = {
 	'note.renoteCount': {
 		table: 'note',
 		column: 'renoteCount',
-		// NoteCreateService.incRenoteCount: Renote先の投稿者以外で、botでない投稿者のRenote・引用だけを数える
-		expected: '(SELECT COUNT(*) FROM "note" r INNER JOIN "user" ru ON ru."id" = r."userId" WHERE r."renoteId" = t."id" AND r."userId" != t."userId" AND ru."isBot" = FALSE)',
+		expected: renoteCountSql('t'),
 		max: SMALLINT_MAX,
 	},
 	'note.clippedCount': {
@@ -131,6 +138,10 @@ export class CounterConsistencyService {
 
 	@bindThis
 	private async run(counter: CounterName, repair: boolean, batchSize: number): Promise<CounterReport> {
+		// 0以下だとLIMITで1行も読まず、ずれがないと報告してしまう
+		if (!Number.isSafeInteger(batchSize) || batchSize <= 0) {
+			throw new Error(`batchSize must be a positive integer: ${batchSize}`);
+		}
 		const def: CounterDefinition = COUNTERS[counter];
 		const column = `t."${def.column}"`;
 		const expected = def.max != null ? `LEAST(${def.expected}, ${def.max})` : def.expected;
@@ -163,7 +174,8 @@ export class CounterConsistencyService {
 			if (repair) {
 				// 確認した時点の値ではなく、更新する時点で数え直した値を書く
 				const [, affected]: [unknown, number] = await this.db.query(
-					`UPDATE "${def.table}" t SET "${def.column}" = ${expected} WHERE t."id" = ANY($1) AND ${column} IS DISTINCT FROM ${expected}`,
+					// 確認した後に対象外になった行（引っ越したユーザーなど）は書き換えない
+					`UPDATE "${def.table}" t SET "${def.column}" = ${expected} WHERE t."id" = ANY($1) ${where} AND ${column} IS DISTINCT FROM ${expected}`,
 					[mismatches.map(m => m.id)],
 				);
 				report.repaired += affected;

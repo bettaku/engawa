@@ -16,13 +16,29 @@ process.title = 'Engawa Cli';
 Error.stackTraceLimit = Infinity;
 EventEmitter.defaultMaxListeners = 128;
 
+const command = process.argv[2] ?? 'help';
+
+const isCounterCommand = command === 'check-counters' || command === 'repair-counters';
+
+// カウンタのコマンドは、標準出力にレポート（JSON Lines）だけを出す。起動ログなどは標準エラー出力へ送る
+if (isCounterCommand) {
+	console.log = console.error;
+	console.info = console.error;
+	console.debug = console.error;
+}
+
+/** 標準出力への書き込みが終わるまで待つ（process.exitで書き込みが失われないようにする） */
+function writeStdout(line: string): Promise<void> {
+	return new Promise((resolve, reject) => {
+		process.stdout.write(line + '\n', err => err ? reject(err) : resolve());
+	});
+}
+
 const app = await NestFactory.createApplicationContext(CommandModule, {
 	logger: new NestLogger(),
 });
 
 const commandService = app.get(CommandService);
-
-const command = process.argv[2] ?? 'help';
 
 switch (command) {
 	case 'help': {
@@ -32,6 +48,8 @@ switch (command) {
 		console.log('  check-counters [counter...] - Checks denormalized counters (exits with 1 if any mismatch is found)');
 		console.log('  repair-counters [counter...] - Recounts and repairs denormalized counters');
 		console.log(`    counters: ${COUNTER_NAMES.join(', ')}`);
+		console.log('    Repairing while notes, follows or clips are being written may leave a few rows off by one.');
+		console.log('    Run check-counters again afterwards, or repair while writes are stopped.');
 		console.log('  bake-reactions - Applies buffered reactions to the database (stop the queue processes first)');
 		break;
 	}
@@ -48,9 +66,9 @@ switch (command) {
 		const targets = counters.length > 0 ? counters as CounterName[] : COUNTER_NAMES;
 		const reports = command === 'repair-counters' ? await service.repair(targets) : await service.check(targets);
 		for (const report of reports) {
-			console.log(JSON.stringify(report));
+			await writeStdout(JSON.stringify(report));
 		}
-		if (command === 'check-counters' && reports.some(r => r.mismatched > 0)) process.exit(1);
+		if (command === 'check-counters' && reports.some(r => r.mismatched > 0)) process.exitCode = 1;
 		break;
 	}
 	case 'ping': {
@@ -74,4 +92,5 @@ switch (command) {
 	}
 }
 
-process.exit(0);
+// exitCodeを設定したコマンドは、その終了コードで終わる
+process.exit(process.exitCode ?? 0);

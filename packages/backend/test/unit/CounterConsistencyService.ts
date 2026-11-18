@@ -217,9 +217,16 @@ describe('CounterConsistencyService', () => {
 		await service.repair();
 
 		const effects = { ...NO_NOTE_DELETE_EFFECTS, repliesCount: true, renoteCount: true, notesCount: true };
-		await noteDeleteService.deleteMany(bob, [reply, renote, quote], { effects });
+		const renoteCountOfParent = async () => (await notesRepository.findOneByOrFail({ id: parent.id })).renoteCount;
+		expect(await renoteCountOfParent()).toBe(2);
+
+		// 数えていない自分のRenoteとbotのRenoteを先に消し、Renote数が減らないことを確かめる
 		await noteDeleteService.deleteMany(alice, [selfRenote], { effects });
+		expect(await renoteCountOfParent()).toBe(2);
 		await noteDeleteService.deleteMany(bot, [botRenote], { effects });
+		expect(await renoteCountOfParent()).toBe(2);
+
+		await noteDeleteService.deleteMany(bob, [reply, renote, quote], { effects });
 
 		expect(await mismatches()).toEqual({});
 		const after = await notesRepository.findOneByOrFail({ id: parent.id });
@@ -227,6 +234,32 @@ describe('CounterConsistencyService', () => {
 		expect(after.renoteCount).toBe(0);
 		expect((await usersRepository.findOneByOrFail({ id: bob.id })).notesCount).toBe(0);
 		expect((await usersRepository.findOneByOrFail({ id: alice.id })).notesCount).toBe(1);
+	});
+
+	test('上限に丸めたRenote数は、削除のときに数え直す', async () => {
+		const alice = await createUser({ host: null });
+		const bob = await createUser({ host: null });
+		const parent = await createNote({}, alice);
+
+		await notesRepository.query(
+			'INSERT INTO "note" ("id", "userId", "renoteId", "renoteUserId", "visibility") SELECT \'rn\' || g, $1, $2, $3, \'public\' FROM generate_series(1, 32768) g',
+			[bob.id, parent.id, alice.id],
+		);
+		await service.repair(['note.renoteCount']);
+		expect((await notesRepository.findOneByOrFail({ id: parent.id })).renoteCount).toBe(32767);
+
+		const effects = { ...NO_NOTE_DELETE_EFFECTS, renoteCount: true };
+		// 残りは32767件なので、上限のまま
+		await noteDeleteService.deleteMany(bob, [await notesRepository.findOneByOrFail({ id: 'rn1' })], { effects });
+		expect((await notesRepository.findOneByOrFail({ id: parent.id })).renoteCount).toBe(32767);
+		// 残りは32766件
+		await noteDeleteService.deleteMany(bob, [await notesRepository.findOneByOrFail({ id: 'rn2' })], { effects });
+		expect((await notesRepository.findOneByOrFail({ id: parent.id })).renoteCount).toBe(32766);
+	});
+
+	test('0以下のbatchSizeは受け付けない', async () => {
+		await expect(service.check(['note.repliesCount'], { batchSize: 0 })).rejects.toThrow('batchSize');
+		await expect(service.repair(['note.repliesCount'], { batchSize: -1 })).rejects.toThrow('batchSize');
 	});
 
 	test('カウンタは0未満にならない', async () => {

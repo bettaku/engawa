@@ -28,6 +28,7 @@ import { ModerationLogService } from '@/core/ModerationLogService.js';
 import { LoggerService } from '@/core/LoggerService.js';
 import type Logger from '@/logger.js';
 import { isQuote, isRenote } from '@/misc/is-renote.js';
+import { renoteCountSql, SMALLINT_MAX } from '@/core/CounterConsistencyService.js';
 
 type NoteAuthor = { id: MiUser['id']; uri: MiUser['uri']; host: MiUser['host']; isBot: MiUser['isBot']; };
 
@@ -152,7 +153,7 @@ export class NoteDeleteService {
 	 * 投稿を削除します。
 	 * @param user 投稿者
 	 * @param note 投稿
-	 * @param quiet trueなら、返信数と検索索引の更新だけを行い、配送・ストリーム・チャートの更新をしない
+	 * @param quiet trueなら、カウンタ（返信先の返信数、Renote先のRenote数、投稿者のノート数）と検索索引の更新だけを行い、配送・ストリーム・チャートの更新をしない
 	 * @param deleter 投稿者以外が削除したときの削除者。モデレーションログに記録する
 	 */
 	@bindThis
@@ -327,8 +328,9 @@ export class NoteDeleteService {
 		await step('renoteCount', async () => {
 			// 作成時（NoteCreateService.incRenoteCount）と同じ条件: Renote先の投稿者以外で、botでない投稿者のRenote・引用
 			if (note.renoteId == null || user.isBot) return;
+			// 上限（smallint）に丸めてある値は、1を引くと実際の件数より少なくなるので、残りを数え直す
 			await this.notesRepository.createQueryBuilder().update()
-				.set({ renoteCount: () => 'GREATEST("renoteCount" - 1, 0)' })
+				.set({ renoteCount: () => `CASE WHEN "renoteCount" >= ${SMALLINT_MAX} THEN LEAST(${renoteCountSql('"note"')}, ${SMALLINT_MAX}) ELSE GREATEST("renoteCount" - 1, 0) END` })
 				.where('id = :renoteId', { renoteId: note.renoteId })
 				.andWhere('"userId" != :authorId', { authorId: note.userId })
 				.execute();
