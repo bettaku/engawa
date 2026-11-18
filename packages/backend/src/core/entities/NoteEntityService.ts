@@ -318,8 +318,8 @@ export class NoteEntityService implements OnModuleInit {
 				return false;
 			} else if (meId === note.userId) {
 				return true;
-			} else if (note.reply && (meId === note.reply.userId)) {
-				// 自分の投稿に対するリプライ
+			} else if (meId === (note.replyUserId ?? note.reply?.userId)) {
+				// 自分の投稿に対するリプライ（replyリレーションを読み込んでいないノートでも判定できるように、replyUserIdを見る）
 				return true;
 			} else if (note.mentions && note.mentions.some(id => meId === id)) {
 				// 自分へのメンション
