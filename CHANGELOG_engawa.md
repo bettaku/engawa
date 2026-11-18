@@ -60,6 +60,8 @@
 - Enhance: 削除予定のジョブが失われても、削除予定時刻を過ぎたノートを5分ごとに確認して削除するようになりました
 - Enhance: コントロールパネルのジョブキューに、ノートの予約削除（`scheduledNoteDelete`）を表示するようになりました
 	- `admin/queue/*` の `queue` に `scheduledNoteDelete` を指定できます
+- Enhance: Redisのキャッシュを更新・削除するとき、次の版の形式（`kvcache:v2:*`、`singlecache:v2:*`）のキーも削除するようにしました
+	- キャッシュの保存形式を切り替える準備です。この版より前へ戻すと、次の版で保存形式を切り替えた後にキャッシュが古いまま残るので、戻さないでください
 - Fix: ノートを削除しても、Renote先のRenote数と投稿者のノート数が減らない問題を修正
 - Enhance: 非正規化されたカウンタ（ノートの返信数・Renote数・クリップ数、ローカルユーザーのノート数・フォロー数・フォロワー数）を確認・修復するコマンドを追加
 	- `pnpm --filter backend cli check-counters` でずれを確認し（ずれがあると終了コード1）、`pnpm --filter backend cli repair-counters` で数え直して修復します。カウンタ名を指定すると、そのカウンタだけを対象にします
