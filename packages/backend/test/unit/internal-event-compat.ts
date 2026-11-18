@@ -206,6 +206,11 @@ describe('内部イベントの新本文（P2-3 第1リリース）', () => {
 			globalEventService.publishInternalEvent('systemWebhookUpdated', toInternalEventRef({ id } as MiSystemWebhook));
 			await waitFor(async () => !(await service.fetchActiveSystemWebhooks()).some(w => w.id === id));
 
+			// 一覧に載った状態から削除する（載っていなければ、削除の処理がなくても成り立つので）
+			await systemWebhooksRepository.update(id, { isActive: true });
+			globalEventService.publishInternalEvent('systemWebhookUpdated', toInternalEventRef({ id } as MiSystemWebhook));
+			await waitFor(async () => (await service.fetchActiveSystemWebhooks()).some(w => w.id === id));
+
 			await systemWebhooksRepository.delete(id);
 			globalEventService.publishInternalEvent('systemWebhookDeleted', toInternalEventRef({ id } as MiSystemWebhook));
 			await waitFor(async () => !(await service.fetchActiveSystemWebhooks()).some(w => w.id === id));
@@ -219,8 +224,13 @@ describe('内部イベントの新本文（P2-3 第1リリース）', () => {
 
 			const id = idService.gen();
 			await antennasRepository.insert({ id, userId: alice.id, name: 'antenna', src: 'all', keywords: [['a']], excludeKeywords: [], users: [], isActive: false, withFile: false, lastUsedAt: new Date() });
+			// 自分のプロセスに届いて一覧が捨てられるのを待ってから、無効なアンテナが一覧にないことを確かめる
+			const generation = () => (service as unknown as { antennasGeneration: number }).antennasGeneration;
+			const before = generation();
 			globalEventService.publishInternalEvent('antennaCreated', toInternalEventRef({ id } as MiAntenna));
-			// 無効なアンテナは加えないので、反映を待てない。後のイベントと順序が保たれることで確かめる
+			await waitFor(() => generation() !== before);
+			expect((await service.getAntennas()).some(a => a.id === id)).toBe(false);
+
 			await antennasRepository.update(id, { isActive: true, name: 'activated' });
 			globalEventService.publishInternalEvent('antennaUpdated', toInternalEventRef({ id } as MiAntenna));
 			await waitFor(async () => (await service.getAntennas()).find(a => a.id === id)?.name === 'activated');
