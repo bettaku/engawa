@@ -30,6 +30,8 @@ export type UserWebhookPayload<T extends WebhookEventTypes> =
 export class UserWebhookService implements OnApplicationShutdown {
 	private readonly offRedisReconnected: () => void;
 	private activeWebhooksFetched = false;
+	/** 一覧を捨てるたびに進める。取得中に捨てられた一覧は保存しない */
+	private activeWebhooksGeneration = 0;
 	private activeWebhooks: MiWebhook[] = [];
 
 	constructor(
@@ -46,13 +48,22 @@ export class UserWebhookService implements OnApplicationShutdown {
 	@bindThis
 	public async getActiveWebhooks() {
 		if (!this.activeWebhooksFetched) {
-			this.activeWebhooks = await this.webhooksRepository.findBy({
+			const generation = this.activeWebhooksGeneration;
+			const webhooks = await this.webhooksRepository.findBy({
 				active: true,
 			});
+			if (generation !== this.activeWebhooksGeneration) return webhooks;
+			this.activeWebhooks = webhooks;
 			this.activeWebhooksFetched = true;
 		}
 
 		return this.activeWebhooks;
+	}
+
+	@bindThis
+	private invalidateActiveWebhooks(): void {
+		this.activeWebhooksGeneration++;
+		this.activeWebhooksFetched = false;
 	}
 
 	/**
@@ -112,13 +123,9 @@ export class UserWebhookService implements OnApplicationShutdown {
 			case 'webhookUpdated':
 			case 'webhookDeleted': {
 				if (!isInternalEventRef(body)) break;
-				// 新本文は値を持たないので、DBから読み直す。削除済みや無効なら一覧から外す
-				if (!this.activeWebhooksFetched) break;
-				const webhook = type === 'webhookDeleted' ? null : await this.webhooksRepository.findOneBy({ id: body.id });
-				this.activeWebhooks = this.activeWebhooks.filter(a => a.id !== body.id);
-				if (webhook != null && webhook.active) {
-					this.activeWebhooks.push(webhook);
-				}
+				// 新本文は値を持たないので、一覧を捨てて次の取得でDBから読み直す。
+				// 1件ずつ読み直すと、読み込み中に届いた後続のイベントや、取得中の一覧との順序が入れ替わる
+				this.invalidateActiveWebhooks();
 				return;
 			}
 			default:
@@ -173,7 +180,7 @@ export class UserWebhookService implements OnApplicationShutdown {
 	 */
 	@bindThis
 	private onRedisReconnected(): void {
-		this.activeWebhooksFetched = false;
+		this.invalidateActiveWebhooks();
 	}
 
 	@bindThis

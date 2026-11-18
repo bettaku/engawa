@@ -12,7 +12,7 @@ import { GlobalModule } from '@/GlobalModule.js';
 import { CoreModule } from '@/core/CoreModule.js';
 import { CacheService } from '@/core/CacheService.js';
 import { IdService } from '@/core/IdService.js';
-import { kvCacheKey, RedisKVCache, RedisSingleCache, singleCacheKey } from '@/misc/cache.js';
+import { kvCacheKey, MemoryKVCache, MemorySingleCache, RedisKVCache, RedisSingleCache, singleCacheKey } from '@/misc/cache.js';
 import type { CacheKeyVersion } from '@/misc/cache.js';
 import { secureRndstr } from '@/misc/secure-rndstr.js';
 
@@ -212,5 +212,69 @@ describe('CacheService のキャッシュの版の切り替え', () => {
 		await cacheService.userBlockingCache.refresh(alice.id);
 
 		expect(await v2Process.fetch(alice.id)).toEqual(new Set([bob.id]));
+	});
+});
+
+describe('MemoryKVCache / MemorySingleCache の取得中の無効化', () => {
+	function deferred<T>() {
+		let resolve!: (value: T) => void;
+		const promise = new Promise<T>(r => { resolve = r; });
+		return { promise, resolve };
+	}
+
+	test('MemoryKVCache: 取得中にキーを消したら、取得した値をキャッシュしない', async () => {
+		const cache = new MemoryKVCache<string>(1000 * 60);
+		try {
+			const read = deferred<string>();
+			const fetching = cache.fetch('k', () => read.promise);
+			cache.delete('k');
+			read.resolve('stale');
+			expect(await fetching).toBe('stale');
+			expect(cache.get('k')).toBeUndefined();
+
+			// ほかのキーの無効化は影響しない
+			const read2 = deferred<string>();
+			const fetching2 = cache.fetch('k', () => read2.promise);
+			cache.delete('other');
+			read2.resolve('fresh');
+			await fetching2;
+			expect(cache.get('k')).toBe('fresh');
+		} finally {
+			cache.dispose();
+		}
+	});
+
+	test('MemoryKVCache: 取得中にclearやsetをしたら、取得した値で上書きしない', async () => {
+		const cache = new MemoryKVCache<string>(1000 * 60);
+		try {
+			const read = deferred<string>();
+			const fetching = cache.fetchMaybe('k', () => read.promise);
+			cache.clear();
+			read.resolve('stale');
+			await fetching;
+			expect(cache.get('k')).toBeUndefined();
+
+			const read2 = deferred<string>();
+			const fetching2 = cache.fetch('k', () => read2.promise);
+			cache.set('k', 'newer');
+			read2.resolve('stale');
+			await fetching2;
+			expect(cache.get('k')).toBe('newer');
+		} finally {
+			cache.dispose();
+		}
+	});
+
+	test('MemorySingleCache: 取得中に消したら、取得した値をキャッシュしない', async () => {
+		const cache = new MemorySingleCache<string>(1000 * 60);
+		const read = deferred<string>();
+		const fetching = cache.fetch(() => read.promise);
+		cache.delete();
+		read.resolve('stale');
+		expect(await fetching).toBe('stale');
+		expect(cache.get()).toBeUndefined();
+
+		expect(await cache.fetch(async () => 'fresh')).toBe('fresh');
+		expect(cache.get()).toBe('fresh');
 	});
 });

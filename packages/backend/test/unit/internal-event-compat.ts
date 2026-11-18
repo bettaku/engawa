@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import { vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import type {
 	AntennasRepository,
@@ -228,6 +229,42 @@ describe('内部イベントの新本文（P2-3 第1リリース）', () => {
 			await antennasRepository.delete(id);
 			globalEventService.publishInternalEvent('antennaDeleted', toInternalEventRef({ id } as MiAntenna));
 			await waitFor(async () => !(await service.getAntennas()).some(a => a.id === id));
+		});
+
+		test('一覧の取得中に新本文が届いたら、取得した一覧（古いかもしれない）を保存しない', async () => {
+			const service = app.get(AntennaService);
+			const id = idService.gen();
+			await antennasRepository.insert({ id, userId: alice.id, name: 'antenna', src: 'all', keywords: [['a']], excludeKeywords: [], users: [], isActive: true, withFile: false, lastUsedAt: new Date() });
+			globalEventService.publishInternalEvent('antennaCreated', toInternalEventRef({ id } as MiAntenna));
+			await waitFor(async () => (await service.getAntennas()).some(a => a.id === id));
+
+			// 一覧を捨てた状態で取得を始め、削除前の行を読んだところで止める
+			(service as unknown as { invalidateAntennas: () => void }).invalidateAntennas();
+			const findBy = antennasRepository.findBy.bind(antennasRepository);
+			let release!: () => void;
+			const released = new Promise<void>(r => { release = r; });
+			const spy = vi.spyOn(antennasRepository, 'findBy').mockImplementationOnce(async (where) => {
+				const rows = await findBy(where);
+				await released;
+				return rows;
+			});
+			try {
+				const fetching = service.getAntennas();
+				await waitFor(() => spy.mock.calls.length > 0);
+
+				// 自分のプロセスにも届くのを待つ。届いたら一覧の世代が進む
+				const generation = () => (service as unknown as { antennasGeneration: number }).antennasGeneration;
+				const before = generation();
+				await antennasRepository.delete(id);
+				globalEventService.publishInternalEvent('antennaDeleted', toInternalEventRef({ id } as MiAntenna));
+				await waitFor(() => generation() !== before);
+				release();
+
+				expect((await fetching).some(a => a.id === id)).toBe(true);
+				expect((await service.getAntennas()).some(a => a.id === id)).toBe(false);
+			} finally {
+				spy.mockRestore();
+			}
 		});
 	});
 

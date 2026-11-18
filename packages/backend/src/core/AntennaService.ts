@@ -27,6 +27,8 @@ import { onRedisReconnected } from '@/misc/redis-reconnected.js';
 export class AntennaService implements OnApplicationShutdown {
 	private readonly offRedisReconnected: () => void;
 	private antennasFetched: boolean;
+	/** 一覧を捨てるたびに進める。取得中に捨てられた一覧は保存しない */
+	private antennasGeneration = 0;
 	private antennas: MiAntenna[];
 
 	constructor(
@@ -64,13 +66,9 @@ export class AntennaService implements OnApplicationShutdown {
 		if (obj.channel === 'internal') {
 			const { type, body } = obj.message as GlobalEvents['internal']['payload'];
 			if (isInternalEventRef(body) && (type === 'antennaCreated' || type === 'antennaUpdated' || type === 'antennaDeleted')) {
-				// 新本文は値を持たないので、DBから読み直す。削除済みや無効なら一覧から外す
-				if (!this.antennasFetched) return;
-				const antenna = type === 'antennaDeleted' ? null : await this.antennasRepository.findOneBy({ id: body.id });
-				this.antennas = this.antennas.filter(a => a.id !== body.id);
-				if (antenna != null && antenna.isActive) {
-					this.antennas.push(antenna);
-				}
+				// 新本文は値を持たないので、一覧を捨てて次の取得でDBから読み直す。
+				// 1件ずつ読み直すと、読み込み中に届いた後続のイベントや、取得中の一覧との順序が入れ替わる
+				this.invalidateAntennas();
 				return;
 			}
 
@@ -224,13 +222,22 @@ export class AntennaService implements OnApplicationShutdown {
 	@bindThis
 	public async getAntennas() {
 		if (!this.antennasFetched) {
-			this.antennas = await this.antennasRepository.findBy({
+			const generation = this.antennasGeneration;
+			const antennas = await this.antennasRepository.findBy({
 				isActive: true,
 			});
+			if (generation !== this.antennasGeneration) return antennas;
+			this.antennas = antennas;
 			this.antennasFetched = true;
 		}
 
 		return this.antennas;
+	}
+
+	@bindThis
+	private invalidateAntennas(): void {
+		this.antennasGeneration++;
+		this.antennasFetched = false;
 	}
 
 	@bindThis
@@ -273,7 +280,7 @@ export class AntennaService implements OnApplicationShutdown {
 	 */
 	@bindThis
 	private onRedisReconnected(): void {
-		this.antennasFetched = false;
+		this.invalidateAntennas();
 	}
 
 	@bindThis

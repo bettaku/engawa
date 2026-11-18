@@ -54,6 +54,8 @@ export type SystemWebhookPayload<T extends SystemWebhookEventType> =
 export class SystemWebhookService implements OnApplicationShutdown {
 	private readonly offRedisReconnected: () => void;
 	private activeSystemWebhooksFetched = false;
+	/** 一覧を捨てるたびに進める。取得中に捨てられた一覧は保存しない */
+	private activeSystemWebhooksGeneration = 0;
 	private activeSystemWebhooks: MiSystemWebhook[] = [];
 
 	constructor(
@@ -73,13 +75,22 @@ export class SystemWebhookService implements OnApplicationShutdown {
 	@bindThis
 	public async fetchActiveSystemWebhooks() {
 		if (!this.activeSystemWebhooksFetched) {
-			this.activeSystemWebhooks = await this.systemWebhooksRepository.findBy({
+			const generation = this.activeSystemWebhooksGeneration;
+			const webhooks = await this.systemWebhooksRepository.findBy({
 				isActive: true,
 			});
+			if (generation !== this.activeSystemWebhooksGeneration) return webhooks;
+			this.activeSystemWebhooks = webhooks;
 			this.activeSystemWebhooksFetched = true;
 		}
 
 		return this.activeSystemWebhooks;
+	}
+
+	@bindThis
+	private invalidateActiveSystemWebhooks(): void {
+		this.activeSystemWebhooksGeneration++;
+		this.activeSystemWebhooksFetched = false;
 	}
 
 	/**
@@ -227,13 +238,9 @@ export class SystemWebhookService implements OnApplicationShutdown {
 			case 'systemWebhookUpdated':
 			case 'systemWebhookDeleted': {
 				if (!isInternalEventRef(body)) break;
-				// 新本文は値を持たないので、DBから読み直す。削除済みや無効なら一覧から外す
-				if (!this.activeSystemWebhooksFetched) break;
-				const webhook = type === 'systemWebhookDeleted' ? null : await this.systemWebhooksRepository.findOneBy({ id: body.id });
-				this.activeSystemWebhooks = this.activeSystemWebhooks.filter(a => a.id !== body.id);
-				if (webhook != null && webhook.isActive) {
-					this.activeSystemWebhooks.push(webhook);
-				}
+				// 新本文は値を持たないので、一覧を捨てて次の取得でDBから読み直す。
+				// 1件ずつ読み直すと、読み込み中に届いた後続のイベントや、取得中の一覧との順序が入れ替わる
+				this.invalidateActiveSystemWebhooks();
 				return;
 			}
 			default:
@@ -276,7 +283,7 @@ export class SystemWebhookService implements OnApplicationShutdown {
 	 */
 	@bindThis
 	private onRedisReconnected(): void {
-		this.activeSystemWebhooksFetched = false;
+		this.invalidateActiveSystemWebhooks();
 	}
 
 	@bindThis

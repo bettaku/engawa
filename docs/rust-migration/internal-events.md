@@ -10,9 +10,14 @@ pre-rust-tech-debt.md の P2-3（Pub/Subの内部イベントの本文とチャ�
 2. **第2リリース**: 発行側を新本文に切り替える（`toInternalEventRef`・`toRoleAssignmentEventRef`・`toMetaUpdatedEventRef`）。
 3. **第3リリース以降（必要な場合だけ）**: 内部イベントを`<host>:internal`へ移す。
 
-ロールバック: 第2→第1リリースへはそのまま戻せる。第1リリースより前へ戻すときは、先に発行側を旧本文へ戻す（第1リリースへ戻す）。
+ロールバック: 第2→第1リリースへはそのまま戻せる（第1リリースの受信側は新本文も処理できる）。第1リリースより前へ戻すときは、次の順で行う。
+
+1. すべてのプロセス（APIとキュー・バックグラウンドのワーカーのすべて）を第1リリースへ戻し、第2リリースのプロセスが残っていないこと（新本文を発行するプロセスがないこと）を確かめる。段階的に入れ替えている間は、残っている第2リリースのプロセスが新本文を発行し続ける。
+2. その後で、第1リリースより前の版のプロセスを起動する。第1リリースより前の受信側は新本文をエンティティとして扱うので、新本文を発行するプロセスが残っている間は起動しない。
 
 新本文の判定は`isInternalEventRef(body)`（`body.v === 2`）で行う。
+
+新本文を受け取った受信側は、1件ずつDBから読み直して手元の一覧に反映するのではなく、キャッシュや一覧を捨てて次の取得でDBから読み直す。1件ずつ読み直すと、読み込み中に届いた後のイベント（削除など）や、取得中の一覧との順序が入れ替わり、削除済みの行を一覧に戻すことがある。捨てる前に始めた取得の結果は、キャッシュしない（世代を比べる）。
 
 | 新本文の型 | 形 | 使うイベント |
 | --- | --- | --- |
@@ -39,10 +44,10 @@ pre-rust-tech-debt.md の P2-3（Pub/Subの内部イベントの本文とチャ�
 | `roleDeleted` | `MiRole` | `{ v: 2, id }` | RoleService | RoleService: ロールのキャッシュから外す。AbuseReportNotificationService: 同上 | |
 | `userRoleAssigned` | `MiRoleAssignment` | `{ v: 2, id, userId, roleId }` | RoleService | RoleService: 旧本文はユーザーの割り当てのキャッシュに追加、新本文はそのユーザーのキャッシュを捨てる | |
 | `userRoleUnassigned` | `MiRoleAssignment` | `{ v: 2, id, userId, roleId }` | RoleService | RoleService: ユーザーの割り当てのキャッシュから外す。AbuseReportNotificationService: 同上 | |
-| `webhookCreated`・`webhookUpdated`・`webhookDeleted` | `MiWebhook` | `{ v: 2, id }` | `i/webhooks/*` | UserWebhookService: 有効なWebhookの一覧を更新する。新本文はDBから読み直す | 旧本文には`secret`を含む |
+| `webhookCreated`・`webhookUpdated`・`webhookDeleted` | `MiWebhook` | `{ v: 2, id }` | `i/webhooks/*` | UserWebhookService: 有効なWebhookの一覧を更新する。新本文は一覧を捨てる | 旧本文には`secret`を含む |
 | `systemWebhookCreated`・`systemWebhookUpdated`・`systemWebhookDeleted` | `MiSystemWebhook` | `{ v: 2, id }` | SystemWebhookService | SystemWebhookService: 同上 | 旧本文には`secret`を含む |
-| `antennaCreated`・`antennaUpdated`・`antennaDeleted` | `MiAntenna` | `{ v: 2, id }` | `antennas/*`、AntennaService、ImportAntennasProcessorService | AntennaService: 有効なアンテナの一覧を更新する。新本文はDBから読み直す | 旧本文の`antennaCreated`は無効なアンテナも一覧に加えていた（新本文では加えない） |
+| `antennaCreated`・`antennaUpdated`・`antennaDeleted` | `MiAntenna` | `{ v: 2, id }` | `antennas/*`、AntennaService、ImportAntennasProcessorService | AntennaService: 有効なアンテナの一覧を更新する。新本文は一覧を捨てる | 旧本文の`antennaCreated`は無効なアンテナも一覧に加えていた（新本文では加えない） |
 | `avatarDecorationCreated`・`avatarDecorationUpdated`・`avatarDecorationDeleted` | `MiAvatarDecoration` | `{ v: 2, id }` | AvatarDecorationService | AvatarDecorationService: 一覧のキャッシュを捨てる（本文は使わない） | |
-| `metaUpdated` | `{ before?: MiMeta, after: MiMeta }` | `{ v: 2, changedKeys }` | MetaService、`reset-db` | GlobalModule（注入済みの`meta`）: 旧本文は`after`を展開、新本文はDBから読み直す。MetaService: 旧本文は`after`をキャッシュ、新本文はキャッシュを捨てる。SystemAccountService: サーバー名が変わったら、システムアカウントの名前を更新する | 購読処理に副作用（システムアカウントの更新）がある。P2-3の段階4で移す |
+| `metaUpdated` | `{ before?: MiMeta, after: MiMeta }` | `{ v: 2, changedKeys }` | MetaService、`reset-db` | GlobalModule（注入済みの`meta`）: 旧本文は`after`を展開、新本文はDBから読み直す。MetaService: 旧本文は`after`をキャッシュ、新本文はキャッシュを捨てる。SystemAccountService: サーバー名が変わったら、システムアカウントの名前を更新する（届いた順に1つずつ。新本文は順番が来てからDBから名前を読む） | 購読処理に副作用（システムアカウントの更新）がある。P2-3の段階4で移す |
 | `updateUserProfile` | `MiUserProfile` | — | なし | なし | 型だけが定義されていて、発行されていない |
 | `userListMemberAdded`・`userListMemberRemoved` | `{ userListId, memberId }` | 変更なし | UserListService | UserListService: メンバーのキャッシュを更新する | P2-2で無効化の方法を変える |

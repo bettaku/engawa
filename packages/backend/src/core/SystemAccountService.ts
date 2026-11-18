@@ -30,6 +30,8 @@ export const SYSTEM_ACCOUNT_TYPES = ['actor', 'relay', 'proxy'] as const;
 export class SystemAccountService implements OnApplicationShutdown {
 	private readonly offRedisReconnected: () => void;
 	private cache: MemoryKVCache<MiLocalUser>;
+	/** システムアカウントの名前の更新を、イベントが届いた順に1つずつ行うためのキュー（rejectしない） */
+	private nameUpdateQueue: Promise<void> = Promise.resolve();
 
 	constructor(
 		@Inject(DI.redisForSub)
@@ -67,32 +69,43 @@ export class SystemAccountService implements OnApplicationShutdown {
 			const { type, body } = obj.message as GlobalEvents['internal']['payload'];
 			switch (type) {
 				case 'metaUpdated': {
-					let name: string | null;
+					let getName: () => Promise<string | null | undefined>;
 					if (isInternalEventRef(body)) {
-						// 新本文は値を持たないので、変わった列にnameがあるときだけDBから読む
+						// 新本文は値を持たないので、変わった列にnameがあるときだけ、順番が来てからDBから読む
 						if (!body.changedKeys.includes('name')) break;
-						const meta = await this.usersRepository.manager.getRepository(MiMeta).findOne({ where: {}, order: { id: 'DESC' } });
-						if (meta == null) break;
-						name = meta.name;
+						getName = async () => (await this.usersRepository.manager.getRepository(MiMeta).findOne({ where: {}, order: { id: 'DESC' } }))?.name;
 					} else {
 						if (body.before == null || body.before.name === body.after.name) break;
-						name = body.after.name;
+						const name = body.after.name;
+						getName = async () => name;
 					}
-					// イベントの処理なので、失敗しても例外を投げない（処理されないrejectionにしない）
-					try {
-						for (const account of SYSTEM_ACCOUNT_TYPES) {
-							await this.updateCorrespondingUserProfile(account, {
-								name,
-							});
-						}
-					} catch (err) {
-						console.error('Failed to update the names of system accounts', err);
-					}
+					// 先に届いたイベントの更新が終わる前に後のイベントの更新が始まると、古い名前で上書きすることがあるので、届いた順に1つずつ処理する
+					const queued = this.nameUpdateQueue.then(() => this.updateNames(getName));
+					this.nameUpdateQueue = queued;
+					await queued;
 					break;
 				}
 				default:
 					break;
 			}
+		}
+	}
+
+	/**
+	 * システムアカウントの名前をサーバー名に合わせる。イベントの処理なので、失敗しても例外を投げない（処理されないrejectionにしない）
+	 */
+	@bindThis
+	private async updateNames(getName: () => Promise<string | null | undefined>): Promise<void> {
+		try {
+			const name = await getName();
+			if (name === undefined) return;
+			for (const account of SYSTEM_ACCOUNT_TYPES) {
+				await this.updateCorrespondingUserProfile(account, {
+					name,
+				});
+			}
+		} catch (err) {
+			console.error('Failed to update the names of system accounts', err);
 		}
 	}
 

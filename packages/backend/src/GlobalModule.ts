@@ -151,6 +151,24 @@ const $meta: Provider = {
 			}
 		});
 
+		// metaを書き換えるたびに進める。DBから読み直している間にほかの更新が始まったら、読み直した値（古いかもしれない）は使わない
+		let generation = 0;
+
+		function assign(values: object): void {
+			generation++;
+			for (const key in values) {
+				(meta as any)[key] = (values as any)[key];
+			}
+			meta.rootUser = null; // joinなカラムは通常取ってこないので
+		}
+
+		async function reload(): Promise<void> {
+			const started = ++generation;
+			const latest = await db.getRepository(MiMeta).findOne({ where: {}, order: { id: 'DESC' } });
+			if (latest == null || started !== generation) return;
+			assign(latest);
+		}
+
 		async function onMessage(_: string, data: string): Promise<void> {
 			const obj = JSON.parse(data);
 
@@ -160,17 +178,13 @@ const $meta: Provider = {
 					case 'metaUpdated': {
 						if (isInternalEventRef(body)) {
 							// 新本文は値を持たないので、DBから読み直す
-							const latest = await db.getRepository(MiMeta).findOne({ where: {}, order: { id: 'DESC' } });
-							if (latest == null) break;
-							for (const key in latest) {
-								(meta as any)[key] = (latest as any)[key];
-							}
+							// イベントの処理なので、失敗しても例外を投げない（処理されないrejectionにしない）
+							await reload().catch(err => {
+								console.error('Failed to reload meta', err);
+							});
 						} else {
-							for (const key in body.after) {
-								(meta as any)[key] = (body.after as any)[key];
-							}
+							assign(body.after);
 						}
-						meta.rootUser = null; // joinなカラムは通常取ってこないので
 						break;
 					}
 					default:
@@ -183,13 +197,7 @@ const $meta: Provider = {
 
 		// Pub/Subが切れている間のmetaUpdatedを受け取れていないので、つなぎ直したときにDBから読み直す
 		onRedisReconnected(redisForSub, () => {
-			db.getRepository(MiMeta).findOne({ where: {}, order: { id: 'DESC' } }).then(latest => {
-				if (latest == null) return;
-				for (const key in latest) {
-					(meta as any)[key] = (latest as any)[key];
-				}
-				meta.rootUser = null;
-			}).catch(err => {
+			reload().catch(err => {
 				console.error('Failed to reload meta after Redis reconnection', err);
 			});
 		});
