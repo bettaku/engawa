@@ -17,7 +17,7 @@ pre-rust-tech-debt.md の P2-3（Pub/Subの内部イベントの本文とチャ�
 
 新本文の判定は`isInternalEventRef(body)`（`body.v === 2`）で行う。
 
-一覧やキャッシュを持つ受信側（UserWebhookService・SystemWebhookService・AntennaService・RoleService・MetaService）は、新本文を受け取ったら、1件ずつDBから読み直して手元の一覧に反映するのではなく、一覧やキャッシュを捨てて次の取得でDBから読み直す。1件ずつ読み直すと、読み込み中に届いた後のイベント（削除など）や、取得中の一覧との順序が入れ替わり、削除済みの行を一覧に戻すことがある。捨てる前に始めた取得の結果は、キャッシュしない（世代を比べる）。旧本文で一覧を差分更新するときも世代を進め、取得中の一覧（その変更を含まない）を保存しない。`metaUpdated`のGlobalModule・SystemAccountServiceは、受け取ったときにDBから読む（下の一覧の`metaUpdated`の行を参照）。
+一覧やキャッシュを持つ受信側（UserWebhookService・SystemWebhookService・AntennaService・RoleService・MetaService）は、新本文を受け取ったら、1件ずつDBから読み直して手元の一覧に反映するのではなく、一覧やキャッシュを捨てて次の取得でDBから読み直す。1件ずつ読み直すと、読み込み中に届いた後のイベント（削除など）や、取得中の一覧との順序が入れ替わり、削除済みの行を一覧に戻すことがある。捨てる前に始めた取得の結果は、キャッシュしない（世代を比べる）。旧本文で一覧を差分更新するときも世代を進め、取得中の一覧（その変更を含まない）を保存しない。Webhook・システムWebhook・アンテナの一覧は`ReloadableList`（[misc/reloadable-list.ts](../../packages/backend/src/misc/reloadable-list.ts)）で持ち、同時の読み込みを1つにまとめ、失敗したら短い間隔で再試行する（すべて失敗したらログに残す）。`metaUpdated`のGlobalModule・SystemAccountServiceは、受け取ったときにDBから読む（下の一覧の`metaUpdated`の行を参照）。
 
 | 新本文の型 | 形 | 使うイベント |
 | --- | --- | --- |

@@ -37,6 +37,7 @@ import { AntennaService } from '@/core/AntennaService.js';
 import { MetaService } from '@/core/MetaService.js';
 import { SYSTEM_ACCOUNT_TYPES, SystemAccountService } from '@/core/SystemAccountService.js';
 import { secureRndstr } from '@/misc/secure-rndstr.js';
+import type { ReloadableList } from '@/misc/reloadable-list.js';
 
 async function waitFor(condition: () => Promise<boolean> | boolean, timeout = 5000) {
 	const start = Date.now();
@@ -218,6 +219,8 @@ describe('内部イベントの新本文（P2-3 第1リリース）', () => {
 	});
 
 	describe('アンテナ', () => {
+		const antennaList = (service: AntennaService) => (service as unknown as { antennas: ReloadableList<MiAntenna> }).antennas;
+
 		test('新本文で、有効なアンテナの一覧をDBから読み直す。無効なアンテナは加えない', async () => {
 			const service = app.get(AntennaService);
 			await service.getAntennas();
@@ -225,10 +228,13 @@ describe('内部イベントの新本文（P2-3 第1リリース）', () => {
 			const id = idService.gen();
 			await antennasRepository.insert({ id, userId: alice.id, name: 'antenna', src: 'all', keywords: [['a']], excludeKeywords: [], users: [], isActive: false, withFile: false, lastUsedAt: new Date() });
 			// 自分のプロセスに届いて一覧が捨てられるのを待ってから、無効なアンテナが一覧にないことを確かめる
-			const generation = () => (service as unknown as { antennasGeneration: number }).antennasGeneration;
-			const before = generation();
-			globalEventService.publishInternalEvent('antennaCreated', toInternalEventRef({ id } as MiAntenna));
-			await waitFor(() => generation() !== before);
+			const invalidate = vi.spyOn(antennaList(service), 'invalidate');
+			try {
+				globalEventService.publishInternalEvent('antennaCreated', toInternalEventRef({ id } as MiAntenna));
+				await waitFor(() => invalidate.mock.calls.length > 0);
+			} finally {
+				invalidate.mockRestore();
+			}
 			expect((await service.getAntennas()).some(a => a.id === id)).toBe(false);
 
 			await antennasRepository.update(id, { isActive: true, name: 'activated' });
@@ -249,7 +255,7 @@ describe('内部イベントの新本文（P2-3 第1リリース）', () => {
 			await waitFor(async () => (await service.getAntennas()).some(a => a.id === id));
 
 			// 一覧を捨てた状態で取得を始め、削除前の行を読んだところで止める
-			(service as unknown as { invalidateAntennas: () => void }).invalidateAntennas();
+			antennaList(service).invalidate();
 			const findBy = antennasRepository.findBy.bind(antennasRepository);
 			let release!: () => void;
 			const released = new Promise<void>(r => { release = r; });
@@ -266,12 +272,12 @@ describe('内部イベントの新本文（P2-3 第1リリース）', () => {
 				// 削除前の行を読み終えてから削除する
 				await readDone;
 
-				// 自分のプロセスにも届くのを待つ。届いたら一覧の世代が進む
-				const generation = () => (service as unknown as { antennasGeneration: number }).antennasGeneration;
-				const before = generation();
+				// 自分のプロセスにも届いて一覧が捨てられるのを待つ
+				const invalidate = vi.spyOn(antennaList(service), 'invalidate');
 				await antennasRepository.delete(id);
 				globalEventService.publishInternalEvent('antennaDeleted', toInternalEventRef({ id } as MiAntenna));
-				await waitFor(() => generation() !== before);
+				await waitFor(() => invalidate.mock.calls.length > 0);
+				invalidate.mockRestore();
 				release();
 
 				expect((await fetching).some(a => a.id === id)).toBe(true);
