@@ -382,8 +382,9 @@ export class NoteDeleteService {
 			}
 		});
 
-		await step('unindex', () => {
-			this.searchService.unindexNote(note);
+		await step('unindex', async () => {
+			// 削除の確定後に登録するので、ジョブはノートが存在しないことを確認して索引から削除する
+			await this.searchService.requestSyncNoteIndex(note.id);
 		});
 	}
 

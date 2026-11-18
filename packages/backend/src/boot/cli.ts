@@ -32,6 +32,7 @@ switch (command) {
 		console.log('  check-counters [counter...] - Checks denormalized counters (exits with 1 if any mismatch is found)');
 		console.log('  repair-counters [counter...] - Recounts and repairs denormalized counters');
 		console.log(`    counters: ${COUNTER_NAMES.join(', ')}`);
+		console.log('  bake-reactions - Applies buffered reactions to the database (stop the queue processes first)');
 		break;
 	}
 	case 'check-counters':
@@ -59,6 +60,11 @@ switch (command) {
 	case 'reset-captcha': {
 		await commandService.resetCaptcha();
 		console.log('Captcha has been reset.');
+		break;
+	}
+	case 'bake-reactions': {
+		await commandService.bakeReactions();
+		console.log('Buffered reactions have been baked.');
 		break;
 	}
 	default: {
