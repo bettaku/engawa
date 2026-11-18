@@ -61,6 +61,8 @@ describe('RedisKVCache / RedisSingleCache', () => {
 			// 両方のプロセスが古い値をRedisに持っている
 			expect(await readerProcess.fetch('k')).toBe('old');
 			expect(await writerProcess.fetch('k')).toBe('old');
+			// 読む側の版のキーが残っていることを確かめる（なければ、消さなくても次の取得はDBから読むので、確かめたことにならない）
+			expect(await redis.get(kvCacheKey(name, 'k', reader))).toBe(JSON.stringify('old'));
 
 			db.set('k', 'new');
 			await writerProcess.refresh('k');
@@ -72,9 +74,36 @@ describe('RedisKVCache / RedisSingleCache', () => {
 		});
 	}
 
+	test('キャッシュミスでDBから読んだ値を書くときは、ほかの版のキーを消さない', async () => {
+		const name = `test-${secureRndstr(8)}`;
+		await redis.set(kvCacheKey(name, 'k', 2), JSON.stringify('v2-value'), 'EX', 60);
+
+		expect(await process(name, new Map([['k', 'db-value']]), 1).fetch('k')).toBe('db-value');
+
+		expect(await redis.get(kvCacheKey(name, 'k', 1))).toBe(JSON.stringify('db-value'));
+		expect(await redis.get(kvCacheKey(name, 'k', 2))).toBe(JSON.stringify('v2-value'));
+	});
+
+	test('寿命が1秒に満たないキャッシュは作れない', () => {
+		expect(() => new RedisKVCache<string>(redis, 'test', {
+			lifetime: 400,
+			memoryCacheLifetime: -1,
+			fetcher: async () => '',
+			toRedisConverter: (value) => value,
+			fromRedisConverter: (value) => value,
+		})).toThrow('at least 1 second');
+		expect(() => new RedisSingleCache<string>(redis, 'test', {
+			lifetime: 400,
+			memoryCacheLifetime: -1,
+			fetcher: async () => '',
+			toRedisConverter: (value) => value,
+			fromRedisConverter: (value) => value,
+		})).toThrow('at least 1 second');
+	});
+
 	test('set はほかの版のキーを同じMULTIで消す', async () => {
 		const name = `test-${secureRndstr(8)}`;
-		await redis.set(kvCacheKey(name, 'k', 2), JSON.stringify('stale'));
+		await redis.set(kvCacheKey(name, 'k', 2), JSON.stringify('stale'), 'EX', 60);
 
 		await process(name, new Map(), 1).set('k', 'value');
 
@@ -84,7 +113,7 @@ describe('RedisKVCache / RedisSingleCache', () => {
 
 	test('版を持たないキャッシュは、ほかの版のキーを消さない', async () => {
 		const name = `test-${secureRndstr(8)}`;
-		await redis.set(kvCacheKey(name, 'k', 2), JSON.stringify('other'));
+		await redis.set(kvCacheKey(name, 'k', 2), JSON.stringify('other'), 'EX', 60);
 
 		const cache = process(name, new Map(), null);
 		await cache.set('k', 'value');
@@ -109,6 +138,7 @@ describe('RedisKVCache / RedisSingleCache', () => {
 
 		expect(await v1.fetch()).toBe('old');
 		expect(await v2.fetch()).toBe('old');
+		expect(await redis.get(singleCacheKey(name, 1))).toBe(JSON.stringify('old'));
 
 		value = 'new';
 		await v2.refresh();
@@ -150,10 +180,15 @@ describe('CacheService のキャッシュの版の切り替え', () => {
 	});
 
 	afterAll(async () => {
-		await blockingsRepository.delete({ blockerId: alice.id });
-		await usersRepository.delete({ id: alice.id });
-		await usersRepository.delete({ id: bob.id });
-		await app.close();
+		try {
+			for (const user of [alice, bob]) {
+				if (user == null) continue;
+				await blockingsRepository.delete({ blockerId: user.id });
+				await usersRepository.delete({ id: user.id });
+			}
+		} finally {
+			await app?.close();
+		}
 	});
 
 	test('現行の版（v1）のプロセスがブロックを更新すると、v2のプロセスは次の取得で最新の値を読む', async () => {

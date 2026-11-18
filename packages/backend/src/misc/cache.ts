@@ -46,6 +46,18 @@ async function execOrThrow(multi: Redis.ChainableCommander): Promise<void> {
 	}
 }
 
+/**
+ * RedisのTTL（秒）。1秒未満に丸まる寿命はSET ... EXが拒否するので、作成時に拒否する
+ */
+function ttlSeconds(lifetime: number): number | null {
+	if (lifetime === Infinity) return null;
+	const seconds = Math.round(lifetime / 1000);
+	if (!Number.isSafeInteger(seconds) || seconds < 1) {
+		throw new Error(`Cache lifetime must be at least 1 second: ${lifetime}ms`);
+	}
+	return seconds;
+}
+
 export class RedisKVCache<T> {
 	private readonly lifetime: number;
 	private readonly memoryCache: MemoryKVCache<T>;
@@ -76,6 +88,7 @@ export class RedisKVCache<T> {
 		this.toRedisConverter = opts.toRedisConverter;
 		this.fromRedisConverter = opts.fromRedisConverter;
 		this.version = opts.version === undefined ? CURRENT_CACHE_KEY_VERSION : opts.version;
+		ttlSeconds(this.lifetime);
 	}
 
 	/** 読み書きするキー */
@@ -89,16 +102,28 @@ export class RedisKVCache<T> {
 		return CACHE_KEY_VERSIONS.filter(v => v !== this.version).map(v => kvCacheKey(this.name, key, v));
 	}
 
+	/**
+	 * 値を書き込み、ほかの版のキーを消す（値が変わったとき）
+	 */
 	@bindThis
 	public async set(key: string, value: T): Promise<void> {
+		await this.write(key, value, true);
+	}
+
+	/**
+	 * @param invalidateOthers ほかの版のキーも消すか。DBから読んだ値で埋めるだけのとき（キャッシュミス）は、
+	 *   値は変わっていないので消さない（版の異なるプロセスが互いのキャッシュを消し合わないように）
+	 */
+	private async write(key: string, value: T, invalidateOthers: boolean): Promise<void> {
 		this.memoryCache.set(key, value);
 		const multi = this.redisClient.multi();
-		if (this.lifetime === Infinity) {
+		const ttl = ttlSeconds(this.lifetime);
+		if (ttl == null) {
 			multi.set(this.keyOf(key), this.toRedisConverter(value));
 		} else {
-			multi.set(this.keyOf(key), this.toRedisConverter(value), 'EX', Math.round(this.lifetime / 1000));
+			multi.set(this.keyOf(key), this.toRedisConverter(value), 'EX', ttl);
 		}
-		const others = this.otherKeysOf(key);
+		const others = invalidateOthers ? this.otherKeysOf(key) : [];
 		if (others.length > 0) multi.del(...others);
 		await execOrThrow(multi);
 	}
@@ -142,7 +167,7 @@ export class RedisKVCache<T> {
 
 		// Cache MISS
 		const value = await this.fetcher(key);
-		await this.set(key, value);
+		await this.write(key, value, false);
 		return value;
 	}
 
@@ -193,6 +218,7 @@ export class RedisSingleCache<T> {
 		this.toRedisConverter = opts.toRedisConverter;
 		this.fromRedisConverter = opts.fromRedisConverter;
 		this.version = opts.version === undefined ? CURRENT_CACHE_KEY_VERSION : opts.version;
+		ttlSeconds(this.lifetime);
 	}
 
 	private get key(): string {
@@ -206,14 +232,20 @@ export class RedisSingleCache<T> {
 
 	@bindThis
 	public async set(value: T): Promise<void> {
+		await this.write(value, true);
+	}
+
+	/** `RedisKVCache`の`write`と同じ */
+	private async write(value: T, invalidateOthers: boolean): Promise<void> {
 		this.memoryCache.set(value);
 		const multi = this.redisClient.multi();
-		if (this.lifetime === Infinity) {
+		const ttl = ttlSeconds(this.lifetime);
+		if (ttl == null) {
 			multi.set(this.key, this.toRedisConverter(value));
 		} else {
-			multi.set(this.key, this.toRedisConverter(value), 'EX', Math.round(this.lifetime / 1000));
+			multi.set(this.key, this.toRedisConverter(value), 'EX', ttl);
 		}
-		const others = this.otherKeys;
+		const others = invalidateOthers ? this.otherKeys : [];
 		if (others.length > 0) multi.del(...others);
 		await execOrThrow(multi);
 	}
@@ -257,7 +289,7 @@ export class RedisSingleCache<T> {
 
 		// Cache MISS
 		const value = await this.fetcher();
-		await this.set(value);
+		await this.write(value, false);
 		return value;
 	}
 
