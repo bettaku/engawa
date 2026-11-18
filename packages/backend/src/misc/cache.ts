@@ -102,6 +102,8 @@ export class RedisKVCache<T> {
 			invalidation?: CacheInvalidationBus | null;
 		},
 	) {
+		// メモリ層（GCのタイマーを持つ）を作る前に検証する。例外で作成に失敗したときにタイマーが残らないように
+		ttlSeconds(opts.lifetime);
 		this.lifetime = opts.lifetime;
 		this.memoryCache = new MemoryKVCache(opts.memoryCacheLifetime);
 		this.fetcher = opts.fetcher;
@@ -116,7 +118,6 @@ export class RedisKVCache<T> {
 				this.memoryCache.delete(key);
 			}
 		}) ?? null;
-		ttlSeconds(this.lifetime);
 	}
 
 	/** 読み書きするキー */
@@ -262,6 +263,7 @@ export class RedisSingleCache<T> {
 			invalidation?: CacheInvalidationBus | null;
 		},
 	) {
+		ttlSeconds(opts.lifetime);
 		this.lifetime = opts.lifetime;
 		this.memoryCache = new MemorySingleCache(opts.memoryCacheLifetime);
 		this.fetcher = opts.fetcher;
@@ -270,7 +272,6 @@ export class RedisSingleCache<T> {
 		this.version = opts.version === undefined ? CURRENT_CACHE_KEY_VERSION : opts.version;
 		this.invalidation = opts.invalidation ?? null;
 		this.unsubscribe = this.invalidation?.subscribe(this.name, () => this.memoryCache.delete()) ?? null;
-		ttlSeconds(this.lifetime);
 	}
 
 	private get key(): string {
