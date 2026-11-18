@@ -10,7 +10,7 @@ import { DI } from '@/di-symbols.js';
 import { MiMeta } from '@/models/Meta.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { bindThis } from '@/decorators.js';
-import type { GlobalEvents } from '@/core/GlobalEventService.js';
+import { isInternalEventRef, type GlobalEvents } from '@/core/GlobalEventService.js';
 import { FeaturedService } from '@/core/FeaturedService.js';
 import type { OnApplicationShutdown } from '@nestjs/common';
 import { onRedisReconnected } from '@/misc/redis-reconnected.js';
@@ -54,6 +54,11 @@ export class MetaService implements OnApplicationShutdown {
 			const { type, body } = obj.message as GlobalEvents['internal']['payload'];
 			switch (type) {
 				case 'metaUpdated': {
+					if (isInternalEventRef(body)) {
+						// 新本文は値を持たないので、次の取得でDBから読み直す
+						this.cache = undefined;
+						break;
+					}
 					this.cache = { // TODO: このあたりのデシリアライズ処理は各modelファイル内に関数としてexportしたい
 						...(body.after),
 						rootUser: null, // joinなカラムは通常取ってこないので

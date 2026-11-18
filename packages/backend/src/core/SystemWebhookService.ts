@@ -8,7 +8,7 @@ import * as Redis from 'ioredis';
 import type { MiUser, SystemWebhooksRepository } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
 import { bindThis } from '@/decorators.js';
-import { GlobalEvents, GlobalEventService } from '@/core/GlobalEventService.js';
+import { GlobalEvents, GlobalEventService, isInternalEventRef } from '@/core/GlobalEventService.js';
 import { MiSystemWebhook, type SystemWebhookEventType } from '@/models/SystemWebhook.js';
 import { IdService } from '@/core/IdService.js';
 import { QueueService } from '@/core/QueueService.js';
@@ -222,6 +222,26 @@ export class SystemWebhookService implements OnApplicationShutdown {
 		}
 
 		const { type, body } = obj.message as GlobalEvents['internal']['payload'];
+		switch (type) {
+			case 'systemWebhookCreated':
+			case 'systemWebhookUpdated':
+			case 'systemWebhookDeleted': {
+				if (!isInternalEventRef(body)) break;
+				// 新本文は値を持たないので、DBから読み直す。削除済みや無効なら一覧から外す
+				if (!this.activeSystemWebhooksFetched) break;
+				const webhook = type === 'systemWebhookDeleted' ? null : await this.systemWebhooksRepository.findOneBy({ id: body.id });
+				this.activeSystemWebhooks = this.activeSystemWebhooks.filter(a => a.id !== body.id);
+				if (webhook != null && webhook.isActive) {
+					this.activeSystemWebhooks.push(webhook);
+				}
+				return;
+			}
+			default:
+				break;
+		}
+
+		// 旧本文（エンティティ全体）
+		if (isInternalEventRef(body)) return;
 		switch (type) {
 			case 'systemWebhookCreated': {
 				if (body.isActive) {

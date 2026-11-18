@@ -22,7 +22,7 @@ import { bindThis } from '@/decorators.js';
 import { CacheService } from '@/core/CacheService.js';
 import type { RoleCondFormulaValue } from '@/models/Role.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import type { GlobalEvents } from '@/core/GlobalEventService.js';
+import { isInternalEventRef, type GlobalEvents } from '@/core/GlobalEventService.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { IdService } from '@/core/IdService.js';
 import { ModerationLogService } from '@/core/ModerationLogService.js';
@@ -192,6 +192,11 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 			const { type, body } = obj.message as GlobalEvents['internal']['payload'];
 			switch (type) {
 				case 'roleCreated': {
+					if (isInternalEventRef(body)) {
+						// 新本文は値を持たないので、次の取得でDBから読み直す
+						this.rolesCache.delete();
+						break;
+					}
 					const cached = this.rolesCache.get();
 					if (cached) {
 						cached.push({
@@ -203,6 +208,10 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 					break;
 				}
 				case 'roleUpdated': {
+					if (isInternalEventRef(body)) {
+						this.rolesCache.delete();
+						break;
+					}
 					const cached = this.rolesCache.get();
 					if (cached) {
 						const i = cached.findIndex(x => x.id === body.id);
@@ -224,6 +233,10 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 					break;
 				}
 				case 'userRoleAssigned': {
+					if (isInternalEventRef(body)) {
+						this.roleAssignmentByUserIdCache.delete(body.userId);
+						break;
+					}
 					const cached = this.roleAssignmentByUserIdCache.get(body.userId);
 					if (cached) {
 						cached.push({ // TODO: このあたりのデシリアライズ処理は各modelファイル内に関数としてexportしたい

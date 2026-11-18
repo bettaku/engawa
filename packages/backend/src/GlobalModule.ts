@@ -15,7 +15,7 @@ import { Config, loadConfig } from './config.js';
 import { createPostgresDataSource } from './postgres.js';
 import { RepositoryModule } from './models/RepositoryModule.js';
 import { allSettled } from './misc/promise-tracker.js';
-import { GlobalEvents } from './core/GlobalEventService.js';
+import { GlobalEvents, isInternalEventRef } from './core/GlobalEventService.js';
 import type { Provider, OnApplicationShutdown } from '@nestjs/common';
 import { onRedisReconnected } from '@/misc/redis-reconnected.js';
 
@@ -158,8 +158,17 @@ const $meta: Provider = {
 				const { type, body } = obj.message as GlobalEvents['internal']['payload'];
 				switch (type) {
 					case 'metaUpdated': {
-						for (const key in body.after) {
-							(meta as any)[key] = (body.after as any)[key];
+						if (isInternalEventRef(body)) {
+							// 新本文は値を持たないので、DBから読み直す
+							const latest = await db.getRepository(MiMeta).findOne({ where: {}, order: { id: 'DESC' } });
+							if (latest == null) break;
+							for (const key in latest) {
+								(meta as any)[key] = (latest as any)[key];
+							}
+						} else {
+							for (const key in body.after) {
+								(meta as any)[key] = (body.after as any)[key];
+							}
 						}
 						meta.rootUser = null; // joinなカラムは通常取ってこないので
 						break;
