@@ -56,8 +56,11 @@ describe('Note', () => {
 				text: 'b',
 				replyId: _replyedNote.id,
 			})).createdNote;
-			// NOTE: the repliedCount is incremented, so fetch again
-			const replyedNote = await alice.client.request('notes/show', { noteId: _replyedNote.id });
+			// NOTE: the repliedCount is incremented after notes/create returns (in the background), so wait for it
+			const replyedNote = await waitFor(
+				() => alice.client.request('notes/show', { noteId: _replyedNote.id }),
+				n => n.repliesCount === 1,
+			);
 			strictEqual(replyedNote.repliesCount, 1);
 
 			const resolvedNote = await resolveRemoteNote('a.test', note.id, bob);
