@@ -246,8 +246,8 @@ describe('CounterConsistencyService', () => {
 			'INSERT INTO "note" ("id", "userId", "renoteId", "renoteUserId", "visibility") SELECT \'rn\' || g, $1, $2, $3, \'public\' FROM generate_series(1, 32768) g',
 			[bob.id, parent.id, alice.id],
 		);
-		await service.repair(['note.renoteCount']);
-		expect((await notesRepository.findOneByOrFail({ id: parent.id })).renoteCount).toBe(32767);
+		// 修復で上限に丸めた状態（修復の丸めは、smallintの上限のテストで確かめている）
+		await notesRepository.update(parent.id, { renoteCount: 32767 });
 
 		const effects = { ...NO_NOTE_DELETE_EFFECTS, renoteCount: true };
 		// 残りは32767件なので、上限のまま
@@ -267,7 +267,7 @@ describe('CounterConsistencyService', () => {
 			'INSERT INTO "note" ("id", "userId", "renoteId", "renoteUserId", "visibility") SELECT \'rb\' || g, $1, $2, $3, \'public\' FROM generate_series(1, 32768) g',
 			[bob.id, parent.id, alice.id],
 		);
-		await service.repair(['note.renoteCount']);
+		await notesRepository.update(parent.id, { renoteCount: 32767 });
 
 		const effects = { ...NO_NOTE_DELETE_EFFECTS, renoteCount: true };
 		const targets = await notesRepository.findBy({ id: In(['rb1', 'rb2']) });
