@@ -253,14 +253,18 @@ describe('内部イベントの新本文（P2-3 第1リリース）', () => {
 			const findBy = antennasRepository.findBy.bind(antennasRepository);
 			let release!: () => void;
 			const released = new Promise<void>(r => { release = r; });
+			let markRead!: () => void;
+			const readDone = new Promise<void>(r => { markRead = r; });
 			const spy = vi.spyOn(antennasRepository, 'findBy').mockImplementationOnce(async (where) => {
 				const rows = await findBy(where);
+				markRead();
 				await released;
 				return rows;
 			});
 			try {
 				const fetching = service.getAntennas();
-				await waitFor(() => spy.mock.calls.length > 0);
+				// 削除前の行を読み終えてから削除する
+				await readDone;
 
 				// 自分のプロセスにも届くのを待つ。届いたら一覧の世代が進む
 				const generation = () => (service as unknown as { antennasGeneration: number }).antennasGeneration;
@@ -273,6 +277,8 @@ describe('内部イベントの新本文（P2-3 第1リリース）', () => {
 				expect((await fetching).some(a => a.id === id)).toBe(true);
 				expect((await service.getAntennas()).some(a => a.id === id)).toBe(false);
 			} finally {
+				// 失敗したときも、止めている取得を終わらせる
+				release();
 				spy.mockRestore();
 			}
 		});

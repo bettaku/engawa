@@ -249,6 +249,10 @@ export class SystemWebhookService implements OnApplicationShutdown {
 
 		// 旧本文（エンティティ全体）
 		if (isInternalEventRef(body)) return;
+		if (type === 'systemWebhookCreated' || type === 'systemWebhookUpdated' || type === 'systemWebhookDeleted') {
+			// 取得中の一覧はこの変更を含まないので、世代を進めて保存させない（取得済みの一覧には、下で差分を反映する）
+			this.activeSystemWebhooksGeneration++;
+		}
 		switch (type) {
 			case 'systemWebhookCreated': {
 				if (body.isActive) {

@@ -74,6 +74,10 @@ export class AntennaService implements OnApplicationShutdown {
 
 			// 旧本文（エンティティ全体）
 			if (isInternalEventRef(body)) return;
+			if (type === 'antennaCreated' || type === 'antennaUpdated' || type === 'antennaDeleted') {
+				// 取得中の一覧はこの変更を含まないので、世代を進めて保存させない（取得済みの一覧には、下で差分を反映する）
+				this.antennasGeneration++;
+			}
 			switch (type) {
 				case 'antennaCreated':
 					this.antennas.push(deserializeAntenna(body));
