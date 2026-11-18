@@ -28,6 +28,7 @@ switch (command) {
 		console.log('Available commands:');
 		console.log('  help - Displays this help message');
 		console.log('  reset-captcha - Resets the captcha');
+		console.log('  bake-reactions - Applies buffered reactions to the database (stop the queue processes first)');
 		break;
 	}
 	case 'ping': {
@@ -37,6 +38,11 @@ switch (command) {
 	case 'reset-captcha': {
 		await commandService.resetCaptcha();
 		console.log('Captcha has been reset.');
+		break;
+	}
+	case 'bake-reactions': {
+		await commandService.bakeReactions();
+		console.log('Buffered reactions have been baked.');
 		break;
 	}
 	default: {

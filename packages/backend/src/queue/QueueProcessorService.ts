@@ -51,6 +51,7 @@ import { CleanRemoteNotesProcessorService } from './processors/CleanRemoteNotesP
 import { ScheduledNoteDeleteProcessorService } from './processors/ScheduledNoteDeleteProcessorService.js';
 import { QueueLoggerService } from './QueueLoggerService.js';
 import { AutoDeleteNotesProcessorService } from './processors/AutoDeleteNotesProcessorService.js';
+import { SyncNoteIndexProcessorService } from './processors/SyncNoteIndexProcessorService.js';
 import { QUEUE, baseWorkerOptions } from './const.js';
 
 // ref. https://github.com/misskey-dev/misskey/pull/7635#issue-971097019
@@ -139,6 +140,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 		private checkModeratorsActivityProcessorService: CheckModeratorsActivityProcessorService,
 		private cleanProcessorService: CleanProcessorService,
 		private autoDeleteNotesProcessorService: AutoDeleteNotesProcessorService,
+		private syncNoteIndexProcessorService: SyncNoteIndexProcessorService,
 		private cleanRemoteNotesProcessorService: CleanRemoteNotesProcessorService,
 		private scheduledNoteDeleteProcessorService: ScheduledNoteDeleteProcessorService,
 	) {
@@ -245,6 +247,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 					case 'deleteAccount': return this.deleteAccountProcessorService.process(job);
 					case 'truncateAccount': return this.truncateAccountProcessorService.process(job);
 					case 'autoDeleteUserNotes': return this.autoDeleteNotesProcessorService.processUser(job);
+					case 'syncNoteIndex': return this.syncNoteIndexProcessorService.process(job);
 					case 'reportAbuse': return this.reportAbuseProcessorService.process(job);
 					default: throw new Error(`unrecognized job type ${job.name} for db`);
 				}
