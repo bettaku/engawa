@@ -11,7 +11,6 @@ import type { IActivity } from '@/core/activitypub/type.js';
 import type { MiDriveFile } from '@/models/DriveFile.js';
 import type { MiNote } from '@/models/Note.js';
 import type { MiNoteDraft } from '@/models/NoteDraft.js';
-import type { MiAbuseUserReport } from '@/models/AbuseUserReport.js';
 import type { MiWebhook, WebhookEventTypes } from '@/models/Webhook.js';
 import type { MiSystemWebhook, SystemWebhookEventType } from '@/models/SystemWebhook.js';
 import type { Config } from '@/config.js';
@@ -700,11 +699,6 @@ export class QueueService {
 			removeOnComplete: true,
 			removeOnFail: { age: 7 * 24 * 60 * 60, count: 1000 },
 		});
-	}
-
-	@bindThis
-	public createReportAbuseJob(report: MiAbuseUserReport) {
-		return this.dbQueue.add('reportAbuse', report);
 	}
 
 	@bindThis

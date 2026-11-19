@@ -8,7 +8,6 @@ import type { MiDriveFile } from '@/models/DriveFile.js';
 import type { MiNote } from '@/models/Note.js';
 import type { SystemWebhookEventType } from '@/models/SystemWebhook.js';
 import type { MiUser } from '@/models/User.js';
-import type { MiAbuseUserReport } from '@/models/AbuseUserReport.js';
 import type { MiWebhook, WebhookEventTypes } from '@/models/Webhook.js';
 import type { IActivity } from '@/core/activitypub/type.js';
 import type { SystemWebhookPayload } from '@/core/SystemWebhookService.js';
@@ -119,7 +118,6 @@ export type DbJobMap = {
 	truncateAccount: DbUserTruncateJobData;
 	autoDeleteUserNotes: DbJobDataWithUser;
 	syncNoteIndex: DbSyncNoteIndexJobData;
-	reportAbuse: DbAbuseReportJobData;
 };
 
 export type DbSyncNoteIndexJobData = JobDataV1 & {
@@ -175,9 +173,6 @@ export type DbUserImportToDbJobData = JobDataV1 & {
 	target: string;
 	withReplies?: boolean;
 };
-
-/** 生成している箇所はない（処理側だけが残っている） */
-export type DbAbuseReportJobData = MiAbuseUserReport;
 
 export type ObjectStorageJobData = ObjectStorageFileJobData | JobDataV1;
 

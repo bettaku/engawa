@@ -72,7 +72,7 @@ v2はファイルのIDだけを持ち、中身は処理時に利用者のドラ�
 | `postScheduledNote` | （ジョブ名はドラフトのid） | `{ noteDraftId }` |
 | `scheduledNoteDelete` | （ジョブ名はノートのid） | `{ noteId }` |
 
-`db`の`reportAbuse`は、payloadが`MiAbuseUserReport`の行全体で、版を持たない。生成している箇所がない（処理側だけが残っている）。この処理は通報の自動解決ルール（`admin/abuse-report-resolver/*`）を適用するもので、呼び出しがないため自動解決ルールが働いていない。削除するか、通報の受付から呼ぶように戻すかは別途決める。
+`db`の`reportAbuse`（通報の自動解決ルールを適用する処理）は、生成している箇所がなかったので削除した。
 
 ## 処理結果
 
