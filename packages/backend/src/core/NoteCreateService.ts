@@ -64,6 +64,7 @@ import { IdentifiableError } from '@/misc/identifiable-error.js';
 import { CollapsedQueue } from '@/misc/collapsed-queue.js';
 import { CacheService } from '@/core/CacheService.js';
 import { isQuote, isRenote } from '@/misc/is-renote.js';
+import type { noteSearchableBy } from '@/types.js';
 
 type NotificationType = 'reply' | 'renote' | 'quote' | 'mention';
 
@@ -153,7 +154,7 @@ type Option = {
 	url?: string | null;
 	app?: MiApp | null;
 	deleteAt?: Date | null;
-	searchableBy?: string[] | string;
+	searchableBy?: typeof noteSearchableBy[number] | null;
 };
 
 /**
@@ -275,7 +276,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		apHashtags?: string[] | null;
 		apEmojis?: string[] | null;
 		deleteAt?: Date | null;
-		searchableBy?: string[] | string;
+		searchableBy?: typeof noteSearchableBy[number] | null;
 	}, internalOptions: NoteCreateInternalOptions = {}): Promise<MiNote> {
 		const visibleUsers = data.visibleUserIds.length > 0 ? await this.usersRepository.findBy({
 			id: In(data.visibleUserIds),
@@ -626,7 +627,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 			attachedFileTypes: data.files ? data.files.map(file => file.type) : [],
 
-			searchableBy: data.searchableBy ? data.searchableBy as any : 'public',
+			searchableBy: data.searchableBy ?? 'public',
 
 			// 以下非正規化データ
 			replyUserId: data.reply ? data.reply.userId : null,

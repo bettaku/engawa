@@ -106,6 +106,7 @@
 - Fix: 脆弱性が報告されていた依存パッケージを更新
 	- `happy-dom` 21.0.4、`body-parser` 1.20.9 / 2.4.0、`undici` 6.29.1 / 7.30.1 / 8.12.2、`multer` 2.5.0、`joi`、`fast-uri`、`follow-redirects`、`uuid` 11.1.1、`nodemailer`、`systeminformation` を更新
 	- 開発用の `vitest` 4.1.12、`glob` 14、`minimatch` 11、`astro` 7.3.3（ドキュメント）を更新
+- Enhance: マイグレーションを適用したDBのスキーマを `packages/backend/schema/schema.sql` に置き、CIで差分を検査するようにしました。マイグレーションを追加するときは `pnpm --filter backend schema:snapshot` で作り直してください（`docs/rust-migration/db-schema.md`）
 
 ## 1.0.0
 
