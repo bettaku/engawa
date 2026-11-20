@@ -45,7 +45,8 @@ export function getJobDataVersion(data: unknown): unknown {
 
 export function getSupportedJobDataVersions(queue: QueueName, name: string): readonly number[] {
 	const versions = SUPPORTED_JOB_DATA_VERSIONS[queue];
-	return versions[name] ?? versions['*'];
+	// ジョブ名は外部から決まる（inboxはactivityのid）ので、`constructor`などの継承したプロパティを引かない
+	return Object.hasOwn(versions, name) ? versions[name] : versions['*'];
 }
 
 export function isSupportedJobDataVersion(queue: QueueName, name: string, data: unknown): boolean {

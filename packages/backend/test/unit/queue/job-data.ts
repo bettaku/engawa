@@ -59,6 +59,13 @@ describe('ジョブpayloadの版', () => {
 		expect(isSupportedJobDataVersion(QUEUE.SYSTEM_WEBHOOK_DELIVER, 'any', { v: 2 })).toBe(true);
 		expect(isSupportedJobDataVersion(QUEUE.DELIVER, 'any', { v: 2 })).toBe(false);
 	});
+
+	test.each(['constructor', 'toString', '__proto__', 'hasOwnProperty'])('ジョブ名が継承したプロパティの名前（%s）でも、`*`の版で判定する', name => {
+		// inboxのジョブ名はactivityのidから作るので、外部から任意の名前にできる
+		expect(isSupportedJobDataVersion(QUEUE.INBOX, name, { v: 1 })).toBe(true);
+		expect(isSupportedJobDataVersion(QUEUE.INBOX, name, { v: 3 })).toBe(false);
+		expect(isSupportedJobDataVersion(QUEUE.DB, name, {})).toBe(true);
+	});
 });
 
 describe('QueueServiceが登録するpayload', () => {
@@ -390,8 +397,16 @@ describe('importAntennasジョブのpayload', () => {
 		expect(notArray.antennasRepository.insertOne).not.toHaveBeenCalled();
 
 		const notJson = createProcessor({ id: 'file1', url: 'https://files.example.com/file1' }, 'not json');
-		expect(await notJson.processor.process(job({ v: 2 as const, user: { id: 'user1' }, fileId: 'file1' }))).toBe('skip: failed to read the file');
+		expect(await notJson.processor.process(job({ v: 2 as const, user: { id: 'user1' }, fileId: 'file1' }))).toBe('skip: failed to parse the file');
 		expect(notJson.antennasRepository.insertOne).not.toHaveBeenCalled();
+	});
+
+	test('v2は、ファイルのダウンロードに失敗したらジョブを失敗させる（一時的な失敗を完了扱いにしない）', async () => {
+		const { processor, antennasRepository, downloadService } = createProcessor({ id: 'file1', url: 'https://files.example.com/file1' }, '');
+		downloadService.downloadTextFile.mockRejectedValueOnce(new StatusError('Service Unavailable', 503, 'Service Unavailable'));
+
+		await expect(processor.process(job({ v: 2 as const, user: { id: 'user1' }, fileId: 'file1' }))).rejects.toThrow(StatusError);
+		expect(antennasRepository.insertOne).not.toHaveBeenCalled();
 	});
 
 	test('形式が誤っているアンテナは飛ばし、ほかのアンテナは作る', async () => {

@@ -662,7 +662,11 @@ export class QueueService {
 			user: { id: user.id },
 		}, {
 			removeOnComplete: true,
-			removeOnFail: true,
+			// 失敗したジョブは残す。処理側が受け付けない版で失敗したジョブを、処理側の更新後に再実行できるようにする
+			removeOnFail: {
+				age: 3600 * 24 * 7, // keep up to 7 days
+				count: 100,
+			},
 		});
 	}
 
@@ -678,7 +682,8 @@ export class QueueService {
 			data: { v: JOB_DATA_VERSION, user: { id: user.id } },
 			opts: {
 				jobId: QueueService.autoDeleteUserNotesJobId(user.id),
-				// 同じjobIdのジョブが残っていると翌日の登録が無視されるので、終わったら消す
+				// 同じjobIdのジョブが残っていると翌日の登録が無視されるので、終わったら消す。
+				// 処理側が受け付けない版で失敗したジョブも消えるが、定期ジョブ（autoDeleteNotes）が翌日にDBから登録し直す
 				removeOnComplete: true,
 				removeOnFail: true,
 			},

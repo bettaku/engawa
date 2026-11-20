@@ -285,7 +285,8 @@ describe('ノートの公開範囲の判定表', () => {
 			await usersRepository.update(author.id, { makeNotesFollowersOnlyBefore: -60 * 60 });
 			for (const visibility of ['public', 'home'] as const) {
 				const note = await createNote(visibility, author, old);
-				for (const system of flagSystems()) {
+				// Streamingは投稿者の設定を見ないが、配信するノートのpackでこの設定によりfollowersに変わるので、対象に含める
+				for (const system of systems.filter(s => s.appliesAuthorFlags || s.name === 'streaming')) {
 					for (const relation of ['anonymous', 'follower', 'stranger', 'mentioned'] as const) {
 						const expected = expectedFor(system.name, 'followers', relation);
 						expect({ system: system.name, visibility, relation, visible: await system.check(note, viewerOf(relation)) })
@@ -294,6 +295,16 @@ describe('ノートの公開範囲の判定表', () => {
 				}
 			}
 		});
+	});
+
+	test('isVisibleForMe: replyUserIdがない古いノートでも、読み込んだreplyから返信先の投稿者を判定する', async () => {
+		const note = await createNote('followers', author);
+		const reply = await notesRepository.findOneByOrFail({ id: note.replyId ?? '' });
+		const legacy = { ...note, replyUserId: null, mentions: [], reply } as MiNote;
+
+		expect(await noteEntityService.isVisibleForMe(legacy, viewers.replyTarget.id)).toBe(true);
+		expect(await noteEntityService.isVisibleForMe(legacy, viewers.stranger.id)).toBe(false);
+		expect(await noteEntityService.isVisibleForMe({ ...legacy, reply: null } as MiNote, viewers.replyTarget.id)).toBe(false);
 	});
 
 	test('既知の差は、判定表と異なるものだけを書く', () => {

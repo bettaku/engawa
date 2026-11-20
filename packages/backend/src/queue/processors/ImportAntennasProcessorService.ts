@@ -87,11 +87,13 @@ export class ImportAntennasProcessorService {
 			// v2: ファイルのIDだけを受け取り、中身は処理時にドライブから読む
 			const file = await this.driveFilesRepository.findOneBy({ id: job.data.fileId, userId });
 			if (file == null) return 'skip: file not found';
+			// ダウンロードの失敗は一時的なことがあるので、例外のまま失敗させる。JSONとして読めないファイルは再試行しても直らないので、スキップする
+			const text = await this.downloadService.downloadTextFile(file.url);
 			try {
-				antennas = JSON.parse(await this.downloadService.downloadTextFile(file.url));
+				antennas = JSON.parse(text);
 			} catch (err) {
-				this.logger.warn(`Failed to read the antennas file: ${file.id}`, { error: err });
-				return 'skip: failed to read the file';
+				this.logger.warn(`Failed to parse the antennas file: ${file.id}`, { error: err });
+				return 'skip: failed to parse the file';
 			}
 		} else {
 			antennas = job.data.antenna;
