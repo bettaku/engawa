@@ -39,7 +39,6 @@ import { ExportFavoritesProcessorService } from './processors/ExportFavoritesPro
 import { CleanRemoteFilesProcessorService } from './processors/CleanRemoteFilesProcessorService.js';
 import { DeleteFileProcessorService } from './processors/DeleteFileProcessorService.js';
 import { RelationshipProcessorService } from './processors/RelationshipProcessorService.js';
-import { ReportAbuseProcessorService } from './processors/ReportAbuseProcessorService.js';
 import { TickChartsProcessorService } from './processors/TickChartsProcessorService.js';
 import { ResyncChartsProcessorService } from './processors/ResyncChartsProcessorService.js';
 import { CleanChartsProcessorService } from './processors/CleanChartsProcessorService.js';
@@ -52,6 +51,7 @@ import { ScheduledNoteDeleteProcessorService } from './processors/ScheduledNoteD
 import { QueueLoggerService } from './QueueLoggerService.js';
 import { AutoDeleteNotesProcessorService } from './processors/AutoDeleteNotesProcessorService.js';
 import { SyncNoteIndexProcessorService } from './processors/SyncNoteIndexProcessorService.js';
+import { assertSupportedJobDataVersion } from './job-version.js';
 import { QUEUE, baseWorkerOptions } from './const.js';
 
 // ref. https://github.com/misskey-dev/misskey/pull/7635#issue-971097019
@@ -130,7 +130,6 @@ export class QueueProcessorService implements OnApplicationShutdown {
 		private deleteFileProcessorService: DeleteFileProcessorService,
 		private cleanRemoteFilesProcessorService: CleanRemoteFilesProcessorService,
 		private relationshipProcessorService: RelationshipProcessorService,
-		private reportAbuseProcessorService: ReportAbuseProcessorService,
 		private tickChartsProcessorService: TickChartsProcessorService,
 		private resyncChartsProcessorService: ResyncChartsProcessorService,
 		private cleanChartsProcessorService: CleanChartsProcessorService,
@@ -193,6 +192,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 			};
 
 			this.systemQueueWorker = new Bull.Worker(QUEUE.SYSTEM, (job) => {
+				assertSupportedJobDataVersion(QUEUE.SYSTEM, job);
 				if (this.config.sentryForBackend) {
 					return Sentry.startSpan({ name: 'Queue: System: ' + job.name }, () => processer(job));
 				} else {
@@ -248,12 +248,12 @@ export class QueueProcessorService implements OnApplicationShutdown {
 					case 'truncateAccount': return this.truncateAccountProcessorService.process(job);
 					case 'autoDeleteUserNotes': return this.autoDeleteNotesProcessorService.processUser(job);
 					case 'syncNoteIndex': return this.syncNoteIndexProcessorService.process(job);
-					case 'reportAbuse': return this.reportAbuseProcessorService.process(job);
 					default: throw new Error(`unrecognized job type ${job.name} for db`);
 				}
 			};
 
 			this.dbQueueWorker = new Bull.Worker(QUEUE.DB, (job) => {
+				assertSupportedJobDataVersion(QUEUE.DB, job);
 				if (this.config.sentryForBackend) {
 					return Sentry.startSpan({ name: 'Queue: DB: ' + job.name }, () => processer(job));
 				} else {
@@ -286,6 +286,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 		//#region deliver
 		{
 			this.deliverQueueWorker = new Bull.Worker(QUEUE.DELIVER, (job) => {
+				assertSupportedJobDataVersion(QUEUE.DELIVER, job);
 				if (this.config.sentryForBackend) {
 					return Sentry.startSpan({ name: 'Queue: Deliver' }, () => this.deliverProcessorService.process(job));
 				} else {
@@ -326,6 +327,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 		//#region inbox
 		{
 			this.inboxQueueWorker = new Bull.Worker(QUEUE.INBOX, (job) => {
+				assertSupportedJobDataVersion(QUEUE.INBOX, job);
 				if (this.config.sentryForBackend) {
 					return Sentry.startSpan({ name: 'Queue: Inbox' }, () => this.inboxProcessorService.process(job));
 				} else {
@@ -366,6 +368,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 		//#region user-webhook deliver
 		{
 			this.userWebhookDeliverQueueWorker = new Bull.Worker(QUEUE.USER_WEBHOOK_DELIVER, (job) => {
+				assertSupportedJobDataVersion(QUEUE.USER_WEBHOOK_DELIVER, job);
 				if (this.config.sentryForBackend) {
 					return Sentry.startSpan({ name: 'Queue: UserWebhookDeliver' }, () => this.userWebhookDeliverProcessorService.process(job));
 				} else {
@@ -387,10 +390,10 @@ export class QueueProcessorService implements OnApplicationShutdown {
 			const logger = this.logger.createSubLogger('user-webhook');
 
 			this.userWebhookDeliverQueueWorker
-				.on('active', (job) => logger.debug(`active ${getJobInfo(job, true)} to=${job.data.to}`))
-				.on('completed', (job, result) => logger.debug(`completed(${result}) ${getJobInfo(job, true)} to=${job.data.to}`))
+				.on('active', (job) => logger.debug(`active ${getJobInfo(job, true)} webhook=${job.data.webhookId}`))
+				.on('completed', (job, result) => logger.debug(`completed(${result}) ${getJobInfo(job, true)} webhook=${job.data.webhookId}`))
 				.on('failed', (job, err) => {
-					logger.error(`failed(${err.name}: ${err.message}) ${getJobInfo(job)} to=${job ? job.data.to : '-'}`);
+					logger.error(`failed(${err.name}: ${err.message}) ${getJobInfo(job)} webhook=${job ? job.data.webhookId : '-'}`);
 					if (config.sentryForBackend) {
 						Sentry.captureMessage(`Queue: UserWebhookDeliver: ${err.name}: ${err.message}`, {
 							level: 'error',
@@ -406,6 +409,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 		//#region system-webhook deliver
 		{
 			this.systemWebhookDeliverQueueWorker = new Bull.Worker(QUEUE.SYSTEM_WEBHOOK_DELIVER, (job) => {
+				assertSupportedJobDataVersion(QUEUE.SYSTEM_WEBHOOK_DELIVER, job);
 				if (this.config.sentryForBackend) {
 					return Sentry.startSpan({ name: 'Queue: SystemWebhookDeliver' }, () => this.systemWebhookDeliverProcessorService.process(job));
 				} else {
@@ -427,10 +431,10 @@ export class QueueProcessorService implements OnApplicationShutdown {
 			const logger = this.logger.createSubLogger('system-webhook');
 
 			this.systemWebhookDeliverQueueWorker
-				.on('active', (job) => logger.debug(`active ${getJobInfo(job, true)} to=${job.data.to}`))
-				.on('completed', (job, result) => logger.debug(`completed(${result}) ${getJobInfo(job, true)} to=${job.data.to}`))
+				.on('active', (job) => logger.debug(`active ${getJobInfo(job, true)} webhook=${job.data.webhookId}`))
+				.on('completed', (job, result) => logger.debug(`completed(${result}) ${getJobInfo(job, true)} webhook=${job.data.webhookId}`))
 				.on('failed', (job, err) => {
-					logger.error(`failed(${err.name}: ${err.message}) ${getJobInfo(job)} to=${job ? job.data.to : '-'}`);
+					logger.error(`failed(${err.name}: ${err.message}) ${getJobInfo(job)} webhook=${job ? job.data.webhookId : '-'}`);
 					if (config.sentryForBackend) {
 						Sentry.captureMessage(`Queue: SystemWebhookDeliver: ${err.name}: ${err.message}`, {
 							level: 'error',
@@ -456,6 +460,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 			};
 
 			this.relationshipQueueWorker = new Bull.Worker(QUEUE.RELATIONSHIP, (job) => {
+				assertSupportedJobDataVersion(QUEUE.RELATIONSHIP, job);
 				if (this.config.sentryForBackend) {
 					return Sentry.startSpan({ name: 'Queue: Relationship: ' + job.name }, () => processer(job));
 				} else {
@@ -501,6 +506,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 			};
 
 			this.objectStorageQueueWorker = new Bull.Worker(QUEUE.OBJECT_STORAGE, (job) => {
+				assertSupportedJobDataVersion(QUEUE.OBJECT_STORAGE, job);
 				if (this.config.sentryForBackend) {
 					return Sentry.startSpan({ name: 'Queue: ObjectStorage: ' + job.name }, () => processer(job));
 				} else {
@@ -534,6 +540,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 		//#region ended poll notification
 		{
 			this.endedPollNotificationQueueWorker = new Bull.Worker(QUEUE.ENDED_POLL_NOTIFICATION, (job) => {
+				assertSupportedJobDataVersion(QUEUE.ENDED_POLL_NOTIFICATION, job);
 				if (this.config.sentryForBackend) {
 					return Sentry.startSpan({ name: 'Queue: EndedPollNotification' }, () => this.endedPollNotificationProcessorService.process(job));
 				} else {
@@ -549,6 +556,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 		//#region post scheduled note
 		{
 			this.postScheduledNoteQueueWorker = new Bull.Worker(QUEUE.POST_SCHEDULED_NOTE, async (job, token) => {
+				assertSupportedJobDataVersion(QUEUE.POST_SCHEDULED_NOTE, job);
 				if (this.config.sentryForBackend) {
 					return Sentry.startSpan({ name: 'Queue: PostScheduledNote' }, () => this.postScheduledNoteProcessorService.process(job, token));
 				} else {
@@ -564,6 +572,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 		//#region scheduled note delete
 		{
 			this.scheduledNoteDeleteQueueWorker = new Bull.Worker(QUEUE.SCHEDULED_NOTE_DELETE, (job, token) => {
+				assertSupportedJobDataVersion(QUEUE.SCHEDULED_NOTE_DELETE, job);
 				if (this.config.sentryForBackend) {
 					return Sentry.startSpan({ name: 'Queue: ScheduledNoteDelete' }, () => this.scheduledNoteDeleteProcessorService.process(job, token));
 				} else {

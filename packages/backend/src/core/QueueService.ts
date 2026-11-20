@@ -4,14 +4,13 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { MetricsTime, type JobType } from 'bullmq';
 import { parse as parseRedisInfo } from 'redis-info';
 import type { IActivity } from '@/core/activitypub/type.js';
 import type { MiDriveFile } from '@/models/DriveFile.js';
 import type { MiNote } from '@/models/Note.js';
 import type { MiNoteDraft } from '@/models/NoteDraft.js';
-import type { MiAbuseUserReport } from '@/models/AbuseUserReport.js';
 import type { MiWebhook, WebhookEventTypes } from '@/models/Webhook.js';
 import type { MiSystemWebhook, SystemWebhookEventType } from '@/models/SystemWebhook.js';
 import type { Config } from '@/config.js';
@@ -21,12 +20,14 @@ import { LoggerService } from '@/core/LoggerService.js';
 import type Logger from '@/logger.js';
 import type { Antenna } from '@/server/api/endpoints/i/import-antennas.js';
 import { ApRequestCreator } from '@/core/activitypub/ApRequestService.js';
+import { JOB_DATA_VERSION } from '@/queue/job-version.js';
 import { type SystemWebhookPayload } from '@/core/SystemWebhookService.js';
 import type { Packed } from '@/misc/json-schema.js';
 import { type UserWebhookPayload } from './UserWebhookService.js';
 import type {
 	DbJobData,
 	DeliverJobData,
+	InboxJobData,
 	RelationshipJobData,
 	SystemWebhookDeliverJobData,
 	ThinUser,
@@ -62,7 +63,7 @@ export const QUEUE_TYPES = [
 	'scheduledNoteDelete',
 ] as const;
 
-const REPEATABLE_SYSTEM_JOB_DEF = [{
+export const REPEATABLE_SYSTEM_JOB_DEF: readonly { name: string; pattern: string; }[] = [{
 	name: 'tickCharts',
 	pattern: '55 * * * *',
 }, {
@@ -105,8 +106,37 @@ const REPEATABLE_SYSTEM_JOB_DEF = [{
 	pattern: '*/5 * * * *',
 }];
 
+/**
+ * 以前の版で登録していて、いまは使わない定期ジョブの名前。
+ *
+ * registerJobSchedulersは、ここにある名前のスケジューラーだけを削除する。
+ * 定期ジョブをREPEATABLE_SYSTEM_JOB_DEFから外すときは、その名前をここへ移す。
+ */
+export const OBSOLETE_SYSTEM_JOB_SCHEDULER_NAMES: readonly string[] = [];
+
+/**
+ * 登録済みのスケジューラーを削除するかどうか。
+ *
+ * - 既知の旧名（キーまたは名前がOBSOLETE_SYSTEM_JOB_SCHEDULER_NAMESにある）なら削除する
+ * - 旧形式（`add(…, { repeat })`）で登録された、このアプリの定期ジョブなら削除する。
+ *   同じ名前のJob Schedulerと二重に実行されるためである。旧形式のキーは、ジョブ名と異なる
+ *   （BullMQ 5のハッシュ、またはそれ以前の`name:id:endDate:tz:pattern`）
+ * - それ以外（知らない名前）は削除しない
+ *
+ * 定義にある名前の定期ジョブを、別のキーで登録したもの（別の実装が登録したものを含む）も削除する。
+ * 定期ジョブの担当を別の実装へ移すときは、先にREPEATABLE_SYSTEM_JOB_DEFから外す。
+ */
+export function shouldRemoveJobScheduler(scheduler: { key: string; name?: string | null; }): boolean {
+	if (OBSOLETE_SYSTEM_JOB_SCHEDULER_NAMES.includes(scheduler.key)) return true;
+	const name = scheduler.name ?? scheduler.key;
+	if (OBSOLETE_SYSTEM_JOB_SCHEDULER_NAMES.includes(name)) return true;
+	const isLegacyRepeatable = scheduler.key !== name;
+	if (isLegacyRepeatable && REPEATABLE_SYSTEM_JOB_DEF.some(def => def.name === name)) return true;
+	return false;
+}
+
 @Injectable()
-export class QueueService implements OnModuleInit {
+export class QueueService {
 	private logger: Logger;
 
 	constructor(
@@ -130,42 +160,59 @@ export class QueueService implements OnModuleInit {
 		this.logger = this.loggerService.getLogger('queue');
 	}
 
-	async onModuleInit() {
-		console.log('[QueueService] onModuleInit: Setting up', REPEATABLE_SYSTEM_JOB_DEF.length, 'repeatable jobs');
-		try {
-			for (const def of REPEATABLE_SYSTEM_JOB_DEF) {
-				console.log('[QueueService] Setting up repeatable job:', def.name, 'pattern:', def.pattern);
-				const result = await this.systemQueue.upsertJobScheduler(def.name, {
-					pattern: def.pattern,
-					immediately: false,
-				}, {
-					name: def.name,
-					opts: {
-						// 期限ではなくcountで設定したいが、ジョブごとではなくキュー全体でカウントされるため、高頻度で実行されるジョブによって低頻度で実行されるジョブのログが消えることになる
-						removeOnComplete: {
-							age: 3600 * 24 * 7, // keep up to 7 days
-						},
-						removeOnFail: {
-							age: 3600 * 24 * 7, // keep up to 7 days
-						},
+	/**
+	 * 定期ジョブ（system queueのJob Scheduler）を登録する。
+	 *
+	 * queueプロセスの起動時（`CP_NO_JOB_SCHEDULERS`を設定していない場合）と、CLIの`register-job-schedulers`だけが呼ぶ。
+	 * serverプロセスでは呼ばない。Redisに障害があってもserverの起動を妨げないためである。
+	 *
+	 * 定義にあるものはupsertする。削除するのは、既知の旧名（OBSOLETE_SYSTEM_JOB_SCHEDULER_NAMES）と、
+	 * 旧形式（`add(…, { repeat })`）で登録されたこのアプリの定期ジョブだけである。
+	 * 知らない名前のスケジューラーは消さない（新旧の版の混在や、別の実装が登録したものを消さないため）。
+	 */
+	@bindThis
+	public async registerJobSchedulers(): Promise<{ upserted: string[]; removed: string[]; kept: string[]; }> {
+		const upserted: string[] = [];
+		for (const def of REPEATABLE_SYSTEM_JOB_DEF) {
+			await this.systemQueue.upsertJobScheduler(def.name, {
+				pattern: def.pattern,
+				immediately: false,
+			}, {
+				name: def.name,
+				data: { v: JOB_DATA_VERSION },
+				opts: {
+					// 期限ではなくcountで設定したいが、ジョブごとではなくキュー全体でカウントされるため、高頻度で実行されるジョブによって低頻度で実行されるジョブのログが消えることになる
+					removeOnComplete: {
+						age: 3600 * 24 * 7, // keep up to 7 days
 					},
-				});
-				console.log('[QueueService] Result:', def.name, result);
-			}
-
-			// 古いバージョンで作成され現在使われなくなったrepeatableジョブをクリーンアップ
-			const schedulers = await this.systemQueue.getJobSchedulers();
-			console.log('[QueueService] Found', schedulers.length, 'existing schedulers');
-			for (const scheduler of schedulers) {
-				if (!REPEATABLE_SYSTEM_JOB_DEF.some(def => def.name === scheduler.key)) {
-					await this.systemQueue.removeJobScheduler(scheduler.key);
-				}
-			}
-			console.log('[QueueService] onModuleInit: All repeatable jobs set up successfully');
-		} catch (error) {
-			console.error('[QueueService] ERROR in onModuleInit:', error);
-			throw error;
+					removeOnFail: {
+						age: 3600 * 24 * 7, // keep up to 7 days
+					},
+				},
+			});
+			upserted.push(def.name);
 		}
+
+		const removed: string[] = [];
+		const kept: string[] = [];
+		const schedulers = await this.systemQueue.getJobSchedulers();
+		for (const scheduler of schedulers) {
+			// 旧形式でハッシュ化されたキーは、名前を復元できないので対象にしない
+			if (scheduler == null) continue;
+			if (shouldRemoveJobScheduler(scheduler)) {
+				await this.systemQueue.removeJobScheduler(scheduler.key);
+				removed.push(scheduler.key);
+			} else if (!REPEATABLE_SYSTEM_JOB_DEF.some(def => def.name === scheduler.key)) {
+				kept.push(scheduler.key);
+			}
+		}
+
+		this.logger.info(`Job schedulers registered: ${upserted.length} upserted, ${removed.length} removed${removed.length > 0 ? ` (${removed.join(', ')})` : ''}`);
+		if (kept.length > 0) {
+			this.logger.warn(`Unknown job schedulers were kept: ${kept.join(', ')}`);
+		}
+
+		return { upserted, removed, kept };
 	}
 
 	@bindThis
@@ -177,6 +224,7 @@ export class QueueService implements OnModuleInit {
 		const digest = ApRequestCreator.createDigest(contentBody);
 
 		const data: DeliverJobData = {
+			v: JOB_DATA_VERSION,
 			user: {
 				id: user.id,
 			},
@@ -235,6 +283,7 @@ export class QueueService implements OnModuleInit {
 		await this.deliverQueue.addBulk(Array.from(inboxes.entries(), d => ({
 			name: d[0].replace('https://', '').replace('/inbox', ''),
 			data: {
+				v: JOB_DATA_VERSION,
 				user,
 				content: contentBody,
 				digest,
@@ -249,7 +298,8 @@ export class QueueService implements OnModuleInit {
 
 	@bindThis
 	public inbox(activity: IActivity, signature: httpSignature.IParsedSignature) {
-		const data = {
+		const data: InboxJobData = {
+			v: JOB_DATA_VERSION,
 			activity: activity,
 			signature,
 		};
@@ -275,6 +325,7 @@ export class QueueService implements OnModuleInit {
 	@bindThis
 	public createDeleteDriveFilesJob(user: ThinUser) {
 		return this.dbQueue.add('deleteDriveFiles', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 		}, {
 			removeOnComplete: {
@@ -291,6 +342,7 @@ export class QueueService implements OnModuleInit {
 	@bindThis
 	public createExportCustomEmojisJob(user: ThinUser) {
 		return this.dbQueue.add('exportCustomEmojis', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 		}, {
 			removeOnComplete: {
@@ -307,6 +359,7 @@ export class QueueService implements OnModuleInit {
 	@bindThis
 	public createExportNotesJob(user: ThinUser) {
 		return this.dbQueue.add('exportNotes', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 		}, {
 			removeOnComplete: {
@@ -323,6 +376,7 @@ export class QueueService implements OnModuleInit {
 	@bindThis
 	public createExportClipsJob(user: ThinUser) {
 		return this.dbQueue.add('exportClips', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 		}, {
 			removeOnComplete: {
@@ -339,6 +393,7 @@ export class QueueService implements OnModuleInit {
 	@bindThis
 	public createExportFavoritesJob(user: ThinUser) {
 		return this.dbQueue.add('exportFavorites', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 		}, {
 			removeOnComplete: {
@@ -355,6 +410,7 @@ export class QueueService implements OnModuleInit {
 	@bindThis
 	public createExportFollowingJob(user: ThinUser, excludeMuting = false, excludeInactive = false) {
 		return this.dbQueue.add('exportFollowing', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 			excludeMuting,
 			excludeInactive,
@@ -373,6 +429,7 @@ export class QueueService implements OnModuleInit {
 	@bindThis
 	public createExportMuteJob(user: ThinUser) {
 		return this.dbQueue.add('exportMuting', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 		}, {
 			removeOnComplete: {
@@ -389,6 +446,7 @@ export class QueueService implements OnModuleInit {
 	@bindThis
 	public createExportBlockingJob(user: ThinUser) {
 		return this.dbQueue.add('exportBlocking', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 		}, {
 			removeOnComplete: {
@@ -405,6 +463,7 @@ export class QueueService implements OnModuleInit {
 	@bindThis
 	public createExportUserListsJob(user: ThinUser) {
 		return this.dbQueue.add('exportUserLists', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 		}, {
 			removeOnComplete: {
@@ -421,6 +480,7 @@ export class QueueService implements OnModuleInit {
 	@bindThis
 	public createExportAntennasJob(user: ThinUser) {
 		return this.dbQueue.add('exportAntennas', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 		}, {
 			removeOnComplete: {
@@ -437,6 +497,7 @@ export class QueueService implements OnModuleInit {
 	@bindThis
 	public createImportFollowingJob(user: ThinUser, fileId: MiDriveFile['id'], withReplies?: boolean) {
 		return this.dbQueue.add('importFollowing', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 			fileId: fileId,
 			withReplies,
@@ -461,6 +522,7 @@ export class QueueService implements OnModuleInit {
 	@bindThis
 	public createImportMutingJob(user: ThinUser, fileId: MiDriveFile['id']) {
 		return this.dbQueue.add('importMuting', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 			fileId: fileId,
 		}, {
@@ -478,6 +540,7 @@ export class QueueService implements OnModuleInit {
 	@bindThis
 	public createImportBlockingJob(user: ThinUser, fileId: MiDriveFile['id']) {
 		return this.dbQueue.add('importBlocking', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 			fileId: fileId,
 		}, {
@@ -506,7 +569,7 @@ export class QueueService implements OnModuleInit {
 	} {
 		return {
 			name,
-			data,
+			data: { ...data, v: JOB_DATA_VERSION },
 			opts: {
 				removeOnComplete: {
 					age: 3600 * 24 * 7, // keep up to 7 days
@@ -523,6 +586,7 @@ export class QueueService implements OnModuleInit {
 	@bindThis
 	public createImportUserListsJob(user: ThinUser, fileId: MiDriveFile['id']) {
 		return this.dbQueue.add('importUserLists', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 			fileId: fileId,
 		}, {
@@ -540,6 +604,7 @@ export class QueueService implements OnModuleInit {
 	@bindThis
 	public createImportCustomEmojisJob(user: ThinUser, fileId: MiDriveFile['id']) {
 		return this.dbQueue.add('importCustomEmojis', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 			fileId: fileId,
 		}, {
@@ -557,6 +622,7 @@ export class QueueService implements OnModuleInit {
 	@bindThis
 	public createImportAntennasJob(user: ThinUser, antenna: Antenna) {
 		return this.dbQueue.add('importAntennas', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 			antenna,
 		}, {
@@ -574,6 +640,7 @@ export class QueueService implements OnModuleInit {
 	@bindThis
 	public createDeleteAccountJob(user: ThinUser, opts: { soft?: boolean; } = {}) {
 		return this.dbQueue.add('deleteAccount', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 			soft: opts.soft,
 		}, {
@@ -591,10 +658,15 @@ export class QueueService implements OnModuleInit {
 	@bindThis
 	public createTruncateAccountJob(user: ThinUser) {
 		return this.dbQueue.add('truncateAccount', {
+			v: JOB_DATA_VERSION,
 			user: { id: user.id },
 		}, {
 			removeOnComplete: true,
-			removeOnFail: true,
+			// 失敗したジョブは残す。処理側が受け付けない版で失敗したジョブを、処理側の更新後に再実行できるようにする
+			removeOnFail: {
+				age: 3600 * 24 * 7, // keep up to 7 days
+				count: 100,
+			},
 		});
 	}
 
@@ -607,10 +679,11 @@ export class QueueService implements OnModuleInit {
 	public createAutoDeleteUserNotesJobs(users: ThinUser[]) {
 		return this.dbQueue.addBulk(users.map(user => ({
 			name: 'autoDeleteUserNotes',
-			data: { user: { id: user.id } },
+			data: { v: JOB_DATA_VERSION, user: { id: user.id } },
 			opts: {
 				jobId: QueueService.autoDeleteUserNotesJobId(user.id),
-				// 同じjobIdのジョブが残っていると翌日の登録が無視されるので、終わったら消す
+				// 同じjobIdのジョブが残っていると翌日の登録が無視されるので、終わったら消す。
+				// 処理側が受け付けない版で失敗したジョブも消えるが、定期ジョブ（autoDeleteNotes）が翌日にDBから登録し直す
 				removeOnComplete: true,
 				removeOnFail: true,
 			},
@@ -625,17 +698,12 @@ export class QueueService implements OnModuleInit {
 	 */
 	@bindThis
 	public createSyncNoteIndexJob(noteId: MiNote['id']) {
-		return this.dbQueue.add('syncNoteIndex', { noteId }, {
+		return this.dbQueue.add('syncNoteIndex', { v: JOB_DATA_VERSION, noteId }, {
 			attempts: 5,
 			backoff: { type: 'exponential', delay: 10 * 1000 },
 			removeOnComplete: true,
 			removeOnFail: { age: 7 * 24 * 60 * 60, count: 1000 },
 		});
-	}
-
-	@bindThis
-	public createReportAbuseJob(report: MiAbuseUserReport) {
-		return this.dbQueue.add('reportAbuse', report);
 	}
 
 	@bindThis
@@ -677,6 +745,7 @@ export class QueueService implements OnModuleInit {
 		return {
 			name,
 			data: {
+				v: JOB_DATA_VERSION,
 				from: { id: data.from.id },
 				to: { id: data.to.id },
 				silent: data.silent,
@@ -700,6 +769,7 @@ export class QueueService implements OnModuleInit {
 	@bindThis
 	public createDeleteObjectStorageFileJob(key: string) {
 		return this.objectStorageQueue.add('deleteFile', {
+			v: JOB_DATA_VERSION,
 			key: key,
 		}, {
 			removeOnComplete: {
@@ -715,7 +785,7 @@ export class QueueService implements OnModuleInit {
 
 	@bindThis
 	public createCleanRemoteFilesJob() {
-		return this.objectStorageQueue.add('cleanRemoteFiles', {}, {
+		return this.objectStorageQueue.add('cleanRemoteFiles', { v: JOB_DATA_VERSION }, {
 			removeOnComplete: {
 				age: 3600 * 24 * 7, // keep up to 7 days
 				count: 30,
@@ -739,6 +809,7 @@ export class QueueService implements OnModuleInit {
 		opts?: { attempts?: number },
 	) {
 		const data: UserWebhookDeliverJobData = {
+			v: JOB_DATA_VERSION,
 			type,
 			content,
 			webhookId: webhook.id,
@@ -777,6 +848,7 @@ export class QueueService implements OnModuleInit {
 		opts?: { attempts?: number },
 	) {
 		const data: SystemWebhookDeliverJobData = {
+			v: JOB_DATA_VERSION,
 			type,
 			content,
 			webhookId: webhook.id,
@@ -848,6 +920,7 @@ export class QueueService implements OnModuleInit {
 	@bindThis
 	public async ensureNoteDeleteScheduled(noteId: MiNote['id'], deleteAt: Date): Promise<void> {
 		await this.scheduledNoteDeleteQueue.add(noteId, {
+			v: JOB_DATA_VERSION,
 			noteId,
 		}, {
 			jobId: QueueService.scheduledNoteDeleteJobId(noteId),
@@ -917,6 +990,7 @@ export class QueueService implements OnModuleInit {
 	@bindThis
 	public async ensureNotePostScheduled(draftId: MiNoteDraft['id'], scheduledAt: Date): Promise<void> {
 		await this.postScheduledNoteQueue.add(draftId, {
+			v: JOB_DATA_VERSION,
 			noteDraftId: draftId,
 		}, {
 			jobId: QueueService.postScheduledNoteJobId(draftId),

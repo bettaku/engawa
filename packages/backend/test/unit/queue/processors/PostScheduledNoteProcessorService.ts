@@ -407,7 +407,7 @@ describe('PostScheduledNoteProcessorService', () => {
 			await queueService.scheduleNotePost(draft.id, fromNow(HOUR));
 
 			const job = await getJob(draft);
-			expect(job?.data).toEqual({ noteDraftId: draft.id });
+			expect(job?.data).toEqual({ v: 1, noteDraftId: draft.id });
 			expect(await job?.getState()).toBe('delayed');
 			expect(job?.opts.attempts).toBe(5);
 

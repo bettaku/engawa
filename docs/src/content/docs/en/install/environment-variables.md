@@ -96,6 +96,7 @@ These flags switch the role of the process and the log output. All of them are o
 | `CP_WITH_LOG_TIME` | Adds timestamps to the backend logger's output |
 | `CP_QUIET` | Suppresses logger output and the boot logo |
 | `CP_NO_DAEMONS` | The value is stored but currently never read (see below) |
+| `CP_NO_JOB_SCHEDULERS` | Does not register the repeatable jobs when a job queue process starts (see below) |
 
 :::caution[0 and false also enable them]
 These flags are considered enabled for **any non-empty string**. Not just `1` or `true`, but `0` and `false` as well. To disable one, unset the variable or set it to an empty string.
@@ -106,6 +107,16 @@ Normally the main process runs the web server and the workers run the job queue.
 Do not combine `CP_ONLY_SERVER` and `CP_ONLY_QUEUE`. With both enabled, only the web server starts, yet the "boot finished" log announces a queue-only process. What runs and what is printed disagree, so set only one of them.
 
 `CP_NO_DAEMONS` is currently never read. Enabling it does not stop the daemons.
+
+### Registering repeatable jobs
+
+The repeatable jobs (chart aggregation, checking expired mutings and so on) are registered when a job queue process starts. A web-server-only process (`CP_ONLY_SERVER`) does not register them. Registration re-registers every job in the definition and removes jobs that earlier versions used and this one no longer does. Repeatable jobs with unknown names are left alone.
+
+A process with `CP_NO_JOB_SCHEDULERS` enabled does not register them. Use it to limit registration to particular processes, for example while processes of different versions run side by side. If you enable it on every job queue process, register the jobs with this command:
+
+```sh
+pnpm --filter backend cli register-job-schedulers
+```
 
 Under `NODE_ENV=test`, the equivalents of `CP_DISABLE_CLUSTERING`, `CP_QUIET` and `CP_NO_DAEMONS` are forced on, and emptying the matching variables does not turn them off.
 

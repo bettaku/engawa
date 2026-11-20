@@ -156,7 +156,7 @@ describe('AutoDeleteNotesProcessorService', () => {
 			expect(result).toEqual({ queuedUsers: 1 });
 			const jobs = await queueService.dbQueue.getJobs(['waiting', 'delayed', 'prioritized']);
 			expect(jobs.map(job => [job.name, job.id, job.data])).toEqual([
-				['autoDeleteUserNotes', QueueService.autoDeleteUserNotesJobId(alice.id), { user: { id: alice.id } }],
+				['autoDeleteUserNotes', QueueService.autoDeleteUserNotesJobId(alice.id), { v: 1, user: { id: alice.id } }],
 			]);
 		});
 
