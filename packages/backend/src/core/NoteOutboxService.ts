@@ -269,10 +269,13 @@ export class NoteOutboxService implements OnApplicationShutdown {
 
 		const step: NoteOutboxStep = async (name, fn) => {
 			if (done.has(name)) return;
-			// それまでの完了の記録を待ち、取得し直されていないことを確かめてから始める。
-			// 並行して始める副作用（最初のタイムライン・アンテナなど）は、待つ記録がないので遅れない
-			if (marks.length > 0) await Promise.allSettled(marks);
-			if (mustConfirm && !lost) await confirmOwnership();
+			// 失敗がなければ、完了の記録を待たずに次の副作用を始める（従来と同じ遅延で通知などを出すため）。
+			// 期限が切れるまではほかのプロセスは取得できず、期限は heartbeat が延ばし続ける。
+			// 副作用・記録・期限の延長のどれかが失敗した後だけ、始める前に持ち主であることをDBで確かめる
+			if (mustConfirm && !lost) {
+				await Promise.allSettled(marks);
+				await confirmOwnership();
+			}
 			// 取得し直されたレコードの副作用は、取得し直したプロセスに任せる
 			if (lost) return;
 			try {

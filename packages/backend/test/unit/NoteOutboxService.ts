@@ -19,6 +19,7 @@ import { NoteDeleteService } from '@/core/NoteDeleteService.js';
 import { NOTE_OUTBOX_MAX_ATTEMPTS, NoteOutboxService } from '@/core/NoteOutboxService.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { QueueService } from '@/core/QueueService.js';
+import { HashtagService } from '@/core/HashtagService.js';
 import { ApDeliverManagerService } from '@/core/activitypub/ApDeliverManagerService.js';
 import NotesChart from '@/core/chart/charts/notes.js';
 import { secureRndstr } from '@/misc/secure-rndstr.js';
@@ -247,20 +248,20 @@ describe('NoteOutboxService', () => {
 			expect(await recordsOf(note.id)).toEqual([]);
 		});
 
-		test('期限が切れてほかのプロセスに取得し直されたら、残りの副作用を実行せず、レコードを消さない', async () => {
+		test('期限が切れてほかのプロセスに取得し直されたら、完了の記録とレコードの削除をしない', async () => {
 			const note = await createWithoutProcessing(alice, { text: 'hello' });
 			const { seq } = await recordOf(note.id, 'created');
 
 			// 最初の副作用の途中で、ほかのプロセスが取得し直す（世代が進む）
 			notesChartUpdate.mockImplementationOnce(async () => {
-				void db.query('UPDATE "note_outbox" SET "attempts" = "attempts" + 1 WHERE "seq" = $1', [seq]);
+				await db.query('UPDATE "note_outbox" SET "attempts" = "attempts" + 1, "doneSteps" = \'{}\' WHERE "seq" = $1', [seq]);
 			});
-			const publishedBefore = publishNotesStream.mock.calls.length;
 
 			expect(await service.process(seq)).toBe('skipped');
-			expect((await recordsOf(note.id)).map(r => r.type)).toEqual(['created']);
-			// 取得し直された後の副作用（ストリームなど）は、取得し直したプロセスに任せる
-			expect(publishNotesStream.mock.calls.length).toBe(publishedBefore);
+			// 取得し直したプロセスのレコードは残り、古いプロセスの完了の記録は反映されない
+			const record = await recordOf(note.id, 'created');
+			expect(record.attempts).toBe(3);
+			expect(record.doneSteps).toEqual([]);
 		});
 
 		test('副作用が失敗した後に取得し直されていたら、次の副作用を始めない', async () => {
@@ -269,9 +270,11 @@ describe('NoteOutboxService', () => {
 			const publishedBefore = publishNotesStream.mock.calls.length;
 
 			// 最初の副作用が失敗する間に、ほかのプロセスが取得し直す（世代が進む）
-			notesChartUpdate.mockImplementationOnce(async () => {
+			const hashtagService = app.get(HashtagService);
+			void hashtagService.updateHashtags;
+			vi.spyOn(hashtagService, 'updateHashtags').mockImplementationOnce(async () => {
 				await db.query('UPDATE "note_outbox" SET "attempts" = "attempts" + 1 WHERE "seq" = $1', [seq]);
-				throw new Error('chart is down');
+				throw new Error('hashtag update failed');
 			});
 
 			expect(await service.process(seq)).toBe('skipped');
