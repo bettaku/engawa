@@ -22,6 +22,7 @@ import type { Config } from '@/config.js';
 import { UserListService } from '@/core/UserListService.js';
 import { FilterUnionByProperty, groupedNotificationTypes, obsoleteNotificationTypes } from '@/types.js';
 import { trackPromise } from '@/misc/promise-tracker.js';
+import { compareRedisStreamId, parseRedisStreamId, redisStreamIdFromParsedId } from '@/misc/redis-stream-id.js';
 
 @Injectable()
 export class NotificationService implements OnApplicationShutdown {
@@ -64,7 +65,7 @@ export class NotificationService implements OnApplicationShutdown {
 
 		this.redisClient.set(`latestReadNotification:${userId}`, latestNotificationId);
 
-		if (force || latestReadNotificationId == null || (latestReadNotificationId < latestNotificationId)) {
+		if (force || !this.isReadUpTo(latestReadNotificationId, latestNotificationId)) {
 			return this.postReadAllNotifications(userId);
 		}
 	}
@@ -189,7 +190,7 @@ export class NotificationService implements OnApplicationShutdown {
 		const interval = notification.type === 'test' ? 0 : 2000;
 		setTimeout(interval, 'unread notification', { signal: this.#shutdownController.signal }).then(async () => {
 			const latestReadNotificationId = await this.redisClient.get(`latestReadNotification:${notifieeId}`);
-			if (latestReadNotificationId && (latestReadNotificationId >= redisId)) return;
+			if (this.isReadUpTo(latestReadNotificationId, redisId)) return;
 
 			this.globalEventService.publishMainStream(notifieeId, 'unreadNotification', packed);
 			this.pushNotificationService.pushNotification(notifieeId, 'notification', packed);
@@ -287,8 +288,21 @@ export class NotificationService implements OnApplicationShutdown {
 	}
 
 	private toXListId(id: string): string {
-		const { date, additional } = this.idService.parseFull(id);
-		return date.toString() + '-' + additional.toString();
+		return redisStreamIdFromParsedId(this.idService.parseFull(id));
+	}
+
+	/**
+	 * 既読位置 `latestReadId` が、通知の Stream ID `notificationId` 以降に達しているか。
+	 * Stream ID は数値として比較する（文字列で比べると、同じミリ秒で seq の桁数が違うときに誤る）。
+	 * 既読位置がない、または解析できない場合は未読として扱う。
+	 */
+	@bindThis
+	private isReadUpTo(latestReadId: string | null, notificationId: string): boolean {
+		if (latestReadId == null) return false;
+		const latestRead = parseRedisStreamId(latestReadId);
+		const target = parseRedisStreamId(notificationId);
+		if (latestRead == null || target == null) return false;
+		return compareRedisStreamId(latestRead, target) >= 0;
 	}
 
 	@bindThis
