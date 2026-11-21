@@ -12,6 +12,7 @@ import { DI } from '@/di-symbols.js';
 import { bindThis } from '@/decorators.js';
 import { RoleService } from '@/core/RoleService.js';
 import { QueueService } from '@/core/QueueService.js';
+import { CacheService } from '@/core/CacheService.js';
 
 export const meta = {
 	tags: ['admin'],
@@ -41,6 +42,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 		private roleService: RoleService,
 		private moderationLogService: ModerationLogService,
 		private queueService: QueueService,
+		private cacheService: CacheService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const user = await this.usersRepository.findOneBy({ id: ps.userId });
@@ -56,6 +58,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 			await this.userProfilesRepository.update(user.id, {
 				isSensitive: true,
 			});
+			await this.cacheService.userProfileCache.delete(user.id);
 
 			await this.usersRepository.update(user.id, {
 				isSensitive: true,

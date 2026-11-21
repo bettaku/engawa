@@ -1,6 +1,6 @@
 import assert, { rejects, strictEqual } from 'node:assert';
 import * as Misskey from 'cherrypick-js';
-import { addCustomEmoji, createAccount, createModerator, deepStrictEqualWithExcludedFields, type LoginUser, resolveRemoteNote, resolveRemoteUser, sleep, uploadFile } from './utils.js';
+import { addCustomEmoji, createAccount, createModerator, deepStrictEqualWithExcludedFields, type LoginUser, resolveRemoteNote, resolveRemoteUser, sleep, uploadFile, waitFor, waitForNoteDeleted } from './utils.js';
 
 describe('Note', () => {
 	let alice: LoginUser, bob: LoginUser;
@@ -56,8 +56,11 @@ describe('Note', () => {
 				text: 'b',
 				replyId: _replyedNote.id,
 			})).createdNote;
-			// NOTE: the repliedCount is incremented, so fetch again
-			const replyedNote = await alice.client.request('notes/show', { noteId: _replyedNote.id });
+			// NOTE: the repliedCount is incremented after notes/create returns (in the background), so wait for it
+			const replyedNote = await waitFor(
+				() => alice.client.request('notes/show', { noteId: _replyedNote.id }),
+				n => n.repliesCount === 1,
+			);
 			strictEqual(replyedNote.repliesCount, 1);
 
 			const resolvedNote = await resolveRemoteNote('a.test', note.id, bob);
@@ -157,7 +160,7 @@ describe('Note', () => {
 					const note = (await bob.client.request('notes/create', { text: 'I\'m Bob.' })).createdNote;
 					const noteInA = await resolveRemoteNote('b.test', note.id, carol);
 					await bob.client.request('notes/delete', { noteId: note.id });
-					await sleep();
+					await waitForNoteDeleted(carol, noteInA.id);
 
 					await rejects(
 						async () => await carol.client.request('notes/show', { noteId: noteInA.id }),
@@ -182,7 +185,7 @@ describe('Note', () => {
 					await sleep();
 
 					await bob.client.request('notes/delete', { noteId: note.id });
-					await sleep();
+					await waitForNoteDeleted(alice, noteInA.id);
 
 					await rejects(
 						async () => await alice.client.request('notes/show', { noteId: noteInA.id }),
@@ -202,7 +205,7 @@ describe('Note', () => {
 					await sleep();
 
 					await bob.client.request('notes/delete', { noteId: note.id });
-					await sleep();
+					await waitForNoteDeleted(alice, noteInA.id);
 
 					await rejects(
 						async () => await alice.client.request('notes/show', { noteId: noteInA.id }),
@@ -279,9 +282,11 @@ describe('Note', () => {
 				const resolvedNote = await resolveRemoteNote('a.test', note.id, bob);
 				const reaction = '😅';
 				await bob.client.request('notes/reactions/create', { noteId: resolvedNote.id, reaction });
-				await sleep();
 
-				const reactions = await alice.client.request('notes/reactions', { noteId: note.id });
+				const reactions = await waitFor(
+					async () => await alice.client.request('notes/reactions', { noteId: note.id }),
+					reactions => reactions.length > 0,
+				);
 				strictEqual(reactions.length, 1);
 				strictEqual(reactions[0].type, reaction);
 				strictEqual(reactions[0].user.id, bobInA.id);
@@ -292,9 +297,11 @@ describe('Note', () => {
 				const resolvedNote = await resolveRemoteNote('a.test', note.id, bob);
 				const emoji = await addCustomEmoji('b.test');
 				await bob.client.request('notes/reactions/create', { noteId: resolvedNote.id, reaction: `:${emoji.name}:` });
-				await sleep();
 
-				const reactions = await alice.client.request('notes/reactions', { noteId: note.id });
+				const reactions = await waitFor(
+					async () => await alice.client.request('notes/reactions', { noteId: note.id }),
+					reactions => reactions.length > 0,
+				);
 				strictEqual(reactions.length, 1);
 				strictEqual(reactions[0].type, `:${emoji.name}@b.test:`);
 				strictEqual(reactions[0].user.id, bobInA.id);
@@ -307,9 +314,11 @@ describe('Note', () => {
 				const noteInB = await resolveRemoteNote('a.test', note.id, bob);
 				const emoji = await addCustomEmoji('b.test');
 				await bob.client.request('notes/reactions/create', { noteId: noteInB.id, reaction: `:${emoji.name}:` });
-				await sleep();
 
-				const reactions = await alice.client.request('notes/reactions', { noteId: note.id });
+				const reactions = await waitFor(
+					async () => await alice.client.request('notes/reactions', { noteId: note.id }),
+					reactions => reactions.length > 0,
+				);
 				strictEqual(reactions.length, 1);
 				strictEqual(reactions[0].type, '❤');
 			});
@@ -323,9 +332,11 @@ describe('Note', () => {
 				const noteInB = await resolveRemoteNote('a.test', note.id, bob);
 				const emoji = await addCustomEmoji('b.test', { isSensitive: true });
 				await bob.client.request('notes/reactions/create', { noteId: noteInB.id, reaction: `:${emoji.name}:` });
-				await sleep();
 
-				const reactions = await alice.client.request('notes/reactions', { noteId: note.id });
+				const reactions = await waitFor(
+					async () => await alice.client.request('notes/reactions', { noteId: note.id }),
+					reactions => reactions.length > 0,
+				);
 				strictEqual(reactions.length, 1);
 				strictEqual(reactions[0].type, `:${emoji.name}@b.test:`);
 			});
@@ -344,9 +355,11 @@ describe('Note', () => {
 				const note = (await bob.client.request('notes/create', { poll: { choices: ['inu', 'neko'] } })).createdNote;
 				const noteInA = await resolveRemoteNote('b.test', note.id, carol);
 				await carol.client.request('notes/polls/vote', { noteId: noteInA.id, choice: 0 });
-				await sleep();
 
-				const noteAfterVote = await bob.client.request('notes/show', { noteId: note.id });
+				const noteAfterVote = await waitFor(
+					async () => await bob.client.request('notes/show', { noteId: note.id }),
+					note => note.poll?.choices[0].votes === 1,
+				);
 				assert(noteAfterVote.poll != null);
 				strictEqual(noteAfterVote.poll.choices[0].votes, 1);
 				strictEqual(noteAfterVote.poll.choices[1].votes, 0);
@@ -374,9 +387,11 @@ describe('Note', () => {
 				// NOTE: resolve before voting
 				const noteInA = await resolveRemoteNote('b.test', note.id, bobRemoteFollower);
 				await localVoter.client.request('notes/polls/vote', { noteId: note.id, choice: 0 });
-				await sleep();
 
-				const noteAfterVote = await bobRemoteFollower.client.request('notes/show', { noteId: noteInA.id });
+				const noteAfterVote = await waitFor(
+					async () => await bobRemoteFollower.client.request('notes/show', { noteId: noteInA.id }),
+					note => note.poll?.choices[0].votes === 1,
+				);
 				assert(noteAfterVote.poll != null);
 				strictEqual(noteAfterVote.poll.choices[0].votes, 1);
 				strictEqual(noteAfterVote.poll.choices[1].votes, 0);

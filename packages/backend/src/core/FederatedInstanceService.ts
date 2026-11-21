@@ -12,6 +12,7 @@ import { IdService } from '@/core/IdService.js';
 import { DI } from '@/di-symbols.js';
 import { UtilityService } from '@/core/UtilityService.js';
 import { bindThis } from '@/decorators.js';
+import { CacheInvalidationService } from '@/core/CacheInvalidationService.js';
 
 @Injectable()
 export class FederatedInstanceService implements OnApplicationShutdown {
@@ -26,6 +27,7 @@ export class FederatedInstanceService implements OnApplicationShutdown {
 
 		private utilityService: UtilityService,
 		private idService: IdService,
+		private cacheInvalidationService: CacheInvalidationService,
 	) {
 		this.federatedInstanceCache = new RedisKVCache<MiInstance | null>(this.redisClient, 'federatedInstance', {
 			lifetime: 1000 * 60 * 30, // 30m
@@ -43,6 +45,7 @@ export class FederatedInstanceService implements OnApplicationShutdown {
 					notRespondingSince: parsed.notRespondingSince ? new Date(parsed.notRespondingSince) : null,
 				};
 			},
+			invalidation: this.cacheInvalidationService,
 		});
 	}
 

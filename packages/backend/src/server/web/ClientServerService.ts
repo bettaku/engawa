@@ -787,8 +787,10 @@ export class ClientServerService {
 
 			const clip = await this.clipsRepository.findOneBy({
 				id: request.params.clip,
+				isPublic: true,
 			});
 
+			// 非公開のクリップは、存在しない場合と同じ応答にする
 			if (clip == null) return;
 
 			const _clip = await this.clipEntityService.pack(clip);

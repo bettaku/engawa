@@ -474,6 +474,19 @@ describe('Chart', () => {
 			});
 		});
 
+		test('引用符や括弧を含む値も、1つの値としてそのまま保存される', async () => {
+			await testUniqueChart.uniqueIncrement('\'}\'::varchar[]) || (SELECT pg_sleep(10))::text || (\'{');
+			await testUniqueChart.uniqueIncrement('"a","b"');
+			await testUniqueChart.uniqueIncrement('back\\slash');
+			await testUniqueChart.save();
+
+			const chartHours = await testUniqueChart.getChart('hour', 3, null);
+
+			assert.deepStrictEqual(chartHours, {
+				foo: [3, 0, 0],
+			});
+		});
+
 		describe('Intersection', () => {
 			test('条件が満たされていない場合はカウントされない', async () => {
 				await testIntersectionChart.addA('alice');

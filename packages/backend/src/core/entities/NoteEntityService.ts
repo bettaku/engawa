@@ -193,6 +193,7 @@ export class NoteEntityService implements OnModuleInit {
 		packedNote.files = [];
 		packedNote.text = null;
 		packedNote.poll = undefined;
+		packedNote.event = undefined;
 		packedNote.cw = null;
 		packedNote.isHidden = true;
 		// TODO: hiddenReason みたいなのを提供しても良さそう
@@ -317,8 +318,8 @@ export class NoteEntityService implements OnModuleInit {
 				return false;
 			} else if (meId === note.userId) {
 				return true;
-			} else if (note.reply && (meId === note.reply.userId)) {
-				// 自分の投稿に対するリプライ
+			} else if (meId === (note.replyUserId ?? note.reply?.userId)) {
+				// 自分の投稿に対するリプライ（replyリレーションを読み込んでいないノートでも判定できるように、replyUserIdを見る）
 				return true;
 			} else if (note.mentions && note.mentions.some(id => meId === id)) {
 				// 自分へのメンション
@@ -348,6 +349,30 @@ export class NoteEntityService implements OnModuleInit {
 		}
 
 		return true;
+	}
+
+	/**
+	 * 公開範囲に加えて、投稿者の「ログイン必須」「過去の投稿を非表示・フォロワー限定にする」設定も含めて、
+	 * いまこの閲覧者がノートを見られるかを判定する。
+	 * ノートの内容や、ノートに紐づく情報（リアクション・投票・履歴など）を返す前の認可に使う。
+	 */
+	@bindThis
+	public async isCurrentlyVisibleForMe(note: MiNote, meId: MiUser['id'] | null): Promise<boolean> {
+		if (meId != null && meId === note.userId) return true;
+
+		const author = note.user ?? await this.usersRepository.findOneBy({ id: note.userId });
+		if (author == null) return false;
+
+		if (author.requireSigninToViewContents && meId == null) return false;
+
+		const createdAt = this.idService.parse(note.id).date;
+		if (shouldHideNoteByTime(author.makeNotesHiddenBefore, createdAt)) return false;
+
+		if ((note.visibility === 'public' || note.visibility === 'home') && shouldHideNoteByTime(author.makeNotesFollowersOnlyBefore, createdAt)) {
+			return await this.isVisibleForMe({ ...note, visibility: 'followers' } as MiNote, meId);
+		}
+
+		return await this.isVisibleForMe(note, meId);
 	}
 
 	@bindThis

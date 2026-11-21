@@ -19,6 +19,20 @@ import type { DataSource, Repository } from 'typeorm';
 
 const COLUMN_PREFIX = '___' as const;
 const UNIQUE_TEMP_COLUMN_PREFIX = 'unique_temp___' as const;
+
+/**
+ * 文字列の配列を、SQLに直接埋め込める varchar[] の式にする。
+ * 値は外部から来る（閲覧者のIPアドレスやホスト名など）ので、SQLの文字列として解釈される余地を残さないよう、
+ * 16進数に変換して渡しDB側で文字列に戻す。引用符・括弧・バックスラッシュを含んでいても1つの要素として保存される。
+ */
+export function toSqlVarcharArray(items: string[]): string {
+	const elements = items.map(item => {
+		// PostgreSQLの文字列はNUL文字を含められない
+		const hex = Buffer.from(String(item).replaceAll('\0', ''), 'utf8').toString('hex');
+		return `convert_from(decode('${hex}', 'hex'), 'UTF8')`;
+	});
+	return `ARRAY[${elements.join(', ')}]::varchar[]`;
+}
 const COLUMN_DELIMITER = '_' as const;
 
 type Schema = Record<string, {
@@ -456,11 +470,10 @@ export default abstract class Chart<T extends Schema> {
 					if (v < 0) queryForDay[name] = () => `"${name}" - ${Math.abs(v)}`;
 				} else if (Array.isArray(v) && v.length > 0) { // ユニークインクリメント
 					const tempColumnName = UNIQUE_TEMP_COLUMN_PREFIX + k.replaceAll('.', COLUMN_DELIMITER) as string & keyof TempColumnsForUnique<T>;
-					// TODO: item をSQLエスケープ
-					const itemsForHour = v.filter(item => !(logHour[tempColumnName] as unknown as string[]).includes(item)).map(item => `"${item}"`);
-					const itemsForDay = v.filter(item => !(logDay[tempColumnName] as unknown as string[]).includes(item)).map(item => `"${item}"`);
-					if (itemsForHour.length > 0) queryForHour[tempColumnName] = () => `array_cat("${tempColumnName}", '{${itemsForHour.join(',')}}'::varchar[])`;
-					if (itemsForDay.length > 0) queryForDay[tempColumnName] = () => `array_cat("${tempColumnName}", '{${itemsForDay.join(',')}}'::varchar[])`;
+					const itemsForHour = v.filter(item => !(logHour[tempColumnName] as unknown as string[]).includes(item));
+					const itemsForDay = v.filter(item => !(logDay[tempColumnName] as unknown as string[]).includes(item));
+					if (itemsForHour.length > 0) queryForHour[tempColumnName] = () => `array_cat("${tempColumnName}", ${toSqlVarcharArray(itemsForHour)})`;
+					if (itemsForDay.length > 0) queryForDay[tempColumnName] = () => `array_cat("${tempColumnName}", ${toSqlVarcharArray(itemsForDay)})`;
 				}
 			}
 

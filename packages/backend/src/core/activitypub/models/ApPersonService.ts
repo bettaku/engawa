@@ -38,6 +38,7 @@ import { RoleService } from '@/core/RoleService.js';
 import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
 import type { AccountMoveService } from '@/core/AccountMoveService.js';
 import { checkHttps } from '@/misc/check-https.js';
+import { HttpRequestService } from '@/core/HttpRequestService.js';
 import { AvatarDecorationService } from '@/core/AvatarDecorationService.js';
 import { getApId, getApType, getOneApHrefNullable, isActor, isCollection, isCollectionOrOrderedCollection, isPropertyValue } from '../type.js';
 import { extractApHashtags } from './tag.js';
@@ -106,6 +107,7 @@ export class ApPersonService implements OnModuleInit {
 		private roleService: RoleService,
 
 		private avatarDecorationService: AvatarDecorationService,
+		private httpRequestService: HttpRequestService,
 	) {
 	}
 
@@ -308,6 +310,24 @@ export class ApPersonService implements OnModuleInit {
 	/**
 	 * Personを作成します。
 	 */
+	/**
+	 * リモートアクターのコレクション（followers / following / outbox）の件数を取得する。
+	 * URLはリモートから渡された値なので、プライベートアドレスへの接続の遮断・応答サイズの上限・タイムアウトを備えた
+	 * 共通のHTTPクライアントを必ず通す（リダイレクト先にも同じ制限が掛かる）。
+	 */
+	@bindThis
+	private async fetchCollectionTotalItems(url: string): Promise<number | undefined> {
+		try {
+			if (!checkHttps(url)) return undefined;
+
+			const data = await this.httpRequestService.getJson<{ totalItems?: unknown }>(url, 'application/activity+json, application/json');
+			const totalItems = data?.totalItems;
+			return typeof totalItems === 'number' && Number.isSafeInteger(totalItems) && totalItems >= 0 ? totalItems : undefined;
+		} catch {
+			return undefined;
+		}
+	}
+
 	@bindThis
 	public async createPerson(uri: string, resolver?: Resolver): Promise<MiRemoteUser> {
 		if (typeof uri !== 'string') throw new Error('uri is not string');
@@ -363,46 +383,19 @@ export class ApPersonService implements OnModuleInit {
 		let followersCount: number | undefined;
 
 		if (typeof person.followers === 'string') {
-			try {
-				const data = await fetch(person.followers, {
-					headers: { Accept: 'application/json' },
-				});
-				const jsonData = JSON.parse(await data.text());
-
-				followersCount = jsonData.totalItems;
-			} catch {
-				followersCount = undefined;
-			}
+			followersCount = await this.fetchCollectionTotalItems(person.followers);
 		}
 
 		let followingCount: number | undefined;
 
 		if (typeof person.following === 'string') {
-			try {
-				const data = await fetch(person.following, {
-					headers: { Accept: 'application/json' },
-				});
-				const jsonData = JSON.parse(await data.text());
-
-				followingCount = jsonData.totalItems;
-			} catch (e) {
-				followingCount = undefined;
-			}
+			followingCount = await this.fetchCollectionTotalItems(person.following);
 		}
 
 		let notesCount: number | undefined;
 
 		if (typeof person.outbox === 'string') {
-			try {
-				const data = await fetch(person.outbox, {
-					headers: { Accept: 'application/json' },
-				});
-				const jsonData = JSON.parse(await data.text());
-
-				notesCount = jsonData.totalItems;
-			} catch (e) {
-				notesCount = undefined;
-			}
+			notesCount = await this.fetchCollectionTotalItems(person.outbox);
 		}
 
 		// Create user
@@ -641,46 +634,19 @@ export class ApPersonService implements OnModuleInit {
 		let followersCount: number | undefined;
 
 		if (typeof person.followers === 'string') {
-			try {
-				const data = await fetch(person.followers, {
-					headers: { Accept: 'application/json' },
-				});
-				const jsonData = JSON.parse(await data.text());
-
-				followersCount = jsonData.totalItems;
-			} catch {
-				followersCount = undefined;
-			}
+			followersCount = await this.fetchCollectionTotalItems(person.followers);
 		}
 
 		let followingCount: number | undefined;
 
 		if (typeof person.following === 'string') {
-			try {
-				const data = await fetch(person.following, {
-					headers: { Accept: 'application/json' },
-				});
-				const jsonData = JSON.parse(await data.text());
-
-				followingCount = jsonData.totalItems;
-			} catch {
-				followingCount = undefined;
-			}
+			followingCount = await this.fetchCollectionTotalItems(person.following);
 		}
 
 		let notesCount: number | undefined;
 
 		if (typeof person.outbox === 'string') {
-			try {
-				const data = await fetch(person.outbox, {
-					headers: { Accept: 'application/json' },
-				});
-				const jsonData = JSON.parse(await data.text());
-
-				notesCount = jsonData.totalItems;
-			} catch (e) {
-				notesCount = undefined;
-			}
+			notesCount = await this.fetchCollectionTotalItems(person.outbox);
 		}
 
 		const updates = {
@@ -782,6 +748,7 @@ export class ApPersonService implements OnModuleInit {
 			birthday: bday?.[0] ?? null,
 			location: person['vcard:Address'] ?? null,
 		});
+		await this.cacheService.userProfileCache.delete(exist.id);
 
 		this.globalEventService.publishInternalEvent('remoteUserUpdated', { id: exist.id });
 

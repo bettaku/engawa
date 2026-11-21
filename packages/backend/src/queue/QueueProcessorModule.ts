@@ -22,6 +22,7 @@ import { CheckModeratorsActivityProcessorService } from './processors/CheckModer
 import { CleanRemoteNotesProcessorService } from './processors/CleanRemoteNotesProcessorService.js';
 import { CleanRemoteFilesProcessorService } from './processors/CleanRemoteFilesProcessorService.js';
 import { AutoDeleteNotesProcessorService } from './processors/AutoDeleteNotesProcessorService.js';
+import { SyncNoteIndexProcessorService } from './processors/SyncNoteIndexProcessorService.js';
 import { DeleteAccountProcessorService } from './processors/DeleteAccountProcessorService.js';
 import { TruncateAccountProcessorService } from './processors/TruncateAccountProcessorService.js';
 import { DeleteDriveFilesProcessorService } from './processors/DeleteDriveFilesProcessorService.js';
@@ -41,7 +42,6 @@ import { ImportMutingProcessorService } from './processors/ImportMutingProcessor
 import { ImportUserListsProcessorService } from './processors/ImportUserListsProcessorService.js';
 import { ImportAntennasProcessorService } from './processors/ImportAntennasProcessorService.js';
 import { ResyncChartsProcessorService } from './processors/ResyncChartsProcessorService.js';
-import { ReportAbuseProcessorService } from './processors/ReportAbuseProcessorService.js';
 import { TickChartsProcessorService } from './processors/TickChartsProcessorService.js';
 import { AggregateRetentionProcessorService } from './processors/AggregateRetentionProcessorService.js';
 import { ExportFavoritesProcessorService } from './processors/ExportFavoritesProcessorService.js';
@@ -82,7 +82,6 @@ import { ScheduledNoteDeleteProcessorService } from './processors/ScheduledNoteD
 		DeleteFileProcessorService,
 		CleanRemoteFilesProcessorService,
 		RelationshipProcessorService,
-		ReportAbuseProcessorService,
 		UserWebhookDeliverProcessorService,
 		SystemWebhookDeliverProcessorService,
 		EndedPollNotificationProcessorService,
@@ -94,6 +93,7 @@ import { ScheduledNoteDeleteProcessorService } from './processors/ScheduledNoteD
 		CheckModeratorsActivityProcessorService,
 		CleanRemoteNotesProcessorService,
 		AutoDeleteNotesProcessorService,
+		SyncNoteIndexProcessorService,
 		QueueProcessorService,
 		ScheduledNoteDeleteProcessorService,
 	],

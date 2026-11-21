@@ -4,9 +4,12 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
+import { In, IsNull, Not } from 'typeorm';
 import { DI } from '@/di-symbols.js';
 import type { NotesRepository, UsersRepository, PollsRepository, PollVotesRepository, MiUser } from '@/models/_.js';
 import type { MiNote } from '@/models/Note.js';
+import type { MiRemoteUser } from '@/models/User.js';
+import { getNoteDeliveryScope } from '@/misc/note-delivery-scope.js';
 import { RelayService } from '@/core/RelayService.js';
 import { IdService } from '@/core/IdService.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
@@ -81,7 +84,7 @@ export class PollService {
 
 		// Increment votes count
 		const index = choice + 1; // In SQL, array index is 1 based
-		await this.pollsRepository.query(`UPDATE poll SET votes[${index}] = votes[${index}] + 1 WHERE "noteId" = '${poll.noteId}'`);
+		await this.pollsRepository.query('UPDATE poll SET votes[$1::int] = votes[$1::int] + 1 WHERE "noteId" = $2', [index, poll.noteId]);
 
 		this.globalEventService.publishNoteStream(note, 'pollVoted', {
 			choice: choice,
@@ -94,15 +97,34 @@ export class PollService {
 		const note = await this.notesRepository.findOneBy({ id: noteId });
 		if (note == null) throw new Error('note not found');
 
-		if (note.localOnly) return;
+		// 配送先は作成時と同じく、ノートの公開範囲に従う
+		const scope = getNoteDeliveryScope(note);
+		if (!scope.federate) return;
 
 		const user = await this.usersRepository.findOneBy({ id: note.userId });
 		if (user == null) throw new Error('note not found');
 
 		if (this.userEntityService.isLocalUser(user)) {
 			const content = this.apRendererService.addContext(this.apRendererService.renderUpdate(await this.apRendererService.renderNote(note, false), user));
-			this.apDeliverManagerService.deliverToFollowers(user, content);
-			this.relayService.deliverToRelays(user, content);
+
+			if (scope.followers) {
+				this.apDeliverManagerService.deliverToFollowers(user, content);
+			}
+			if (scope.relays) {
+				this.relayService.deliverToRelays(user, content);
+			}
+
+			// 宛先に指定された・メンションされたリモートユーザーには直接配送する
+			const directUserIds = [...new Set([...note.visibleUserIds, ...note.mentions])];
+			if (directUserIds.length > 0) {
+				const remoteUsers = await this.usersRepository.findBy({
+					id: In(directUserIds),
+					host: Not(IsNull()),
+				}) as MiRemoteUser[];
+				if (remoteUsers.length > 0) {
+					this.apDeliverManagerService.deliverToUsers(user, content, remoteUsers);
+				}
+			}
 		}
 	}
 }

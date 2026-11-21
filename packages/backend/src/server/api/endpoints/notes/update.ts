@@ -217,8 +217,12 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 
 			const updatedNote = await this.noteUpdateService.update(me, data, note, false);
 
+			if (updatedNote == null) {
+				throw new ApiError(meta.errors.noSuchNote);
+			}
+
 			return {
-				updatedNote: await this.noteEntityService.pack(updatedNote!, me),
+				updatedNote: await this.noteEntityService.pack(updatedNote, me),
 			};
 		});
 	}

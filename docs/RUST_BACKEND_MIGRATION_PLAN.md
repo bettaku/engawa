@@ -38,13 +38,13 @@ CherryPick縁側フォークのバックエンドを、既存ユーザー・ク�
 | ジョブ・定期処理 | [QueueService](../packages/backend/src/core/QueueService.ts)、[QueueProcessorService](../packages/backend/src/queue/QueueProcessorService.ts)、[processors](../packages/backend/src/queue/processors)。BullMQと39のprocessorファイル | 再試行、遅延・定期ジョブ、ロック、失敗管理、並列度、予約投稿・自動削除 |
 | 連合 | [ActivityPubServerService](../packages/backend/src/server/ActivityPubServerService.ts)、[core/activitypub](../packages/backend/src/core/activitypub)、[InboxProcessorService](../packages/backend/src/queue/processors/InboxProcessorService.ts) | Actor / Object URI、署名鍵、署名検証、配送・再送、フォロー・移行・削除、拡張プロパティ |
 | メディア・外部接続 | [DriveService](../packages/backend/src/core/DriveService.ts)、[FileServerService](../packages/backend/src/server/FileServerService.ts)、[backend/package.json](../packages/backend/package.json) | ローカル／S3互換ストレージ、ファイルURL、画像・動画処理、URLプレビュー、メール、Web Push、Webhook |
-| 検索 | [SearchService](../packages/backend/src/core/SearchService.ts)、[config.ts](../packages/backend/src/config.ts) | `sqlLike`、`sqlPgroonga`、Meilisearch、Elasticsearchの各コード経路、公開範囲・検索許可、検索条件・索引更新 |
+| 検索 | [SearchService](../packages/backend/src/core/SearchService.ts)、[config.ts](../packages/backend/src/config.ts) | `sqlLike`、`sqlPgroonga`、Elasticsearchの各コード経路、公開範囲・検索許可、検索条件・索引更新（Meilisearchの経路は削除済み） |
 | その他の機能 | [CoreModule](../packages/backend/src/core/CoreModule.ts)、[ChatService](../packages/backend/src/core/ChatService.ts)、API一覧 | チャットとその連合、アンテナ、リスト、チャンネル、クリップ、ページ、ギャラリー、Play、ロール、モデレーション、インポート／エクスポート |
-| SDK・検証・配布 | [ルートpackage.json](../package.json)、[backend tests](../packages/backend/test)、[連合テスト](../packages/backend/test-federation/README.md)、[Dockerfile](../Dockerfile)、[chart](../chart) | 型生成、既存テスト、Docker・systemd・Helm、更新・復旧手順 |
+| SDK・検証・配布 | [ルートpackage.json](../package.json)、[backend tests](../packages/backend/test)、[連合テスト](../packages/backend/test-federation/README.md)、[Dockerfile](../Dockerfile) | 型生成、既存テスト、Docker・systemd、更新・復旧手順 |
 
 448はファイル数であり、公開ルート数や移行工数を表すものではない。フェーズ0で実際のルート・ジョブ・定期処理を一覧化する。
 
-このフォーク固有の`private`公開範囲、`isIndexable`、予約・自動削除、チャット連合などを独立した受入項目にする。[フォーク差分資料](jp/Difference.md)と[変更履歴](../CHANGELOG_engawa.md)も参照するが、資料にはMeilisearch削除の記述がある一方で現行コードには経路が残っている。対応範囲はコード・設定仕様・運用実績を照合して確定し、資料の記述だけで機能を落とさない。
+このフォーク固有の`private`公開範囲、`isIndexable`、予約・自動削除、チャット連合などを独立した受入項目にする。[フォーク差分資料](jp/Difference.md)と[変更履歴](../CHANGELOG_engawa.md)も参照するが、対応範囲はコード・設定仕様・運用実績を照合して確定し、資料の記述だけで機能を落とさない。
 
 さらに、[ノート編集](../packages/backend/src/core/NoteUpdateService.ts)・[履歴](../packages/backend/src/core/NoteHistoryService.ts)・[下書き](../packages/backend/src/core/NoteDraftService.ts)、Bubbleやcatsを含むタイムライン、独自翻訳、リモートファイル用ストレージの分離を担当表に記載する。本家Misskeyの機能一覧だけを移行対象の根拠にしない。
 
@@ -178,7 +178,7 @@ Rustによる直接キュー管理へ進む際は、実際のBullMQバージョ�
 
 現行テストはTypeORMによる`dropSchema` / `synchronize`を利用する経路があり、[Noteモデル](../packages/backend/src/models/Note.ts)には本番用索引とテスト用索引の違いも記述されている。RustのDB検証では、entityから再生成したDBに加え、既存migrationを順に適用した使い捨てDBでSQL・索引・旧版との互換を確認する。
 
-[Dockerfile](../Dockerfile)は現在`migrateandstart`を実行する。混在構成へ変更する段階でmigrationを配布手順の単一ジョブに分離し、replicaごとの起動や新旧サーバーの同時起動に任せない。Compose、Helm、systemdについて同じ順序を文書化する。
+[Dockerfile](../Dockerfile)は現在`migrateandstart`を実行する。混在構成へ変更する段階でmigrationを配布手順の単一ジョブに分離し、replicaごとの起動や新旧サーバーの同時起動に任せない。Compose、systemdについて同じ順序を文書化する。
 
 最終的なmigration実行系の移行では、既存履歴を保持したbaseline、空DBへの新規インストール、既存DBの更新、サポートする過去版からの更新経路を検証する。過去のJS migrationを全件Rustに機械翻訳することを先行条件にはしない。最終的にNode.jsのmigrationツールを削除するには、これらをRustの配布物だけで実行できる必要がある。
 
@@ -287,7 +287,7 @@ Rustによる直接キュー管理へ進む際は、実際のBullMQバージョ�
 - Node.js bridge、BullMQのNode.js worker、JS migrationの必須実行を含め、バックエンドの実行依存が残っていない。
 - 新規インストール、サポート版からの更新、バックアップ復元、スケール変更、障害対応を配布対象ごとに検証している。
 - 第8節の長期運転と改善・非退行の基準を満たし、旧版の保持期限と最後に切り戻せる版・スキーマを記録している。
-- 設定例、Docker / Compose / Helm / systemd、開発ガイド、監視・当番手順が更新され、複数人がレビュー・リリース・障害対応できる。
+- 設定例、Docker / Compose / systemd、開発ガイド、監視・当番手順が更新され、複数人がレビュー・リリース・障害対応できる。
 
 役割は、互換性・上流差分を判断するバックエンド責任者、Rust基盤と性能を担当する実装担当、fixture・連合・障害試験を担当する検証担当、切り替え・監視・復旧を担当する運用担当を置く。兼任できるが、担当不在の判定項目を残さない。
 

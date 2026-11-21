@@ -10,6 +10,7 @@ import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import type { UserProfilesRepository } from '@/models/_.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { DI } from '@/di-symbols.js';
+import { CacheService } from '@/core/CacheService.js';
 
 export const meta = {
 	requireCredential: true,
@@ -46,6 +47,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 		private userEntityService: UserEntityService,
 		private globalEventService: GlobalEventService,
+		private cacheService: CacheService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const token = ps.token.replace(/\s/g, '');
@@ -74,6 +76,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				twoFactorBackupSecret: backupCodes,
 				twoFactorEnabled: true,
 			});
+			await this.cacheService.userProfileCache.delete(me.id);
 
 			// Publish meUpdated event
 			this.globalEventService.publishMainStream(me.id, 'meUpdated', await this.userEntityService.pack(me.id, me, {

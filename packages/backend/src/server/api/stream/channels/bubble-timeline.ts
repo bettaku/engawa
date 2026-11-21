@@ -14,6 +14,7 @@ import type { MiMeta } from '@/models/Meta.js';
 import { isRenotePacked, isQuotePacked } from '@/misc/is-renote.js';
 import type { JsonObject } from '@/misc/json-value.js';
 import Channel, { type ChannelRequest } from '../channel.js';
+import { NoteStreamingHidingService } from '../NoteStreamingHidingService.js';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class BubbleTimelineChannel extends Channel {
@@ -33,6 +34,7 @@ export class BubbleTimelineChannel extends Channel {
 		private metaService: MetaService,
 		private roleService: RoleService,
 		private noteEntityService: NoteEntityService,
+		private noteStreamingHidingService: NoteStreamingHidingService,
 	) {
 		super(request);
 		//this.onNote = this.onNote.bind(this);
@@ -67,6 +69,12 @@ export class BubbleTimelineChannel extends Channel {
 		if (!this.following[note.userId] && note.userId !== this.user!.id) return;
 
 		if (this.isNoteMutedOrBlocked(note)) return;
+
+		// 引用元・返信先も含めて、閲覧者に見せられない内容を隠す
+		const filtered = await this.noteStreamingHidingService.filter(note, this.user?.id ?? null);
+		if (!filtered) return;
+		// eslint-disable-next-line no-param-reassign -- これ以降元の Note オブジェクトは見てはいけないので、いっそ再代入した方が安全
+		note = filtered;
 
 		if (this.user && isRenotePacked(note) && !isQuotePacked(note)) {
 			if (note.renote && Object.keys(note.renote.reactions).length > 0) {

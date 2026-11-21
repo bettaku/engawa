@@ -202,6 +202,47 @@ type UndefinedAsNullAll<T> = {
 	[K in keyof T]: T[K] extends undefined ? null : T[K];
 };
 
+/**
+ * 内部イベントの新しい本文（P2-3）。エンティティを載せず、受信側がDBから読み直す。
+ *
+ * 第1リリースでは受信側だけが新本文を処理できるようにし、発行側は旧本文（エンティティ全体）のままにする。
+ * 第2リリースで発行側を新本文に切り替える。一覧は docs/rust-migration/internal-events.md を参照。
+ */
+export const INTERNAL_EVENT_REF_VERSION = 2;
+
+/** 行を指す新本文 */
+export type InternalEventRef<T extends { id: string }> = { v: typeof INTERNAL_EVENT_REF_VERSION; id: T['id']; };
+
+/** ロールの割り当ての新本文。受信側のキャッシュはユーザーごとなので、ユーザーIDも持つ */
+export type RoleAssignmentEventRef = InternalEventRef<MiRoleAssignment> & { userId: MiRoleAssignment['userId']; roleId: MiRoleAssignment['roleId']; };
+
+/** `metaUpdated`の新本文。値は載せず、変わった列の名前だけを持つ */
+export type MetaUpdatedEventRef = { v: typeof INTERNAL_EVENT_REF_VERSION; changedKeys: (keyof MiMeta)[]; };
+
+/**
+ * 新本文かどうか。受信側は、旧本文（エンティティ全体）と新本文の両方を処理する
+ */
+export function isInternalEventRef<T>(body: T): body is Extract<T, { v: typeof INTERNAL_EVENT_REF_VERSION }> {
+	return typeof body === 'object' && body != null && (body as { v?: unknown }).v === INTERNAL_EVENT_REF_VERSION;
+}
+
+/** 新本文を作る（第2リリースで発行側が使う） */
+export function toInternalEventRef<T extends { id: string }>(entity: T): InternalEventRef<T> {
+	return { v: INTERNAL_EVENT_REF_VERSION, id: entity.id };
+}
+
+export function toRoleAssignmentEventRef(assignment: Pick<MiRoleAssignment, 'id' | 'userId' | 'roleId'>): RoleAssignmentEventRef {
+	return { v: INTERNAL_EVENT_REF_VERSION, id: assignment.id, userId: assignment.userId, roleId: assignment.roleId };
+}
+
+export function toMetaUpdatedEventRef(before: Partial<MiMeta> | undefined, after: Partial<MiMeta>): MetaUpdatedEventRef {
+	const keys = new Set([...Object.keys(before ?? {}), ...Object.keys(after)]) as Set<keyof MiMeta>;
+	const changedKeys = before == null
+		? [...keys]
+		: [...keys].filter(key => JSON.stringify(before[key]) !== JSON.stringify(after[key]));
+	return { v: INTERNAL_EVENT_REF_VERSION, changedKeys };
+}
+
 export interface InternalEventTypes {
 	userChangeSuspendedState: { id: MiUser['id']; isSuspended: MiUser['isSuspended']; };
 	userChangeDeletedState: { id: MiUser['id']; isDeleted: MiUser['isDeleted']; };
@@ -213,29 +254,34 @@ export interface InternalEventTypes {
 	blockingCreated: { blockerId: MiUser['id']; blockeeId: MiUser['id']; };
 	blockingDeleted: { blockerId: MiUser['id']; blockeeId: MiUser['id']; };
 	policiesUpdated: MiRole['policies'];
-	roleCreated: MiRole;
-	roleDeleted: MiRole;
-	roleUpdated: MiRole;
-	userRoleAssigned: MiRoleAssignment;
-	userRoleUnassigned: MiRoleAssignment;
-	webhookCreated: MiWebhook;
-	webhookDeleted: MiWebhook;
-	webhookUpdated: MiWebhook;
-	systemWebhookCreated: MiSystemWebhook;
-	systemWebhookDeleted: MiSystemWebhook;
-	systemWebhookUpdated: MiSystemWebhook;
-	antennaCreated: MiAntenna;
-	antennaDeleted: MiAntenna;
-	antennaUpdated: MiAntenna;
-	avatarDecorationCreated: MiAvatarDecoration;
-	avatarDecorationDeleted: MiAvatarDecoration;
-	avatarDecorationUpdated: MiAvatarDecoration;
-	metaUpdated: { before?: MiMeta; after: MiMeta; };
+	roleCreated: MiRole | InternalEventRef<MiRole>;
+	roleDeleted: MiRole | InternalEventRef<MiRole>;
+	roleUpdated: MiRole | InternalEventRef<MiRole>;
+	userRoleAssigned: MiRoleAssignment | RoleAssignmentEventRef;
+	userRoleUnassigned: MiRoleAssignment | RoleAssignmentEventRef;
+	webhookCreated: MiWebhook | InternalEventRef<MiWebhook>;
+	webhookDeleted: MiWebhook | InternalEventRef<MiWebhook>;
+	webhookUpdated: MiWebhook | InternalEventRef<MiWebhook>;
+	systemWebhookCreated: MiSystemWebhook | InternalEventRef<MiSystemWebhook>;
+	systemWebhookDeleted: MiSystemWebhook | InternalEventRef<MiSystemWebhook>;
+	systemWebhookUpdated: MiSystemWebhook | InternalEventRef<MiSystemWebhook>;
+	antennaCreated: MiAntenna | InternalEventRef<MiAntenna>;
+	antennaDeleted: MiAntenna | InternalEventRef<MiAntenna>;
+	antennaUpdated: MiAntenna | InternalEventRef<MiAntenna>;
+	avatarDecorationCreated: MiAvatarDecoration | InternalEventRef<MiAvatarDecoration>;
+	avatarDecorationDeleted: MiAvatarDecoration | InternalEventRef<MiAvatarDecoration>;
+	avatarDecorationUpdated: MiAvatarDecoration | InternalEventRef<MiAvatarDecoration>;
+	metaUpdated: { before?: MiMeta; after: MiMeta; } | MetaUpdatedEventRef;
 	updateUserProfile: MiUserProfile;
 	mute: { muterId: MiUser['id']; muteeId: MiUser['id']; };
 	unmute: { muterId: MiUser['id']; muteeId: MiUser['id']; };
 	userListMemberAdded: { userListId: MiUserList['id']; memberId: MiUser['id']; };
 	userListMemberRemoved: { userListId: MiUserList['id']; memberId: MiUser['id']; };
+	/**
+	 * キャッシュ`cache`のキー`key`（`null`ならすべて）の値が変わった。受け取ったプロセスはメモリ層から消す。
+	 * `origin`は発行したプロセスのID（自分が発行したイベントを見分ける）
+	 */
+	cacheInvalidated: { cache: string; key: string | null; origin: string; };
 }
 
 type EventTypesToEventPayload<T> = EventUnionFromDictionary<UndefinedAsNullAll<SerializedAll<T>>>;

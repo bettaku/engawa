@@ -4431,10 +4431,6 @@ export type components = {
             email?: string | null;
             emailVerified?: boolean | null;
             securityKeysList?: {
-                /**
-                 * Format: id
-                 * @example xxxxxxxxxx
-                 */
                 id: string;
                 name: string;
                 /** Format: date-time */
@@ -5417,7 +5413,7 @@ export type components = {
             canEditMembersByModerator: boolean;
             policies: {
                 [key: string]: {
-                    value?: number | boolean;
+                    value?: number | boolean | string | string[];
                     priority?: number;
                     useDefault?: boolean;
                 };
@@ -10502,7 +10498,7 @@ export interface operations {
             content: {
                 'application/json': {
                     /** @enum {string} */
-                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver';
+                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver' | 'scheduledNoteDelete';
                     /** @enum {string} */
                     state: '*' | 'completed' | 'wait' | 'active' | 'paused' | 'prioritized' | 'delayed' | 'failed';
                 };
@@ -10689,7 +10685,7 @@ export interface operations {
             content: {
                 'application/json': {
                     /** @enum {string} */
-                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver';
+                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver' | 'scheduledNoteDelete';
                     state: ('active' | 'wait' | 'delayed' | 'completed' | 'failed' | 'paused')[];
                     search?: string;
                 };
@@ -10757,7 +10753,7 @@ export interface operations {
             content: {
                 'application/json': {
                     /** @enum {string} */
-                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver';
+                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver' | 'scheduledNoteDelete';
                 };
             };
         };
@@ -10820,7 +10816,7 @@ export interface operations {
             content: {
                 'application/json': {
                     /** @enum {string} */
-                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver';
+                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver' | 'scheduledNoteDelete';
                 };
             };
         };
@@ -10833,7 +10829,7 @@ export interface operations {
                 content: {
                     'application/json': {
                         /** @enum {string} */
-                        name: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver';
+                        name: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver' | 'scheduledNoteDelete';
                         qualifiedName: string;
                         counts: {
                             [key: string]: number;
@@ -10923,7 +10919,7 @@ export interface operations {
                 content: {
                     'application/json': {
                         /** @enum {string} */
-                        name: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver';
+                        name: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver' | 'scheduledNoteDelete';
                         counts: {
                             [key: string]: number;
                         };
@@ -10987,7 +10983,7 @@ export interface operations {
             content: {
                 'application/json': {
                     /** @enum {string} */
-                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver';
+                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver' | 'scheduledNoteDelete';
                     jobId: string;
                 };
             };
@@ -11051,7 +11047,7 @@ export interface operations {
             content: {
                 'application/json': {
                     /** @enum {string} */
-                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver';
+                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver' | 'scheduledNoteDelete';
                     jobId: string;
                 };
             };
@@ -11115,7 +11111,7 @@ export interface operations {
             content: {
                 'application/json': {
                     /** @enum {string} */
-                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver';
+                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver' | 'scheduledNoteDelete';
                     jobId: string;
                 };
             };
@@ -11182,7 +11178,7 @@ export interface operations {
             content: {
                 'application/json': {
                     /** @enum {string} */
-                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver';
+                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver' | 'scheduledNoteDelete';
                     jobId: string;
                 };
             };
@@ -24552,25 +24548,25 @@ export interface operations {
                             type: string;
                             alg: number;
                         }[];
-                        timeout: number | null;
-                        excludeCredentials: {
+                        timeout?: number | null;
+                        excludeCredentials?: {
                             id: string;
                             type: string;
-                            transports: ('ble' | 'cable' | 'hybrid' | 'internal' | 'nfc' | 'smart-card' | 'usb')[];
+                            transports?: ('ble' | 'cable' | 'hybrid' | 'internal' | 'nfc' | 'smart-card' | 'usb')[];
                         }[] | null;
-                        authenticatorSelection: {
+                        authenticatorSelection?: {
                             /** @enum {string} */
-                            authenticatorAttachment: 'cross-platform' | 'platform';
-                            requireResidentKey: boolean;
+                            authenticatorAttachment?: 'cross-platform' | 'platform';
+                            requireResidentKey?: boolean;
                             /** @enum {string} */
-                            userVerification: 'discouraged' | 'preferred' | 'required';
+                            userVerification?: 'discouraged' | 'preferred' | 'required';
                         } | null;
                         /** @enum {string|null} */
-                        attestation: 'direct' | 'enterprise' | 'indirect' | 'none' | null;
-                        extensions: {
-                            appid: string | null;
-                            credProps: boolean | null;
-                            hmacCreateSecret: boolean | null;
+                        attestation?: 'direct' | 'enterprise' | 'indirect' | 'none' | null;
+                        extensions?: {
+                            appid?: string | null;
+                            credProps?: boolean | null;
+                            hmacCreateSecret?: boolean | null;
                         } | null;
                     };
                 };
@@ -24633,10 +24629,13 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK (without any results) */
-            204: {
+            /** @description OK (with results) */
+            200: {
                 headers: {
                     [name: string]: unknown;
+                };
+                content: {
+                    'application/json': Record<string, never>;
                 };
             };
             /** @description Client error */
@@ -24759,10 +24758,13 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK (without any results) */
-            204: {
+            /** @description OK (with results) */
+            200: {
                 headers: {
                     [name: string]: unknown;
+                };
+                content: {
+                    'application/json': Record<string, never>;
                 };
             };
             /** @description Client error */
@@ -30319,7 +30321,7 @@ export interface operations {
                     filters?: {
                         /** @description the metadata string property to filter on. Can filter on nested properties using an array. such as `["location", "postalCode"]`. */
                         key?: string[];
-                        /** @description The values to match the metadata against (case insensitive regex). Each item in this array is applied as an OR. Include null to indicate match on missing metadata */
+                        /** @description The values to match the metadata against (case insensitive partial match). Each item in this array is applied as an OR. Include null to indicate match on missing metadata */
                         values?: (string | null)[];
                     }[] | null;
                     /**
@@ -30369,6 +30371,15 @@ export interface operations {
             };
             /** @description I'm Ai */
             418: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    'application/json': components['schemas']['Error'];
+                };
+            };
+            /** @description Too many requests */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };

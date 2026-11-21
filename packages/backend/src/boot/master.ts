@@ -13,6 +13,7 @@ import chalkTemplate from 'chalk-template';
 import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import Logger from '@/logger.js';
+import { ConfigValidationError } from '@/config/parse.js';
 import { loadConfig } from '@/config.js';
 import type { Config } from '@/config.js';
 import { showMachineInfo } from '@/misc/show-machine-info.js';
@@ -160,8 +161,8 @@ function loadConfigBoot(): Config {
 	try {
 		config = loadConfig();
 	} catch (exception) {
-		if (typeof exception === 'string') {
-			configLogger.error(exception);
+		if (exception instanceof ConfigValidationError || typeof exception === 'string') {
+			configLogger.error(String(exception));
 			process.exit(1);
 		} else if ((exception as any).code === 'ENOENT') {
 			configLogger.error('Configuration file not found', null, true);

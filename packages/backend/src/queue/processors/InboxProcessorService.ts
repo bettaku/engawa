@@ -30,6 +30,7 @@ import { MiNote } from '@/models/Note.js';
 import { MiMeta } from '@/models/Meta.js';
 import { DI } from '@/di-symbols.js';
 import { QueueLoggerService } from '../QueueLoggerService.js';
+import { toParsedSignature } from '../inbox-job-data.js';
 import type { InboxJobData } from '../types.js';
 
 type UpdateInstanceJob = {
@@ -64,7 +65,7 @@ export class InboxProcessorService implements OnApplicationShutdown {
 
 	@bindThis
 	public async process(job: Bull.Job<InboxJobData>): Promise<string> {
-		const signature = job.data.signature;	// HTTP-signature
+		const signature = toParsedSignature(job.data);	// HTTP-signature（v1はそのまま、v2は組み立て直す）
 		let activity = job.data.activity;
 
 		//#region Log
@@ -245,6 +246,9 @@ export class InboxProcessorService implements OnApplicationShutdown {
 				}
 				if (e.id === '85ab9bd7-3a41-4530-959d-f07073900109') {
 					return 'actor has been suspended';
+				}
+				if (e.id === 'a093350c-a7cf-4293-8dbd-497fb1426e74') { // specified visibility pure renote
+					return 'skip: pure renote with specified visibility is not supported';
 				}
 				if (e.id === 'd450b8a9-48e4-4dab-ae36-f4db763fda7c') { // invalid Note
 					return e.message;

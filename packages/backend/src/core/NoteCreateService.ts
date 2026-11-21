@@ -6,6 +6,7 @@
 import { setImmediate } from 'node:timers/promises';
 import * as mfm from 'mfc-js';
 import { In, DataSource, IsNull, LessThan } from 'typeorm';
+import type { EntityManager } from 'typeorm';
 import * as Redis from 'ioredis';
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import RE2 from 're2';
@@ -16,6 +17,8 @@ import { extractHashtags } from '@/misc/extract-hashtags.js';
 import type { IMentionedRemoteUsers } from '@/models/Note.js';
 import { MiNote } from '@/models/Note.js';
 import { MiEvent } from '@/models/Event.js';
+import { getNoteDeliveryScope } from '@/misc/note-delivery-scope.js';
+import { sanitizeEventMetadata } from '@/misc/sanitize-event-metadata.js';
 import type { IEvent } from '@/models/Event.js';
 import type { BlockingsRepository, DriveFilesRepository, FollowingsRepository, InstancesRepository, MiFollowing, MiMeta, MutingsRepository, NotesRepository, NoteThreadMutingsRepository, UserListMembershipsRepository, UserProfilesRepository, UsersRepository } from '@/models/_.js';
 import type { MiDriveFile } from '@/models/DriveFile.js';
@@ -40,6 +43,7 @@ import { NotificationService } from '@/core/NotificationService.js';
 import { UserWebhookService } from '@/core/UserWebhookService.js';
 import { HashtagService } from '@/core/HashtagService.js';
 import { AntennaService } from '@/core/AntennaService.js';
+import { JOB_DATA_VERSION } from '@/queue/job-version.js';
 import { QueueService } from '@/core/QueueService.js';
 import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
@@ -60,6 +64,7 @@ import { IdentifiableError } from '@/misc/identifiable-error.js';
 import { CollapsedQueue } from '@/misc/collapsed-queue.js';
 import { CacheService } from '@/core/CacheService.js';
 import { isQuote, isRenote } from '@/misc/is-renote.js';
+import type { noteSearchableBy } from '@/types.js';
 
 type NotificationType = 'reply' | 'renote' | 'quote' | 'mention';
 
@@ -149,7 +154,19 @@ type Option = {
 	url?: string | null;
 	app?: MiApp | null;
 	deleteAt?: Date | null;
-	searchableBy?: string[] | string;
+	searchableBy?: typeof noteSearchableBy[number] | null;
+};
+
+/**
+ * 内部の処理だけが指定する作成オプション。APIからは指定できない。
+ */
+export type NoteCreateInternalOptions = {
+	/**
+	 * ノートのinsertと同じトランザクションの中で、insertの後に呼ばれる。
+	 * 例外を投げると、ノートのinsertを含むトランザクション全体がロールバックし、
+	 * 後処理（配信・配送・索引など）も行われない。
+	 */
+	onInserted?: (manager: EntityManager, note: MiNote) => Promise<void>;
 };
 
 @Injectable()
@@ -259,8 +276,8 @@ export class NoteCreateService implements OnApplicationShutdown {
 		apHashtags?: string[] | null;
 		apEmojis?: string[] | null;
 		deleteAt?: Date | null;
-		searchableBy?: string[] | string;
-	}): Promise<MiNote> {
+		searchableBy?: typeof noteSearchableBy[number] | null;
+	}, internalOptions: NoteCreateInternalOptions = {}): Promise<MiNote> {
 		const visibleUsers = data.visibleUserIds.length > 0 ? await this.usersRepository.findBy({
 			id: In(data.visibleUserIds),
 		}) : [];
@@ -384,7 +401,8 @@ export class NoteCreateService implements OnApplicationShutdown {
 			apHashtags: data.apHashtags,
 			apEmojis: data.apEmojis,
 			deleteAt: data.deleteAt,
-		});
+			searchableBy: data.searchableBy,
+		}, false, internalOptions);
 	}
 
 	@bindThis
@@ -396,10 +414,12 @@ export class NoteCreateService implements OnApplicationShutdown {
 		isCat: MiUser['isCat'];
 		isIndexable: MiUser['isIndexable'];
 		isSensitive: MiUser['isSensitive'];
-	}, data: Option, silent = false): Promise<MiNote> {
+	}, data: Option, silent = false, internalOptions: NoteCreateInternalOptions = {}): Promise<MiNote> {
 		if (data.createdAt == null) data.createdAt = new Date();
 		if (data.visibility == null) data.visibility = 'public';
 		if (data.localOnly == null) data.localOnly = false;
+		// 「自分のみ」の投稿は、クライアントの指定に関わらず連合しない
+		if (data.visibility === 'private') data.localOnly = true;
 		if (data.disableRightClick == null) data.disableRightClick = false;
 
 		if (data.visibility === 'public') {
@@ -456,6 +476,13 @@ export class NoteCreateService implements OnApplicationShutdown {
 					// specified / direct note/ private noteはreject
 					throw new Error('Renote target is not public or home');
 			}
+		}
+
+		// 公開範囲が specified の純粋なRenoteは作らない（Announceとして配送・削除できないため）。引用は許可する
+		// 作成元（API・予約投稿・AP受信）は Option の形で渡ってくるので、misc/is-renote.ts と同期している
+		// this.isRenote / this.isQuote で判定する
+		if (this.isRenote(data) && !this.isQuote(data) && data.visibility === 'specified') {
+			throw new IdentifiableError('a093350c-a7cf-4293-8dbd-497fb1426e74', 'Cannot create pure renote with specified visibility');
 		}
 
 		// Check blocking
@@ -557,7 +584,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 			throw new IdentifiableError('9f466dab-c856-48cd-9e65-ff90ff750580', 'Note contains too many mentions');
 		}
 
-		const note = await this.insertNote(user, data, tags, emojis, mentionedUsers);
+		const note = await this.insertNote(user, data, tags, emojis, mentionedUsers, internalOptions.onInserted);
 
 		setImmediate('post created', { signal: this.#shutdownController.signal }).then(
 			() => this.postNoteCreated(note, user, data, silent, tags!, mentionedUsers!),
@@ -568,7 +595,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 	}
 
 	@bindThis
-	private async insertNote(user: { id: MiUser['id']; host: MiUser['host']; }, data: Option, tags: string[], emojis: string[], mentionedUsers: MinimumUser[]) {
+	private async insertNote(user: { id: MiUser['id']; host: MiUser['host']; }, data: Option, tags: string[], emojis: string[], mentionedUsers: MinimumUser[], onInserted?: NoteCreateInternalOptions['onInserted']) {
 		const insert = new MiNote({
 			id: this.idService.gen(data.createdAt?.getTime()),
 			fileIds: data.files ? data.files.map(file => file.id) : [],
@@ -600,7 +627,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 			attachedFileTypes: data.files ? data.files.map(file => file.type) : [],
 
-			searchableBy: data.searchableBy ? data.searchableBy as any : 'public',
+			searchableBy: data.searchableBy ?? 'public',
 
 			// 以下非正規化データ
 			replyUserId: data.reply ? data.reply.userId : null,
@@ -631,7 +658,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 		// 投稿を作成
 		try {
-			if (insert.hasPoll || insert.hasEvent) {
+			if (insert.hasPoll || insert.hasEvent || onInserted != null) {
 				// Start transaction
 				await this.db.transaction(async transactionalEntityManager => {
 					await transactionalEntityManager.insert(MiNote, insert);
@@ -657,7 +684,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 							start: data.event!.start,
 							end: data.event!.end ?? undefined,
 							title: data.event!.title,
-							metadata: data.event!.metadata,
+							metadata: sanitizeEventMetadata(data.event!.metadata),
 							noteVisibility: insert.visibility,
 							userId: user.id,
 							userHost: user.host,
@@ -668,6 +695,10 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 					if (insert.visibility === 'private') {
 						insert.localOnly = true;
+					}
+
+					if (onInserted != null) {
+						await onInserted(transactionalEntityManager, insert);
 					}
 				});
 			} else {
@@ -686,6 +717,9 @@ export class NoteCreateService implements OnApplicationShutdown {
 				err.name = 'duplicated';
 				throw err;
 			}
+
+			// onInsertedが意図して投げた例外は、呼び出し元が扱う
+			if (e instanceof IdentifiableError) throw e;
 
 			console.error(e);
 
@@ -769,6 +803,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		if (data.poll && data.poll.expiresAt) {
 			const delay = data.poll.expiresAt.getTime() - Date.now();
 			this.queueService.endedPollNotificationQueue.add(note.id, {
+				v: JOB_DATA_VERSION,
 				noteId: note.id,
 			}, {
 				delay,
@@ -784,13 +819,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		}
 
 		if (data.deleteAt) {
-			const delay = data.deleteAt.getTime() - Date.now();
-			this.queueService.scheduledNoteDeleteQueue.add(note.id, {
-				noteId: note.id,
-			}, {
-				delay,
-				removeOnComplete: true,
-			});
+			await this.queueService.syncScheduledNoteDelete(note.id, data.deleteAt);
 		}
 
 		if (!silent) {
@@ -847,7 +876,8 @@ export class NoteCreateService implements OnApplicationShutdown {
 			nm.notify();
 
 			//#region AP deliver
-			if (!data.localOnly && this.userEntityService.isLocalUser(user)) {
+			const deliveryScope = getNoteDeliveryScope(note);
+			if (!data.localOnly && deliveryScope.federate && this.userEntityService.isLocalUser(user)) {
 				await (async () => {
 					const noteActivity = await this.renderNoteOrRenoteActivity(data, note);
 					const dm = this.apDeliverManagerService.createDeliverManager(user, noteActivity);
@@ -870,11 +900,11 @@ export class NoteCreateService implements OnApplicationShutdown {
 					}
 
 					// フォロワーに配送
-					if (['public', 'home', 'followers'].includes(note.visibility)) {
+					if (deliveryScope.followers) {
 						dm.addFollowersRecipe();
 					}
 
-					if (['public'].includes(note.visibility)) {
+					if (deliveryScope.relays) {
 						this.relayService.deliverToRelays(user, noteActivity);
 					}
 
@@ -882,16 +912,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 				})();
 			}
 			//#endregion
-		}
-
-		if (data.deleteAt) {
-			const delay = data.deleteAt.getTime() - Date.now();
-			this.queueService.scheduledNoteDeleteQueue.add(note.id, {
-				noteId: note.id,
-			}, {
-				delay,
-				removeOnComplete: true,
-			});
 		}
 
 		if (user.isIndexable) this.index(note);
@@ -973,9 +993,13 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 	@bindThis
 	private index(note: MiNote) {
+		// 作成時に索引の対象外であることが明らかなノートは、ジョブを登録しない（索引から消すものもない）
 		if (note.text == null && note.cw == null) return;
+		if (!['home', 'public'].includes(note.visibility)) return;
 
-		this.searchService.indexNote(note);
+		this.searchService.requestSyncNoteIndex(note.id).catch(err => {
+			console.error(`Failed to request search index sync of note ${note.id}`, err);
+		});
 	}
 
 	@bindThis

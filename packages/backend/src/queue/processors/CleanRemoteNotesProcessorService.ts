@@ -11,6 +11,7 @@ import type { MiMeta, MiNote, NotesRepository } from '@/models/_.js';
 import type Logger from '@/logger.js';
 import { bindThis } from '@/decorators.js';
 import { IdService } from '@/core/IdService.js';
+import { NO_NOTE_DELETE_EFFECTS, NoteDeleteService } from '@/core/NoteDeleteService.js';
 import { QueueLoggerService } from '../QueueLoggerService.js';
 import type * as Bull from 'bullmq';
 
@@ -29,6 +30,7 @@ export class CleanRemoteNotesProcessorService {
 		private db: DataSource,
 
 		private idService: IdService,
+		private noteDeleteService: NoteDeleteService,
 		private queueLoggerService: QueueLoggerService,
 	) {
 		this.logger = this.queueLoggerService.logger.createSubLogger('clean-remote-notes');
@@ -237,7 +239,11 @@ export class CleanRemoteNotesProcessorService {
 			const deletableNoteIds = noteIds.filter(result => result.isRemovable).map(result => result.id);
 			if (deletableNoteIds.length > 0) {
 				try {
-					await this.notesRepository.delete(deletableNoteIds);
+					// 古いリモートのノートをローカルのキャッシュから消すだけなので、副作用は実行しない。
+					// 配送は不要（相手のサーバーには残る）で、チャートや返信数も変えない
+					await this.noteDeleteService.deleteMany(null, deletableNoteIds.map(id => ({ id })), {
+						effects: NO_NOTE_DELETE_EFFECTS,
+					});
 
 					for (const id of deletableNoteIds) {
 						const t = this.idService.parse(id).date.getTime();

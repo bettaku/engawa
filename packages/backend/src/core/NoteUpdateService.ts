@@ -4,13 +4,14 @@
  */
 
 import { setImmediate } from 'node:timers/promises';
-import util from 'util';
 import { In, DataSource } from 'typeorm';
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import * as mfm from 'mfc-js';
 import type { IMentionedRemoteUsers } from '@/models/Note.js';
 import { MiNote } from '@/models/Note.js';
 import { MiEvent } from '@/models/Event.js';
+import { getNoteDeliveryScope } from '@/misc/note-delivery-scope.js';
+import { sanitizeEventMetadata } from '@/misc/sanitize-event-metadata.js';
 import type { IEvent } from '@/models/Event.js';
 import type { NotesRepository, UsersRepository } from '@/models/_.js';
 import type { MiUser, MiLocalUser, MiRemoteUser } from '@/models/User.js';
@@ -173,9 +174,13 @@ export class NoteUpdateService implements OnApplicationShutdown {
 			// Start transaction for any poll or event changes
 			const needsTransaction = note.hasPoll || values.hasPoll || note.hasEvent || values.hasEvent;
 
+			// 更新の直前に削除された場合（予約削除など）は、ノートなしとして扱う
+			let noteExists: boolean;
+
 			if (needsTransaction) {
-				await this.db.transaction(async transactionalEntityManager => {
-					await transactionalEntityManager.update(MiNote, { id: note.id }, values);
+				noteExists = await this.db.transaction(async transactionalEntityManager => {
+					const result = await transactionalEntityManager.update(MiNote, { id: note.id }, values);
+					if (result.affected === 0) return false;
 
 					if (note.hasPoll && values.hasPoll) {
 						const old_poll = await transactionalEntityManager.findOneBy(MiPoll, { noteId: note.id });
@@ -224,7 +229,7 @@ export class NoteUpdateService implements OnApplicationShutdown {
 								title: data.event!.title,
 								start: data.event!.start,
 								end: data.event!.end ?? undefined,
-								metadata: data.event!.metadata,
+								metadata: sanitizeEventMetadata(data.event!.metadata),
 								noteVisibility: note.visibility,
 								userId: user.id,
 								userHost: user.host,
@@ -237,7 +242,7 @@ export class NoteUpdateService implements OnApplicationShutdown {
 							title: data.event!.title,
 							start: data.event!.start,
 							end: data.event!.end ?? undefined,
-							metadata: data.event!.metadata,
+							metadata: sanitizeEventMetadata(data.event!.metadata),
 							noteVisibility: note.visibility,
 							userId: user.id,
 							userHost: user.host,
@@ -246,10 +251,15 @@ export class NoteUpdateService implements OnApplicationShutdown {
 					} else if (note.hasEvent && !values.hasEvent) {
 						await transactionalEntityManager.delete(MiEvent, { noteId: note.id });
 					}
+
+					return true;
 				});
 			} else {
-				await this.notesRepository.update({ id: note.id }, values);
+				const result = await this.notesRepository.update({ id: note.id }, values);
+				noteExists = result.affected !== 0;
 			}
+
+			if (!noteExists) return null;
 
 			await this.noteHistoryService.recordHistory(values, note, originalPoll, originalEvent, { updatedAt: data.updatedAt });
 
@@ -270,24 +280,16 @@ export class NoteUpdateService implements OnApplicationShutdown {
 		isIndexable: MiUser['isIndexable'];
 		isSensitive: MiUser['isSensitive'];
 	}, silent: boolean) {
+		// 予約削除のジョブをDBのdeleteAtに合わせる
+		await this.queueService.syncScheduledNoteDelete(note.id, note.deleteAt);
+
 		if (!silent) {
 			if (this.userEntityService.isLocalUser(user)) this.activeUsersChart.write(user);
-
-			if (note.deleteAt) {
-				const delay = note.deleteAt.getTime() - Date.now();
-				await this.queueService.scheduledNoteDeleteQueue.remove(note.id);
-				await this.queueService.scheduledNoteDeleteQueue.add(note.id, {
-					noteId: note.id,
-				}, {
-					delay,
-					removeOnComplete: true,
-				});
-			}
 
 			this.globalEventService.publishNoteStream(note, 'updated', { cw: note.cw, text: note.text, disableRightClick: note.disableRightClick, deleteAt: note.deleteAt });
 
 			//#region AP deliver
-			if (this.userEntityService.isLocalUser(user) && !note.localOnly) {
+			if (this.userEntityService.isLocalUser(user) && getNoteDeliveryScope(note).federate) {
 				await (async () => {
 					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 					// @ts-expect-error
@@ -337,9 +339,16 @@ export class NoteUpdateService implements OnApplicationShutdown {
 
 	@bindThis
 	private async deliverToConcerned(user: { id: MiLocalUser['id']; host: null; }, note: MiNote, content: any) {
-		console.log('deliverToConcerned', util.inspect(content, { depth: null }));
-		await this.apDeliverManagerService.deliverToFollowers(user, content);
-		await this.relayService.deliverToRelays(user, content);
+		// 配送先は作成時と同じく、ノートの公開範囲に従う
+		const scope = getNoteDeliveryScope(note);
+		if (!scope.federate) return;
+
+		if (scope.followers) {
+			await this.apDeliverManagerService.deliverToFollowers(user, content);
+		}
+		if (scope.relays) {
+			await this.relayService.deliverToRelays(user, content);
+		}
 		const remoteUsers = await this.getMentionedRemoteUsers(note);
 		for (const remoteUser of remoteUsers) {
 			await this.apDeliverManagerService.deliverToUser(user, content, remoteUser);
@@ -358,9 +367,10 @@ export class NoteUpdateService implements OnApplicationShutdown {
 
 	@bindThis
 	private reIndex(note: MiNote) {
-		if (note.text == null && note.cw == null) return;
-
-		this.searchService.unindexNote(note);
-		this.searchService.indexNote(note);
+		// 索引の更新はジョブで行い、実行時点のDBの状態を反映する。
+		// 本文がなくなった場合や、検索対象外の公開範囲になった場合は、ジョブが索引から削除する。
+		this.searchService.requestSyncNoteIndex(note.id).catch(err => {
+			console.error(`Failed to request search index sync of note ${note.id}`, err);
+		});
 	}
 }

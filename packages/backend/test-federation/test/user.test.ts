@@ -1,6 +1,6 @@
 import assert, { rejects, strictEqual } from 'node:assert';
 import * as Misskey from 'cherrypick-js';
-import { createAccount, deepStrictEqualWithExcludedFields, fetchAdmin, type LoginUser, resolveRemoteNote, resolveRemoteUser, sleep } from './utils.js';
+import { createAccount, deepStrictEqualWithExcludedFields, fetchAdmin, type LoginUser, resolveRemoteNote, resolveRemoteUser, sleep, waitFor } from './utils.js';
 
 const [aAdmin, bAdmin] = await Promise.all([
 	fetchAdmin('a.test'),
@@ -374,15 +374,26 @@ describe('User', () => {
 
 			test('Bob follows Alice, and Alice deleted themself', async () => {
 				await bob.client.request('following/create', { userId: aliceInB.id });
-				await sleep();
 
-				const followers = await alice.client.request('users/followers', { userId: alice.id });
+				const followers = await waitFor(
+					async () => await alice.client.request('users/followers', { userId: alice.id }),
+					followers => followers.length === 1,
+				);
 				strictEqual(followers.length, 1); // followed by Bob
 
-				await alice.client.request('i/delete-account', { password: alice.password });
-				await sleep();
+				// NOTE: リモートへのフォローは Accept が届くまで Bob 側で確定しないので、それも待つ
+				const bobFollowing = await waitFor(
+					async () => await bob.client.request('users/following', { userId: bob.id }),
+					following => following.length === 1,
+				);
+				strictEqual(bobFollowing.length, 1); // Bob follows Alice
 
-				const following = await bob.client.request('users/following', { userId: bob.id });
+				await alice.client.request('i/delete-account', { password: alice.password });
+
+				const following = await waitFor(
+					async () => await bob.client.request('users/following', { userId: bob.id }),
+					following => following.length === 0,
+				);
 				strictEqual(following.length, 0); // no following relation
 
 				await rejects(
@@ -413,10 +424,19 @@ describe('User', () => {
 
 			test('Bob follows Alice, then Alice gets deleted in B server', async () => {
 				await bob.client.request('following/create', { userId: aliceInB.id });
-				await sleep();
 
-				const followers = await alice.client.request('users/followers', { userId: alice.id });
+				const followers = await waitFor(
+					async () => await alice.client.request('users/followers', { userId: alice.id }),
+					followers => followers.length === 1,
+				);
 				strictEqual(followers.length, 1); // followed by Bob
+
+				// NOTE: リモートへのフォローは Accept が届くまで Bob 側で確定しないので、それも待つ
+				const bobFollowing = await waitFor(
+					async () => await bob.client.request('users/following', { userId: bob.id }),
+					following => following.length === 1,
+				);
+				strictEqual(bobFollowing.length, 1); // Bob follows Alice
 
 				await bAdmin.client.request('admin/delete-account', { userId: aliceInB.id });
 				await sleep();
@@ -472,15 +492,26 @@ describe('User', () => {
 
 			test('Bob follows Alice, and Alice gets suspended, there is no following relation, and Bob fails to follow again', async () => {
 				await bob.client.request('following/create', { userId: aliceInB.id });
-				await sleep();
 
-				const followers = await alice.client.request('users/followers', { userId: alice.id });
+				const followers = await waitFor(
+					async () => await alice.client.request('users/followers', { userId: alice.id }),
+					followers => followers.length === 1,
+				);
 				strictEqual(followers.length, 1); // followed by Bob
 
-				await aAdmin.client.request('admin/suspend-user', { userId: alice.id });
-				await sleep();
+				// NOTE: リモートへのフォローは Accept が届くまで Bob 側で確定しないので、それも待つ
+				const bobFollowing = await waitFor(
+					async () => await bob.client.request('users/following', { userId: bob.id }),
+					following => following.length === 1,
+				);
+				strictEqual(bobFollowing.length, 1); // Bob follows Alice
 
-				const following = await bob.client.request('users/following', { userId: bob.id });
+				await aAdmin.client.request('admin/suspend-user', { userId: alice.id });
+
+				const following = await waitFor(
+					async () => await bob.client.request('users/following', { userId: bob.id }),
+					following => following.length === 0,
+				);
 				strictEqual(following.length, 0); // no following relation
 
 				await rejects(

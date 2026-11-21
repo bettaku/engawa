@@ -4,8 +4,8 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { Brackets, In } from 'typeorm';
-import { Client as ElasticSearch } from '@elastic/elasticsearch';
+import { Brackets, In, type SelectQueryBuilder } from 'typeorm';
+import { Client as ElasticSearch, errors } from '@elastic/elasticsearch';
 import { DI } from '@/di-symbols.js';
 import { type Config, FulltextSearchProvider } from '@/config.js';
 import { bindThis } from '@/decorators.js';
@@ -20,22 +20,17 @@ import { QueryService } from '@/core/QueryService.js';
 import { IdService } from '@/core/IdService.js';
 import { LoggerService } from '@/core/LoggerService.js';
 import { noteMapping, noteSettings } from '@/models/elasticsearch/note.js';
-import type { Index, MeiliSearch } from 'meilisearch';
+import { AppLockService } from '@/core/AppLockService.js';
+import { QueueService } from '@/core/QueueService.js';
+import type Logger from '@/logger.js';
 
-type K = string;
-type V = string | number | boolean;
-type Q =
-	{ op: '=', k: K, v: V } |
-	{ op: '!=', k: K, v: V } |
-	{ op: '>', k: K, v: number } |
-	{ op: '<', k: K, v: number } |
-	{ op: '>=', k: K, v: number } |
-	{ op: '<=', k: K, v: number } |
-	{ op: 'is null', k: K } |
-	{ op: 'is not null', k: K } |
-	{ op: 'and', qs: Q[] } |
-	{ op: 'or', qs: Q[] } |
-	{ op: 'not', q: Q };
+function isVersionConflict(e: unknown): boolean {
+	return e instanceof errors.ResponseError && e.statusCode === 409;
+}
+
+function isNotFound(e: unknown): boolean {
+	return e instanceof errors.ResponseError && e.statusCode === 404;
+}
 
 export type SearchOpts = {
 	userId?: MiNote['userId'] | null;
@@ -51,51 +46,46 @@ export type SearchPagination = {
 	limit: number;
 };
 
-function compileValue(value: V): string {
-	if (typeof value === 'string') {
-		return `'${value}'`; // TODO: escape
-	} else if (typeof value === 'number') {
-		return value.toString();
-	} else if (typeof value === 'boolean') {
-		return value.toString();
-	}
-	throw new Error('unrecognized value');
-}
+/** 索引に入れる公開範囲 */
+const INDEXABLE_VISIBILITIES: readonly MiNote['visibility'][] = ['home', 'public'];
 
-function compileQuery(q: Q): string {
-	switch (q.op) {
-		case '=': return `(${q.k} = ${compileValue(q.v)})`;
-		case '!=': return `(${q.k} != ${compileValue(q.v)})`;
-		case '>': return `(${q.k} > ${compileValue(q.v)})`;
-		case '<': return `(${q.k} < ${compileValue(q.v)})`;
-		case '>=': return `(${q.k} >= ${compileValue(q.v)})`;
-		case '<=': return `(${q.k} <= ${compileValue(q.v)})`;
-		case 'and': return q.qs.length === 0 ? '' : `(${ q.qs.map(_q => compileQuery(_q)).join(' AND ') })`;
-		case 'or': return q.qs.length === 0 ? '' : `(${ q.qs.map(_q => compileQuery(_q)).join(' OR ') })`;
-		case 'is null': return `(${q.k} IS NULL)`;
-		case 'is not null': return `(${q.k} IS NOT NULL)`;
-		case 'not': return `(NOT ${compileQuery(q.q)})`;
-		default: throw new Error('unrecognized query operator');
-	}
-}
+/**
+ * 索引の世代として使う、DBの現在時刻（マイクロ秒）。
+ *
+ * ノートの読み出しと同じ文の中で評価するので、後から読んだジョブほど大きな値になる。
+ * Elasticsearchの外部バージョンに使い、古い状態の書き込み（ロックの期限切れ後に再開したジョブなど）を拒否させる。
+ * `updatedAt`ではなく読み出しの時刻を使うのは、ユーザーの`isIndexable`の変更や削除のように、
+ * ノートの`updatedAt`が変わらない変化も、後から読んだ状態として反映させるため。
+ */
+const GENERATION_SQL = 'FLOOR(EXTRACT(EPOCH FROM clock_timestamp()) * 1000000)::bigint';
+
+type NoteIndexDocument = {
+	text: string | null;
+	cw: string | null;
+	visibility: MiNote['visibility'];
+	createdAt: number;
+	userId: MiNote['userId'];
+	userHost: MiNote['userHost'];
+	tags: MiNote['tags'];
+	replyId: MiNote['replyId'];
+	renoteId: MiNote['renoteId'];
+	fileIds: MiNote['fileIds'];
+	isQuote: boolean;
+	searchableBy: MiNote['searchableBy'];
+	isBot: boolean;
+};
 
 @Injectable()
 export class SearchService {
-	private readonly meilisearchIndexScope: 'local' | 'global' | string[] = 'local';
-	private readonly meilisearchNoteIndex: Index | null = null;
-	private readonly meilisearchLocale: string[] = ['jpn', 'eng'];
-
 	private readonly elasticsearchIndexScope: 'local' | 'global' | string[] = 'local';
 	private elasticsearchNoteIndex: string | null = null;
 
 	private readonly provider: FulltextSearchProvider;
+	private readonly logger: Logger;
 
 	constructor(
 		@Inject(DI.config)
 		private config: Config,
-
-		@Inject(DI.meilisearch)
-		private meilisearch: MeiliSearch | null,
 
 		@Inject(DI.elasticsearch)
 		private elasticsearch: ElasticSearch | null,
@@ -116,31 +106,12 @@ export class SearchService {
 		private queryService: QueryService,
 		private idService: IdService,
 		private loggerService: LoggerService,
+		private appLockService: AppLockService,
+		private queueService: QueueService,
 	) {
-		if (meilisearch) {
-			this.meilisearchNoteIndex = meilisearch.index(`${config.meilisearch!.index}---notes`);
-			this.meilisearchNoteIndex.updateSettings({
-				searchableAttributes: [
-					'text',
-					'cw',
-				],
-				sortableAttributes: [
-					'createdAt',
-				],
-				filterableAttributes: [
-					'createdAt',
-					'userId',
-					'userHost',
-					'tags',
-				],
-				typoTolerance: {
-					enabled: false,
-				},
-				pagination: {
-					maxTotalHits: 10000,
-				},
-			});
-		} else if (elasticsearch) {
+		this.logger = this.loggerService.getLogger('SearchService');
+
+		if (elasticsearch) {
 			this.elasticsearchNoteIndex = `${config.elasticsearch!.index}---notes`;
 			const NoteIndex = this.elasticsearchNoteIndex;
 
@@ -156,15 +127,9 @@ export class SearchService {
 				}).catch((e) => {
 					console.error(e);
 				});
+			}).catch((e) => {
+				this.logger.error('Failed to check the note index', { error: e });
 			});
-		}
-
-		if (config.meilisearch?.scope) {
-			this.meilisearchIndexScope = config.meilisearch.scope;
-		}
-
-		if (config.meilisearch?.locale) {
-			this.meilisearchLocale = config.meilisearch.locale;
 		}
 
 		if (config.elasticsearch?.scope) {
@@ -172,122 +137,200 @@ export class SearchService {
 		}
 
 		this.provider = config.fulltextSearch?.provider ?? 'sqlLike';
-		this.loggerService.getLogger('SearchService').info(`-- Provider: ${this.provider}`);
+		this.logger.info(`-- Provider: ${this.provider}`);
 	}
 
+	/** 外部の検索索引を使うかどうか */
+	private get usesExternalIndex(): boolean {
+		return this.provider === 'elasticsearch' && this.elasticsearch != null;
+	}
+
+	/**
+	 * ノートの作成・編集・削除の後に呼ぶ。索引の更新はジョブ（`syncNoteIndex`）で行う。
+	 *
+	 * 呼び出し時点のノートの内容は使わず、ジョブの実行時点のDBの状態を索引に反映する。
+	 * 外部の検索索引を使わない構成では何もしない。
+	 */
 	@bindThis
-	public async indexNote(note: MiNote): Promise<void> {
-		if (note.text == null && note.cw == null) return;
-		if (!['home', 'public'].includes(note.visibility)) return;
+	public async requestSyncNoteIndex(noteId: MiNote['id']): Promise<void> {
+		if (!this.usesExternalIndex) return;
 
-		if (this.provider === 'meilisearch') {
-			switch (this.meilisearchIndexScope) {
-				case 'global':
-					break;
-				case 'local':
-					if (note.userHost == null) break;
-					return;
-				default:
-					if (note.userHost == null) break;
-					if (this.meilisearchIndexScope.includes(note.userHost)) break;
-					return;
+		await this.queueService.createSyncNoteIndexJob(noteId);
+	}
+
+	/**
+	 * ノートの索引を、実行時点のDBの状態に合わせる（`syncNoteIndex`ジョブの処理）。
+	 *
+	 * - ノートが存在し、索引の対象ならupsertする
+	 * - ノートが存在しない、または対象外ならIDで削除する
+	 *
+	 * ノート単位のロックで同じノートの処理を直列にしたうえで、Elasticsearchの外部バージョンで古い書き込みを拒否させる。
+	 * 同じノートのジョブが重なっても、後からDBを読んだジョブの内容が残る。
+	 */
+	@bindThis
+	public async syncNoteIndex(noteId: MiNote['id']): Promise<void> {
+		if (!this.usesExternalIndex) return;
+
+		const unlock = await this.appLockService.getSearchIndexLock(noteId);
+		try {
+			const { note, generation } = await this.readNoteForIndex(noteId);
+
+			if (note != null && this.isIndexTarget(note)) {
+				await this.writeNoteDocument(note, generation);
+			} else {
+				await this.deleteNoteDocument(noteId, generation);
 			}
-
-			await this.meilisearchNoteIndex?.addDocuments([{
-				id: note.id,
-				createdAt: this.idService.parse(note.id).date.getTime(),
-				userId: note.userId,
-				userHost: note.userHost,
-				text: note.text,
-				cw: note.cw,
-				tags: note.tags,
-				fileIds: note.fileIds,
-			}], {
-				primaryKey: 'id',
-			});
-		} else if (this.provider === 'elasticsearch') {
-			const Quote = isRenote(note) && isQuote(note);
-			const isBot = note.user?.isBot;
-
-			const document = {
-				text: note.text,
-				cw: note.cw,
-				visibility: note.visibility,
-				createdAt: this.idService.parse(note.id).date.getTime(),
-				userId: note.userId,
-				userHost: note.userHost,
-				tags: note.tags,
-				replyId: note.replyId,
-				renoteId: note.renoteId,
-				fileIds: note.fileIds,
-				isQuote: Quote,
-				searchableBy: note.searchableBy,
-				isBot: isBot,
-			};
-
-			switch (this.elasticsearchIndexScope) {
-				case 'global':
-					break;
-				case 'local':
-					if (note.userHost == null) break;
-					return;
-				default:
-					if (note.userHost == null) break;
-					if (this.elasticsearchIndexScope.includes(note.userHost)) break;
-					return;
-			}
-
-			await this.elasticsearch?.index({
-				index: this.elasticsearchNoteIndex as string,
-				id: note.id,
-				document: document,
-			}).catch((e) => {
-				console.error(e);
-			});
+		} finally {
+			unlock();
 		}
 	}
 
+	/**
+	 * ノートとユーザーを読み、同じ文の中で世代を取る。
+	 */
 	@bindThis
-	public async unindexNote(note: MiNote): Promise<void> {
-		if (!this.meilisearch || !this.elasticsearch) return;
-		if (!['home', 'public'].includes(note.visibility)) return;
+	private async readNoteForIndex(noteId: MiNote['id']): Promise<{ note: MiNote | null; generation: number }> {
+		const { entities, raw } = await this.notesRepository.createQueryBuilder('note')
+			.innerJoinAndSelect('note.user', 'user')
+			.addSelect(GENERATION_SQL, 'search_index_generation')
+			.where('note.id = :noteId', { noteId })
+			.getRawAndEntities<{ search_index_generation: string }>();
 
-		switch (this.provider) {
-			case 'meilisearch':
-				await this.meilisearchNoteIndex?.deleteDocument(note.id);
-				break;
-			case 'elasticsearch':
-				await this.elasticsearch.delete({
-					index: this.elasticsearchNoteIndex as string,
-					id: note.id,
-				}).catch((e) => {
-					console.error(e);
-				});
-				break;
+		if (entities.length > 0 && raw.length > 0) {
+			return { note: entities[0], generation: Number(raw[0].search_index_generation) };
+		}
+
+		// ノートが存在しない。IDは再利用されないので、存在しないことを確認した後に取った世代でよい
+		const rows: { generation: string }[] = await this.notesRepository.query(`SELECT ${GENERATION_SQL} AS generation`);
+		return { note: null, generation: Number(rows[0].generation) };
+	}
+
+	/**
+	 * 索引の対象かどうか。`note.user`を読み込んでおくこと。
+	 */
+	@bindThis
+	public isIndexTarget(note: MiNote): boolean {
+		if (note.text == null && note.cw == null) return false;
+		if (!INDEXABLE_VISIBILITIES.includes(note.visibility)) return false;
+		if (note.user == null || !note.user.isIndexable) return false;
+
+		switch (this.elasticsearchIndexScope) {
+			case 'global':
+				return true;
+			case 'local':
+				return note.userHost == null;
 			default:
-				return;
+				return note.userHost == null || this.elasticsearchIndexScope.includes(note.userHost);
 		}
 	}
 
+	@bindThis
+	private toDocument(note: MiNote): NoteIndexDocument {
+		return {
+			text: note.text,
+			cw: note.cw,
+			visibility: note.visibility,
+			createdAt: this.idService.parse(note.id).date.getTime(),
+			userId: note.userId,
+			userHost: note.userHost,
+			tags: note.tags,
+			replyId: note.replyId,
+			renoteId: note.renoteId,
+			fileIds: note.fileIds,
+			isQuote: isRenote(note) && isQuote(note),
+			searchableBy: note.searchableBy,
+			isBot: note.user?.isBot ?? false,
+		};
+	}
+
+	@bindThis
+	private async writeNoteDocument(note: MiNote, generation: number): Promise<void> {
+		if (this.elasticsearch == null || this.elasticsearchNoteIndex == null) return;
+
+		try {
+			await this.elasticsearch.index({
+				index: this.elasticsearchNoteIndex,
+				id: note.id,
+				version: generation,
+				version_type: 'external',
+				document: this.toDocument(note),
+			});
+		} catch (e) {
+			// 後から読んだ状態がすでに書かれている。このジョブの内容は古いので捨てる
+			if (isVersionConflict(e)) return;
+			throw e;
+		}
+	}
+
+	@bindThis
+	private async deleteNoteDocument(noteId: MiNote['id'], generation: number): Promise<void> {
+		if (this.elasticsearch == null || this.elasticsearchNoteIndex == null) return;
+
+		try {
+			await this.elasticsearch.delete({
+				index: this.elasticsearchNoteIndex,
+				id: noteId,
+				version: generation,
+				version_type: 'external',
+			});
+		} catch (e) {
+			if (isVersionConflict(e)) return;
+			// 索引に入っていなかった
+			if (isNotFound(e)) return;
+			throw e;
+		}
+	}
+
+	/**
+	 * すべてのノートを索引に登録し直す。索引の対象外のノートは登録しない。
+	 */
 	@bindThis
 	public async fullIndexNote(): Promise<void> {
-		const notesCount = await this.notesRepository.createQueryBuilder('note').getCount();
+		if (this.elasticsearch == null || this.elasticsearchNoteIndex == null) return;
+
 		const limit = 100;
 		let latestId = '';
-		for (let i = 0; i < notesCount; i += limit) {
-			const notes = await this.notesRepository.createQueryBuilder('note')
+		while (true) {
+			const { entities, raw } = await this.notesRepository.createQueryBuilder('note')
+				.innerJoinAndSelect('note.user', 'user')
+				.addSelect(GENERATION_SQL, 'search_index_generation')
 				.where('note.id > :latestId', { latestId })
 				.orderBy('note.id', 'ASC')
 				.limit(limit)
-				.getMany();
+				.getRawAndEntities<{ note_id: string; search_index_generation: string }>();
 
-			notes.forEach(note => {
-				this.indexNote(note);
-				latestId = note.id;
-			});
+			if (entities.length === 0) break;
+			latestId = entities[entities.length - 1].id;
+
+			const generations = new Map(raw.map(r => [r.note_id, Number(r.search_index_generation)]));
+			const operations = entities
+				.filter(note => this.isIndexTarget(note) && generations.has(note.id))
+				.flatMap(note => [
+					{
+						index: {
+							_index: this.elasticsearchNoteIndex as string,
+							_id: note.id,
+							version: generations.get(note.id),
+							version_type: 'external' as const,
+						},
+					},
+					this.toDocument(note),
+				]);
+			if (operations.length === 0) continue;
+
+			const res = await this.elasticsearch.bulk({ operations });
+			if (res.errors) {
+				const failed = res.items.filter(item => item.index?.error != null && item.index.status !== 409);
+				if (failed.length > 0) {
+					this.logger.warn(`Failed to index ${failed.length} notes`, { error: failed[0].index?.error });
+				}
+			}
 		}
 	}
 
+	/**
+	 * 索引を作り直す。修正前に索引へ入った削除済みのノートや対象外のノートも、これで取り除かれる。
+	 */
 	@bindThis
 	public async reindexNote(): Promise<void> {
 		if (!this.elasticsearch) return;
@@ -317,9 +360,6 @@ export class SearchService {
 			case 'sqlPgroonga': {
 				return this.searchNoteByLike(q, me, opts, pagination);
 			}
-			case 'meilisearch': {
-				return this.searchNoteByMeiliSearch(q, me, opts, pagination);
-			}
 			case 'elasticsearch': {
 				return this.searchNoteByElasticSearch(q, me, opts, pagination);
 			}
@@ -330,6 +370,25 @@ export class SearchService {
 		}
 	}
 
+	/**
+	 * ノートの searchableBy（検索を許可する範囲）を満たすものだけに絞り込む
+	 */
+	@bindThis
+	private generateSearchableByQuery(query: SelectQueryBuilder<MiNote>, me: MiUser | null): void {
+		query.andWhere(new Brackets(qb => {
+			qb.where('note."searchableBy" = \'public\'');
+			if (me != null) {
+				qb.orWhere(new Brackets(qb2 => {
+					qb2.where('note."searchableBy" = \'followers\' AND (note."userId" IN (SELECT "followeeId" FROM following WHERE following."followerId" = :searchMeId) OR note."userId" = :searchMeId)')
+						.orWhere('note."searchableBy" = \'limited\' AND note."userId" = :searchMeId')
+						.orWhere('note."searchableBy" = \'reacted\' AND (note."userId" IN (SELECT "userId" FROM note_reaction) OR note."userId" = :searchMeId)');
+				}));
+			}
+		}));
+
+		if (me != null) query.setParameter('searchMeId', me.id);
+	}
+
 	@bindThis
 	private async searchNoteByLike(q: string, me: MiUser | null, opts: SearchOpts, pagination: SearchPagination): Promise<MiNote[]> {
 		const query = this.queryService.makePaginationQuery(this.notesRepository.createQueryBuilder('note'), pagination.sinceId, pagination.untilId);
@@ -338,15 +397,9 @@ export class SearchService {
 			query.andWhere('note.userId = :userId', { userId: opts.userId });
 		}
 
+		this.generateSearchableByQuery(query, me);
+
 		query
-			.andWhere(new Brackets(qb => {
-				qb.andWhere('note."searchableBy" = :public', { public: 'public' })
-					.orWhere(new Brackets(qb2 => {
-						qb2.where('note."searchableBy" = :followers AND (note."userId" IN (SELECT "followeeId" FROM following WHERE following."followerId" = :meId) OR note."userId" = :meId)', { followers: 'followers', meId: me?.id })
-							.orWhere('note."searchableBy" = :limited AND note."userId" = :meId', { limited: 'limited', meId: me?.id })
-							.orWhere('note."searchableBy" = :reacted AND (note."userId" IN (SELECT "userId" FROM note_reaction) OR note."userId" = :meId)', { reacted: 'reacted', meId: me?.id });
-					}));
-			}))
 			.leftJoinAndSelect('note.reply', 'reply')
 			.leftJoinAndSelect('note.renote', 'renote')
 			.leftJoinAndSelect('reply.user', 'replyUser')
@@ -360,11 +413,19 @@ export class SearchService {
 			}
 		}
 
-		if (this.provider === 'sqlPgroonga') {
-			query.andWhere('note."text" &@~ :q', { q: q });
-		} else {
-			query.andWhere('LOWER(note."text") LIKE :q', { q: `%${ sqlLikeEscape(q.toLowerCase())}%` });
-		}
+		// 本文とCWの一致は必ず1つの括弧にまとめる。
+		// 括弧なしの OR があると、公開範囲や検索許可の条件が一部の分岐にしか掛からなくなる。
+		const likeQ = `%${sqlLikeEscape(q.toLowerCase())}%`;
+		query.andWhere(new Brackets(qb => {
+			if (this.provider === 'sqlPgroonga') {
+				qb.where('note."text" &@~ :pgroongaQ', { pgroongaQ: q });
+			} else {
+				qb.where('LOWER(note."text") LIKE :likeQ', { likeQ });
+			}
+			if (!opts.excludeNsfw) {
+				qb.orWhere('LOWER(note.cw) LIKE :likeQ', { likeQ });
+			}
+		}));
 
 		if (opts.excludeBot) {
 			query.innerJoin('note.user', 'user')
@@ -378,104 +439,12 @@ export class SearchService {
 		if (opts.excludeNsfw) {
 			query.andWhere('note.cw IS NULL')
 				.andWhere('NOT EXISTS (SELECT 1 FROM drive_file df WHERE df.id = ANY(note.fileIds) AND df.isSensitive = TRUE)');
-		} else {
-			query.orWhere('LOWER(note.cw) LIKE :q', { q: `%${sqlLikeEscape(q.toLowerCase())}%` });
-		}
-
-		if (this.provider === 'sqlPgroonga') {
-			query.andWhere('note."text" &@~ :q', { q: q });
-		} else {
-			query.andWhere('LOWER(note."text") LIKE :q', { q: `%${ sqlLikeEscape(q.toLowerCase())}%` });
 		}
 
 		this.queryService.generateVisibilityQuery(query, me);
 		this.queryService.generateBaseNoteFilteringQuery(query, me);
 
 		return query.limit(pagination.limit).getMany();
-	}
-
-	@bindThis
-	private async searchNoteByMeiliSearch(q: string, me: MiUser | null, opts: SearchOpts, pagination: SearchPagination): Promise<MiNote[]> {
-		if (!this.meilisearch) {
-			throw new Error('meilisearch is not available');
-		}
-		if (!this.meilisearchNoteIndex) {
-			throw new Error('index of meilisearch is not set');
-		}
-
-		const filter: Q = {
-			op: 'and',
-			qs: [],
-		};
-		if (pagination.untilId) filter.qs.push({
-			op: '<',
-			k: 'createdAt',
-			v: this.idService.parse(pagination.untilId).date.getTime(),
-		});
-		if (pagination.sinceId) filter.qs.push({
-			op: '>',
-			k: 'createdAt',
-			v: this.idService.parse(pagination.sinceId).date.getTime(),
-		});
-		if (opts.userId) filter.qs.push({
-			op: '=',
-			k: 'userId',
-			v: opts.userId,
-		});
-		if (opts.host) {
-			if (opts.host === '.') {
-				filter.qs.push({
-					op: 'is null',
-					k: 'userHost',
-				});
-			} else {
-				filter.qs.push({
-					op: '=',
-					k: 'userHost',
-					v: opts.host,
-				});
-			}
-		}
-
-		const res = await this.meilisearchNoteIndex.search(q, {
-			sort: ['createdAt:desc'],
-			matchingStrategy: 'all',
-			attributesToRetrieve: ['id', 'createdAt'],
-			filter: compileQuery(filter),
-			limit: pagination.limit,
-		});
-		if (res.hits.length === 0) {
-			return [];
-		}
-
-		const [
-			userIdWhoMeMuting,
-			userIdWhoBlockingMe,
-		] = me ? await Promise.all([
-			this.cacheService.userMutingsCache.fetch(me.id),
-			this.cacheService.userBlockedCache.fetch(me.id),
-		])
-		: [new Set<string>(), new Set<string>()];
-
-		const query = this.notesRepository.createQueryBuilder('note')
-			.innerJoinAndSelect('note.user', 'user')
-			.leftJoinAndSelect('note.reply', 'reply')
-			.leftJoinAndSelect('note.renote', 'renote')
-			.leftJoinAndSelect('reply.user', 'replyUser')
-			.leftJoinAndSelect('renote.user', 'renoteUser');
-
-		query.where('note.id IN (:...noteIds)', { noteIds: res.hits.map(x => x.id) });
-
-		this.queryService.generateBlockedHostQueryForNote(query);
-		this.queryService.generateSuspendedUserQueryForNote(query);
-
-		const notes = (await query.getMany()).filter(note => {
-			if (me && isUserRelated(note, userIdWhoBlockingMe)) return false;
-			if (me && isUserRelated(note, userIdWhoMeMuting)) return false;
-			return true;
-		});
-
-		return notes.sort((a, b) => a.id > b.id ? -1 : 1);
 	}
 
 	@bindThis
