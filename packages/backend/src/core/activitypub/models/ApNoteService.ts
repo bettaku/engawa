@@ -36,6 +36,7 @@ import { extractApHashtags } from './tag.js';
 import { ApMentionService } from './ApMentionService.js';
 import { ApQuestionService } from './ApQuestionService.js';
 import { ApEventService } from './ApEventService.js';
+import type { noteSearchableBy } from '@/types.js';
 import { ApImageService } from './ApImageService.js';
 import type { Resolver } from '../ApResolverService.js';
 import type { IObject, IPost } from '../type.js';
@@ -231,15 +232,15 @@ export class ApNoteService {
 		}
 
 		const searchableActivity = toArray(note.searchableBy);
-		let searchable: string[] = [];
+		let searchable: typeof noteSearchableBy[number];
 		if (searchableActivity.includes('https://www.w3.org/ns/activitystreams#Public')) {
-			searchable = ['public'];
+			searchable = 'public';
 		} else if (searchableActivity.includes('kmyblue:Limited') || searchableActivity.includes('as:Limited')) {
-			searchable = ['limited'];
+			searchable = 'limited';
 		} else if (searchableActivity.includes('/followers')) {
-			searchable = ['followers'];
+			searchable = 'followers';
 		} else {
-			searchable = ['reacted'];
+			searchable = 'reacted';
 		}
 
 		// 添付ファイル
@@ -359,7 +360,7 @@ export class ApNoteService {
 				event,
 				uri: note.id,
 				url: url,
-				searchableBy: note.searchableBy ? searchable : ['public'],
+				searchableBy: note.searchableBy ? searchable : 'public',
 				deleteAt: note.deleteAt ? new Date(note.deleteAt) : null,
 			}, silent);
 		} catch (err: any) {
