@@ -55,6 +55,7 @@ import { MiMuting } from '@/models/Muting.js';
 import { MiNote } from '@/models/Note.js';
 import { MiNoteDraft } from '@/models/NoteDraft.js';
 import { MiReactionBakeLedger } from '@/models/ReactionBakeLedger.js';
+import { MiNoteOutbox } from '@/models/NoteOutbox.js';
 import { MiNoteFavorite } from '@/models/NoteFavorite.js';
 import { MiNoteReaction } from '@/models/NoteReaction.js';
 import { MiNoteThreadMuting } from '@/models/NoteThreadMuting.js';
@@ -193,6 +194,7 @@ export {
 	MiNote,
 	MiNoteDraft,
 	MiReactionBakeLedger,
+	MiNoteOutbox,
 	MiNoteFavorite,
 	MiNoteReaction,
 	MiNoteThreadMuting,

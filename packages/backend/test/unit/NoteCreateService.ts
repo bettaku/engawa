@@ -4,10 +4,13 @@
  */
 
 import { Test } from '@nestjs/testing';
+import type { TestingModule } from '@nestjs/testing';
 import { afterEach, vi } from 'vitest';
 
 import { CoreModule } from '@/core/CoreModule.js';
 import { NoteCreateService } from '@/core/NoteCreateService.js';
+import { NoteOutboxService } from '@/core/NoteOutboxService.js';
+import type { MiNoteOutbox } from '@/models/NoteOutbox.js';
 import { GlobalModule } from '@/GlobalModule.js';
 import { MiNote } from '@/models/Note.js';
 import { IPoll } from '@/models/Poll.js';
@@ -16,9 +19,10 @@ import { IdentifiableError } from '@/misc/identifiable-error.js';
 
 describe('NoteCreateService', () => {
 	let noteCreateService: NoteCreateService;
+	let app: TestingModule;
 
 	beforeAll(async () => {
-		const app = await Test.createTestingModule({
+		app = await Test.createTestingModule({
 			imports: [GlobalModule, CoreModule],
 		}).compile();
 		noteCreateService = app.get<NoteCreateService>(NoteCreateService);
@@ -61,6 +65,7 @@ describe('NoteCreateService', () => {
 			replyUserHost: null,
 			renoteUserId: null,
 			renoteUserHost: null,
+			renoteCounted: null,
 			updatedAt: null,
 			updatedAtHistory: null,
 			hasEvent: false,
@@ -173,11 +178,12 @@ describe('NoteCreateService', () => {
 		function stubInsert() {
 			// DBへの書き込みと後処理は止め、作成処理が insert まで到達したかだけを見る
 			const target = noteCreateService as unknown as {
-				insertNote: () => Promise<MiNote>;
-				postNoteCreated: () => Promise<void>;
+				insertNote: () => Promise<{ note: MiNote; outboxRecord: MiNoteOutbox }>;
 			};
-			const insertNote = vi.spyOn(target, 'insertNote').mockImplementation(async () => ({ id: 'created-note-id' }) as MiNote);
-			const postNoteCreated = vi.spyOn(target, 'postNoteCreated').mockImplementation(async () => {});
+			const insertNote = vi.spyOn(target, 'insertNote').mockImplementation(async () => ({ note: { id: 'created-note-id' } as MiNote, outboxRecord: { seq: '1' } as MiNoteOutbox }));
+			const noteOutboxService = app.get(NoteOutboxService);
+			void noteOutboxService.dispatchClaimed;
+			const postNoteCreated = vi.spyOn(noteOutboxService, 'dispatchClaimed').mockImplementation(() => {});
 			return { insertNote, postNoteCreated };
 		}
 

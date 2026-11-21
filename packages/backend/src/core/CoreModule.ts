@@ -44,6 +44,7 @@ import { ModerationLogService } from './ModerationLogService.js';
 import { NoteCreateService } from './NoteCreateService.js';
 import { NoteUpdateService } from './NoteUpdateService.js';
 import { NoteDeleteService } from './NoteDeleteService.js';
+import { NoteOutboxService } from './NoteOutboxService.js';
 import { NotePiningService } from './NotePiningService.js';
 import { NoteDraftService } from './NoteDraftService.js';
 import { NotificationService } from './NotificationService.js';
@@ -193,6 +194,7 @@ const $ModerationLogService: Provider = { provide: 'ModerationLogService', useEx
 const $NoteCreateService: Provider = { provide: 'NoteCreateService', useExisting: NoteCreateService };
 const $NoteUpdateService: Provider = { provide: 'NoteUpdateService', useExisting: NoteUpdateService };
 const $NoteDeleteService: Provider = { provide: 'NoteDeleteService', useExisting: NoteDeleteService };
+const $NoteOutboxService: Provider = { provide: 'NoteOutboxService', useExisting: NoteOutboxService };
 const $NotePiningService: Provider = { provide: 'NotePiningService', useExisting: NotePiningService };
 const $NoteDraftService: Provider = { provide: 'NoteDraftService', useExisting: NoteDraftService };
 const $NotificationService: Provider = { provide: 'NotificationService', useExisting: NotificationService };
@@ -350,6 +352,7 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		NoteCreateService,
 		NoteUpdateService,
 		NoteDeleteService,
+		NoteOutboxService,
 		NotePiningService,
 		NoteDraftService,
 		NotificationService,
@@ -505,6 +508,7 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		$NoteCreateService,
 		$NoteUpdateService,
 		$NoteDeleteService,
+		$NoteOutboxService,
 		$NotePiningService,
 		$NoteDraftService,
 		$NotificationService,
@@ -659,6 +663,7 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		NoteCreateService,
 		NoteUpdateService,
 		NoteDeleteService,
+		NoteOutboxService,
 		NotePiningService,
 		NoteDraftService,
 		NotificationService,
@@ -813,6 +818,7 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		$NoteCreateService,
 		$NoteUpdateService,
 		$NoteDeleteService,
+		$NoteOutboxService,
 		$NotePiningService,
 		$NoteDraftService,
 		$NotificationService,

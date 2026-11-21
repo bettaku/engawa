@@ -33,7 +33,7 @@ describe('AutoDeleteNotesProcessorService', () => {
 	let userProfilesRepository: UserProfilesRepository;
 
 	let publishNoteStream: MockInstance<GlobalEventService['publishNoteStream']>;
-	let deliverToFollowers: MockInstance<ApDeliverManagerService['deliverToFollowers']>;
+	let deliverToFollowers: MockInstance<ApDeliverManagerService['deliverToFollowersAndUsers']>;
 
 	const users: MiUser[] = [];
 
@@ -123,10 +123,8 @@ describe('AutoDeleteNotesProcessorService', () => {
 		publishNoteStream = vi.spyOn(globalEventService, 'publishNoteStream');
 
 		const apDeliverManagerService = app.get(ApDeliverManagerService);
-		void apDeliverManagerService.deliverToFollowers;
-		void apDeliverManagerService.deliverToUsers;
-		deliverToFollowers = vi.spyOn(apDeliverManagerService, 'deliverToFollowers').mockResolvedValue(undefined);
-		vi.spyOn(apDeliverManagerService, 'deliverToUsers').mockResolvedValue(undefined);
+		void apDeliverManagerService.deliverToFollowersAndUsers;
+		deliverToFollowers = vi.spyOn(apDeliverManagerService, 'deliverToFollowersAndUsers').mockResolvedValue(undefined);
 
 		await queueService.dbQueue.obliterate({ force: true });
 	});

@@ -362,12 +362,12 @@ export class GlobalEventService {
 	}
 
 	@bindThis
-	private publish(channel: StreamChannels, type: string | null, value?: any): void {
+	private publish(channel: StreamChannels, type: string | null, value?: any): Promise<number> {
 		const message = type == null ? value : value == null ?
 			{ type: type, body: null } :
 			{ type: type, body: value };
 
-		this.redisForPub.publish(this.config.host, JSON.stringify({
+		return this.redisForPub.publish(this.config.host, JSON.stringify({
 			channel: channel,
 			message: message,
 		}));
@@ -394,8 +394,9 @@ export class GlobalEventService {
 	}
 
 	@bindThis
-	public publishNoteStream<K extends keyof NoteEventTypes>(note: MiNote, type: K, value?: NoteEventTypes[K]): void {
-		this.publish(`noteStream:${note.id}`, type, {
+	/** Redisが受け付けるまで待てるように、Promiseを返す（outboxの副作用で失敗を検知するため） */
+	public async publishNoteStream<K extends keyof NoteEventTypes>(note: MiNote, type: K, value?: NoteEventTypes[K]): Promise<void> {
+		await this.publish(`noteStream:${note.id}`, type, {
 			id: note.id,
 			userId: note.userId,
 			visibility: note.visibility,
@@ -420,8 +421,9 @@ export class GlobalEventService {
 	}
 
 	@bindThis
-	public publishNotesStream(note: Packed<'Note'>): void {
-		this.publish('notesStream', null, note);
+	/** Redisが受け付けるまで待てるように、Promiseを返す（outboxの副作用で失敗を検知するため） */
+	public async publishNotesStream(note: Packed<'Note'>): Promise<void> {
+		await this.publish('notesStream', null, note);
 	}
 
 	@bindThis

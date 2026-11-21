@@ -76,6 +76,9 @@ const camelToSnake = (str: string): string => {
 
 const removeDuplicates = (array: any[]) => Array.from(new Set(array));
 
+/** waitForSaveで待っている差分の保存に失敗したとき、保存し直すまでの時間 */
+const SAVE_RETRY_DELAY = 1000 * 10;
+
 type Commit<S extends Schema> = {
 	[K in keyof S]?: S[K]['uniqueIncrement'] extends true ? string[] : number;
 };
@@ -159,6 +162,14 @@ export default abstract class Chart<T extends Schema> {
 		diff: Commit<T>;
 		group: string | null;
 	}[] = [];
+
+	/** バッファにある差分の保存を待っている呼び出し（waitForSave）。保存を始めるときにバッファと一緒に引き取る */
+	private saveWaiters: (() => void)[] = [];
+	/** 保存は1つずつ順に行う（同じ差分を2回足したり、保存中に追加された差分を消したりしないため） */
+	private saving: Promise<void> = Promise.resolve();
+	/** waitForSaveで予約した、まだ始まっていない保存があるか */
+	private saveScheduled = false;
+	private saveRetryTimer: NodeJS.Timeout | null = null;
 	// ↓にしたいけどfindOneとかで型エラーになる
 	//private repositoryForHour: Repository<RawRecord<T>> & MiRepository<RawRecord<T>>;
 	//private repositoryForDay: Repository<RawRecord<T>> & MiRepository<RawRecord<T>>;
@@ -429,10 +440,53 @@ export default abstract class Chart<T extends Schema> {
 		});
 	}
 
+	/**
+	 * バッファにある差分をデータベースに保存する。
+	 * 保存は1つずつ順に行う。保存を始めた時点のバッファを引き取り、保存中に追加された差分は次の保存に回す。
+	 * 保存に失敗したグループの差分はバッファに戻す
+	 */
 	@bindThis
-	public async save(): Promise<void> {
-		if (this.buffer.length === 0) {
+	public save(): Promise<void> {
+		const result = this.saving.then(() => this.saveBuffer());
+		this.saving = result.catch(() => {});
+		return result;
+	}
+
+	/**
+	 * 今バッファにある差分（呼び出し元がこれまでにcommitしたもの）がデータベースに保存されるまで待つ。
+	 * 保存はすぐに予約する。保存中なら、その次の保存にまとめる。
+	 * 保存に失敗したら、差分をバッファに戻して保存し直し、保存できたときに解決する
+	 */
+	@bindThis
+	public waitForSave(): Promise<void> {
+		return new Promise(resolve => {
+			this.saveWaiters.push(resolve);
+			this.scheduleSave();
+		});
+	}
+
+	@bindThis
+	private scheduleSave(): void {
+		if (this.saveScheduled) return;
+		this.saveScheduled = true;
+		this.saving = this.saving.then(() => {
+			this.saveScheduled = false;
+			return this.saveBuffer();
+		}).catch(err => {
+			this.logger.error(`${this.name}: Failed to save`, { error: err });
+		});
+	}
+
+	@bindThis
+	private async saveBuffer(): Promise<void> {
+		const buffer = this.buffer;
+		const waiters = this.saveWaiters;
+		this.buffer = [];
+		this.saveWaiters = [];
+
+		if (buffer.length === 0) {
 			this.logger.info(`${this.name}: Write skipped`);
+			for (const resolve of waiters) resolve();
 			return;
 		}
 
@@ -442,10 +496,10 @@ export default abstract class Chart<T extends Schema> {
 		// そのログは本来は 01:00~ のログとしてDBに保存されて欲しいのに、02:00~ のログ扱いになってしまう。
 		// これを回避するための実装は複雑になりそうなため、一旦保留。
 
-		const update = async (logHour: RawRecord<T>, logDay: RawRecord<T>): Promise<void> => {
+		const update = async (entries: typeof this.buffer, logHour: RawRecord<T>, logDay: RawRecord<T>): Promise<void> => {
 			const finalDiffs = {} as Record<string, number | string[]>;
 
-			for (const diff of this.buffer.filter(q => q.group == null || (q.group === logHour.group)).map(q => q.diff)) {
+			for (const diff of entries.map(q => q.diff)) {
 				for (const [k, v] of Object.entries(diff)) {
 					if (finalDiffs[k] == null) {
 						finalDiffs[k] = v;
@@ -518,35 +572,55 @@ export default abstract class Chart<T extends Schema> {
 				}
 			}
 
-			// ログ更新
-			await Promise.all([
-				this.repositoryForHour.createQueryBuilder()
-					.update()
+			// ログ更新。時間と日のログを同じトランザクションで更新する（片方だけ反映された状態で、再び保存して二重に足さないため）
+			await this.repositoryForHour.manager.transaction(async manager => {
+				await manager.createQueryBuilder()
+					.update(this.repositoryForHour.target)
 					.set(queryForHour as any)
 					.where('id = :id', { id: logHour.id })
-					.execute(),
-				this.repositoryForDay.createQueryBuilder()
-					.update()
+					.execute();
+				await manager.createQueryBuilder()
+					.update(this.repositoryForDay.target)
 					.set(queryForDay as any)
 					.where('id = :id', { id: logDay.id })
-					.execute(),
-			]);
+					.execute();
+			});
 
 			this.logger.info(`${this.name + (logHour.group ? `:${logHour.group}` : '')}: Updated`);
-
-			// TODO: この一連の処理が始まった後に新たにbufferに入ったものは消さないようにする
-			this.buffer = this.buffer.filter(q => q.group != null && (q.group !== logHour.group));
 		};
 
-		const groups = removeDuplicates(this.buffer.map(log => log.group));
+		const groups: (string | null)[] = removeDuplicates(buffer.map(log => log.group));
 
-		await Promise.all(
+		const results = await Promise.allSettled(
 			groups.map(group =>
 				Promise.all([
 					this.claimCurrentLog(group, 'hour'),
 					this.claimCurrentLog(group, 'day'),
 				]).then(([logHour, logDay]) =>
-					update(logHour, logDay))));
+					update(buffer.filter(q => q.group == null || q.group === group), logHour, logDay))));
+
+		const failedGroups = groups.filter((_, i) => results[i].status === 'rejected');
+		if (failedGroups.length === 0) {
+			for (const resolve of waiters) resolve();
+			return;
+		}
+
+		// 保存できなかったグループの差分をバッファに戻す。待っている呼び出しは、保存し直せたときに解決する
+		this.buffer = [...buffer.filter(q => failedGroups.includes(q.group)), ...this.buffer];
+		if (waiters.length > 0) {
+			this.saveWaiters = [...waiters, ...this.saveWaiters];
+			if (this.saveRetryTimer == null) {
+				this.saveRetryTimer = setTimeout(() => {
+					this.saveRetryTimer = null;
+					this.scheduleSave();
+				}, SAVE_RETRY_DELAY);
+				// 停止を妨げない（停止時の保存はChartManagementServiceが行う）
+				this.saveRetryTimer.unref();
+			}
+		}
+
+		const failure = results.find(r => r.status === 'rejected');
+		throw failure?.reason;
 	}
 
 	@bindThis

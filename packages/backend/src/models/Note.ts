@@ -263,6 +263,15 @@ export class MiNote {
 	})
 	public renoteUserHost: string | null;
 
+	/**
+	 * Renote先のrenoteCountに計上したか。作成時に決め、削除時の減算と修復（repair-counters）で同じ事実を使う。
+	 * この列を追加する前に作成したノートはnullで、そのときは投稿者の現在のisBotで判定する。
+	 */
+	@Column('boolean', {
+		nullable: true,
+	})
+	public renoteCounted: boolean | null;
+
 	@Column('enum', {
 		enum: noteSearchableBy,
 		nullable: true,
