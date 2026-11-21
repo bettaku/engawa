@@ -3,9 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { setImmediate } from 'node:timers/promises';
 import { In, DataSource } from 'typeorm';
-import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import * as mfm from 'mfc-js';
 import type { IMentionedRemoteUsers } from '@/models/Note.js';
 import { MiNote } from '@/models/Note.js';
@@ -14,6 +13,9 @@ import { getNoteDeliveryScope } from '@/misc/note-delivery-scope.js';
 import { sanitizeEventMetadata } from '@/misc/sanitize-event-metadata.js';
 import type { IEvent } from '@/models/Event.js';
 import type { NotesRepository, UsersRepository } from '@/models/_.js';
+import type { MiNoteOutbox } from '@/models/NoteOutbox.js';
+import { NoteOutboxService } from '@/core/NoteOutboxService.js';
+import type { NoteOutboxStep } from '@/core/NoteOutboxService.js';
 import type { MiUser, MiLocalUser, MiRemoteUser } from '@/models/User.js';
 import { RelayService } from '@/core/RelayService.js';
 import { DI } from '@/di-symbols.js';
@@ -49,9 +51,7 @@ type Option = {
 };
 
 @Injectable()
-export class NoteUpdateService implements OnApplicationShutdown {
-	#shutdownController = new AbortController();
-
+export class NoteUpdateService {
 	constructor(
 		@Inject(DI.db)
 		private db: DataSource,
@@ -71,7 +71,10 @@ export class NoteUpdateService implements OnApplicationShutdown {
 		private searchService: SearchService,
 		private activeUsersChart: ActiveUsersChart,
 		private noteHistoryService: NoteHistorySerivce,
-	) { }
+		private noteOutboxService: NoteOutboxService,
+	) {
+		this.noteOutboxService.registerHandler('updated', this.handleUpdated);
+	}
 
 	@bindThis
 	public async update(user: {
@@ -113,22 +116,19 @@ export class NoteUpdateService implements OnApplicationShutdown {
 
 		tags = tags.filter(tag => Array.from(tag ?? '').length <= 128).splice(0, 32);
 
-		const updatedNote = await this.updateNote(user, note, data, tags, emojis);
+		const updated = await this.updateNote(user, note, data, tags, emojis, silent);
+		if (updated == null) return null;
 
-		if (updatedNote) {
-			setImmediate('post updated', { signal: this.#shutdownController.signal }).then(
-				() => this.postNoteUpdated(updatedNote, user, silent),
-				() => { /* aborted, ignore this */ },
-			);
-		}
+		// 後処理はoutboxに記録済み。コミット後すぐにこのプロセスで処理し、停止などで残った分は照合ジョブが拾う
+		this.noteOutboxService.dispatch(updated.outboxSeqs);
 
-		return updatedNote;
+		return updated.note;
 	}
 
 	@bindThis
 	private async updateNote(user: {
 		id: MiUser['id']; host: MiUser['host'];
-	}, note: MiNote, data: Option, tags: string[], emojis: string[]): Promise<MiNote | null> {
+	}, note: MiNote, data: Option, tags: string[], emojis: string[], silent: boolean): Promise<{ note: MiNote | null; outboxSeqs: MiNoteOutbox['seq'][] } | null> {
 		const updatedAtHistory = note.updatedAtHistory ? note.updatedAtHistory : [];
 
 		const values = new MiNote({
@@ -171,34 +171,16 @@ export class NoteUpdateService implements OnApplicationShutdown {
 					: Promise.resolve(null),
 			]);
 
-			// Start transaction for any poll or event changes
-			const needsTransaction = note.hasPoll || values.hasPoll || note.hasEvent || values.hasEvent;
+			// 更新の直前に削除された場合（予約削除など）は、ノートなしとして扱う（null）。
+			// ノートの行と後処理のoutboxを同じトランザクションで書く
+			const outboxSeqs = await this.db.transaction(async transactionalEntityManager => {
+				const result = await transactionalEntityManager.update(MiNote, { id: note.id }, values);
+				if (result.affected === 0) return null;
 
-			// 更新の直前に削除された場合（予約削除など）は、ノートなしとして扱う
-			let noteExists: boolean;
-
-			if (needsTransaction) {
-				noteExists = await this.db.transaction(async transactionalEntityManager => {
-					const result = await transactionalEntityManager.update(MiNote, { id: note.id }, values);
-					if (result.affected === 0) return false;
-
-					if (note.hasPoll && values.hasPoll) {
-						const old_poll = await transactionalEntityManager.findOneBy(MiPoll, { noteId: note.id });
-						if (old_poll && (old_poll.choices.toString() !== data.poll!.choices.toString() || old_poll.multiple !== data.poll!.multiple)) {
-							await transactionalEntityManager.delete(MiPoll, { noteId: note.id });
-							const poll = new MiPoll({
-								noteId: note.id,
-								choices: data.poll!.choices,
-								expiresAt: data.poll!.expiresAt,
-								multiple: data.poll!.multiple,
-								votes: new Array(data.poll!.choices.length).fill(0),
-								noteVisibility: note.visibility,
-								userId: user.id,
-								userHost: user.host,
-							});
-							await transactionalEntityManager.insert(MiPoll, poll);
-						}
-					} else if (!note.hasPoll && values.hasPoll) {
+				if (note.hasPoll && values.hasPoll) {
+					const old_poll = await transactionalEntityManager.findOneBy(MiPoll, { noteId: note.id });
+					if (old_poll && (old_poll.choices.toString() !== data.poll!.choices.toString() || old_poll.multiple !== data.poll!.multiple)) {
+						await transactionalEntityManager.delete(MiPoll, { noteId: note.id });
 						const poll = new MiPoll({
 							noteId: note.id,
 							choices: data.poll!.choices,
@@ -210,33 +192,33 @@ export class NoteUpdateService implements OnApplicationShutdown {
 							userHost: user.host,
 						});
 						await transactionalEntityManager.insert(MiPoll, poll);
-					} else if (note.hasPoll && !values.hasPoll) {
-						// Remove poll
-						await transactionalEntityManager.delete(MiPoll, { noteId: note.id });
 					}
+				} else if (!note.hasPoll && values.hasPoll) {
+					const poll = new MiPoll({
+						noteId: note.id,
+						choices: data.poll!.choices,
+						expiresAt: data.poll!.expiresAt,
+						multiple: data.poll!.multiple,
+						votes: new Array(data.poll!.choices.length).fill(0),
+						noteVisibility: note.visibility,
+						userId: user.id,
+						userHost: user.host,
+					});
+					await transactionalEntityManager.insert(MiPoll, poll);
+				} else if (note.hasPoll && !values.hasPoll) {
+					// Remove poll
+					await transactionalEntityManager.delete(MiPoll, { noteId: note.id });
+				}
 
-					if (note.hasEvent && values.hasEvent) {
-						const old_event = await transactionalEntityManager.findOneBy(MiEvent, { noteId: note.id });
-						if (old_event && (
-							old_event.start !== data.event!.start ||
-							old_event.end !== data.event!.end ||
-							old_event.title !== data.event!.title ||
-							old_event.metadata !== data.event!.metadata
-						)) {
-							await transactionalEntityManager.delete(MiEvent, { noteId: note.id });
-							const event = new MiEvent({
-								noteId: note.id,
-								title: data.event!.title,
-								start: data.event!.start,
-								end: data.event!.end ?? undefined,
-								metadata: sanitizeEventMetadata(data.event!.metadata),
-								noteVisibility: note.visibility,
-								userId: user.id,
-								userHost: user.host,
-							});
-							await transactionalEntityManager.insert(MiEvent, event);
-						}
-					} else if (!note.hasEvent && values.hasEvent) {
+				if (note.hasEvent && values.hasEvent) {
+					const old_event = await transactionalEntityManager.findOneBy(MiEvent, { noteId: note.id });
+					if (old_event && (
+						old_event.start !== data.event!.start ||
+						old_event.end !== data.event!.end ||
+						old_event.title !== data.event!.title ||
+						old_event.metadata !== data.event!.metadata
+					)) {
+						await transactionalEntityManager.delete(MiEvent, { noteId: note.id });
 						const event = new MiEvent({
 							noteId: note.id,
 							title: data.event!.title,
@@ -248,22 +230,36 @@ export class NoteUpdateService implements OnApplicationShutdown {
 							userHost: user.host,
 						});
 						await transactionalEntityManager.insert(MiEvent, event);
-					} else if (note.hasEvent && !values.hasEvent) {
-						await transactionalEntityManager.delete(MiEvent, { noteId: note.id });
 					}
+				} else if (!note.hasEvent && values.hasEvent) {
+					const event = new MiEvent({
+						noteId: note.id,
+						title: data.event!.title,
+						start: data.event!.start,
+						end: data.event!.end ?? undefined,
+						metadata: sanitizeEventMetadata(data.event!.metadata),
+						noteVisibility: note.visibility,
+						userId: user.id,
+						userHost: user.host,
+					});
+					await transactionalEntityManager.insert(MiEvent, event);
+				} else if (note.hasEvent && !values.hasEvent) {
+					await transactionalEntityManager.delete(MiEvent, { noteId: note.id });
+				}
 
-					return true;
-				});
-			} else {
-				const result = await this.notesRepository.update({ id: note.id }, values);
-				noteExists = result.affected !== 0;
-			}
+				return await this.noteOutboxService.add(transactionalEntityManager, [{
+					type: 'updated',
+					noteId: note.id,
+					userId: note.userId,
+					payload: { silent },
+				}]);
+			});
 
-			if (!noteExists) return null;
+			if (outboxSeqs == null) return null;
 
 			await this.noteHistoryService.recordHistory(values, note, originalPoll, originalEvent, { updatedAt: data.updatedAt });
 
-			return await this.notesRepository.findOneBy({ id: note.id });
+			return { note: await this.notesRepository.findOneBy({ id: note.id }), outboxSeqs };
 		} catch (e) {
 			console.error(e);
 
@@ -271,37 +267,45 @@ export class NoteUpdateService implements OnApplicationShutdown {
 		}
 	}
 
+	/**
+	 * outboxの更新のレコードの処理。処理する時点のノートの状態を読み直して副作用を実行する。
+	 * 同じノートを続けて更新した場合も、レコードごとに処理する（どれも処理する時点の最新の状態を配信・配送する）。
+	 */
 	@bindThis
-	private async postNoteUpdated(note: MiNote, user: {
-		id: MiUser['id'];
-		username: MiUser['username'];
-		host: MiUser['host'];
-		isBot: MiUser['isBot'];
-		isIndexable: MiUser['isIndexable'];
-		isSensitive: MiUser['isSensitive'];
-	}, silent: boolean) {
+	private async handleUpdated(record: MiNoteOutbox, step: NoteOutboxStep) {
+		// 削除済みなら、削除の側が配信・配送・索引の削除を行う
+		const note = await this.notesRepository.findOneBy({ id: record.noteId });
+		if (note == null) return;
+
+		const user = await this.usersRepository.findOneBy({ id: note.userId });
+		if (user == null) return;
+
+		const silent = record.payload.silent === true;
+
 		// 予約削除のジョブをDBのdeleteAtに合わせる
-		await this.queueService.syncScheduledNoteDelete(note.id, note.deleteAt);
+		await step('scheduledDelete', () => this.queueService.syncScheduledNoteDelete(note.id, note.deleteAt));
 
 		if (!silent) {
-			if (this.userEntityService.isLocalUser(user)) this.activeUsersChart.write(user);
+			await step('activeUsers', () => {
+				if (this.userEntityService.isLocalUser(user)) this.activeUsersChart.write(user);
+			});
 
-			this.globalEventService.publishNoteStream(note, 'updated', { cw: note.cw, text: note.text, disableRightClick: note.disableRightClick, deleteAt: note.deleteAt });
+			await step('stream', () => {
+				this.globalEventService.publishNoteStream(note, 'updated', { cw: note.cw, text: note.text, disableRightClick: note.disableRightClick, deleteAt: note.deleteAt });
+			});
 
 			//#region AP deliver
-			if (this.userEntityService.isLocalUser(user) && getNoteDeliveryScope(note).federate) {
-				await (async () => {
-					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-					// @ts-expect-error
-					const noteActivity = await this.renderNoteActivity(note, user);
+			await step('deliver', async () => {
+				// 配送先は、処理する時点のノートの公開範囲から決める
+				if (!this.userEntityService.isLocalUser(user) || !getNoteDeliveryScope(note).federate) return;
 
-					await this.deliverToConcerned(user, note, noteActivity);
-				})();
-			}
+				const noteActivity = await this.renderNoteActivity(note, user);
+				await this.deliverToConcerned(user, note, noteActivity);
+			});
 			//#endregion
 		}
 
-		this.reIndex(note);
+		await step('index', () => this.reIndex(note));
 	}
 
 	@bindThis
@@ -356,21 +360,9 @@ export class NoteUpdateService implements OnApplicationShutdown {
 	}
 
 	@bindThis
-	public dispose(): void {
-		this.#shutdownController.abort();
-	}
-
-	@bindThis
-	public onApplicationShutdown(signal?: string | undefined): void {
-		this.dispose();
-	}
-
-	@bindThis
-	private reIndex(note: MiNote) {
+	private async reIndex(note: MiNote) {
 		// 索引の更新はジョブで行い、実行時点のDBの状態を反映する。
 		// 本文がなくなった場合や、検索対象外の公開範囲になった場合は、ジョブが索引から削除する。
-		this.searchService.requestSyncNoteIndex(note.id).catch(err => {
-			console.error(`Failed to request search index sync of note ${note.id}`, err);
-		});
+		await this.searchService.requestSyncNoteIndex(note.id);
 	}
 }

@@ -10,6 +10,7 @@ import { CommandModule } from '@/cli/CommandModule.js';
 import { NestLogger } from '@/NestLogger.js';
 import { CommandService } from '@/cli/CommandService.js';
 import { QueueService } from '@/core/QueueService.js';
+import { NoteOutboxService } from '@/core/NoteOutboxService.js';
 import { COUNTER_NAMES, CounterConsistencyService, type CounterName } from '@/core/CounterConsistencyService.js';
 
 process.title = 'Engawa Cli';
@@ -49,10 +50,13 @@ switch (command) {
 		console.log('  check-counters [counter...] - Checks denormalized counters (exits with 1 if any mismatch is found)');
 		console.log('  repair-counters [counter...] - Recounts and repairs denormalized counters');
 		console.log(`    counters: ${COUNTER_NAMES.join(', ')}`);
-		console.log('    Checks and repairs are not synchronized with ordinary counter updates, so counters may still drift');
-		console.log('    while notes, follows or clips are being written. For a reliable result, stop writes, wait for running');
-		console.log('    jobs to finish, then repair and check again.');
+		console.log('    note.repliesCount, note.renoteCount and user.notesCount can be repaired while notes are being written.');
+		console.log('    The other counters are not synchronized with ordinary updates, so they may still drift while follows or');
+		console.log('    clips are being written. For a reliable result, stop writes, wait for running jobs to finish, then repair');
+		console.log('    and check again.');
 		console.log('  bake-reactions - Applies buffered reactions to the database (stop the queue processes first)');
+		console.log('  drain-note-outbox - Runs the pending side effects of note creation, update and deletion (before rolling back');
+		console.log('    to a version without note_outbox: stop the server processes first). Exits with 1 if records remain');
 		console.log('  register-job-schedulers - Registers the repeatable system jobs (for queue processes started with CP_NO_JOB_SCHEDULERS)');
 		break;
 	}
@@ -86,6 +90,15 @@ switch (command) {
 	case 'bake-reactions': {
 		await commandService.bakeReactions();
 		console.log('Buffered reactions have been baked.');
+		break;
+	}
+	case 'drain-note-outbox': {
+		const result = await app.get(NoteOutboxService).drain();
+		console.log(`Processed: ${result.processed}, remaining: ${result.remaining}`);
+		if (result.remaining > 0) {
+			console.log('Some records are being processed by another process or are waiting for a retry. Run this command again later.');
+			process.exitCode = 1;
+		}
 		break;
 	}
 	case 'register-job-schedulers': {

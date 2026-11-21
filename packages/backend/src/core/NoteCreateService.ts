@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { setImmediate } from 'node:timers/promises';
 import * as mfm from 'mfc-js';
 import { In, DataSource, IsNull, LessThan } from 'typeorm';
 import type { EntityManager } from 'typeorm';
@@ -25,7 +24,8 @@ import type { MiDriveFile } from '@/models/DriveFile.js';
 import type { MiApp } from '@/models/App.js';
 import { concat } from '@/misc/prelude/array.js';
 import { IdService } from '@/core/IdService.js';
-import type { MiUser, MiLocalUser, MiRemoteUser } from '@/models/User.js';
+import { MiUser } from '@/models/User.js';
+import type { MiLocalUser, MiRemoteUser } from '@/models/User.js';
 import type { IPoll } from '@/models/Poll.js';
 import { MiPoll } from '@/models/Poll.js';
 import { isDuplicateKeyValueError } from '@/misc/is-duplicate-key-value-error.js';
@@ -59,12 +59,16 @@ import { FanoutTimelineService } from '@/core/FanoutTimelineService.js';
 import { UtilityService } from '@/core/UtilityService.js';
 import { UserBlockingService } from '@/core/UserBlockingService.js';
 import { isReply } from '@/misc/is-reply.js';
-import { trackPromise } from '@/misc/promise-tracker.js';
 import { IdentifiableError } from '@/misc/identifiable-error.js';
 import { CollapsedQueue } from '@/misc/collapsed-queue.js';
 import { CacheService } from '@/core/CacheService.js';
 import { isQuote, isRenote } from '@/misc/is-renote.js';
 import type { noteSearchableBy } from '@/types.js';
+import type { Packed } from '@/misc/json-schema.js';
+import { NoteOutboxService } from '@/core/NoteOutboxService.js';
+import type { NoteOutboxStep } from '@/core/NoteOutboxService.js';
+import type { MiNoteOutbox } from '@/models/NoteOutbox.js';
+import { SMALLINT_MAX } from '@/core/CounterConsistencyService.js';
 
 type NotificationType = 'reply' | 'renote' | 'quote' | 'mention';
 
@@ -171,8 +175,6 @@ export type NoteCreateInternalOptions = {
 
 @Injectable()
 export class NoteCreateService implements OnApplicationShutdown {
-	#shutdownController = new AbortController();
-
 	public static ContainsProhibitedWordsError = class extends Error {};
 	private updateNotesCountQueue: CollapsedQueue<MiNote['id'], number>;
 
@@ -244,8 +246,10 @@ export class NoteCreateService implements OnApplicationShutdown {
 		private utilityService: UtilityService,
 		private userBlockingService: UserBlockingService,
 		private cacheService: CacheService,
+		private noteOutboxService: NoteOutboxService,
 	) {
 		this.updateNotesCountQueue = new CollapsedQueue(process.env.NODE_ENV !== 'test' ? 60 * 1000 * 5 : 0, this.collapseNotesCount, this.performUpdateNotesCount);
+		this.noteOutboxService.registerHandler('created', this.handleCreated);
 	}
 
 	@bindThis
@@ -584,18 +588,16 @@ export class NoteCreateService implements OnApplicationShutdown {
 			throw new IdentifiableError('9f466dab-c856-48cd-9e65-ff90ff750580', 'Note contains too many mentions');
 		}
 
-		const note = await this.insertNote(user, data, tags, emojis, mentionedUsers, internalOptions.onInserted);
+		const { note, outboxSeqs } = await this.insertNote(user, data, tags, emojis, mentionedUsers, silent, internalOptions.onInserted);
 
-		setImmediate('post created', { signal: this.#shutdownController.signal }).then(
-			() => this.postNoteCreated(note, user, data, silent, tags!, mentionedUsers!),
-			() => { /* aborted, ignore this */ },
-		);
+		// 後処理はoutboxに記録済み。コミット後すぐにこのプロセスで処理し、停止などで残った分は照合ジョブが拾う
+		this.noteOutboxService.dispatch(outboxSeqs);
 
 		return note;
 	}
 
 	@bindThis
-	private async insertNote(user: { id: MiUser['id']; host: MiUser['host']; }, data: Option, tags: string[], emojis: string[], mentionedUsers: MinimumUser[], onInserted?: NoteCreateInternalOptions['onInserted']) {
+	private async insertNote(user: { id: MiUser['id']; host: MiUser['host']; isBot: MiUser['isBot']; }, data: Option, tags: string[], emojis: string[], mentionedUsers: MinimumUser[], silent: boolean, onInserted?: NoteCreateInternalOptions['onInserted']) {
 		const insert = new MiNote({
 			id: this.idService.gen(data.createdAt?.getTime()),
 			fileIds: data.files ? data.files.map(file => file.id) : [],
@@ -635,6 +637,8 @@ export class NoteCreateService implements OnApplicationShutdown {
 			renoteUserId: data.renote ? data.renote.userId : null,
 			renoteUserHost: data.renote ? data.renote.userHost : null,
 			userHost: user.host,
+			// Renote先のrenoteCountに計上するか。削除時と修復でも、この値で判定する
+			renoteCounted: data.renote ? (data.renote.userId !== user.id && !user.isBot) : null,
 		});
 
 		if (data.uri != null) insert.uri = data.uri;
@@ -658,57 +662,65 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 		// 投稿を作成
 		try {
-			if (insert.hasPoll || insert.hasEvent || onInserted != null) {
-				// Start transaction
-				await this.db.transaction(async transactionalEntityManager => {
-					await transactionalEntityManager.insert(MiNote, insert);
+			// ノートの行、非正規化カウンタ、後処理のoutboxを同じトランザクションで書く
+			const outboxSeqs = await this.db.transaction(async transactionalEntityManager => {
+				await transactionalEntityManager.insert(MiNote, insert);
 
-					if (insert.hasPoll) {
-						const poll = new MiPoll({
-							noteId: insert.id,
-							choices: data.poll!.choices,
-							expiresAt: data.poll!.expiresAt,
-							multiple: data.poll!.multiple,
-							votes: new Array(data.poll!.choices.length).fill(0),
-							noteVisibility: insert.visibility,
-							userId: user.id,
-							userHost: user.host,
-						});
+				if (insert.hasPoll) {
+					const poll = new MiPoll({
+						noteId: insert.id,
+						choices: data.poll!.choices,
+						expiresAt: data.poll!.expiresAt,
+						multiple: data.poll!.multiple,
+						votes: new Array(data.poll!.choices.length).fill(0),
+						noteVisibility: insert.visibility,
+						userId: user.id,
+						userHost: user.host,
+					});
 
-						await transactionalEntityManager.insert(MiPoll, poll);
-					}
+					await transactionalEntityManager.insert(MiPoll, poll);
+				}
 
-					if (insert.hasEvent) {
-						const event = new MiEvent({
-							noteId: insert.id,
-							start: data.event!.start,
-							end: data.event!.end ?? undefined,
-							title: data.event!.title,
-							metadata: sanitizeEventMetadata(data.event!.metadata),
-							noteVisibility: insert.visibility,
-							userId: user.id,
-							userHost: user.host,
-						});
+				if (insert.hasEvent) {
+					const event = new MiEvent({
+						noteId: insert.id,
+						start: data.event!.start,
+						end: data.event!.end ?? undefined,
+						title: data.event!.title,
+						metadata: sanitizeEventMetadata(data.event!.metadata),
+						noteVisibility: insert.visibility,
+						userId: user.id,
+						userHost: user.host,
+					});
 
-						await transactionalEntityManager.insert(MiEvent, event);
-					}
+					await transactionalEntityManager.insert(MiEvent, event);
+				}
 
-					if (insert.visibility === 'private') {
-						insert.localOnly = true;
-					}
+				if (insert.visibility === 'private') {
+					insert.localOnly = true;
+				}
 
-					if (onInserted != null) {
-						await onInserted(transactionalEntityManager, insert);
-					}
-				});
-			} else {
-				await this.notesRepository.insert(insert);
-			}
+				if (onInserted != null) {
+					await onInserted(transactionalEntityManager, insert);
+				}
+
+				await this.incrementCounters(transactionalEntityManager, insert);
+
+				return await this.noteOutboxService.add(transactionalEntityManager, [{
+					type: 'created',
+					noteId: insert.id,
+					userId: user.id,
+					payload: { silent },
+				}]);
+			});
 
 			return {
-				...insert,
-				reply: data.reply ?? null,
-				renote: data.renote ?? null,
+				note: {
+					...insert,
+					reply: data.reply ?? null,
+					renote: data.renote ?? null,
+				},
+				outboxSeqs,
 			};
 		} catch (e) {
 			// duplicate key error
@@ -727,82 +739,152 @@ export class NoteCreateService implements OnApplicationShutdown {
 		}
 	}
 
+	/**
+	 * 作成のトランザクションの中で、非正規化カウンタ（返信先のrepliesCount、Renote先のrenoteCount、投稿者のnotesCount）を加算する。
+	 *
+	 * 削除の減算（NoteDeleteService）も行の削除と同じトランザクションで行うので、作成直後に削除しても加算が後から残ることはない。
+	 * 行ロックの順序を削除側と揃えるため、ノートはID順に更新し、ユーザーは最後に更新する。
+	 * smallintの列は上限で頭打ちにする（上限に達した値は、削除のときに数え直す）。
+	 */
 	@bindThis
-	private async postNoteCreated(note: MiNote, user: {
-		id: MiUser['id'];
-		username: MiUser['username'];
-		host: MiUser['host'];
-		isBot: MiUser['isBot'];
-		isIndexable: MiUser['isIndexable'];
-		isSensitive: MiUser['isSensitive'];
-	}, data: Option, silent: boolean, tags: string[], mentionedUsers: MinimumUser[]) {
-		this.notesChart.update(note, true);
-		if (note.visibility !== 'specified' && (this.meta.enableChartsForRemoteUser || (user.host == null))) {
-			this.perUserNotesChart.update(user, note, true);
+	private async incrementCounters(manager: EntityManager, note: MiNote) {
+		const targets = new Map<MiNote['id'], { replies: number; renotes: number }>();
+		const target = (id: MiNote['id']) => {
+			let t = targets.get(id);
+			if (t == null) targets.set(id, t = { replies: 0, renotes: 0 });
+			return t;
+		};
+		if (note.replyId != null) target(note.replyId).replies++;
+		if (note.renoteId != null && note.renoteCounted) target(note.renoteId).renotes++;
+
+		for (const id of [...targets.keys()].sort()) {
+			const t = targets.get(id);
+			if (t == null) continue;
+			const set: Record<string, () => string> = {};
+			if (t.replies > 0) set.repliesCount = () => `LEAST("repliesCount" + ${t.replies}, ${SMALLINT_MAX})`;
+			if (t.renotes > 0) set.renoteCount = () => `LEAST("renoteCount" + ${t.renotes}, ${SMALLINT_MAX})`;
+			await manager.createQueryBuilder().update(MiNote)
+				.set(set)
+				.where('id = :id', { id })
+				.execute();
 		}
 
-		// Register host
-		if (this.meta.enableStatsForFederatedInstances) {
-			if (this.userEntityService.isRemoteUser(user)) {
-				this.federatedInstanceService.fetchOrRegister(user.host).then(async i => {
-					this.updateNotesCountQueue.enqueue(i.id, 1);
-					if (this.meta.enableChartsForFederatedInstances) {
-						this.instanceChart.updateNote(i.host, note, true);
-					}
-				});
-			}
+		await manager.createQueryBuilder().update(MiUser)
+			.set({
+				updatedAt: new Date(),
+				notesCount: () => '"notesCount" + 1',
+			})
+			.where('id = :id', { id: note.userId })
+			.execute();
+	}
+
+	/**
+	 * outboxの作成のレコードの処理。処理する時点のノートの状態を読み直して副作用を実行する。
+	 */
+	@bindThis
+	private async handleCreated(record: MiNoteOutbox, step: NoteOutboxStep) {
+		const note = await this.notesRepository.findOneBy({ id: record.noteId });
+		if (note == null) {
+			// 副作用を終える前に削除された。削除の側は、ここまでに実行した副作用だけを取り消す
+			await this.noteOutboxService.reportCreatedStepsToDeletion(record.noteId, record.doneSteps);
+			return;
 		}
+
+		const user = await this.usersRepository.findOneBy({ id: note.userId });
+		if (user == null) return;
+
+		const [reply, renote, mentionedUsers] = await Promise.all([
+			note.replyId != null ? this.notesRepository.findOneBy({ id: note.replyId }) : null,
+			note.renoteId != null ? this.notesRepository.findOneBy({ id: note.renoteId }) : null,
+			note.mentions.length > 0 ? this.usersRepository.findBy({ id: In(note.mentions) }) : [],
+		]);
+
+		await this.runCreatedEffects(step, note, user, {
+			reply,
+			renote,
+			mentionedUsers,
+			silent: record.payload.silent === true,
+		});
+	}
+
+	/**
+	 * 作成の副作用。各副作用は`step`の名前で完了を記録するので、名前を変えるときは処理中のレコードに注意する。
+	 * 削除のレコードは`stats`と`deliver`の完了を見て取り消すかどうかを決める（NoteDeleteService）。
+	 */
+	@bindThis
+	private async runCreatedEffects(step: NoteOutboxStep, note: MiNote, user: MiUser, ctx: {
+		reply: MiNote | null;
+		renote: MiNote | null;
+		mentionedUsers: MiUser[];
+		silent: boolean;
+	}) {
+		const { reply, renote, mentionedUsers, silent } = ctx;
+		const isPureRenote = isRenote(note) && !isQuote(note);
+
+		await step('stats', async () => {
+			this.notesChart.update(note, true);
+			if (note.visibility !== 'specified' && (this.meta.enableChartsForRemoteUser || (user.host == null))) {
+				this.perUserNotesChart.update(user, note, true);
+			}
+
+			// Register host
+			if (this.meta.enableStatsForFederatedInstances && this.userEntityService.isRemoteUser(user)) {
+				const i = await this.federatedInstanceService.fetchOrRegister(user.host);
+				this.updateNotesCountQueue.enqueue(i.id, 1);
+				if (this.meta.enableChartsForFederatedInstances) {
+					this.instanceChart.updateNote(i.host, note, true);
+				}
+			}
+		});
 
 		// ハッシュタグ更新
-		if (data.visibility === 'public' || data.visibility === 'home') {
-			this.hashtagService.updateHashtags(user, tags);
-		}
+		await step('hashtags', async () => {
+			if (note.visibility === 'public' || note.visibility === 'home') {
+				await this.hashtagService.updateHashtags(user, note.tags);
+			}
+		});
 
-		// Increment notes count (user)
-		this.incNotesCountOfUser(user);
+		await step('timeline', () => this.pushToTl(note, user));
 
-		this.pushToTl(note, user);
+		await step('antenna', () => this.antennaService.addNoteToAntennas({ ...note }, user));
 
-		this.antennaService.addNoteToAntennas({
-			...note,
-		}, user);
+		await step('followerNotification', async () => {
+			if (note.replyId != null || note.visibility === 'specified') return;
 
-		if (data.reply) {
-			this.saveReply(data.reply, note);
-		}
-
-		if (data.reply == null) {
 			// TODO: キャッシュ
-			this.followingsRepository.findBy({
+			const followings = await this.followingsRepository.findBy({
 				followeeId: user.id,
 				notify: 'normal',
-			}).then(async followings => {
-				if (note.visibility !== 'specified') {
-					const isPureRenote = this.isRenote(data) && !this.isQuote(data) ? true : false;
-					for (const following of followings) {
-						// TODO: ワードミュート考慮
-						let isRenoteMuted = false;
-						if (isPureRenote) {
-							const userIdsWhoMeMutingRenotes = await this.cacheService.renoteMutingsCache.fetch(following.followerId);
-							isRenoteMuted = userIdsWhoMeMutingRenotes.has(user.id);
-						}
-						if (!isRenoteMuted) {
-							this.notificationService.createNotification(following.followerId, 'note', {
-								noteId: note.id,
-							}, user.id);
-						}
-					}
-				}
 			});
-		}
+			for (const following of followings) {
+				// TODO: ワードミュート考慮
+				let isRenoteMuted = false;
+				if (isPureRenote) {
+					const userIdsWhoMeMutingRenotes = await this.cacheService.renoteMutingsCache.fetch(following.followerId);
+					isRenoteMuted = userIdsWhoMeMutingRenotes.has(user.id);
+				}
+				if (!isRenoteMuted) {
+					this.notificationService.createNotification(following.followerId, 'note', {
+						noteId: note.id,
+					}, user.id);
+				}
+			}
+		});
 
-		if (data.renote && data.renote.userId !== user.id && !user.isBot) {
-			this.incRenoteCount(data.renote);
-		}
+		await step('featured', async () => {
+			if (renote == null || !note.renoteCounted) return;
+			if (renote.visibility === 'public' && renote.userHost == null) {
+				await this.featuredService.updateGlobalNotesRanking(renote.id, 5);
+				await this.featuredService.updatePerUserNotesRanking(renote.userId, renote.id, 5);
+			}
+		});
 
-		if (data.poll && data.poll.expiresAt) {
-			const delay = data.poll.expiresAt.getTime() - Date.now();
-			this.queueService.endedPollNotificationQueue.add(note.id, {
+		await step('pollEnd', async () => {
+			if (!note.hasPoll) return;
+			const poll = await this.db.getRepository(MiPoll).findOneBy({ noteId: note.id });
+			if (poll?.expiresAt == null) return;
+			const delay = poll.expiresAt.getTime() - Date.now();
+			await this.queueService.endedPollNotificationQueue.add(note.id, {
 				v: JOB_DATA_VERSION,
 				noteId: note.id,
 			}, {
@@ -816,105 +898,121 @@ export class NoteCreateService implements OnApplicationShutdown {
 					count: 100,
 				},
 			});
-		}
+		});
 
-		if (data.deleteAt) {
-			await this.queueService.syncScheduledNoteDelete(note.id, data.deleteAt);
-		}
+		await step('scheduledDelete', async () => {
+			if (note.deleteAt) {
+				await this.queueService.syncScheduledNoteDelete(note.id, note.deleteAt);
+			}
+		});
 
 		if (!silent) {
-			if (this.userEntityService.isLocalUser(user)) this.activeUsersChart.write(user);
-
 			// Pack the note
-			const noteObj = await this.noteEntityService.pack(note, null, { skipHide: true, withReactionAndUserPairCache: true });
+			let packed: Packed<'Note'> | null = null;
+			const getPacked = async () => packed ??= await this.noteEntityService.pack(note, null, { skipHide: true, withReactionAndUserPairCache: true });
 
-			this.globalEventService.publishNotesStream(noteObj);
+			await step('activeUsers', () => {
+				if (this.userEntityService.isLocalUser(user)) this.activeUsersChart.write(user);
+			});
 
-			this.roleService.addNoteToRoleTimeline(noteObj);
+			await step('stream', async () => {
+				const noteObj = await getPacked();
+				this.globalEventService.publishNotesStream(noteObj);
+				this.roleService.addNoteToRoleTimeline(noteObj);
+			});
 
-			this.webhookService.enqueueUserWebhook(user.id, 'note', { note: noteObj });
+			await step('webhook', async () => {
+				await this.webhookService.enqueueUserWebhook(user.id, 'note', { note: await getPacked() });
+			});
 
-			const nm = new NotificationManager(this.mutingsRepository, this.notificationService, user, note);
+			await step('interactions', async () => {
+				const noteObj = await getPacked();
+				const nm = new NotificationManager(this.mutingsRepository, this.notificationService, user, note);
 
-			await this.createMentionedEvents(mentionedUsers, note, nm);
+				await this.createMentionedEvents(mentionedUsers, note, nm);
 
-			// If has in reply to note
-			if (data.reply) {
-				// 通知
-				if (data.reply.userHost === null) {
+				// If has in reply to note
+				if (reply != null && reply.userHost === null) {
+					// 通知
 					const isThreadMuted = await this.noteThreadMutingsRepository.exists({
 						where: {
-							userId: data.reply.userId,
-							threadId: data.reply.threadId ?? data.reply.id,
+							userId: reply.userId,
+							threadId: reply.threadId ?? reply.id,
 						},
 					});
 
 					if (!isThreadMuted) {
-						nm.push(data.reply.userId, 'reply');
-						this.globalEventService.publishMainStream(data.reply.userId, 'reply', noteObj);
-						this.webhookService.enqueueUserWebhook(data.reply.userId, 'reply', { note: noteObj });
+						nm.push(reply.userId, 'reply');
+						this.globalEventService.publishMainStream(reply.userId, 'reply', noteObj);
+						this.webhookService.enqueueUserWebhook(reply.userId, 'reply', { note: noteObj });
 					}
 				}
-			}
 
-			// If it is renote
-			if (this.isRenote(data)) {
-				const type = this.isQuote(data) ? 'quote' : 'renote';
+				// If it is renote
+				if (renote != null) {
+					const type = isPureRenote ? 'renote' : 'quote';
 
-				// Notify
-				if (data.renote.userHost === null) {
-					nm.push(data.renote.userId, type);
+					// Notify
+					if (renote.userHost === null) {
+						nm.push(renote.userId, type);
+					}
+
+					// Publish event
+					if ((user.id !== renote.userId) && renote.userHost === null) {
+						this.globalEventService.publishMainStream(renote.userId, 'renote', noteObj);
+						this.webhookService.enqueueUserWebhook(renote.userId, 'renote', { note: noteObj });
+					}
 				}
 
-				// Publish event
-				if ((user.id !== data.renote.userId) && data.renote.userHost === null) {
-					this.globalEventService.publishMainStream(data.renote.userId, 'renote', noteObj);
-					this.webhookService.enqueueUserWebhook(data.renote.userId, 'renote', { note: noteObj });
-				}
-			}
-
-			nm.notify();
+				await nm.notify();
+			});
 
 			//#region AP deliver
-			const deliveryScope = getNoteDeliveryScope(note);
-			if (!data.localOnly && deliveryScope.federate && this.userEntityService.isLocalUser(user)) {
-				await (async () => {
-					const noteActivity = await this.renderNoteOrRenoteActivity(data, note);
-					const dm = this.apDeliverManagerService.createDeliverManager(user, noteActivity);
+			await step('deliver', async () => {
+				// 配送先は、処理する時点のノートの公開範囲から決める
+				const deliveryScope = getNoteDeliveryScope(note);
+				if (note.localOnly || !deliveryScope.federate || !this.userEntityService.isLocalUser(user)) return;
 
-					// メンションされたリモートユーザーに配送
-					for (const u of mentionedUsers.filter(u => this.userEntityService.isRemoteUser(u))) {
-						dm.addDirectRecipe(u as MiRemoteUser);
-					}
+				const noteActivity = await this.renderNoteOrRenoteActivity(note, renote);
+				// 引用でないRenoteで、Renote先が削除済みなら配送するものがない
+				if (noteActivity == null) return;
 
-					// 投稿がリプライかつ投稿者がローカルユーザーかつリプライ先の投稿の投稿者がリモートユーザーなら配送
-					if (data.reply && data.reply.userHost !== null) {
-						const u = await this.usersRepository.findOneBy({ id: data.reply.userId });
-						if (u && this.userEntityService.isRemoteUser(u)) dm.addDirectRecipe(u);
-					}
+				const dm = this.apDeliverManagerService.createDeliverManager(user, noteActivity);
 
-					// 投稿がRenoteかつ投稿者がローカルユーザーかつRenote元の投稿の投稿者がリモートユーザーなら配送
-					if (data.renote && data.renote.userHost !== null) {
-						const u = await this.usersRepository.findOneBy({ id: data.renote.userId });
-						if (u && this.userEntityService.isRemoteUser(u)) dm.addDirectRecipe(u);
-					}
+				// メンションされたリモートユーザーに配送
+				for (const u of mentionedUsers.filter(u => this.userEntityService.isRemoteUser(u))) {
+					dm.addDirectRecipe(u as MiRemoteUser);
+				}
 
-					// フォロワーに配送
-					if (deliveryScope.followers) {
-						dm.addFollowersRecipe();
-					}
+				// 投稿がリプライかつ投稿者がローカルユーザーかつリプライ先の投稿の投稿者がリモートユーザーなら配送
+				if (reply != null && reply.userHost !== null) {
+					const u = await this.usersRepository.findOneBy({ id: reply.userId });
+					if (u && this.userEntityService.isRemoteUser(u)) dm.addDirectRecipe(u);
+				}
 
-					if (deliveryScope.relays) {
-						this.relayService.deliverToRelays(user, noteActivity);
-					}
+				// 投稿がRenoteかつ投稿者がローカルユーザーかつRenote元の投稿の投稿者がリモートユーザーなら配送
+				if (renote != null && renote.userHost !== null) {
+					const u = await this.usersRepository.findOneBy({ id: renote.userId });
+					if (u && this.userEntityService.isRemoteUser(u)) dm.addDirectRecipe(u);
+				}
 
-					trackPromise(dm.execute());
-				})();
-			}
+				// フォロワーに配送
+				if (deliveryScope.followers) {
+					dm.addFollowersRecipe();
+				}
+
+				if (deliveryScope.relays) {
+					await this.relayService.deliverToRelays(user, noteActivity);
+				}
+
+				await dm.execute();
+			});
 			//#endregion
 		}
 
-		if (user.isIndexable) this.index(note);
+		await step('index', () => {
+			if (user.isIndexable) this.index(note);
+		});
 	}
 
 	@bindThis
@@ -932,21 +1030,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 			note.cw != null ||
 			note.poll != null ||
 			(note.files != null && note.files.length > 0);
-	}
-
-	@bindThis
-	private incRenoteCount(renote: MiNote) {
-		this.notesRepository.createQueryBuilder().update()
-			.set({
-				renoteCount: () => '"renoteCount" + 1',
-			})
-			.where('id = :id', { id: renote.id })
-			.execute();
-
-		if (renote.visibility === 'public' && renote.userHost == null) {
-			this.featuredService.updateGlobalNotesRanking(renote.id, 5);
-			this.featuredService.updatePerUserNotesRanking(renote.userId, renote.id, 5);
-		}
 	}
 
 	@bindThis
@@ -976,17 +1059,16 @@ export class NoteCreateService implements OnApplicationShutdown {
 	}
 
 	@bindThis
-	private saveReply(reply: MiNote, note: MiNote) {
-		this.notesRepository.increment({ id: reply.id }, 'repliesCount', 1);
-	}
+	private async renderNoteOrRenoteActivity(note: MiNote, renote: MiNote | null) {
+		if (note.localOnly) return null;
 
-	@bindThis
-	private async renderNoteOrRenoteActivity(data: Option, note: MiNote) {
-		if (data.localOnly) return null;
-
-		const content = this.isRenote(data) && !this.isQuote(data)
-			? this.apRendererService.renderAnnounce(data.renote.uri ? data.renote.uri : `${this.config.url}/notes/${data.renote.id}`, note)
-			: this.apRendererService.renderCreate(await this.apRendererService.renderNote(note, false), note);
+		let content;
+		if (isRenote(note) && !isQuote(note)) {
+			if (renote == null) return null;
+			content = this.apRendererService.renderAnnounce(renote.uri ? renote.uri : `${this.config.url}/notes/${renote.id}`, note);
+		} else {
+			content = this.apRendererService.renderCreate(await this.apRendererService.renderNote(note, false), note);
+		}
 
 		return this.apRendererService.addContext(content);
 	}
@@ -1000,17 +1082,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 		this.searchService.requestSyncNoteIndex(note.id).catch(err => {
 			console.error(`Failed to request search index sync of note ${note.id}`, err);
 		});
-	}
-
-	@bindThis
-	private incNotesCountOfUser(user: { id: MiUser['id']; }) {
-		this.usersRepository.createQueryBuilder().update()
-			.set({
-				updatedAt: new Date(),
-				notesCount: () => '"notesCount" + 1',
-			})
-			.where('id = :id', { id: user.id })
-			.execute();
 	}
 
 	@bindThis
@@ -1135,7 +1206,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 			});
 		}
 
-		r.exec();
+		await r.exec();
 	}
 
 	@bindThis
@@ -1205,7 +1276,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 	@bindThis
 	public async dispose(): Promise<void> {
-		this.#shutdownController.abort();
 		await this.updateNotesCountQueue.performAllNow();
 	}
 

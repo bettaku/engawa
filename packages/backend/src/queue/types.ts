@@ -118,6 +118,12 @@ export type DbJobMap = {
 	truncateAccount: DbUserTruncateJobData;
 	autoDeleteUserNotes: DbJobDataWithUser;
 	syncNoteIndex: DbSyncNoteIndexJobData;
+	processNoteOutbox: DbProcessNoteOutboxJobData;
+};
+
+/** ノートの後処理のoutboxのレコード（P3-1）。内容はDBのレコードにあり、payloadには持たせない */
+export type DbProcessNoteOutboxJobData = JobDataV1 & {
+	seq: string;
 };
 
 export type DbSyncNoteIndexJobData = JobDataV1 & {

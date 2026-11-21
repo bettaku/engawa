@@ -21,6 +21,7 @@ import { IdService } from '@/core/IdService.js';
 import { CoreModule } from '@/core/CoreModule.js';
 import { GlobalModule } from '@/GlobalModule.js';
 import { NoteCreateService } from '@/core/NoteCreateService.js';
+import { NoteOutboxService } from '@/core/NoteOutboxService.js';
 import { NoteDraftService } from '@/core/NoteDraftService.js';
 import type { NoteDraftOptions } from '@/core/NoteDraftService.js';
 import { NotificationService } from '@/core/NotificationService.js';
@@ -186,9 +187,9 @@ describe('PostScheduledNoteProcessorService', () => {
 		createNotification = vi.spyOn(notificationService, 'createNotification').mockImplementation(() => {});
 
 		// ノート作成後の配信・配送・索引は、このテストの対象外
-		const noteCreateServiceInternal = noteCreateService as unknown as { postNoteCreated: () => Promise<void> };
-		void noteCreateServiceInternal.postNoteCreated;
-		vi.spyOn(noteCreateServiceInternal, 'postNoteCreated').mockResolvedValue();
+		const noteOutboxService = app.get(NoteOutboxService);
+		void noteOutboxService.dispatch;
+		vi.spyOn(noteOutboxService, 'dispatch').mockImplementation(() => {});
 
 		await queueService.postScheduledNoteQueue.obliterate({ force: true });
 	});
