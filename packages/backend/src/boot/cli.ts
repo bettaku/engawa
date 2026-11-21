@@ -56,7 +56,8 @@ switch (command) {
 		console.log('    and check again.');
 		console.log('  bake-reactions - Applies buffered reactions to the database (stop the queue processes first)');
 		console.log('  drain-note-outbox - Runs the pending side effects of note creation, update and deletion (before rolling back');
-		console.log('    to a version without note_outbox: stop the server processes first). Exits with 1 if records remain');
+		console.log('    to a version without note_outbox: stop all server and queue processes first, since queue jobs such as');
+		console.log('    scheduled posts, scheduled deletes and inbox also write notes). Exits with 1 if records remain');
 		console.log('  register-job-schedulers - Registers the repeatable system jobs (for queue processes started with CP_NO_JOB_SCHEDULERS)');
 		break;
 	}

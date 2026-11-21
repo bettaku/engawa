@@ -69,6 +69,8 @@ import { NoteOutboxService } from '@/core/NoteOutboxService.js';
 import type { NoteOutboxStep } from '@/core/NoteOutboxService.js';
 import type { MiNoteOutbox } from '@/models/NoteOutbox.js';
 import { SMALLINT_MAX } from '@/core/CounterConsistencyService.js';
+import { retryOnDeadlock } from '@/misc/retry-on-deadlock.js';
+import { execPipeline } from '@/misc/redis-pipeline.js';
 
 type NotificationType = 'reply' | 'renote' | 'quote' | 'mention';
 
@@ -689,7 +691,8 @@ export class NoteCreateService implements OnApplicationShutdown {
 		// 投稿を作成
 		try {
 			// ノートの行、非正規化カウンタ、後処理のoutboxを同じトランザクションで書く
-			const outboxRecord = await this.db.transaction(async transactionalEntityManager => {
+			// 返信先・Renote先のカウンタの行ロックが削除と競合してデッドロックになったら、トランザクションごとやり直す
+			const outboxRecord = await retryOnDeadlock(() => this.db.transaction(async transactionalEntityManager => {
 				await transactionalEntityManager.insert(MiNote, insert);
 
 				if (insert.hasPoll) {
@@ -739,7 +742,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 					userId: user.id,
 					payload: { silent },
 				});
-			});
+			}));
 
 			return {
 				note: {
@@ -857,19 +860,22 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 			step('antenna', () => this.antennaService.addNoteToAntennas({ ...note }, user)),
 
-			step('stats', async () => {
+			// チャートと連合サーバーの集計は、独立して失敗する（後者はサーバーの登録を待つ）ので、別の副作用にする。
+			// 片方だけが終わった状態で再試行しても、終わった方を二重に加算しない
+			step('stats', () => {
 				this.notesChart.update(note, true);
 				if (note.visibility !== 'specified' && (this.meta.enableChartsForRemoteUser || (user.host == null))) {
 					this.perUserNotesChart.update(user, note, true);
 				}
+			}),
 
-				// Register host
-				if (this.meta.enableStatsForFederatedInstances && this.userEntityService.isRemoteUser(user)) {
-					const i = await this.federatedInstanceService.fetchOrRegister(user.host);
-					this.updateNotesCountQueue.enqueue(i.id, 1);
-					if (this.meta.enableChartsForFederatedInstances) {
-						this.instanceChart.updateNote(i.host, note, true);
-					}
+			// Register host
+			step('instanceStats', async () => {
+				if (!this.meta.enableStatsForFederatedInstances || !this.userEntityService.isRemoteUser(user)) return;
+				const i = await this.federatedInstanceService.fetchOrRegister(user.host);
+				this.updateNotesCountQueue.enqueue(i.id, 1);
+				if (this.meta.enableChartsForFederatedInstances) {
+					this.instanceChart.updateNote(i.host, note, true);
 				}
 			}),
 
@@ -951,7 +957,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 			await step('stream', async () => {
 				const noteObj = await getPacked();
 				this.globalEventService.publishNotesStream(noteObj);
-				this.roleService.addNoteToRoleTimeline(noteObj);
+				await this.roleService.addNoteToRoleTimeline(noteObj);
 			});
 
 			await step('webhook', async () => {
@@ -977,7 +983,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 					if (!isThreadMuted) {
 						nm.push(reply.userId, 'reply');
 						this.globalEventService.publishMainStream(reply.userId, 'reply', noteObj);
-						this.webhookService.enqueueUserWebhook(reply.userId, 'reply', { note: noteObj });
+						await this.webhookService.enqueueUserWebhook(reply.userId, 'reply', { note: noteObj });
 					}
 				}
 
@@ -993,7 +999,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 					// Publish event
 					if ((user.id !== renote.userId) && renote.userHost === null) {
 						this.globalEventService.publishMainStream(renote.userId, 'renote', noteObj);
-						this.webhookService.enqueueUserWebhook(renote.userId, 'renote', { note: noteObj });
+						await this.webhookService.enqueueUserWebhook(renote.userId, 'renote', { note: noteObj });
 					}
 				}
 
@@ -1043,8 +1049,8 @@ export class NoteCreateService implements OnApplicationShutdown {
 			//#endregion
 		}
 
-		await step('index', () => {
-			if (user.isIndexable) this.index(note);
+		await step('index', async () => {
+			if (user.isIndexable) await this.index(note);
 		});
 	}
 
@@ -1084,7 +1090,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 			});
 
 			this.globalEventService.publishMainStream(u.id, 'mention', detailPackedNote);
-			this.webhookService.enqueueUserWebhook(u.id, 'mention', { note: detailPackedNote });
+			await this.webhookService.enqueueUserWebhook(u.id, 'mention', { note: detailPackedNote });
 
 			// Create notification
 			nm.push(u.id, 'mention');
@@ -1107,14 +1113,13 @@ export class NoteCreateService implements OnApplicationShutdown {
 	}
 
 	@bindThis
-	private index(note: MiNote) {
+	private async index(note: MiNote) {
 		// 作成時に索引の対象外であることが明らかなノートは、ジョブを登録しない（索引から消すものもない）
 		if (note.text == null && note.cw == null) return;
 		if (!['home', 'public'].includes(note.visibility)) return;
 
-		this.searchService.requestSyncNoteIndex(note.id).catch(err => {
-			console.error(`Failed to request search index sync of note ${note.id}`, err);
-		});
+		// 登録の失敗はoutboxの副作用の失敗として返し、再試行させる
+		await this.searchService.requestSyncNoteIndex(note.id);
 	}
 
 	@bindThis
@@ -1239,7 +1244,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 			});
 		}
 
-		await r.exec();
+		await execPipeline(r);
 	}
 
 	@bindThis

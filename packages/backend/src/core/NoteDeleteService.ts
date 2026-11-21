@@ -30,6 +30,7 @@ import type Logger from '@/logger.js';
 import { isQuote, isRenote } from '@/misc/is-renote.js';
 import { renoteCountSql, repliesCountSql, SMALLINT_MAX } from '@/core/CounterConsistencyService.js';
 import { NoteOutboxService } from '@/core/NoteOutboxService.js';
+import { retryOnDeadlock } from '@/misc/retry-on-deadlock.js';
 import type { NoteOutboxStep } from '@/core/NoteOutboxService.js';
 import type { MiNoteOutbox } from '@/models/NoteOutbox.js';
 
@@ -241,7 +242,8 @@ export class NoteDeleteService {
 			contexts.set(note.id, await this.collectEffectsContext(user, note, effects));
 		}
 
-		const { deleted, outboxSeqs } = await this.db.transaction(manager => this.deleteInTransaction(manager, user, fullNotes, contexts, effects));
+		// 削除する行とカウンタの行のロックが、ほかの作成・削除と競合してデッドロックになったら、トランザクションごとやり直す
+		const { deleted, outboxSeqs } = await retryOnDeadlock(() => this.db.transaction(manager => this.deleteInTransaction(manager, user, fullNotes, contexts, effects)));
 
 		// 副作用ごとに失敗を切り分けるので、1件が失敗しても他のノートの副作用は続く。失敗した副作用はoutboxに残り、後で再試行する
 		await this.noteOutboxService.processNow(outboxSeqs);
@@ -259,7 +261,7 @@ export class NoteDeleteService {
 	public async deleteIfScheduledTimeReached(noteId: MiNote['id']): Promise<ScheduledNoteDeleteResult> {
 		const effects = ALL_NOTE_DELETE_EFFECTS;
 
-		const confirmed = await this.db.transaction(async manager => {
+		const confirmed = await retryOnDeadlock(() => this.db.transaction(async manager => {
 			const note = await manager.createQueryBuilder(MiNote, 'note')
 				.setLock('pessimistic_write')
 				.where('note.id = :id', { id: noteId })
@@ -273,7 +275,7 @@ export class NoteDeleteService {
 			const context = await this.collectEffectsContext(user, note, effects, manager);
 
 			return await this.deleteInTransaction(manager, user, [note], new Map([[note.id, context]]), effects);
-		});
+		}));
 
 		if (confirmed == null || confirmed.deleted.length === 0) {
 			const current = await this.notesRepository.findOne({
@@ -463,7 +465,7 @@ export class NoteDeleteService {
 		});
 		const effects = new Set(payload.effects);
 
-		// 作成の副作用を終える前に削除したときは、作成の側で実行した分だけを取り消す
+		// 作成の副作用を終える前に削除したときは、作成の側で実行した分だけを取り消す（チャートなどの集計）
 		const undo = (name: string) => payload.createdDone == null || payload.createdDone.includes(name);
 
 		if (effects.has('stream')) {
@@ -474,24 +476,31 @@ export class NoteDeleteService {
 			});
 		}
 
-		// ローカルの投稿なら削除アクティビティを配送
-		if (effects.has('deliver') && undo('deliver')) {
+		// ローカルの投稿なら削除アクティビティを配送。
+		// 作成の配送が一部の宛先（リレーなど）にだけ届いて止まった場合もあるので、作成の配送が終わっていなくても配送する。
+		// 作成を受け取っていない宛先には、存在しないノートの削除が届くだけである
+		if (effects.has('deliver')) {
 			await step('deliver', () => this.deliverDeletion(note, payload));
 		}
 
+		// チャートと連合サーバーの集計は、作成側と同じく別の副作用にする（片方だけ終わった状態での再試行で二重に減算しない）
 		if (effects.has('stats') && undo('stats')) {
-			await step('stats', async () => {
+			await step('stats', () => {
 				this.notesChart.update(note, false);
 				if (this.meta.enableChartsForRemoteUser || (note.userHost == null)) {
 					this.perUserNotesChart.update({ id: note.userId }, note, false);
 				}
+			});
+		}
 
-				if (this.meta.enableStatsForFederatedInstances && note.userHost != null) {
-					const i = await this.federatedInstanceService.fetchOrRegister(note.userHost);
-					await this.instancesRepository.decrement({ id: i.id }, 'notesCount', 1);
-					if (this.meta.enableChartsForFederatedInstances) {
-						this.instanceChart.updateNote(i.host, note, false);
-					}
+		if (effects.has('stats') && undo('instanceStats') && this.meta.enableStatsForFederatedInstances && note.userHost != null) {
+			await step('instanceStats', async () => {
+				const host = note.userHost;
+				if (host == null) return;
+				const i = await this.federatedInstanceService.fetchOrRegister(host);
+				await this.instancesRepository.decrement({ id: i.id }, 'notesCount', 1);
+				if (this.meta.enableChartsForFederatedInstances) {
+					this.instanceChart.updateNote(i.host, note, false);
 				}
 			});
 		}

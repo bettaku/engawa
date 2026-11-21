@@ -243,9 +243,21 @@ export class NoteOutboxService implements OnApplicationShutdown {
 		const done = new Set(record.doneSteps);
 		// 完了の記録は、次の副作用を待たせないよう待たずに書き、レコードを片付ける前にまとめて待つ
 		const marks: Promise<unknown>[] = [];
+		// 処理を始めた回数（attempts）を、このプロセスが持つ取得の世代として使う。
+		// 期限が切れてほかのプロセスが取得し直すと世代が進むので、このプロセスの記録・削除は効かなくなる
+		const generation = record.attempts;
+		let lost = false;
+		const owned = (result: [unknown, number]) => {
+			if (result[1] === 0) lost = true;
+		};
 
 		const step: NoteOutboxStep = async (name, fn) => {
 			if (done.has(name)) return;
+			// それまでの完了の記録を待ち、取得し直されていないことを確かめてから始める。
+			// 並行して始める副作用（最初のタイムライン・アンテナなど）は、待つ記録がないので遅れない
+			if (marks.length > 0) await Promise.allSettled(marks);
+			// 取得し直されたレコードの副作用は、取得し直したプロセスに任せる
+			if (lost) return;
 			try {
 				await fn();
 			} catch (err) {
@@ -256,9 +268,9 @@ export class NoteOutboxService implements OnApplicationShutdown {
 			done.add(name);
 			record.doneSteps = [...done];
 			marks.push(this.db.query(
-				`UPDATE "note_outbox" SET "doneSteps" = array_append("doneSteps", $2::varchar), "lockedUntil" = now() + make_interval(secs => ${LEASE_SECONDS}) WHERE "seq" = $1`,
-				[record.seq, name],
-			));
+				`UPDATE "note_outbox" SET "doneSteps" = array_append("doneSteps", $2::varchar), "lockedUntil" = now() + make_interval(secs => ${LEASE_SECONDS}) WHERE "seq" = $1 AND "attempts" = $3`,
+				[record.seq, name, generation],
+			).then(owned));
 		};
 
 		try {
@@ -276,13 +288,18 @@ export class NoteOutboxService implements OnApplicationShutdown {
 			this.logger.error(`Failed to record done steps of note outbox ${record.seq}`, { error: err });
 		}
 
+		if (lost) {
+			this.logger.warn(`Note outbox ${record.seq} was taken over by another process after its lease expired`);
+			return 'skipped';
+		}
+
 		if (failed.length > 0) {
 			if (record.attempts < NOTE_OUTBOX_MAX_ATTEMPTS) {
 				// 期限を、次に試す時刻にする。照合ジョブが期限切れのレコードを拾う
 				const backoff = 60 * (2 ** (record.attempts - 1));
 				await this.db.query(
-					'UPDATE "note_outbox" SET "lockedUntil" = now() + make_interval(secs => $2) WHERE "seq" = $1',
-					[record.seq, backoff],
+					'UPDATE "note_outbox" SET "lockedUntil" = now() + make_interval(secs => $2) WHERE "seq" = $1 AND "attempts" = $3',
+					[record.seq, backoff, generation],
 				);
 				return 'retry';
 			}
@@ -290,7 +307,8 @@ export class NoteOutboxService implements OnApplicationShutdown {
 			this.logger.error(`Giving up note outbox ${record.seq} (${record.type} ${record.noteId}) after ${record.attempts} attempts. Failed: ${failed.join(', ')}`);
 		}
 
-		await this.db.query('DELETE FROM "note_outbox" WHERE "seq" = $1', [record.seq]);
+		const [, deleted]: [unknown, number] = await this.db.query('DELETE FROM "note_outbox" WHERE "seq" = $1 AND "attempts" = $2', [record.seq, generation]);
+		if (deleted === 0) return 'skipped';
 
 		// 同じノートの次のレコードを続けて処理する
 		const [next]: { seq: string }[] = await this.db.query(
@@ -325,7 +343,7 @@ export class NoteOutboxService implements OnApplicationShutdown {
 
 	/**
 	 * 処理できるレコードをすべて処理する（CLIの`drain-note-outbox`）。outboxを知らない版へ切り戻す前に、
-	 * 書き込み（serverプロセス）を止めてから実行する。
+	 * ノートを書き込むプロセス（server、および予約投稿・予約削除・受信を処理するキュー）をすべて止めてから実行する。
 	 *
 	 * ほかのプロセスが処理中のレコードと、再試行の時刻を待っているレコードは処理しない。
 	 * @returns 処理したレコードの数と、残っているレコードの数

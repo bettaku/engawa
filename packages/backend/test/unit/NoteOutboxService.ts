@@ -247,6 +247,22 @@ describe('NoteOutboxService', () => {
 			expect(await recordsOf(note.id)).toEqual([]);
 		});
 
+		test('期限が切れてほかのプロセスに取得し直されたら、残りの副作用を実行せず、レコードを消さない', async () => {
+			const note = await createWithoutProcessing(alice, { text: 'hello' });
+			const { seq } = await recordOf(note.id, 'created');
+
+			// 最初の副作用の途中で、ほかのプロセスが取得し直す（世代が進む）
+			notesChartUpdate.mockImplementationOnce(async () => {
+				void db.query('UPDATE "note_outbox" SET "attempts" = "attempts" + 1 WHERE "seq" = $1', [seq]);
+			});
+			const publishedBefore = publishNotesStream.mock.calls.length;
+
+			expect(await service.process(seq)).toBe('skipped');
+			expect((await recordsOf(note.id)).map(r => r.type)).toEqual(['created']);
+			// 取得し直された後の副作用（ストリームなど）は、取得し直したプロセスに任せる
+			expect(publishNotesStream.mock.calls.length).toBe(publishedBefore);
+		});
+
 		test('ほかのプロセスが処理中（期限内）のレコードは処理しない', async () => {
 			const note = await createWithoutProcessing(alice, { text: 'hello' });
 			const { seq } = await recordOf(note.id, 'created');
@@ -278,7 +294,7 @@ describe('NoteOutboxService', () => {
 	});
 
 	describe('作成の副作用を終える前の削除', () => {
-		test('作成のレコードを誰も処理していなければ取り消し、チャートと配送を取り消さない', async () => {
+		test('作成のレコードを誰も処理していなければ取り消し、チャートを取り消さない', async () => {
 			const note = await createWithoutProcessing(alice, { text: 'hello' });
 			// 処理を始めていないレコード（照合ジョブ待ちなど）
 			await db.query('UPDATE "note_outbox" SET "attempts" = 0, "lockedUntil" = NULL WHERE "noteId" = $1', [note.id]);
@@ -288,12 +304,12 @@ describe('NoteOutboxService', () => {
 			expect(await recordsOf(note.id)).toEqual([]);
 			expect(notesChartCalls(note, true)).toBe(0);
 			expect(notesChartCalls(note, false)).toBe(0);
-			expect(deliverToFollowers).not.toHaveBeenCalled();
-			// ストリームと索引は取り消しても害がないので、そのまま実行する
+			// 削除の配送・ストリーム・索引は、作成を受け取っていない宛先に届いても害がないので、そのまま実行する
+			expect(deliverToFollowers).toHaveBeenCalledOnce();
 			expect(deletedEventsOf(note)).toBe(1);
 		});
 
-		test('作成のコミット直後に停止してから削除されたら、照合ジョブの処理の後で、何も取り消さない', async () => {
+		test('作成のコミット直後に停止してから削除されたら、照合ジョブの処理の後で、チャートを取り消さない', async () => {
 			const note = await createWithoutProcessing(alice, { text: 'hello' });
 			const created = await recordOf(note.id, 'created');
 
@@ -306,7 +322,7 @@ describe('NoteOutboxService', () => {
 
 			expect(notesChartCalls(note, true)).toBe(0);
 			expect(notesChartCalls(note, false)).toBe(0);
-			expect(deliverToFollowers).not.toHaveBeenCalled();
+			expect(deliverToFollowers).toHaveBeenCalledOnce();
 		});
 
 		test('作成の副作用の途中で削除されたら、実行した分だけを取り消す', async () => {
@@ -324,7 +340,8 @@ describe('NoteOutboxService', () => {
 
 			expect(await service.process(deleted.seq)).toBe('done');
 			expect(notesChartCalls(note, false)).toBe(1);
-			expect(deliverToFollowers).not.toHaveBeenCalled();
+			// 作成の配送が一部の宛先にだけ届いて止まった場合もあるので、削除は配送する
+			expect(deliverToFollowers).toHaveBeenCalledOnce();
 		});
 
 		test('作成の副作用がすべて終わっていれば、すべて取り消す', async () => {

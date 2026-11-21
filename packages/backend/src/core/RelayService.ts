@@ -110,8 +110,7 @@ export class RelayService {
 
 		const signed = await this.apRendererService.attachLdSignature(copy, user);
 
-		for (const relay of relays) {
-			this.queueService.deliver(user, signed, relay.inbox, false);
-		}
+		// 登録の失敗を呼び出し元（outboxの副作用など）へ伝える
+		await Promise.all(relays.map(relay => this.queueService.deliver(user, signed, relay.inbox, false)));
 	}
 }
