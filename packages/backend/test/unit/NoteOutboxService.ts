@@ -263,6 +263,22 @@ describe('NoteOutboxService', () => {
 			expect(publishNotesStream.mock.calls.length).toBe(publishedBefore);
 		});
 
+		test('副作用が失敗した後に取得し直されていたら、次の副作用を始めない', async () => {
+			const note = await createWithoutProcessing(alice, { text: 'hello' });
+			const { seq } = await recordOf(note.id, 'created');
+			const publishedBefore = publishNotesStream.mock.calls.length;
+
+			// 最初の副作用が失敗する間に、ほかのプロセスが取得し直す（世代が進む）
+			notesChartUpdate.mockImplementationOnce(async () => {
+				await db.query('UPDATE "note_outbox" SET "attempts" = "attempts" + 1 WHERE "seq" = $1', [seq]);
+				throw new Error('chart is down');
+			});
+
+			expect(await service.process(seq)).toBe('skipped');
+			expect(publishNotesStream.mock.calls.length).toBe(publishedBefore);
+			expect((await recordOf(note.id, 'created')).doneSteps).not.toContain('stream');
+		});
+
 		test('ほかのプロセスが処理中（期限内）のレコードは処理しない', async () => {
 			const note = await createWithoutProcessing(alice, { text: 'hello' });
 			const { seq } = await recordOf(note.id, 'created');

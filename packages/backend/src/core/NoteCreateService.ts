@@ -1246,8 +1246,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 			});
 		}
 
-		await execPipeline(r);
-		await Promise.all(pending);
+		await execPipeline(r, pending);
 	}
 
 	@bindThis

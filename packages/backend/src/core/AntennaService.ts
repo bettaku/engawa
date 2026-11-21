@@ -108,13 +108,14 @@ export class AntennaService implements OnApplicationShutdown {
 		const matchedAntennas = antennasWithMatchResult.filter(([, hit]) => hit).map(([antenna]) => antenna);
 
 		const redisPipeline = this.redisForTimelines.pipeline();
+		const pending: Promise<unknown>[] = [];
 
 		for (const antenna of matchedAntennas) {
-			this.fanoutTimelineService.push(`antennaTimeline:${antenna.id}`, note.id, 200, redisPipeline);
+			this.fanoutTimelineService.push(`antennaTimeline:${antenna.id}`, note.id, 200, redisPipeline, pending);
 			this.globalEventService.publishAntennaStream(antenna.id, 'note', note);
 		}
 
-		await execPipeline(redisPipeline);
+		await execPipeline(redisPipeline, pending);
 	}
 
 	// NOTE: フォローしているユーザーのノート、リストのユーザーのノート、グループのユーザーのノート指定はパフォーマンス上の理由で無効になっている

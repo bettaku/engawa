@@ -680,13 +680,14 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 		const roles = await this.getUserRoles(note.userId);
 
 		const redisPipeline = this.redisForTimelines.pipeline();
+		const pending: Promise<unknown>[] = [];
 
 		for (const role of roles) {
-			this.fanoutTimelineService.push(`roleTimeline:${role.id}`, note.id, 1000, redisPipeline);
+			this.fanoutTimelineService.push(`roleTimeline:${role.id}`, note.id, 1000, redisPipeline, pending);
 			this.globalEventService.publishRoleTimelineStream(role.id, 'note', note);
 		}
 
-		await execPipeline(redisPipeline);
+		await execPipeline(redisPipeline, pending);
 	}
 
 	@bindThis

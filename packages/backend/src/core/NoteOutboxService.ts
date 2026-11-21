@@ -250,18 +250,36 @@ export class NoteOutboxService implements OnApplicationShutdown {
 		const owned = (result: [unknown, number]) => {
 			if (result[1] === 0) lost = true;
 		};
+		// 副作用の失敗や期限の延長の失敗の後は、次の副作用を始める前に、まだ持ち主であることをDBで確かめる。
+		// （副作用が失敗した分だけ時間がたっていて、その間に取得し直されている可能性がある）
+		let mustConfirm = false;
+		const confirmOwnership = async () => {
+			try {
+				owned(await this.db.query(
+					`UPDATE "note_outbox" SET "lockedUntil" = now() + make_interval(secs => ${LEASE_SECONDS}) WHERE "seq" = $1 AND "attempts" = $2`,
+					[record.seq, generation],
+				));
+				mustConfirm = false;
+			} catch (err) {
+				// 確かめられなければ、持ち主でなくなったものとして扱う
+				lost = true;
+				this.logger.warn(`Failed to confirm the lease of note outbox ${record.seq}`, { error: err });
+			}
+		};
 
 		const step: NoteOutboxStep = async (name, fn) => {
 			if (done.has(name)) return;
 			// それまでの完了の記録を待ち、取得し直されていないことを確かめてから始める。
 			// 並行して始める副作用（最初のタイムライン・アンテナなど）は、待つ記録がないので遅れない
 			if (marks.length > 0) await Promise.allSettled(marks);
+			if (mustConfirm && !lost) await confirmOwnership();
 			// 取得し直されたレコードの副作用は、取得し直したプロセスに任せる
 			if (lost) return;
 			try {
 				await fn();
 			} catch (err) {
 				failed.push(name);
+				mustConfirm = true;
 				this.logger.error(`Failed to run "${name}" of note outbox ${record.seq} (${record.type} ${record.noteId}, attempt ${record.attempts})`, { error: err });
 				return;
 			}
@@ -279,6 +297,7 @@ export class NoteOutboxService implements OnApplicationShutdown {
 				`UPDATE "note_outbox" SET "lockedUntil" = now() + make_interval(secs => ${LEASE_SECONDS}) WHERE "seq" = $1 AND "attempts" = $2`,
 				[record.seq, generation],
 			).then(owned, err => {
+				mustConfirm = true;
 				this.logger.warn(`Failed to extend the lease of note outbox ${record.seq}`, { error: err });
 			});
 		}, LEASE_SECONDS * 1000 / 3);
