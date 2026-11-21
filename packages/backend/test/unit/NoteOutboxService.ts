@@ -279,6 +279,36 @@ describe('NoteOutboxService', () => {
 			expect((await recordOf(note.id, 'created')).doneSteps).not.toContain('stream');
 		});
 
+		test('完了の記録が失敗し、その間に取得し直されていたら、次の副作用を始めない', async () => {
+			const note = await createWithoutProcessing(alice, { text: 'hello' });
+			const { seq } = await recordOf(note.id, 'created');
+			const publishedBefore = publishNotesStream.mock.calls.length;
+
+			// 完了の記録がすべて失敗し、その間にほかのプロセスが取得し直す（世代が進む）。
+			// 記録の結果からは取得し直されたことがわからないので、確かめ直さなければ次の副作用を始めてしまう
+			const query = db.query.bind(db);
+			let failedOnce = false;
+			const spy = vi.spyOn(db, 'query').mockImplementation(async (sql: string, params?: unknown[]) => {
+				if (sql.includes('array_append')) {
+					if (!failedOnce) {
+						failedOnce = true;
+						await query('UPDATE "note_outbox" SET "attempts" = "attempts" + 1 WHERE "seq" = $1', [seq]);
+					}
+					throw new Error('connection lost');
+				}
+				return await query(sql, params);
+			});
+			try {
+				expect(await service.process(seq)).toBe('skipped');
+			} finally {
+				spy.mockRestore();
+			}
+
+			expect(failedOnce).toBe(true);
+			expect(publishNotesStream.mock.calls.length).toBe(publishedBefore);
+			expect((await recordOf(note.id, 'created')).doneSteps).not.toContain('stream');
+		});
+
 		test('ほかのプロセスが処理中（期限内）のレコードは処理しない', async () => {
 			const note = await createWithoutProcessing(alice, { text: 'hello' });
 			const { seq } = await recordOf(note.id, 'created');

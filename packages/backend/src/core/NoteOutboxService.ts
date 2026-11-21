@@ -288,7 +288,11 @@ export class NoteOutboxService implements OnApplicationShutdown {
 			marks.push(this.db.query(
 				`UPDATE "note_outbox" SET "doneSteps" = array_append("doneSteps", $2::varchar), "lockedUntil" = now() + make_interval(secs => ${LEASE_SECONDS}) WHERE "seq" = $1 AND "attempts" = $3`,
 				[record.seq, name, generation],
-			).then(owned));
+			).then(owned, err => {
+				// 記録できなかった（期限切れの間に取得し直された場合もある）。次の副作用の前に持ち主であることを確かめる
+				mustConfirm = true;
+				throw err;
+			}));
 		};
 
 		// 副作用が長くかかっても期限が切れないよう、処理中は期限を延ばし続ける。延ばせなければ（取得し直されていれば）、残りの副作用を実行しない
