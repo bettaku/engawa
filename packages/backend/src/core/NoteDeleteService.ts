@@ -301,6 +301,16 @@ export class NoteDeleteService {
 		contexts: Map<MiNote['id'], NoteDeleteEffectsContext>,
 		effects: Readonly<NoteDeleteEffects>,
 	): Promise<{ deleted: MiNote[]; outboxSeqs: MiNoteOutbox['seq'][] }> {
+		// 削除する行と、カウンタを減らす行（返信先・Renote先）を、まとめてID順にロックしてから変更する。
+		// 作成側もカウンタの行をID順に更新するので、親と返信を並行して削除・作成してもロックの順序が食い違いにくい
+		// （食い違ってデッドロックになった場合は、呼び出し元がトランザクションごとやり直す）
+		const lockIds = new Set(notes.map(note => note.id));
+		for (const note of notes) {
+			if (effects.repliesCount && note.replyId != null) lockIds.add(note.replyId);
+			if (effects.renoteCount && note.renoteId != null) lockIds.add(note.renoteId);
+		}
+		await manager.query('SELECT "id" FROM "note" WHERE "id" = ANY($1) ORDER BY "id" FOR UPDATE', [[...lockIds]]);
+
 		const deletedIds = await this.deleteRows(manager, notes.map(note => note.id), user.id);
 		const deleted = notes.filter(note => deletedIds.has(note.id));
 		if (deleted.length === 0) return { deleted, outboxSeqs: [] };

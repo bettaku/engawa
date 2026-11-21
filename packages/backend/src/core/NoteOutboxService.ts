@@ -273,11 +273,23 @@ export class NoteOutboxService implements OnApplicationShutdown {
 			).then(owned));
 		};
 
+		// 副作用が長くかかっても期限が切れないよう、処理中は期限を延ばし続ける。延ばせなければ（取得し直されていれば）、残りの副作用を実行しない
+		const heartbeat = setInterval(() => {
+			this.db.query(
+				`UPDATE "note_outbox" SET "lockedUntil" = now() + make_interval(secs => ${LEASE_SECONDS}) WHERE "seq" = $1 AND "attempts" = $2`,
+				[record.seq, generation],
+			).then(owned, err => {
+				this.logger.warn(`Failed to extend the lease of note outbox ${record.seq}`, { error: err });
+			});
+		}, LEASE_SECONDS * 1000 / 3);
+
 		try {
 			await handler(record, step, context);
 		} catch (err) {
 			failed.push('(handler)');
 			this.logger.error(`Failed to handle note outbox ${record.seq} (${record.type} ${record.noteId}, attempt ${record.attempts})`, { error: err });
+		} finally {
+			clearInterval(heartbeat);
 		}
 
 		try {

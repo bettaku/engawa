@@ -426,6 +426,27 @@ describe('CounterConsistencyService', () => {
 			expect(await renoteCountOf(parent)).toBe(32766);
 		});
 
+		test('親と返信を並行して削除しても失敗せず、カウンタは数え直した値と一致する', async () => {
+			const alice = await createUser({ host: null });
+			for (let i = 0; i < 10; i++) {
+				const parent = await noteCreateService.create(alice, { text: 'parent' });
+				const reply = await noteCreateService.create(alice, { text: 'reply', reply: parent });
+				const [p, r] = await Promise.all([
+					notesRepository.findOneByOrFail({ id: parent.id }),
+					notesRepository.findOneByOrFail({ id: reply.id }),
+				]);
+
+				await Promise.all([
+					noteDeleteService.deleteMany(alice, [p, r], { effects: ALL_NOTE_DELETE_EFFECTS }),
+					noteDeleteService.delete(alice, r),
+				]);
+
+				expect(await notesRepository.existsBy({ id: p.id })).toBe(false);
+				expect(await notesRepository.existsBy({ id: r.id })).toBe(false);
+			}
+			expect((await usersRepository.findOneByOrFail({ id: alice.id })).notesCount).toBe(0);
+		});
+
 		test('書き込み中に修復しても、修復を待たせた加算を数え直しに含める', async () => {
 			const alice = await createUser({ host: null });
 			const bob = await createUser({ host: null });

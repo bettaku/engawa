@@ -1144,6 +1144,8 @@ export class NoteCreateService implements OnApplicationShutdown {
 		if (!this.meta.enableFanoutTimeline) return;
 
 		const r = this.redisForTimelines.pipeline();
+		// パイプラインの外で行う古いノートの追加も、完了と失敗を待つ
+		const pending: Promise<unknown>[] = [];
 
 		// TODO: キャッシュ？
 		// eslint-disable-next-line prefer-const
@@ -1179,9 +1181,9 @@ export class NoteCreateService implements OnApplicationShutdown {
 				if (!following.withReplies) continue;
 			}
 
-			this.fanoutTimelineService.push(`homeTimeline:${following.followerId}`, note.id, this.meta.perUserHomeTimelineCacheMax, r);
+			this.fanoutTimelineService.push(`homeTimeline:${following.followerId}`, note.id, this.meta.perUserHomeTimelineCacheMax, r, pending);
 			if (note.fileIds.length > 0) {
-				this.fanoutTimelineService.push(`homeTimelineWithFiles:${following.followerId}`, note.id, this.meta.perUserHomeTimelineCacheMax / 2, r);
+				this.fanoutTimelineService.push(`homeTimelineWithFiles:${following.followerId}`, note.id, this.meta.perUserHomeTimelineCacheMax / 2, r, pending);
 			}
 		}
 
@@ -1198,42 +1200,42 @@ export class NoteCreateService implements OnApplicationShutdown {
 				if (!userListMembership.withReplies) continue;
 			}
 
-			this.fanoutTimelineService.push(`userListTimeline:${userListMembership.userListId}`, note.id, this.meta.perUserListTimelineCacheMax, r);
+			this.fanoutTimelineService.push(`userListTimeline:${userListMembership.userListId}`, note.id, this.meta.perUserListTimelineCacheMax, r, pending);
 			if (note.fileIds.length > 0) {
-				this.fanoutTimelineService.push(`userListTimelineWithFiles:${userListMembership.userListId}`, note.id, this.meta.perUserListTimelineCacheMax / 2, r);
+				this.fanoutTimelineService.push(`userListTimelineWithFiles:${userListMembership.userListId}`, note.id, this.meta.perUserListTimelineCacheMax / 2, r, pending);
 			}
 		}
 
 		// 自分自身のHTL
 		if (note.userHost == null) {
 			if (note.visibility !== 'specified' || !note.visibleUserIds.some(v => v === user.id)) {
-				this.fanoutTimelineService.push(`homeTimeline:${user.id}`, note.id, this.meta.perUserHomeTimelineCacheMax, r);
+				this.fanoutTimelineService.push(`homeTimeline:${user.id}`, note.id, this.meta.perUserHomeTimelineCacheMax, r, pending);
 				if (note.fileIds.length > 0) {
-					this.fanoutTimelineService.push(`homeTimelineWithFiles:${user.id}`, note.id, this.meta.perUserHomeTimelineCacheMax / 2, r);
+					this.fanoutTimelineService.push(`homeTimelineWithFiles:${user.id}`, note.id, this.meta.perUserHomeTimelineCacheMax / 2, r, pending);
 				}
 			}
 		}
 
 		// 自分自身以外への返信
 		if (isReply(note)) {
-			this.fanoutTimelineService.push(`userTimelineWithReplies:${user.id}`, note.id, note.userHost == null ? this.meta.perLocalUserUserTimelineCacheMax : this.meta.perRemoteUserUserTimelineCacheMax, r);
+			this.fanoutTimelineService.push(`userTimelineWithReplies:${user.id}`, note.id, note.userHost == null ? this.meta.perLocalUserUserTimelineCacheMax : this.meta.perRemoteUserUserTimelineCacheMax, r, pending);
 
 			if (note.visibility === 'public' && note.userHost == null) {
-				this.fanoutTimelineService.push('localTimelineWithReplies', note.id, 300, r);
+				this.fanoutTimelineService.push('localTimelineWithReplies', note.id, 300, r, pending);
 				if (note.replyUserHost == null) {
-					this.fanoutTimelineService.push(`localTimelineWithReplyTo:${note.replyUserId}`, note.id, 300 / 10, r);
+					this.fanoutTimelineService.push(`localTimelineWithReplyTo:${note.replyUserId}`, note.id, 300 / 10, r, pending);
 				}
 			}
 		} else {
-			this.fanoutTimelineService.push(`userTimeline:${user.id}`, note.id, note.userHost == null ? this.meta.perLocalUserUserTimelineCacheMax : this.meta.perRemoteUserUserTimelineCacheMax, r);
+			this.fanoutTimelineService.push(`userTimeline:${user.id}`, note.id, note.userHost == null ? this.meta.perLocalUserUserTimelineCacheMax : this.meta.perRemoteUserUserTimelineCacheMax, r, pending);
 			if (note.fileIds.length > 0) {
-				this.fanoutTimelineService.push(`userTimelineWithFiles:${user.id}`, note.id, note.userHost == null ? this.meta.perLocalUserUserTimelineCacheMax / 2 : this.meta.perRemoteUserUserTimelineCacheMax / 2, r);
+				this.fanoutTimelineService.push(`userTimelineWithFiles:${user.id}`, note.id, note.userHost == null ? this.meta.perLocalUserUserTimelineCacheMax / 2 : this.meta.perRemoteUserUserTimelineCacheMax / 2, r, pending);
 			}
 
 			if (note.visibility === 'public' && note.userHost == null) {
-				this.fanoutTimelineService.push('localTimeline', note.id, 1000, r);
+				this.fanoutTimelineService.push('localTimeline', note.id, 1000, r, pending);
 				if (note.fileIds.length > 0) {
-					this.fanoutTimelineService.push('localTimelineWithFiles', note.id, 500, r);
+					this.fanoutTimelineService.push('localTimelineWithFiles', note.id, 500, r, pending);
 				}
 			}
 		}
@@ -1245,6 +1247,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		}
 
 		await execPipeline(r);
+		await Promise.all(pending);
 	}
 
 	@bindThis
