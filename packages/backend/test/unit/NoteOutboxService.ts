@@ -6,6 +6,7 @@
 import { vi } from 'vitest';
 import type { MockInstance } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
+import type * as Redis from 'ioredis';
 import type { DataSource } from 'typeorm';
 import type { MiNote, MiUser, NotesRepository, UsersRepository, UserProfilesRepository } from '@/models/_.js';
 import type { MiNoteOutbox } from '@/models/NoteOutbox.js';
@@ -20,6 +21,7 @@ import { NOTE_OUTBOX_MAX_ATTEMPTS, NoteOutboxService } from '@/core/NoteOutboxSe
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { QueueService } from '@/core/QueueService.js';
 import { HashtagService } from '@/core/HashtagService.js';
+import { RelayService } from '@/core/RelayService.js';
 import { ApDeliverManagerService } from '@/core/activitypub/ApDeliverManagerService.js';
 import NotesChart from '@/core/chart/charts/notes.js';
 import { secureRndstr } from '@/misc/secure-rndstr.js';
@@ -42,7 +44,7 @@ describe('NoteOutboxService', () => {
 	let publishNotesStream: MockInstance<GlobalEventService['publishNotesStream']>;
 	let publishNoteStream: MockInstance<GlobalEventService['publishNoteStream']>;
 	let notesChartUpdate: MockInstance<NotesChart['update']>;
-	let deliverToFollowers: MockInstance<ApDeliverManagerService['deliverToFollowers']>;
+	let deliverToFollowers: MockInstance<ApDeliverManagerService['deliverToFollowersAndUsers']>;
 
 	let alice: MiUser;
 	let bob: MiUser;
@@ -132,10 +134,8 @@ describe('NoteOutboxService', () => {
 		notesChartUpdate = vi.spyOn(notesChart, 'update');
 
 		const apDeliverManagerService = app.get(ApDeliverManagerService);
-		void apDeliverManagerService.deliverToFollowers;
-		void apDeliverManagerService.deliverToUsers;
-		deliverToFollowers = vi.spyOn(apDeliverManagerService, 'deliverToFollowers').mockResolvedValue(undefined);
-		vi.spyOn(apDeliverManagerService, 'deliverToUsers').mockResolvedValue(undefined);
+		void apDeliverManagerService.deliverToFollowersAndUsers;
+		deliverToFollowers = vi.spyOn(apDeliverManagerService, 'deliverToFollowersAndUsers').mockResolvedValue(undefined);
 	});
 
 	afterEach(async () => {
@@ -233,6 +233,24 @@ describe('NoteOutboxService', () => {
 
 			expect(publishNotesStream.mock.calls.filter(([n]) => n.id === note.id)).toHaveLength(2);
 			expect(notesChartCalls(note, true)).toBe(1);
+		});
+
+		test('チャートの差分がデータベースに保存されるまで、statsを完了にしない', async () => {
+			const note = await createWithoutProcessing(alice, { text: 'hello' });
+			const { seq } = await recordOf(note.id, 'created');
+
+			const notesChart = app.get(NotesChart);
+			void notesChart.waitForSave;
+			const waitForSave = vi.spyOn(notesChart, 'waitForSave').mockRejectedValueOnce(new Error('process stopped before save'));
+
+			expect(await service.process(seq)).toBe('retry');
+			expect((await recordOf(note.id, 'created')).doneSteps).not.toContain('stats');
+
+			await db.query('UPDATE "note_outbox" SET "lockedUntil" = now() - interval \'1 second\' WHERE "seq" = $1', [seq]);
+			expect(await service.process(seq)).toBe('done');
+			// 保存を確かめられなかった差分は、再試行で積み直す
+			expect(notesChartCalls(note, true)).toBe(2);
+			expect(waitForSave).toHaveBeenCalledTimes(2);
 		});
 
 		test('処理を始めた回数が上限に達したら、失敗した副作用を諦めてレコードを削除する', async () => {
@@ -425,6 +443,55 @@ describe('NoteOutboxService', () => {
 			expect(deletedEventsOf(note)).toBe(1);
 			expect(deliverToFollowers).toHaveBeenCalledOnce();
 			expect(notesChartCalls(note, false)).toBe(1);
+		});
+
+		/** 削除をコミットし、プロセス内の処理を始めずに削除のレコードを返す */
+		async function deleteWithoutProcessing(note: MiNote) {
+			void service.processNow;
+			const processNow = vi.spyOn(service, 'processNow').mockResolvedValue();
+			await noteDeleteService.delete(alice, await notesRepository.findOneByOrFail({ id: note.id }));
+			processNow.mockRestore();
+			return (await recordOf(note.id, 'deleted')).seq;
+		}
+
+		test('リレーへの配送の登録が失敗しても、再試行ではフォロワーへの配送を重ねて登録しない', async () => {
+			const note = await createWithoutProcessing(alice, { text: 'hello' });
+			await service.process((await recordOf(note.id, 'created')).seq);
+			deliverToFollowers.mockClear();
+			const seq = await deleteWithoutProcessing(note);
+
+			const relayService = app.get(RelayService);
+			void relayService.deliverToRelays;
+			const deliverToRelays = vi.spyOn(relayService, 'deliverToRelays')
+				.mockRejectedValueOnce(new Error('redis is down'))
+				.mockResolvedValue();
+
+			expect(await service.process(seq)).toBe('retry');
+			const record = await recordOf(note.id, 'deleted');
+			expect(record.doneSteps).toContain('deliver');
+			expect(record.doneSteps).not.toContain('deliverRelays');
+
+			await db.query('UPDATE "note_outbox" SET "lockedUntil" = now() - interval \'1 second\' WHERE "seq" = $1', [seq]);
+			expect(await service.process(seq)).toBe('done');
+
+			expect(deliverToFollowers).toHaveBeenCalledOnce();
+			expect(deliverToRelays).toHaveBeenCalledTimes(2);
+		});
+
+		test('Redisがストリームのイベントを受け付けなければ、streamを完了にせず再試行する', async () => {
+			const note = await createWithoutProcessing(alice, { text: 'hello' });
+			await service.process((await recordOf(note.id, 'created')).seq);
+			const seq = await deleteWithoutProcessing(note);
+
+			const redisForPub = app.get<Redis.Redis>(DI.redisForPub);
+			vi.spyOn(redisForPub, 'publish').mockRejectedValueOnce(new Error('redis is down'));
+
+			expect(await service.process(seq)).toBe('retry');
+			expect((await recordOf(note.id, 'deleted')).doneSteps).not.toContain('stream');
+
+			await db.query('UPDATE "note_outbox" SET "lockedUntil" = now() - interval \'1 second\' WHERE "seq" = $1', [seq]);
+			expect(await service.process(seq)).toBe('done');
+			expect(deletedEventsOf(note)).toBe(2);
 		});
 	});
 

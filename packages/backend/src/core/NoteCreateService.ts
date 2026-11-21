@@ -5,9 +5,8 @@
 
 import * as mfm from 'mfc-js';
 import { In, DataSource, IsNull, LessThan } from 'typeorm';
-import type { EntityManager } from 'typeorm';
 import * as Redis from 'ioredis';
-import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import RE2 from 're2';
 import { Data } from 'ws';
 import { extractMentions } from '@/misc/extract-mentions.js';
@@ -60,7 +59,6 @@ import { UtilityService } from '@/core/UtilityService.js';
 import { UserBlockingService } from '@/core/UserBlockingService.js';
 import { isReply } from '@/misc/is-reply.js';
 import { IdentifiableError } from '@/misc/identifiable-error.js';
-import { CollapsedQueue } from '@/misc/collapsed-queue.js';
 import { CacheService } from '@/core/CacheService.js';
 import { isQuote, isRenote } from '@/misc/is-renote.js';
 import type { noteSearchableBy } from '@/types.js';
@@ -71,6 +69,7 @@ import type { MiNoteOutbox } from '@/models/NoteOutbox.js';
 import { SMALLINT_MAX } from '@/core/CounterConsistencyService.js';
 import { retryOnDeadlock } from '@/misc/retry-on-deadlock.js';
 import { execPipeline } from '@/misc/redis-pipeline.js';
+import type { EntityManager } from 'typeorm';
 
 type NotificationType = 'reply' | 'renote' | 'quote' | 'mention';
 
@@ -193,9 +192,8 @@ export type NoteCreateInternalOptions = {
 };
 
 @Injectable()
-export class NoteCreateService implements OnApplicationShutdown {
+export class NoteCreateService {
 	public static ContainsProhibitedWordsError = class extends Error {};
-	private updateNotesCountQueue: CollapsedQueue<MiNote['id'], number>;
 
 	constructor(
 		@Inject(DI.config)
@@ -267,7 +265,6 @@ export class NoteCreateService implements OnApplicationShutdown {
 		private cacheService: CacheService,
 		private noteOutboxService: NoteOutboxService,
 	) {
-		this.updateNotesCountQueue = new CollapsedQueue(process.env.NODE_ENV !== 'test' ? 60 * 1000 * 5 : 0, this.collapseNotesCount, this.performUpdateNotesCount);
 		this.noteOutboxService.registerHandler('created', this.handleCreated);
 	}
 
@@ -851,33 +848,61 @@ export class NoteCreateService implements OnApplicationShutdown {
 	 */
 	@bindThis
 	private async runCreatedEffects(step: NoteOutboxStep, ctx: CreatedEffectsContext) {
-		const { note, user, reply, renote, mentionedUsers, silent } = ctx;
+		const { note, user, silent } = ctx;
 		const isPureRenote = isRenote(note) && !isQuote(note);
 
-		// 従来はどれも待たずに並行して始めていた副作用。タイムライン・アンテナへの反映を遅らせないよう、並行して実行する
-		await Promise.all([
-			step('timeline', () => this.pushToTl(note, user)),
-
-			step('antenna', () => this.antennaService.addNoteToAntennas({ ...note }, user)),
-
+		// チャートの集計は、データベースへの保存を待つ（数回の問い合わせになる）。
+		// ほかの副作用（タイムライン・通知・配送など）を遅らせないよう、並行して始め、最後に終わるのを待つ
+		const statsSteps = Promise.all([
 			// チャートと連合サーバーの集計は、独立して失敗する（後者はサーバーの登録を待つ）ので、別の副作用にする。
 			// 片方だけが終わった状態で再試行しても、終わった方を二重に加算しない
-			step('stats', () => {
-				this.notesChart.update(note, true);
+			// チャートはプロセス内のバッファに差分を積むので、データベースに保存されるまで完了にしない
+			// （保存の前に停止したら、再試行で積み直す）
+			step('stats', async () => {
+				await this.notesChart.update(note, true);
+				const saves = [this.notesChart.waitForSave()];
 				if (note.visibility !== 'specified' && (this.meta.enableChartsForRemoteUser || (user.host == null))) {
-					this.perUserNotesChart.update(user, note, true);
+					await this.perUserNotesChart.update(user, note, true);
+					saves.push(this.perUserNotesChart.waitForSave());
 				}
+				await Promise.all(saves);
 			}),
 
 			// Register host
 			step('instanceStats', async () => {
 				if (!this.meta.enableStatsForFederatedInstances || !this.userEntityService.isRemoteUser(user)) return;
 				const i = await this.federatedInstanceService.fetchOrRegister(user.host);
-				this.updateNotesCountQueue.enqueue(i.id, 1);
+				// 完了にする前に保存されるように、まとめずに直接加算する（削除の側の減算と同じ）
+				await this.instancesRepository.increment({ id: i.id }, 'notesCount', 1);
 				if (this.meta.enableChartsForFederatedInstances) {
-					this.instanceChart.updateNote(i.host, note, true);
+					await this.instanceChart.updateNote(i.host, note, true);
+					await this.instanceChart.waitForSave();
 				}
 			}),
+
+			step('activeUsers', async () => {
+				if (silent || !this.userEntityService.isLocalUser(user)) return;
+				await this.activeUsersChart.write(user);
+				await this.activeUsersChart.waitForSave();
+			}),
+		]);
+
+		try {
+			await this.runCreatedEffectsExceptStats(step, ctx, isPureRenote);
+		} finally {
+			await statsSteps;
+		}
+	}
+
+	@bindThis
+	private async runCreatedEffectsExceptStats(step: NoteOutboxStep, ctx: CreatedEffectsContext, isPureRenote: boolean) {
+		const { note, user, reply, renote, mentionedUsers, silent } = ctx;
+
+		// 従来はどれも待たずに並行して始めていた副作用。タイムライン・アンテナへの反映を遅らせないよう、並行して実行する
+		await Promise.all([
+			step('timeline', () => this.pushToTl(note, user)),
+
+			step('antenna', () => this.antennaService.addNoteToAntennas({ ...note }, user)),
 
 			// ハッシュタグ更新
 			step('hashtags', async () => {
@@ -950,13 +975,9 @@ export class NoteCreateService implements OnApplicationShutdown {
 			let packed: Packed<'Note'> | null = null;
 			const getPacked = async () => packed ??= await this.noteEntityService.pack(note, null, { skipHide: true, withReactionAndUserPairCache: true });
 
-			await step('activeUsers', () => {
-				if (this.userEntityService.isLocalUser(user)) this.activeUsersChart.write(user);
-			});
-
 			await step('stream', async () => {
 				const noteObj = await getPacked();
-				this.globalEventService.publishNotesStream(noteObj);
+				await this.globalEventService.publishNotesStream(noteObj);
 				await this.roleService.addNoteToRoleTimeline(noteObj);
 			});
 
@@ -1007,12 +1028,16 @@ export class NoteCreateService implements OnApplicationShutdown {
 			});
 
 			//#region AP deliver
-			await step('deliver', async () => {
-				// 配送先は、処理する時点のノートの公開範囲から決める
-				const deliveryScope = getNoteDeliveryScope(note);
-				if (note.localOnly || !deliveryScope.federate || !this.userEntityService.isLocalUser(user)) return;
+			// 配送先は、処理する時点のノートの公開範囲から決める。
+			// フォロワー・直接の宛先と、リレーとを別の副作用にする。それぞれ1回のaddBulkで登録するので、
+			// 片方が失敗して再試行しても、登録済みの側を重ねて登録しない
+			const deliveryScope = getNoteDeliveryScope(note);
+			let noteActivity: Awaited<ReturnType<typeof this.renderNoteOrRenoteActivity>> | undefined;
+			const getActivity = async () => noteActivity === undefined ? (noteActivity = await this.renderNoteOrRenoteActivity(note, renote)) : noteActivity;
+			const federate = !note.localOnly && deliveryScope.federate && this.userEntityService.isLocalUser(user);
 
-				const noteActivity = await this.renderNoteOrRenoteActivity(note, renote);
+			if (federate) await step('deliver', async () => {
+				const noteActivity = await getActivity();
 				// 引用でないRenoteで、Renote先が削除済みなら配送するものがない
 				if (noteActivity == null) return;
 
@@ -1040,11 +1065,13 @@ export class NoteCreateService implements OnApplicationShutdown {
 					dm.addFollowersRecipe();
 				}
 
-				if (deliveryScope.relays) {
-					await this.relayService.deliverToRelays(user, noteActivity);
-				}
-
 				await dm.execute();
+			});
+
+			if (federate && deliveryScope.relays) await step('deliverRelays', async () => {
+				const noteActivity = await getActivity();
+				if (noteActivity == null) return;
+				await this.relayService.deliverToRelays({ id: user.id, host: null }, noteActivity);
 			});
 			//#endregion
 		}
@@ -1302,25 +1329,5 @@ export class NoteCreateService implements OnApplicationShutdown {
 		}
 
 		return false;
-	}
-
-	@bindThis
-	private collapseNotesCount(oldValue: number, newValue: number) {
-		return oldValue + newValue;
-	}
-
-	@bindThis
-	private async performUpdateNotesCount(id: MiNote['id'], incrBy: number) {
-		await this.instancesRepository.increment({ id: id }, 'notesCount', incrBy);
-	}
-
-	@bindThis
-	public async dispose(): Promise<void> {
-		await this.updateNotesCountQueue.performAllNow();
-	}
-
-	@bindThis
-	public async onApplicationShutdown(signal?: string | undefined): Promise<void> {
-		await this.dispose();
 	}
 }

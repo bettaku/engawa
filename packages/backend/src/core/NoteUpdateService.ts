@@ -16,7 +16,7 @@ import type { NotesRepository, UsersRepository } from '@/models/_.js';
 import type { MiNoteOutbox } from '@/models/NoteOutbox.js';
 import { NoteOutboxService } from '@/core/NoteOutboxService.js';
 import type { NoteOutboxStep } from '@/core/NoteOutboxService.js';
-import type { MiUser, MiLocalUser, MiRemoteUser } from '@/models/User.js';
+import type { MiUser, MiRemoteUser } from '@/models/User.js';
 import { RelayService } from '@/core/RelayService.js';
 import { DI } from '@/di-symbols.js';
 import ActiveUsersChart from '@/core/chart/charts/active-users.js';
@@ -285,23 +285,44 @@ export class NoteUpdateService {
 		// 予約削除のジョブをDBのdeleteAtに合わせる
 		await step('scheduledDelete', () => this.queueService.syncScheduledNoteDelete(note.id, note.deleteAt));
 
-		if (!silent) {
-			await step('activeUsers', () => {
-				if (this.userEntityService.isLocalUser(user)) this.activeUsersChart.write(user);
-			});
+		// チャートはデータベースへの保存を待つので、ほかの副作用を遅らせないよう並行して始め、最後に終わるのを待つ
+		const activeUsersStep = step('activeUsers', async () => {
+			if (silent || !this.userEntityService.isLocalUser(user)) return;
+			await this.activeUsersChart.write(user);
+			await this.activeUsersChart.waitForSave();
+		});
 
-			await step('stream', () => {
-				this.globalEventService.publishNoteStream(note, 'updated', { cw: note.cw, text: note.text, disableRightClick: note.disableRightClick, deleteAt: note.deleteAt });
-			});
+		try {
+			await this.runUpdatedEffectsExceptStats(step, note, user, silent);
+		} finally {
+			await activeUsersStep;
+		}
+	}
+
+	@bindThis
+	private async runUpdatedEffectsExceptStats(step: NoteOutboxStep, note: MiNote, user: MiUser, silent: boolean) {
+		if (!silent) {
+			await step('stream', () => this.globalEventService.publishNoteStream(note, 'updated', { cw: note.cw, text: note.text, disableRightClick: note.disableRightClick, deleteAt: note.deleteAt }));
 
 			//#region AP deliver
-			await step('deliver', async () => {
-				// 配送先は、処理する時点のノートの公開範囲から決める
-				if (!this.userEntityService.isLocalUser(user) || !getNoteDeliveryScope(note).federate) return;
+			// 配送先は、処理する時点のノートの公開範囲から決める。
+			// フォロワー・メンション先と、リレーとを別の副作用にする。それぞれ1回のaddBulkで登録するので、
+			// 片方が失敗して再試行しても、登録済みの側を重ねて登録しない
+			const deliveryScope = getNoteDeliveryScope(note);
+			if (this.userEntityService.isLocalUser(user) && deliveryScope.federate) {
+				const localUser = user;
+				let noteActivity: Awaited<ReturnType<typeof this.renderNoteActivity>> | null = null;
+				const getActivity = async () => noteActivity ??= await this.renderNoteActivity(note, localUser);
 
-				const noteActivity = await this.renderNoteActivity(note, user);
-				await this.deliverToConcerned(user, note, noteActivity);
-			});
+				await step('deliver', async () => {
+					const remoteUsers = await this.getMentionedRemoteUsers(note);
+					await this.apDeliverManagerService.deliverToFollowersAndUsers(localUser, await getActivity(), remoteUsers, deliveryScope.followers);
+				});
+
+				if (deliveryScope.relays) {
+					await step('deliverRelays', async () => this.relayService.deliverToRelays(localUser, await getActivity()));
+				}
+			}
 			//#endregion
 		}
 
@@ -339,24 +360,6 @@ export class NoteUpdateService {
 		return await this.usersRepository.find({
 			where,
 		}) as MiRemoteUser[];
-	}
-
-	@bindThis
-	private async deliverToConcerned(user: { id: MiLocalUser['id']; host: null; }, note: MiNote, content: any) {
-		// 配送先は作成時と同じく、ノートの公開範囲に従う
-		const scope = getNoteDeliveryScope(note);
-		if (!scope.federate) return;
-
-		if (scope.followers) {
-			await this.apDeliverManagerService.deliverToFollowers(user, content);
-		}
-		if (scope.relays) {
-			await this.relayService.deliverToRelays(user, content);
-		}
-		const remoteUsers = await this.getMentionedRemoteUsers(note);
-		for (const remoteUser of remoteUsers) {
-			await this.apDeliverManagerService.deliverToUser(user, content, remoteUser);
-		}
 	}
 
 	@bindThis

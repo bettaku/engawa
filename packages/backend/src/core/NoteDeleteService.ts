@@ -4,10 +4,9 @@
  */
 
 import { Brackets, DataSource, In, IsNull, Not } from 'typeorm';
-import type { EntityManager } from 'typeorm';
 import { Injectable, Inject } from '@nestjs/common';
 import { MiUser } from '@/models/User.js';
-import type { MiLocalUser, MiRemoteUser } from '@/models/User.js';
+import type { MiRemoteUser } from '@/models/User.js';
 import { MiNote } from '@/models/Note.js';
 import type { IMentionedRemoteUsers } from '@/models/Note.js';
 import type { InstancesRepository, MiMeta, NotesRepository, UsersRepository } from '@/models/_.js';
@@ -33,6 +32,7 @@ import { NoteOutboxService } from '@/core/NoteOutboxService.js';
 import { retryOnDeadlock } from '@/misc/retry-on-deadlock.js';
 import type { NoteOutboxStep } from '@/core/NoteOutboxService.js';
 import type { MiNoteOutbox } from '@/models/NoteOutbox.js';
+import type { EntityManager } from 'typeorm';
 
 type NoteAuthor = { id: MiUser['id']; uri: MiUser['uri']; host: MiUser['host']; isBot: MiUser['isBot']; };
 
@@ -479,27 +479,40 @@ export class NoteDeleteService {
 		const undo = (name: string) => payload.createdDone == null || payload.createdDone.includes(name);
 
 		if (effects.has('stream')) {
-			await step('stream', () => {
-				this.globalEventService.publishNoteStream(note, 'deleted', {
-					deletedAt: new Date(record.createdAt),
-				});
-			});
+			await step('stream', () => this.globalEventService.publishNoteStream(note, 'deleted', {
+				deletedAt: new Date(record.createdAt),
+			}));
 		}
 
 		// ローカルの投稿なら削除アクティビティを配送。
 		// 作成の配送が一部の宛先（リレーなど）にだけ届いて止まった場合もあるので、作成の配送が終わっていなくても配送する。
 		// 作成を受け取っていない宛先には、存在しないノートの削除が届くだけである
+		// フォロワー・直接の宛先と、リレーとを別の副作用にする。それぞれ1回のaddBulkで登録するので、
+		// 片方が失敗して再試行しても、登録済みの側を重ねて登録しない
 		if (effects.has('deliver')) {
-			await step('deliver', () => this.deliverDeletion(note, payload));
+			const deletion = this.renderDeletion(note, payload);
+			if (deletion != null) {
+				await step('deliver', async () => {
+					const remoteUsers = payload.remoteUserIds.length > 0
+						? (await this.usersRepository.findBy({ id: In(payload.remoteUserIds) })).filter(u => this.userEntityService.isRemoteUser(u))
+						: [];
+					await this.apDeliverManagerService.deliverToFollowersAndUsers(deletion.author, deletion.content, remoteUsers);
+				});
+				await step('deliverRelays', () => this.relayService.deliverToRelays(deletion.author, deletion.content));
+			}
 		}
 
 		// チャートと連合サーバーの集計は、作成側と同じく別の副作用にする（片方だけ終わった状態での再試行で二重に減算しない）
 		if (effects.has('stats') && undo('stats')) {
-			await step('stats', () => {
-				this.notesChart.update(note, false);
+			// チャートはプロセス内のバッファに差分を積むので、データベースに保存されるまで完了にしない
+			await step('stats', async () => {
+				await this.notesChart.update(note, false);
+				const saves = [this.notesChart.waitForSave()];
 				if (this.meta.enableChartsForRemoteUser || (note.userHost == null)) {
-					this.perUserNotesChart.update({ id: note.userId }, note, false);
+					await this.perUserNotesChart.update({ id: note.userId }, note, false);
+					saves.push(this.perUserNotesChart.waitForSave());
 				}
+				await Promise.all(saves);
 			});
 		}
 
@@ -510,7 +523,8 @@ export class NoteDeleteService {
 				const i = await this.federatedInstanceService.fetchOrRegister(host);
 				await this.instancesRepository.decrement({ id: i.id }, 'notesCount', 1);
 				if (this.meta.enableChartsForFederatedInstances) {
-					this.instanceChart.updateNote(i.host, note, false);
+					await this.instanceChart.updateNote(i.host, note, false);
+					await this.instanceChart.waitForSave();
 				}
 			});
 		}
@@ -521,26 +535,23 @@ export class NoteDeleteService {
 		}
 	}
 
+	/** 配送する削除のアクティビティ。配送しないならnull */
 	@bindThis
-	private async deliverDeletion(note: MiNote, payload: NoteDeletedOutboxPayload) {
-		if (note.userHost != null || note.localOnly) return;
+	private renderDeletion(note: MiNote, payload: NoteDeletedOutboxPayload) {
+		if (note.userHost != null || note.localOnly) return null;
 
 		const author = { id: note.userId, host: null } as const;
 		const renoteUri = payload.isPureRenote ? payload.renoteUri : null;
 
 		// 公開範囲がspecifiedの純粋なRenoteは、作成時もrenderAnnounceが例外を投げるのでAnnounceを配送していない。
 		// 取り消す配送がないので、何も配送しない
-		if (renoteUri != null && !['public', 'home', 'followers'].includes(note.visibility)) return;
+		if (renoteUri != null && !['public', 'home', 'followers'].includes(note.visibility)) return null;
 
 		const content = this.apRendererService.addContext(renoteUri != null
 			? this.apRendererService.renderUndo(this.apRendererService.renderAnnounce(renoteUri, note), author)
 			: this.apRendererService.renderDelete(this.apRendererService.renderTombstone(`${this.config.url}/notes/${note.id}`), author));
 
-		const remoteUsers = payload.remoteUserIds.length > 0
-			? (await this.usersRepository.findBy({ id: In(payload.remoteUserIds) })).filter(u => this.userEntityService.isRemoteUser(u))
-			: [];
-
-		await this.deliverToConcerned(author, content, remoteUsers);
+		return { author, content };
 	}
 
 	@bindThis
@@ -581,12 +592,5 @@ export class NoteDeleteService {
 		const notes = await query.getMany() as (MiNote & { user: MiRemoteUser })[];
 		const remoteUsers = notes.map(({ user }) => user);
 		return remoteUsers;
-	}
-
-	@bindThis
-	private async deliverToConcerned(user: { id: MiLocalUser['id']; host: null; }, content: any, remoteUsers: MiRemoteUser[]) {
-		await this.apDeliverManagerService.deliverToFollowers(user, content);
-		await this.relayService.deliverToRelays(user, content);
-		await this.apDeliverManagerService.deliverToUsers(user, content, remoteUsers);
 	}
 }
