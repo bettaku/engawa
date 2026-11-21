@@ -106,9 +106,9 @@ describe('CounterConsistencyService', () => {
 	beforeEach(async () => {
 		// カウンタはノートの作成・削除と同じトランザクションで更新する。outboxの後処理（配送・チャートなど）はこのテストの対象外
 		const noteOutboxService = app.get(NoteOutboxService);
-		void noteOutboxService.dispatch;
+		void noteOutboxService.dispatchClaimed;
 		void noteOutboxService.processNow;
-		vi.spyOn(noteOutboxService, 'dispatch').mockImplementation(() => {});
+		vi.spyOn(noteOutboxService, 'dispatchClaimed').mockImplementation(() => {});
 		vi.spyOn(noteOutboxService, 'processNow').mockResolvedValue();
 
 		// 他のテストが残したデータの影響を受けないように、空のDBから始める

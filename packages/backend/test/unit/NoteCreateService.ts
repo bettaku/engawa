@@ -10,6 +10,7 @@ import { afterEach, vi } from 'vitest';
 import { CoreModule } from '@/core/CoreModule.js';
 import { NoteCreateService } from '@/core/NoteCreateService.js';
 import { NoteOutboxService } from '@/core/NoteOutboxService.js';
+import type { MiNoteOutbox } from '@/models/NoteOutbox.js';
 import { GlobalModule } from '@/GlobalModule.js';
 import { MiNote } from '@/models/Note.js';
 import { IPoll } from '@/models/Poll.js';
@@ -177,12 +178,12 @@ describe('NoteCreateService', () => {
 		function stubInsert() {
 			// DBへの書き込みと後処理は止め、作成処理が insert まで到達したかだけを見る
 			const target = noteCreateService as unknown as {
-				insertNote: () => Promise<{ note: MiNote; outboxSeqs: string[] }>;
+				insertNote: () => Promise<{ note: MiNote; outboxRecord: MiNoteOutbox }>;
 			};
-			const insertNote = vi.spyOn(target, 'insertNote').mockImplementation(async () => ({ note: { id: 'created-note-id' } as MiNote, outboxSeqs: ['1'] }));
+			const insertNote = vi.spyOn(target, 'insertNote').mockImplementation(async () => ({ note: { id: 'created-note-id' } as MiNote, outboxRecord: { seq: '1' } as MiNoteOutbox }));
 			const noteOutboxService = app.get(NoteOutboxService);
-			void noteOutboxService.dispatch;
-			const postNoteCreated = vi.spyOn(noteOutboxService, 'dispatch').mockImplementation(() => {});
+			void noteOutboxService.dispatchClaimed;
+			const postNoteCreated = vi.spyOn(noteOutboxService, 'dispatchClaimed').mockImplementation(() => {});
 			return { insertNote, postNoteCreated };
 		}
 

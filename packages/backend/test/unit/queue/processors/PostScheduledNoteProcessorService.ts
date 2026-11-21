@@ -188,8 +188,8 @@ describe('PostScheduledNoteProcessorService', () => {
 
 		// ノート作成後の配信・配送・索引は、このテストの対象外
 		const noteOutboxService = app.get(NoteOutboxService);
-		void noteOutboxService.dispatch;
-		vi.spyOn(noteOutboxService, 'dispatch').mockImplementation(() => {});
+		void noteOutboxService.dispatchClaimed;
+		vi.spyOn(noteOutboxService, 'dispatchClaimed').mockImplementation(() => {});
 
 		await queueService.postScheduledNoteQueue.obliterate({ force: true });
 	});

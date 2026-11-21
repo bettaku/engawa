@@ -22,7 +22,11 @@ import type Logger from '@/logger.js';
  */
 export type NoteOutboxStep = (name: string, fn: () => unknown) => Promise<void>;
 
-export type NoteOutboxHandler = (record: MiNoteOutbox, step: NoteOutboxStep) => Promise<void>;
+/**
+ * @param context 書き込んだプロセスがコミット直後に処理するときに渡す、書き込み側が持っているオブジェクト（ノートなど）。
+ *   ハンドラーはDBを読み直す代わりにこれを使ってよい。照合ジョブからの処理では渡さない（DBを読み直す）
+ */
+export type NoteOutboxHandler = (record: MiNoteOutbox, step: NoteOutboxStep, context?: unknown) => Promise<void>;
 
 export type NoteOutboxEntry = {
 	type: NoteOutboxType;
@@ -91,20 +95,40 @@ export class NoteOutboxService implements OnApplicationShutdown {
 	 */
 	@bindThis
 	public async add(manager: EntityManager, entries: NoteOutboxEntry[]): Promise<MiNoteOutbox['seq'][]> {
+		return (await this.insert(manager, entries, false)).map(record => record.seq);
+	}
+
+	/**
+	 * レコードを、このプロセスが処理中の状態で記録する。ノートの行を変更するトランザクションの中で呼び、
+	 * コミット後に`dispatchClaimed`へ渡す。
+	 *
+	 * 処理を始めるときの更新（`process`の取得）を省けるので、コミットから最初の副作用までの遅延が従来と同じになる。
+	 * 同じノートの先のレコードがありえない種類（作成）にだけ使う。
+	 * プロセスが停止した場合は、期限（`STALE_SECONDS`）が切れた後に照合ジョブが拾う。
+	 */
+	@bindThis
+	public async addClaimed(manager: EntityManager, entry: NoteOutboxEntry): Promise<MiNoteOutbox> {
+		const [record] = await this.insert(manager, [entry], true);
+		return record;
+	}
+
+	@bindThis
+	private async insert(manager: EntityManager, entries: NoteOutboxEntry[], claimed: boolean): Promise<MiNoteOutbox[]> {
 		if (entries.length === 0) return [];
 
 		const params: unknown[] = [];
 		const values = entries.map(entry => {
 			const base = params.length;
 			params.push(entry.type, entry.noteId, entry.userId, JSON.stringify(entry.payload ?? {}));
-			return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}::jsonb)`;
+			const state = claimed ? `1, now() + make_interval(secs => ${STALE_SECONDS})` : '0, NULL';
+			return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}::jsonb, ${state})`;
 		});
-		const rows: { seq: string }[] = await manager.query(
-			`INSERT INTO "note_outbox" ("type", "noteId", "userId", "payload") VALUES ${values.join(', ')} RETURNING "seq"`,
+		const rows: MiNoteOutbox[] = await manager.query(
+			`INSERT INTO "note_outbox" ("type", "noteId", "userId", "payload", "attempts", "lockedUntil") VALUES ${values.join(', ')} RETURNING *`,
 			params,
 		);
 
-		return rows.map(row => String(row.seq));
+		return rows.map(row => ({ ...row, seq: String(row.seq) }));
 	}
 
 	/**
@@ -151,6 +175,20 @@ export class NoteOutboxService implements OnApplicationShutdown {
 	}
 
 	/**
+	 * `addClaimed`で記録したレコードを、コミット後にこのプロセスで処理する。完了を待たない。
+	 * シャットダウン中は処理を始めず、レコードは期限が切れた後に照合ジョブが拾う。
+	 */
+	@bindThis
+	public dispatchClaimed(record: MiNoteOutbox, context?: unknown): void {
+		setImmediate('note outbox', { signal: this.#shutdownController.signal }).then(
+			() => this.run(record, context).catch(err => {
+				this.logger.error(`Failed to process note outbox ${record.seq}`, { error: err });
+			}),
+			() => { /* aborted, ignore this */ },
+		);
+	}
+
+	/**
 	 * レコードを順に処理し、終わるのを待つ。例外を投げない。
 	 */
 	@bindThis
@@ -185,7 +223,14 @@ export class NoteOutboxService implements OnApplicationShutdown {
 
 		if (claimed == null) return 'skipped';
 
-		const record: MiNoteOutbox = { ...claimed, seq: String(claimed.seq) };
+		return await this.run({ ...claimed, seq: String(claimed.seq) });
+	}
+
+	/**
+	 * 処理中にしたレコードを処理する。
+	 */
+	@bindThis
+	private async run(record: MiNoteOutbox, context?: unknown): Promise<NoteOutboxProcessResult> {
 		const handler = this.handlers.get(record.type);
 		if (handler == null) {
 			// ハンドラーを登録していないプロセス（ありえないが）は、期限を戻してほかのプロセスに任せる
@@ -196,6 +241,8 @@ export class NoteOutboxService implements OnApplicationShutdown {
 
 		const failed: string[] = [];
 		const done = new Set(record.doneSteps);
+		// 完了の記録は、次の副作用を待たせないよう待たずに書き、レコードを片付ける前にまとめて待つ
+		const marks: Promise<unknown>[] = [];
 
 		const step: NoteOutboxStep = async (name, fn) => {
 			if (done.has(name)) return;
@@ -208,17 +255,25 @@ export class NoteOutboxService implements OnApplicationShutdown {
 			}
 			done.add(name);
 			record.doneSteps = [...done];
-			await this.db.query(
+			marks.push(this.db.query(
 				`UPDATE "note_outbox" SET "doneSteps" = array_append("doneSteps", $2::varchar), "lockedUntil" = now() + make_interval(secs => ${LEASE_SECONDS}) WHERE "seq" = $1`,
 				[record.seq, name],
-			);
+			));
 		};
 
 		try {
-			await handler(record, step);
+			await handler(record, step, context);
 		} catch (err) {
 			failed.push('(handler)');
 			this.logger.error(`Failed to handle note outbox ${record.seq} (${record.type} ${record.noteId}, attempt ${record.attempts})`, { error: err });
+		}
+
+		try {
+			await Promise.all(marks);
+		} catch (err) {
+			// 完了を記録できなかった副作用は、再試行で重複しうる。レコードは残して後で再試行する
+			failed.push('(mark)');
+			this.logger.error(`Failed to record done steps of note outbox ${record.seq}`, { error: err });
 		}
 
 		if (failed.length > 0) {

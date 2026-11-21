@@ -37,6 +37,7 @@ describe('NoteOutboxService', () => {
 	let userProfilesRepository: UserProfilesRepository;
 
 	let dispatch: MockInstance<NoteOutboxService['dispatch']>;
+	let dispatchClaimed: MockInstance<NoteOutboxService['dispatchClaimed']>;
 	let publishNotesStream: MockInstance<GlobalEventService['publishNotesStream']>;
 	let publishNoteStream: MockInstance<GlobalEventService['publishNoteStream']>;
 	let notesChartUpdate: MockInstance<NotesChart['update']>;
@@ -64,9 +65,14 @@ describe('NoteOutboxService', () => {
 		return record;
 	}
 
-	/** コミットの直後に停止したのと同じ状態を作る（プロセス内の処理を始めない） */
+	/**
+	 * コミットの直後に停止したのと同じ状態を作る（プロセス内の処理を始めない）。
+	 * 作成のレコードは処理中の状態で記録されるので、その期限が切れた後の状態にする
+	 */
 	async function createWithoutProcessing(user: MiUser, data: Parameters<NoteCreateService['create']>[1]) {
-		return await noteCreateService.create(user, data);
+		const note = await noteCreateService.create(user, data);
+		await db.query('UPDATE "note_outbox" SET "lockedUntil" = now() - interval \'1 second\' WHERE "noteId" = $1', [note.id]);
+		return note;
 	}
 
 	function notesChartCalls(note: Pick<MiNote, 'id'>, isAdditional: boolean) {
@@ -111,6 +117,8 @@ describe('NoteOutboxService', () => {
 		// @bindThisのメソッドは最初の参照でインスタンスのプロパティになるので、その後でspyする
 		void service.dispatch;
 		dispatch = vi.spyOn(service, 'dispatch').mockImplementation(() => {});
+		void service.dispatchClaimed;
+		dispatchClaimed = vi.spyOn(service, 'dispatchClaimed').mockImplementation(() => {});
 
 		const globalEventService = app.get(GlobalEventService);
 		void globalEventService.publishNotesStream;
@@ -143,13 +151,29 @@ describe('NoteOutboxService', () => {
 	});
 
 	describe('記録', () => {
-		test('作成と同じトランザクションで、作成のレコードを記録し、コミット後に処理を始める', async () => {
-			const note = await createWithoutProcessing(alice, { text: 'hello' });
+		test('作成と同じトランザクションで、作成のレコードを処理中の状態で記録し、コミット後にこのプロセスで処理を始める', async () => {
+			const note = await noteCreateService.create(alice, { text: 'hello' });
 
 			const records = await recordsOf(note.id);
 			expect(records.map(r => r.type)).toEqual(['created']);
-			expect(records[0].attempts).toBe(0);
-			expect(dispatch).toHaveBeenCalledWith([records[0].seq]);
+			expect(records[0].attempts).toBe(1);
+			expect(records[0].lockedUntil).not.toBeNull();
+			// 照合ジョブやほかのプロセスは、期限が切れるまで処理しない
+			expect(await service.process(records[0].seq)).toBe('skipped');
+			expect(dispatchClaimed).toHaveBeenCalledOnce();
+			expect(dispatchClaimed.mock.calls[0][0].seq).toBe(records[0].seq);
+		});
+
+		test('コミット直後のこのプロセスでの処理は、作成に使ったオブジェクトで副作用を実行し、レコードを片付ける', async () => {
+			dispatchClaimed.mockRestore();
+			const note = await noteCreateService.create(alice, { text: 'hello' });
+
+			for (let i = 0; i < 50 && (await recordsOf(note.id)).length > 0; i++) {
+				await new Promise(resolve => setTimeout(resolve, 20));
+			}
+			expect(await recordsOf(note.id)).toEqual([]);
+			expect(publishNotesStream.mock.calls.filter(([n]) => n.id === note.id)).toHaveLength(1);
+			expect(notesChartCalls(note, true)).toBe(1);
 		});
 
 		test('更新と同じトランザクションで、更新のレコードを記録する', async () => {
@@ -256,6 +280,8 @@ describe('NoteOutboxService', () => {
 	describe('作成の副作用を終える前の削除', () => {
 		test('作成のレコードを誰も処理していなければ取り消し、チャートと配送を取り消さない', async () => {
 			const note = await createWithoutProcessing(alice, { text: 'hello' });
+			// 処理を始めていないレコード（照合ジョブ待ちなど）
+			await db.query('UPDATE "note_outbox" SET "attempts" = 0, "lockedUntil" = NULL WHERE "noteId" = $1', [note.id]);
 
 			await noteDeleteService.delete(alice, await notesRepository.findOneByOrFail({ id: note.id }));
 
@@ -265,6 +291,22 @@ describe('NoteOutboxService', () => {
 			expect(deliverToFollowers).not.toHaveBeenCalled();
 			// ストリームと索引は取り消しても害がないので、そのまま実行する
 			expect(deletedEventsOf(note)).toBe(1);
+		});
+
+		test('作成のコミット直後に停止してから削除されたら、照合ジョブの処理の後で、何も取り消さない', async () => {
+			const note = await createWithoutProcessing(alice, { text: 'hello' });
+			const created = await recordOf(note.id, 'created');
+
+			await noteDeleteService.delete(alice, await notesRepository.findOneByOrFail({ id: note.id }));
+			const deleted = await recordOf(note.id, 'deleted');
+
+			expect(await service.process(created.seq)).toBe('done');
+			expect((await recordOf(note.id, 'deleted')).payload.createdDone).toEqual([]);
+			expect(await service.process(deleted.seq)).toBe('done');
+
+			expect(notesChartCalls(note, true)).toBe(0);
+			expect(notesChartCalls(note, false)).toBe(0);
+			expect(deliverToFollowers).not.toHaveBeenCalled();
 		});
 
 		test('作成の副作用の途中で削除されたら、実行した分だけを取り消す', async () => {
@@ -358,6 +400,8 @@ describe('NoteOutboxService', () => {
 			const expiredSeq = (await recordOf(expired.id, 'created')).seq;
 			const freshSeq = (await recordOf(fresh.id, 'created')).seq;
 			const lockedSeq = (await recordOf(locked.id, 'created')).seq;
+			// stale・fresh: 誰も処理を始めていない。staleだけが1分より前に記録された
+			await db.query('UPDATE "note_outbox" SET "attempts" = 0, "lockedUntil" = NULL WHERE "seq" = ANY($1)', [[staleSeq, freshSeq]]);
 			await db.query('UPDATE "note_outbox" SET "createdAt" = now() - interval \'5 minutes\' WHERE "seq" = $1', [staleSeq]);
 			await db.query('UPDATE "note_outbox" SET "attempts" = 1, "lockedUntil" = now() - interval \'1 second\' WHERE "seq" = $1', [expiredSeq]);
 			await db.query('UPDATE "note_outbox" SET "attempts" = 1, "createdAt" = now() - interval \'5 minutes\', "lockedUntil" = now() + interval \'1 minute\' WHERE "seq" = $1', [lockedSeq]);
