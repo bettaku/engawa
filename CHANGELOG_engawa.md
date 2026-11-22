@@ -97,6 +97,10 @@
 	- **更新時の注意**: 更新前の版のキュープロセスが残っていると、`resolveRemoteUser` ジョブを処理できずに失敗させます（再試行の後、移行先は次の受信で改めて登録されます）
 - Fix: ログインしていないとき、ユーザーの一覧（`users/show` で複数指定した場合など）でピン留めしたノートが空になる問題を修正
 - Enhance: ノートの返信を、返信の返信まで際限なく詳細に読み込まないようにしました。詳細（リアクション・返信先など）を含めるのは直接の返信までです
+- Enhance: 起動時と `pnpm check:config` で、環境変数も検証するようになりました
+	- `NODE_ENV` などの形式が決まっている変数に不正な値を渡すとエラー、`CP_*` フラグに `0` や `false` を渡すと（無効にならないため）警告、`CP_`・`CHERRYPICK_` で始まる未知の変数は警告になります。起動を止めるのは `CHERRYPICK_CONFIG_VALIDATION=error` のときだけです
+	- 環境変数の一覧は、設定のJSONスキーマ（`packages/backend/config.schema.json`）の `$defs.environment` に載せました
+	- 環境変数は起動時に一度だけ読むようになりました。起動後に変えても反映されません
 - Enhance: APIのエラー応答の形をそろえました
 	- `/api` 以下の2xx以外の応答は、すべて `{ "error": { "message", "code", "id", "kind" } }` の形になります。これまでは、JSONの構文の誤り・本文のサイズ超過・未知のパスへのPOSTなどでFastifyの既定の形が、GETを受け付けないエンドポイントへのGETやサインアップの一部の失敗では本文のない応答が返っていました
 	- 新しいエラーコード: `INVALID_REQUEST`（400）、`METHOD_NOT_ALLOWED`（405）、`PAYLOAD_TOO_LARGE`（413）、`UNSUPPORTED_MEDIA_TYPE`（415）。未知のパスは、メソッドにかかわらず `UNKNOWN_API_ENDPOINT`（404）を返します

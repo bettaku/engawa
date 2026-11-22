@@ -15,7 +15,7 @@ import { JSDOM } from 'jsdom';
 import { type Response } from 'node-fetch';
 import Fastify from 'fastify';
 import { entities } from '../src/postgres.js';
-import { loadConfig } from '../src/config.js';
+import { loadConfig, type Runtime } from '../src/config.js';
 import type * as misskey from 'cherrypick-js';
 import { DEFAULT_POLICIES } from '@/core/RoleService.js';
 import { validateContentTypeSetAsActivityPub } from '@/core/activitypub/misc/validator.js';
@@ -593,7 +593,7 @@ export async function testPaginationConsistency<Entity extends { id: string, cre
 }
 
 export async function initTestDb(justBorrow = false, initEntities?: any[]) {
-	if (process.env.NODE_ENV !== 'test') throw new Error('NODE_ENV is not a test');
+	if (config.runtime.nodeEnv !== 'test') throw new Error('NODE_ENV is not a test');
 
 	const db = new DataSource({
 		type: 'postgres',
@@ -612,26 +612,29 @@ export async function initTestDb(justBorrow = false, initEntities?: any[]) {
 	return db;
 }
 
-export async function sendEnvUpdateRequest(params: { key: string, value?: string }) {
+/**
+ * テストサーバーのconfig.runtime.testを書き換える。sendEnvResetRequest（各ファイルの開始時）で元に戻る
+ */
+export async function setRuntimeTestOption<K extends keyof Runtime['test']>(key: K, value: Runtime['test'][K]) {
 	const res = await fetch(
-		`http://localhost:${port + 1000}/env`,
+		`http://localhost:${port + 1000}/runtime`,
 		{
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
 			},
-			body: JSON.stringify(params),
+			body: JSON.stringify({ key, value }),
 		},
 	);
 
 	if (res.status !== 200) {
-		throw new Error('server env update failed.');
+		throw new Error('server runtime option update failed.');
 	}
 }
 
 export async function sendEnvResetRequest() {
 	const res = await fetch(
-		`http://localhost:${port + 1000}/env-reset`,
+		`http://localhost:${port + 1000}/runtime-reset`,
 		{
 			method: 'POST',
 			body: JSON.stringify({}),

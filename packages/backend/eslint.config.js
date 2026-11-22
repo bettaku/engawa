@@ -52,4 +52,16 @@ export default [
 			}],
 		},
 	},
+	{
+		// 環境変数はconfig/で検証してから使う（P3-4）
+		files: ['src/**/*.ts'],
+		ignores: ['src/config/**', 'src/boot/config-check.ts', 'src/**/*.test.ts'],
+		rules: {
+			'no-restricted-properties': ['error', {
+				object: 'process',
+				property: 'env',
+				message: 'Read config.runtime (DI) or loadEnvironment() instead. Register new variables in src/config/schema.ts.',
+			}],
+		},
+	},
 ];

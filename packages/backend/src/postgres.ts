@@ -268,9 +268,8 @@ export const entities = [
 	...charts,
 ];
 
-const log = process.env.NODE_ENV !== 'production';
-
 export function createPostgresDataSource(config: Config) {
+	const log = config.runtime.nodeEnv !== 'production';
 	return new DataSource({
 		type: 'postgres',
 		host: config.db.host,
@@ -300,9 +299,9 @@ export function createPostgresDataSource(config: Config) {
 				})),
 			},
 		} : {}),
-		synchronize: process.env.NODE_ENV === 'test',
-		dropSchema: process.env.NODE_ENV === 'test',
-		cache: !config.db.disableCache && process.env.NODE_ENV !== 'test' ? { // dbをcloseしても何故かredisのコネクションが内部的に残り続けるようで、テストの際に支障が出るため無効にする(キャッシュも含めてテストしたいため本当は有効にしたいが...)
+		synchronize: config.runtime.test.resetSchema,
+		dropSchema: config.runtime.test.resetSchema,
+		cache: !config.db.disableCache && !config.runtime.test.disableQueryCache ? { // dbをcloseしても何故かredisのコネクションが内部的に残り続けるようで、テストの際に支障が出るため無効にする(キャッシュも含めてテストしたいため本当は有効にしたいが...)
 			type: 'ioredis',
 			options: {
 				host: config.redis.host,

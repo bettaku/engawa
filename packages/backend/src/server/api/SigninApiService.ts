@@ -180,7 +180,7 @@ export class SigninApiService {
 		};
 
 		if (!profile.twoFactorEnabled) {
-			if (process.env.NODE_ENV !== 'test') {
+			if (!this.config.runtime.test.skipCaptcha) {
 				if (this.meta.enableHcaptcha && this.meta.hcaptchaSecretKey) {
 					await this.captchaService.verifyHcaptcha(this.meta.hcaptchaSecretKey, body['hcaptcha-response']).catch(err => {
 						throw new FastifyReplyError(400, err);

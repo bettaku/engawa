@@ -9,6 +9,7 @@ import * as Redis from 'ioredis';
 import { LoggerService } from '@/core/LoggerService.js';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import { DI } from '@/di-symbols.js';
+import type { Config } from '@/config.js';
 import { resetDb } from '@/misc/reset-db.js';
 import { MetaService } from '@/core/MetaService.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
@@ -34,6 +35,9 @@ export const paramDef = {
 @Injectable()
 export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-disable-line import/no-default-export
 	constructor(
+		@Inject(DI.config)
+		private config: Config,
+
 		@Inject(DI.db)
 		private db: DataSource,
 
@@ -45,7 +49,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private globalEventService: GlobalEventService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
-			if (process.env.NODE_ENV !== 'test') throw new Error('NODE_ENV is not a test');
+			if (!this.config.runtime.test.resetDbEndpoint) throw new Error('NODE_ENV is not a test');
 
 			const logger = this.loggerService.getLogger('reset-db');
 			logger.info('---- Resetting database...');

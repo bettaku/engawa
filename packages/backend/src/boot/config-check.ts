@@ -4,6 +4,7 @@
 
 import { parseArgs } from 'node:util';
 import { configPath, ConfigValidationError, formatDiagnostic, parseConfigSource, type Diagnostic } from '../config/parse.js';
+import { parseEnvironment } from '../config/environment.js';
 
 let diagnostics: Diagnostic[];
 let json = process.argv.includes('--json');
@@ -15,7 +16,10 @@ try {
 	if (positionals.length > 1) throw new Error('usage');
 	json = !!values.json;
 	strict = !!values.strict;
-	diagnostics = parseConfigSource(positionals[0] ?? configPath(), process.env, 'error').diagnostics;
+	diagnostics = [
+		...parseConfigSource(positionals[0] ?? configPath(), process.env, 'error').diagnostics,
+		...parseEnvironment(process.env).diagnostics,
+	];
 } catch (error) {
 	diagnostics = error instanceof ConfigValidationError ? error.diagnostics : [{
 		level: 'error', path: '', message: error instanceof Error && 'errno' in error

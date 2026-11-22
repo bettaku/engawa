@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
 import cluster from 'node:cluster';
 import { parseConfigSource, configPath, ConfigValidationError, formatDiagnostic } from './config/parse.js';
+import { loadEnvironment, type Runtime } from './config/environment.js';
 import type { ConfigInput, RedisOptionsSource } from './config/types.js';
 import { type FastifyServerOptions } from 'fastify';
 import { resolveViteEntry, type ViteEntry } from './misc/vite-entry.js';
@@ -16,6 +17,7 @@ import type * as SentryVue from '@sentry/vue';
 import type { RedisOptions } from 'ioredis';
 
 export type { FulltextSearchProvider } from './config/types.js';
+export type { Runtime } from './config/environment.js';
 
 export type Config = {
 	url: string;
@@ -86,6 +88,8 @@ export type Config = {
 	perUserNotificationsMaxCount: number;
 	deactivateAntennaThreshold: number;
 	pidFile?: string;
+	/** 環境変数で切り替わる振る舞い。設定ファイルでは指定できない */
+	runtime: Runtime;
 };
 
 const _filename = fileURLToPath(import.meta.url);
@@ -96,19 +100,22 @@ let cached: Config | undefined;
 
 export function loadConfig(): Config {
 	if (cached) return cached;
-	const mode = process.env.CHERRYPICK_CONFIG_VALIDATION;
-	const { source, diagnostics } = parseConfigSource(path);
+	const environment = loadEnvironment();
+	// 空文字列は未設定（warn）として扱う。それ以外の不正な値は、parseConfigSourceが拒否する
+	const mode = environment.values.CHERRYPICK_CONFIG_VALIDATION ?? 'warn';
+	const { source, diagnostics: configDiagnostics } = parseConfigSource(path, environment.values, mode);
+	const diagnostics = mode === 'off' ? configDiagnostics : [...configDiagnostics, ...environment.diagnostics];
 	if (mode === 'error' && diagnostics.some(d => d.level === 'error')) {
 		throw new ConfigValidationError(diagnostics);
 	}
-	if (cluster.isPrimary && process.env.NODE_ENV !== 'test') {
+	if (cluster.isPrimary && environment.runtime.nodeEnv !== 'test') {
 		for (const diagnostic of diagnostics) console.warn(formatDiagnostic(diagnostic));
 	}
-	cached = deriveConfig(source);
+	cached = { ...deriveConfig(source), runtime: environment.runtime };
 	return cached;
 }
 
-function deriveConfig(config: ConfigInput): Config {
+function deriveConfig(config: ConfigInput): Omit<Config, 'runtime'> {
 	// Meilisearchは削除した。黙ってSQLでの検索に切り替えると、検索の挙動が変わったことに気づけないので起動しない
 	if ((config.fulltextSearch?.provider as string | undefined) === 'meilisearch') {
 		throw new Error('fulltextSearch.provider "meilisearch" is no longer supported. Use "sqlPgroonga" or "elasticsearch" instead. See CHANGELOG_engawa.md for migration.');
