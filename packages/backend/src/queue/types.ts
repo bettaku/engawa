@@ -124,6 +124,7 @@ export type DbJobMap = {
 	unreadNotification: DbUnreadNotificationJobData;
 	unreadChatMessage: DbUnreadChatMessageJobData;
 	signinNotification: DbSigninNotificationJobData;
+	resolveRemoteUser: DbResolveRemoteUserJobData;
 };
 
 /**
@@ -144,6 +145,14 @@ export type DbUnreadChatMessageJobData = JobDataV1 & {
 /** サインインの記録（`signin`テーブル）を作った後の、通知・ストリーム・メールの送信（P3-2）。内容はDBから読み直す */
 export type DbSigninNotificationJobData = JobDataV1 & {
 	signinId: MiSignin['id'];
+};
+
+/**
+ * 未登録のリモートユーザー（アカウントの移行先）を、リモートから取得して登録する（P3-3）。
+ * 以前はユーザーのpackの中で取得していた
+ */
+export type DbResolveRemoteUserJobData = JobDataV1 & {
+	uri: string;
 };
 
 /** ノートの後処理のoutboxのレコード（P3-1）。内容はDBのレコードにあり、payloadには持たせない */

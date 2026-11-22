@@ -32,6 +32,7 @@ import type { HashtagService } from '@/core/HashtagService.js';
 import { MiUserNotePining } from '@/models/UserNotePining.js';
 import { StatusError } from '@/misc/status-error.js';
 import type { UtilityService } from '@/core/UtilityService.js';
+import { QueueService } from '@/core/QueueService.js';
 import type { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { bindThis } from '@/decorators.js';
 import { RoleService } from '@/core/RoleService.js';
@@ -108,6 +109,7 @@ export class ApPersonService implements OnModuleInit {
 
 		private avatarDecorationService: AvatarDecorationService,
 		private httpRequestService: HttpRequestService,
+		private queueService: QueueService,
 	) {
 	}
 
@@ -550,6 +552,8 @@ export class ApPersonService implements OnModuleInit {
 
 		await this.updateFeatured(user.id, resolver).catch(err => this.logger.error(err));
 
+		await this.requestResolveMoveTarget(user);
+
 		return user;
 	}
 
@@ -786,7 +790,38 @@ export class ApPersonService implements OnModuleInit {
 				});
 		}
 
+		// 移行処理をしない場合も、移行先が未登録なら登録しておく（ユーザーのpackは登録済みのものしか参照しない）
+		await this.requestResolveMoveTarget(updated);
+
 		return 'skip';
+	}
+
+	/**
+	 * アカウントの移行先が未登録なら、取得して登録するジョブを作る（P3-3）。
+	 * 以前はユーザーのpack（`movedTo`）の中で取得していた。packはDBを読むだけにしたので、受信の側で登録する。
+	 * 失敗してもユーザーの登録・更新は失敗にしない。
+	 */
+	@bindThis
+	private async requestResolveMoveTarget(user: Pick<MiRemoteUser, 'movedToUri' | 'uri'>): Promise<void> {
+		const target = user.movedToUri;
+		if (target == null || target === user.uri || this.utilityService.isUriLocal(target)) return;
+		try {
+			if (await this.fetchPerson(target) != null) return;
+			await this.queueService.createResolveRemoteUserJob(target);
+		} catch (err) {
+			this.logger.warn(`Failed to request resolving the move target ${target}`, { stack: err });
+		}
+	}
+
+	/**
+	 * `resolveRemoteUser`ジョブの処理（P3-3）。登録済みなら何もしない。
+	 */
+	@bindThis
+	public async processResolveRemoteUser(uri: string): Promise<string> {
+		if (this.utilityService.isUriLocal(uri)) return 'skip: local uri';
+		if (await this.fetchPerson(uri) != null) return 'skip: already registered';
+		const user = await this.resolvePerson(uri);
+		return `ok: ${user.id}`;
 	}
 
 	/**

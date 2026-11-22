@@ -24,6 +24,13 @@ import type { ReactionService } from '../ReactionService.js';
 import type { UserEntityService } from './UserEntityService.js';
 import type { DriveFileEntityService } from './DriveFileEntityService.js';
 
+/**
+ * 返信を`detail: true`でpackする深さの上限（fork固有、§8-7）。
+ * 上流は返信を`detail: false`でpackするが、forkはMkSubNoteContentで返信の`myReaction`を使うので、直接の返信（1段）だけdetailにする。
+ * それより深い返信は上流と同じく`detail: false`にする（以前は返信の連鎖を際限なくたどっていた）
+ */
+export const MAX_DETAILED_REPLY_DEPTH = 1;
+
 // is-renote.tsとよしなにリンク
 export function isPureRenote(note: MiNote): note is MiNote & { renoteId: MiNote['id']; renote: MiNote } {
 	return (
@@ -398,6 +405,8 @@ export class NoteEntityService implements OnModuleInit {
 			detail?: boolean;
 			skipHide?: boolean;
 			withReactionAndUserPairCache?: boolean;
+			/** 返信をたどった深さ（内部用）。`MAX_DETAILED_REPLY_DEPTH`を超えた返信は`detail: false`でpackする */
+			_replyDepth?: number;
 			_hint_?: {
 				bufferedReactions: Map<MiNote['id'], { deltas: Record<string, number>; pairs: ([MiUser['id'], string])[] }> | null;
 				myReactions: Map<MiNote['id'], string | null>;
@@ -415,6 +424,7 @@ export class NoteEntityService implements OnModuleInit {
 		const meId = me ? me.id : null;
 		const note = typeof src === 'object' ? src : await this.noteLoader.load(src);
 		const host = note.userHost;
+		const replyDepth = opts._replyDepth ?? 0;
 
 		const bufferedReactions = opts._hint_?.bufferedReactions != null
 			? (opts._hint_.bufferedReactions.get(note.id) ?? { deltas: {}, pairs: [] })
@@ -477,9 +487,11 @@ export class NoteEntityService implements OnModuleInit {
 				reply: (note.replyId && note.reply === null) ? null : note.replyId ? nullIfEntityNotFound(this.pack(note.reply ?? note.replyId, me, {
 					// NOTE: 기본값은 false 이지만, 2025.10.0 대응 과정에서 코드가 변경됨에 따라 MkSubNoteContent에서 myReaction을 불러오지 못하는 문제가 있으므로 true로 변경됨.
 					// myReaction을 불러오지 못하면 자신이 리액션 했다는 정보를 불러오지 못하므로 이미 리액션을 했더라도 다시 눌러 리액션을 취소하는 기능을 사용할 수 없고, 리액션을 중복으로 등록하려고 시도하게됨.
-					detail: true,
+					// 返信の返信を際限なくたどらないよう、detailにするのは`MAX_DETAILED_REPLY_DEPTH`段までにする（P3-3、§8-7）
+					detail: replyDepth < MAX_DETAILED_REPLY_DEPTH,
 					skipHide: opts.skipHide,
 					withReactionAndUserPairCache: opts.withReactionAndUserPairCache,
+					_replyDepth: replyDepth + 1,
 					_hint_: options?._hint_,
 				})) : undefined,
 
@@ -488,6 +500,7 @@ export class NoteEntityService implements OnModuleInit {
 					detail: true,
 					skipHide: opts.skipHide,
 					withReactionAndUserPairCache: opts.withReactionAndUserPairCache,
+					_replyDepth: replyDepth,
 					_hint_: options?._hint_,
 				})) : undefined,
 
