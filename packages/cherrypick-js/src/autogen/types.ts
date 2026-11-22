@@ -32366,10 +32366,15 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK (without any results) */
-            204: {
+            /** @description OK (with results) */
+            200: {
                 headers: {
                     [name: string]: unknown;
+                };
+                content: {
+                    'application/json': {
+                        updatedNote: components['schemas']['Note'];
+                    };
                 };
             };
             /** @description Client error */

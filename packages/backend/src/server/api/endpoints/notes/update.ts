@@ -28,6 +28,18 @@ export const meta = {
 		minInterval: ms('1sec'),
 	},
 
+	res: {
+		type: 'object',
+		optional: false, nullable: false,
+		properties: {
+			updatedNote: {
+				type: 'object',
+				optional: false, nullable: false,
+				ref: 'Note',
+			},
+		},
+	},
+
 	errors: {
 		noSuchNote: {
 			message: 'No such note.',

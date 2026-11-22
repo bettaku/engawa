@@ -25,6 +25,7 @@ import { ApiError } from './error.js';
 import { ResponseValidator, appendViolationReport } from './response-validation.js';
 import { RateLimiterService } from './RateLimiterService.js';
 import { ApiLoggerService } from './ApiLoggerService.js';
+import { httpErrors } from './http-errors.js';
 import { AuthenticateService, AuthenticationError } from './AuthenticateService.js';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { OnApplicationShutdown } from '@nestjs/common';
@@ -178,7 +179,8 @@ export class ApiCallService implements OnApplicationShutdown {
 			? request.headers.authorization.slice(7)
 			: body?.['i'];
 		if (token != null && typeof token !== 'string') {
-			reply.code(400);
+			// 以前は本文を送らず、応答が返らなかった
+			this.send(reply, 400, new ApiError(httpErrors.invalidCredentialFormat));
 			return;
 		}
 		this.authenticateService.authenticate(token).then(([user, app, flashToken]) => {
@@ -209,8 +211,7 @@ export class ApiCallService implements OnApplicationShutdown {
 			/* Fastify throws if the remote didn't send multipart data. Return 400 below. */
 		});
 		if (multipartData == null) {
-			reply.code(400);
-			reply.send();
+			this.send(reply, 400, new ApiError(httpErrors.invalidRequest));
 			return;
 		}
 
@@ -221,8 +222,7 @@ export class ApiCallService implements OnApplicationShutdown {
 			// ファイルサイズが制限を超えていた場合
 			// なお truncated はストリームを読み切ってからでないと機能しないため、stream.pipeline より後にある必要がある
 			if (multipartData.file.truncated) {
-				reply.code(413);
-				reply.send();
+				this.send(reply, 413, new ApiError(httpErrors.payloadTooLarge));
 				return;
 			}
 
@@ -236,8 +236,7 @@ export class ApiCallService implements OnApplicationShutdown {
 				? request.headers.authorization.slice(7)
 				: fields['i'];
 			if (token != null && typeof token !== 'string') {
-				reply.code(400);
-				reply.send();
+				this.send(reply, 400, new ApiError(httpErrors.invalidCredentialFormat));
 				return;
 			}
 			await this.authenticateService.authenticate(token).then(async ([user, app, flashToken]) => {

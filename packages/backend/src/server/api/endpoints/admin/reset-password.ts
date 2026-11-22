@@ -22,6 +22,17 @@ export const meta = {
 	kind: 'write:admin:reset-password',
 
 	errors: {
+		noSuchUser: {
+			message: 'No such user.',
+			code: 'NO_SUCH_USER',
+			id: 'fbd7f6a7-6d06-4d91-ac54-b9eb3d08817e',
+		},
+		cannotResetPasswordOfRoot: {
+			message: 'Cannot reset the password of the root user.',
+			code: 'CANNOT_RESET_PASSWORD_OF_ROOT',
+			id: '42e09a2f-bbd7-4509-8442-c811bc3326f3',
+			kind: 'permission',
+		},
 		cannotResetPasswordOfAdmin: {
 			message: 'Only administrators can reset the password of an administrator.',
 			code: 'CANNOT_RESET_PASSWORD_OF_ADMIN',
@@ -73,11 +84,11 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			const user = await this.usersRepository.findOneBy({ id: ps.userId });
 
 			if (user == null) {
-				throw new Error('user not found');
+				throw new ApiError(meta.errors.noSuchUser);
 			}
 
 			if (this.serverSettings.rootUserId === user.id) {
-				throw new Error('cannot reset password of root');
+				throw new ApiError(meta.errors.cannotResetPasswordOfRoot);
 			}
 
 			// 管理者のパスワードは管理者にしか再設定させない（モデレーターが管理者になりすませないようにする）

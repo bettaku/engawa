@@ -7,6 +7,7 @@ import { hashPassword } from '@/misc/password.js';
 import { Inject, Injectable } from '@nestjs/common';
 import type { UserProfilesRepository, PasswordResetRequestsRepository } from '@/models/_.js';
 import { Endpoint } from '@/server/api/endpoint-base.js';
+import { ApiError } from '@/server/api/error.js';
 import { DI } from '@/di-symbols.js';
 import { IdService } from '@/core/IdService.js';
 import { CacheService } from '@/core/CacheService.js';
@@ -19,7 +20,16 @@ export const meta = {
 	description: 'Complete the password reset that was previously requested.',
 
 	errors: {
-
+		noSuchResetRequest: {
+			message: 'No such password reset request.',
+			code: 'NO_SUCH_RESET_REQUEST',
+			id: 'dce6688c-7066-4d53-afad-f5e489332394',
+		},
+		expiredToken: {
+			message: 'The password reset request has expired.',
+			code: 'EXPIRED_TOKEN',
+			id: '2412ddc7-f33d-426f-b2b4-ae54de75fd13',
+		},
 	},
 } as const;
 
@@ -45,13 +55,16 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private cacheService: CacheService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
-			const req = await this.passwordResetRequestsRepository.findOneByOrFail({
+			const req = await this.passwordResetRequestsRepository.findOneBy({
 				token: ps.token,
 			});
+			if (req == null) {
+				throw new ApiError(meta.errors.noSuchResetRequest);
+			}
 
 			// 発行してから30分以上経過していたら無効
 			if (Date.now() - this.idService.parse(req.id).date.getTime() > 1000 * 60 * 30) {
-				throw new Error(); // TODO
+				throw new ApiError(meta.errors.expiredToken);
 			}
 
 			// Generate hash of password

@@ -18,6 +18,11 @@ export const meta = {
 	secure: true,
 
 	errors: {
+		twoFactorAuthenticationFailed: {
+			message: 'Two-factor authentication failed.',
+			code: 'TWO_FACTOR_AUTHENTICATION_FAILED',
+			id: '21f272ca-aee2-4ac8-88ba-e2bccbd5fb68',
+		},
 		userNotFound: {
 			message: 'User not found.',
 			code: 'USER_NOT_FOUND',
@@ -232,13 +237,13 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 
 			if (profile.twoFactorEnabled) {
 				if (token == null) {
-					throw new Error('authentication failed');
+					throw new ApiError(meta.errors.twoFactorAuthenticationFailed);
 				}
 
 				try {
 					await this.userAuthService.twoFactorAuthenticate(profile, token);
 				} catch (e) {
-					throw new Error('authentication failed');
+					throw new ApiError(meta.errors.twoFactorAuthenticationFailed);
 				}
 			}
 

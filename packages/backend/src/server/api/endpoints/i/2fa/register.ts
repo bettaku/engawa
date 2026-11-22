@@ -21,6 +21,11 @@ export const meta = {
 	secure: true,
 
 	errors: {
+		twoFactorAuthenticationFailed: {
+			message: 'Two-factor authentication failed.',
+			code: 'TWO_FACTOR_AUTHENTICATION_FAILED',
+			id: 'd032ba81-84ec-45d4-a1cf-a1a8377a5c2a',
+		},
 		incorrectPassword: {
 			message: 'Incorrect password.',
 			code: 'INCORRECT_PASSWORD',
@@ -69,13 +74,13 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			if (profile.twoFactorEnabled) {
 				if (token == null) {
-					throw new Error('authentication failed');
+					throw new ApiError(meta.errors.twoFactorAuthenticationFailed);
 				}
 
 				try {
 					await this.userAuthService.twoFactorAuthenticate(profile, token);
 				} catch (e) {
-					throw new Error('authentication failed');
+					throw new ApiError(meta.errors.twoFactorAuthenticationFailed);
 				}
 			}
 

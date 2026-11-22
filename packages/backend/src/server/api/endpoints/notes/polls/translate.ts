@@ -151,16 +151,16 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					translator: this.serverSettings.translatorType, // 修正点: 配列ではなく単一の文字列
 				};
 			} else if (this.serverSettings.translatorType === 'ctav3') {
-				if (this.serverSettings.ctav3SaKey == null) return Promise.resolve(204);
-				else if (this.serverSettings.ctav3ProjectId == null) return Promise.resolve(204);
-				else if (this.serverSettings.ctav3Location == null) return Promise.resolve(204);
+				if (this.serverSettings.ctav3SaKey == null || this.serverSettings.ctav3ProjectId == null || this.serverSettings.ctav3Location == null) {
+					throw new ApiError(meta.errors.unavailable);
+				}
 				translationResult = await this.apiCloudTranslationAdvanced(poll.choices, targetLang, this.serverSettings.ctav3SaKey, this.serverSettings.ctav3ProjectId, this.serverSettings.ctav3Location, this.serverSettings.ctav3Model, this.serverSettings.ctav3Glossary, this.serverSettings.translatorType);
 			} else if (this.serverSettings.translatorType === 'Libretranslate') {
 				const endPoint = this.serverSettings.libreTranslateEndPoint;
-				if (endPoint === null) throw new Error('libreTranslateEndPoint is null');
+				if (endPoint === null) throw new ApiError(meta.errors.unavailable);
 				translationResult = await this.translateLibretranslate(poll.choices, targetLang, endPoint, this.serverSettings.libreTranslateApiKey);
 			} else {
-				throw new Error('Unsupported translator type');
+				throw new ApiError(meta.errors.noTranslateService);
 			}
 
 			return Promise.resolve({

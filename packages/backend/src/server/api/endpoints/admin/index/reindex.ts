@@ -23,7 +23,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 		private searchService: SearchService,
 	) {
 		super(meta, paramDef, async () => {
-			return this.searchService.reindexNote();
+			await this.searchService.reindexNote();
 		});
 	}
 }
