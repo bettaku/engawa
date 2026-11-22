@@ -13,6 +13,17 @@ import { bindThis } from '@/decorators.js';
 import type { Config } from '@/config.js';
 import { CacheService } from '@/core/CacheService.js';
 
+/**
+ * 二段階認証のコード（TOTP・バックアップコード）が一致しない。
+ * DB・Redisの障害などのほかの例外と区別するために使う
+ */
+export class TwoFactorAuthenticationError extends Error {
+	constructor() {
+		super('authentication failed');
+		this.name = 'TwoFactorAuthenticationError';
+	}
+}
+
 @Injectable()
 export class UserAuthService {
 	constructor(
@@ -40,7 +51,7 @@ export class UserAuthService {
 			await this.cacheService.userProfileCache.delete(profile.userId);
 		} else {
 			if (!await this.validateOtp(profile.userId, profile.twoFactorSecret!, token)) {
-				throw new Error('authentication failed');
+				throw new TwoFactorAuthenticationError();
 			}
 		}
 	}
@@ -76,7 +87,7 @@ export class UserAuthService {
 		});
 
 		if (delta === null) {
-			throw new Error('authentication failed');
+			throw new TwoFactorAuthenticationError();
 		}
 
 		// 4. totp.counter() を用い、同じタイムスタンプから基準ステップを取得

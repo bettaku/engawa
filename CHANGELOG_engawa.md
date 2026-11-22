@@ -101,6 +101,15 @@
 	- `NODE_ENV` などの形式が決まっている変数に不正な値を渡すとエラー、`CP_*` フラグに `0` や `false` を渡すと（無効にならないため）警告、`CP_`・`CHERRYPICK_` で始まる未知の変数は警告になります。起動を止めるのは `CHERRYPICK_CONFIG_VALIDATION=error` のときだけです
 	- 環境変数の一覧は、設定のJSONスキーマ（`packages/backend/config.schema.json`）の `$defs.environment` に載せました
 	- 環境変数は起動時に一度だけ読むようになりました。起動後に変えても反映されません
+- Enhance: APIのエラー応答の形をそろえました
+	- `/api` 以下の2xx以外の応答は、すべて `{ "error": { "message", "code", "id", "kind" } }` の形になります。これまでは、JSONの構文の誤り・本文のサイズ超過・未知のパスへのPOSTなどでFastifyの既定の形が、GETを受け付けないエンドポイントへのGETやサインアップの一部の失敗では本文のない応答が返っていました
+	- 新しいエラーコード: `INVALID_REQUEST`（400）、`METHOD_NOT_ALLOWED`（405）、`PAYLOAD_TOO_LARGE`（413）、`UNSUPPORTED_MEDIA_TYPE`（415）。未知のパスは、メソッドにかかわらず `UNKNOWN_API_ENDPOINT`（404）を返します
+	- パスワードや二段階認証のコードの誤り、存在しないユーザー・サーバー・絵文字・ノートの指定などで、500（`INTERNAL_ERROR`）ではなく、それぞれのエラー（`INCORRECT_PASSWORD`、`TWO_FACTOR_AUTHENTICATION_FAILED`、`NO_SUCH_USER` など）を返すようになりました
+	- 翻訳（`notes/translate`・`notes/polls/translate`・`users/translate`）で翻訳サービスの設定が足りないとき、HTTP 200で本文が `204` になっていたのを、`UNAVAILABLE` または `NO_TRANSLATE_SERVICE` のエラーにしました
+	- `notes/update` の応答（`updatedNote`）をAPIの定義に加えました。`users/groups/invitations/accept`・`reject` は値を返さなくなりました（204）
+	- `i` に文字列以外を渡すと応答が返らなかった問題を修正（400 `INVALID_PARAM`）
+	- サインイン（`signin-flow`・`signin-with-passkey`）のエラーは、これまでの `id` に加えて `message`・`code`・`kind` も返すようになりました
+	- `users/translate` の `NO_SUCH_DESCRIPTION` のidが `notes/translate` の `NO_SUCH_NOTE` と重複していたので、新しいidにしました。`notes/drafts/update` のエラーコード `CANNOT_REPLY_TO_SPECIFIED_NOTE_WITH_EXTENDED_VISIBILITY` を、同じidを使う `notes/create` と同じ `CANNOT_REPLY_TO_SPECIFIED_VISIBILITY_NOTE_WITH_EXTENDED_VISIBILITY` にしました
 - Fix: ノートを作成した直後に削除すると、Renote先のRenote数・返信先の返信数・投稿者のノート数が1多いまま残ることがある問題を修正
 	- これらのカウンタは、ノートの作成・削除と同じトランザクションで更新するようになりました
 - Fix: Renoteした後で「Botとして設定」を切り替えてから削除すると、Renote先のRenote数がずれる問題を修正

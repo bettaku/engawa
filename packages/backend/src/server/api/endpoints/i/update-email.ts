@@ -14,7 +14,7 @@ import type { Config } from '@/config.js';
 import { DI } from '@/di-symbols.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { L_CHARS, secureRndstr } from '@/misc/secure-rndstr.js';
-import { UserAuthService } from '@/core/UserAuthService.js';
+import { TwoFactorAuthenticationError, UserAuthService } from '@/core/UserAuthService.js';
 import { ApiError } from '../../error.js';
 import { CacheService } from '@/core/CacheService.js';
 
@@ -29,6 +29,11 @@ export const meta = {
 	},
 
 	errors: {
+		twoFactorAuthenticationFailed: {
+			message: 'Two-factor authentication failed.',
+			code: 'TWO_FACTOR_AUTHENTICATION_FAILED',
+			id: '7ce53059-dc72-4c83-960c-89acef4d673e',
+		},
 		incorrectPassword: {
 			message: 'Incorrect password.',
 			code: 'INCORRECT_PASSWORD',
@@ -88,13 +93,15 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			if (profile.twoFactorEnabled) {
 				if (token == null) {
-					throw new Error('authentication failed');
+					throw new ApiError(meta.errors.twoFactorAuthenticationFailed);
 				}
 
 				try {
 					await this.userAuthService.twoFactorAuthenticate(profile, token);
 				} catch (e) {
-					throw new Error('authentication failed');
+					// コードの不一致だけを認証の失敗にする。DB・Redisの障害はそのまま500にする
+					if (e instanceof TwoFactorAuthenticationError) throw new ApiError(meta.errors.twoFactorAuthenticationFailed);
+					throw e;
 				}
 			}
 

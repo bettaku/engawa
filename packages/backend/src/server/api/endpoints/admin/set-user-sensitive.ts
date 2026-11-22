@@ -5,6 +5,7 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
+import { ApiError } from '@/server/api/error.js';
 import type { UsersRepository, UserProfilesRepository } from '@/models/_.js';
 import type { MiUser } from '@/models/User.js';
 import { ModerationLogService } from '@/core/ModerationLogService.js';
@@ -20,6 +21,19 @@ export const meta = {
 	requireCredential: true,
 	requireModerator: true,
 	kind: 'write:admin:suspend-user',
+
+	errors: {
+		noSuchUser: {
+			message: 'No such user.',
+			code: 'NO_SUCH_USER',
+			id: '4e5ca07b-6209-450c-bbf7-eb2fddcf8c08',
+		},
+		cannotChangeSensitiveOfAdministrator: {
+			message: 'Cannot change the sensitive flag of an administrator.',
+			code: 'CANNOT_CHANGE_SENSITIVE_OF_ADMINISTRATOR',
+			id: 'd2c40d29-3db6-4b75-a37a-22c782c3db24',
+		},
+	},
 } as const;
 
 export const paramDef = {
@@ -48,11 +62,11 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 			const user = await this.usersRepository.findOneBy({ id: ps.userId });
 
 			if (user == null) {
-				throw new Error('user not found');
+				throw new ApiError(meta.errors.noSuchUser);
 			}
 
 			if (await this.roleService.isAdministrator(user)) {
-				throw new Error('cannot set admin as sensitive');
+				throw new ApiError(meta.errors.cannotChangeSensitiveOfAdministrator);
 			}
 
 			await this.userProfilesRepository.update(user.id, {

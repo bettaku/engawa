@@ -6,6 +6,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { NotesRepository, NoteThreadMutingsRepository, NoteFavoritesRepository } from '@/models/_.js';
 import { Endpoint } from '@/server/api/endpoint-base.js';
+import { ApiError } from '@/server/api/error.js';
 import { DI } from '@/di-symbols.js';
 
 export const meta = {
@@ -32,6 +33,14 @@ export const meta = {
 			},
 		},
 	},
+
+	errors: {
+		noSuchNote: {
+			message: 'No such note.',
+			code: 'NO_SUCH_NOTE',
+			id: 'a64ffc37-abd2-4f38-8ec3-45cdf687e246',
+		},
+	},
 } as const;
 
 export const paramDef = {
@@ -55,7 +64,10 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private noteFavoritesRepository: NoteFavoritesRepository,
 	) {
 		super(meta, paramDef, async (ps, me) => {
-			const note = await this.notesRepository.findOneByOrFail({ id: ps.noteId });
+			const note = await this.notesRepository.findOneBy({ id: ps.noteId });
+			if (note == null) {
+				throw new ApiError(meta.errors.noSuchNote);
+			}
 
 			const [favorite, threadMuting, renoted] = await Promise.all([
 				this.noteFavoritesRepository.count({

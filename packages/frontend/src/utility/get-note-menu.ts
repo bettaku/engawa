@@ -413,12 +413,15 @@ export function getNoteMenu(props: {
 			}
 		} else if ($i?.policies.canUseTranslator && instance.translatorAvailable) {
 			props.translating.value = true;
-			const res = await misskeyApi('notes/translate', {
-				noteId: appearNote.id,
-				targetLang: miLocalStorage.getItem('lang') ?? navigator.language,
-			});
-			props.translating.value = false;
-			props.translation.value = res;
+			try {
+				props.translation.value = await misskeyApi('notes/translate', {
+					noteId: appearNote.id,
+					targetLang: miLocalStorage.getItem('lang') ?? navigator.language,
+				});
+			} finally {
+				// 翻訳に失敗しても、翻訳中の表示を解除する
+				props.translating.value = false;
+			}
 		}
 	}
 
