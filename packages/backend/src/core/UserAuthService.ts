@@ -10,11 +10,15 @@ import { createHash } from 'node:crypto';
 import { DI } from '@/di-symbols.js';
 import type { MiUserProfile, UserProfilesRepository, UsersRepository } from '@/models/_.js';
 import { bindThis } from '@/decorators.js';
+import type { Config } from '@/config.js';
 import { CacheService } from '@/core/CacheService.js';
 
 @Injectable()
 export class UserAuthService {
 	constructor(
+		@Inject(DI.config)
+		private config: Config,
+
 		@Inject(DI.redis)
 		private redisClient: Redis.Redis,
 
@@ -47,7 +51,7 @@ export class UserAuthService {
 		twoFactorSecret: string,
 		token: string,
 	): Promise<boolean> {
-		if (process.env.NODE_ENV === 'test' && process.env.MISSKEY_TEST_CHECK_DUPLICATED_TOTP !== '1') {
+		if (this.config.runtime.test.skipTotpVerification) {
 			return true;
 		}
 

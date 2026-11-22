@@ -454,12 +454,73 @@ const effective = {
 	else: { properties: { port }, required: ['port'] },
 } satisfies JSONSchemaType<ConfigEffective>;
 
+// Environment variables read by the backend. Every value is a string, and an
+// empty string means unset. x-scope tells whether operators set the variable
+// (operation), only the development server uses it (development), or it exists
+// for tests (test). A second implementation can compare this list with the
+// variables it supports and report the rest at startup.
+type EnvScope = 'operation' | 'development' | 'test';
+const env = (scope: EnvScope, description: string) =>
+	({ type: 'string', 'x-scope': scope, description }) as const;
+const envFlag = (description: string) => ({
+	...env('operation', `${description} Any non-empty value enables it, including 0 and false.`),
+	'x-flag': true,
+});
+const envBinary = (scope: EnvScope, description: string) =>
+	({ ...env(scope, `${description} Only 1 enables it.`), enum: ['0', '1'] }) as const;
+const envPort = (description: string) =>
+	({ ...env('development', description), pattern: '^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$' }) as const;
+const environment = {
+	type: 'object',
+	properties: {
+		NODE_ENV: {
+			...env('operation', 'Runtime mode. Any value other than production (including unset) disables the production-only protections listed in config.runtime.production.'),
+			enum: ['production', 'development', 'test'],
+		},
+		CHERRYPICK_CONFIG_YML: env('operation', 'Configuration file, relative to .config/ (default default.yml, or test.yml when NODE_ENV=test).'),
+		CHERRYPICK_CONFIG_VALIDATION: {
+			...env('operation', 'What to do with invalid configuration and environment variables (default warn).'),
+			enum: ['warn', 'error', 'off'],
+		},
+		CHERRYPICK_URL: env('operation', 'Used as url when the configuration file does not set it.'),
+		PORT: env('operation', 'Used as port when the configuration file does not set it.'),
+		DATABASE_DB: env('operation', 'Used as db.db when the configuration file does not set it.'),
+		DATABASE_USER: env('operation', 'Used as db.user when the configuration file does not set it.'),
+		DATABASE_PASSWORD: { ...env('operation', 'Used as db.pass when the configuration file does not set it.'), 'x-secret': true },
+		CHERRYPICK_MIGRATION_CREATE_INDEX_CONCURRENTLY: envBinary('operation', 'Recreate indexes of large tables with CREATE INDEX CONCURRENTLY during migrations.'),
+		CP_ONLY_QUEUE: envFlag('Run only the job queue, without the web server.'),
+		CP_ONLY_SERVER: envFlag('Run only the web server, without the job queue.'),
+		CP_DISABLE_CLUSTERING: envFlag('Do not fork worker processes. Always enabled when NODE_ENV=test.'),
+		CP_NO_DAEMONS: envFlag('Kept for compatibility. Has no effect.'),
+		CP_NO_JOB_SCHEDULERS: envFlag('Do not register the repeatable jobs when the queue process starts.'),
+		CP_VERBOSE: envFlag('Output debug logs even when NODE_ENV=production.'),
+		CP_WITH_LOG_TIME: envFlag('Add timestamps to log lines.'),
+		CP_QUIET: envFlag('Suppress log output and the startup logo. Always enabled when NODE_ENV=test.'),
+		VITE_PORT: envPort('Port of the Vite development server proxied at /vite (default 5173). Used only when the frontend is not built.'),
+		EMBED_VITE_PORT: envPort('Port of the embed Vite development server proxied at /embed_vite (default 5174). Used only when the frontend is not built.'),
+		API_RES_VALIDATION_REPORT: env('development', 'File to append API response contract violations to. Used only when NODE_ENV is test or development.'),
+		CHERRYPICK_WEBFINGER_USE_HTTP: {
+			...env('test', 'Query WebFinger over HTTP instead of HTTPS for user@host lookups (case-insensitive true). Not limited by NODE_ENV.'),
+			pattern: '^([Tt][Rr][Uu][Ee]|[Ff][Aa][Ll][Ss][Ee])$',
+		},
+		FORCE_FOLLOW_REMOTE_USER_FOR_TESTING: {
+			...env('test', 'Follow remote users without a follow request (lowercase true only). Not limited by NODE_ENV.'),
+			enum: ['true', 'false'],
+		},
+		MISSKEY_TEST_CHECK_DUPLICATED_TOTP: envBinary('test', 'Verify TOTP codes and their reuse even when NODE_ENV=test.'),
+		CHERRYPICK_TEST_CHECK_IP_RANGE: envBinary('test', 'Check the IP range of OAuth client metadata hosts even when NODE_ENV=test.'),
+	},
+	additionalProperties: { type: 'string' },
+	description: 'Environment variables read by the backend. Unknown CP_* and CHERRYPICK_* variables are reported as warnings.',
+} as const;
+
 export const schema = {
 	$schema: 'https://json-schema.org/draft/2020-12/schema',
 	$ref: '#/$defs/input',
 	$defs: {
 		input,
 		effective,
+		environment,
 		secret,
 		optionalSecret: { ...secret, nullable: true },
 		scope: { anyOf: [{ enum: ['local', 'global'] }, list] },
@@ -478,12 +539,17 @@ export function createValidators() {
 		'x-secret': 'boolean',
 		'x-deprecation': 'string',
 		'x-null-as-unset': 'boolean',
+		'x-scope': 'string',
+		'x-flag': 'boolean',
 	} as const)) ajv.addKeyword({ keyword, schemaType });
 	ajv.addSchema(schema, 'config');
 	return {
 		input: ajv.compile<ConfigInput>({ $ref: 'config#/$defs/input' }),
 		effective: ajv.compile<ConfigEffective>({
 			$ref: 'config#/$defs/effective',
+		}),
+		environment: ajv.compile<Record<string, string>>({
+			$ref: 'config#/$defs/environment',
 		}),
 	};
 }

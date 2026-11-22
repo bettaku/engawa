@@ -10,6 +10,7 @@ import { DI } from '@/di-symbols.js';
 import type Logger from '@/logger.js';
 import { LoggerService } from '@/core/LoggerService.js';
 import { bindThis } from '@/decorators.js';
+import type { Config } from '@/config.js';
 import type { IEndpointMeta } from './endpoints.js';
 
 type RateLimitInfo = {
@@ -26,6 +27,9 @@ export class RateLimiterService {
 	private disabled = false;
 
 	constructor(
+		@Inject(DI.config)
+		private config: Config,
+
 		@Inject(DI.redis)
 		private redisClient: Redis.Redis,
 
@@ -33,7 +37,7 @@ export class RateLimiterService {
 	) {
 		this.logger = this.loggerService.getLogger('limiter');
 
-		if (process.env.NODE_ENV !== 'production') {
+		if (!this.config.runtime.production.rateLimit) {
 			this.disabled = true;
 		}
 	}

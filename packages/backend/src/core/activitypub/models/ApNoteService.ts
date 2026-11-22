@@ -157,13 +157,13 @@ export class ApNoteService {
 			throw new Error('Refusing to create note without id');
 		}
 
-		if (!checkHttps(note.id)) {
+		if (!checkHttps(note.id, this.config.runtime.production.requireHttps)) {
 			throw new Error('unexpected schema of note.id: ' + note.id);
 		}
 
 		const url = getOneApHrefNullable(note.url);
 
-		if (url && !checkHttps(url)) {
+		if (url && !checkHttps(url, this.config.runtime.production.requireHttps)) {
 			throw new Error('unexpected schema of note url: ' + url);
 		}
 

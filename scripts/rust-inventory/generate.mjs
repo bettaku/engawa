@@ -498,29 +498,40 @@ flatten(schema, '');
 const seenKey = new Set();
 csv('config-keys.csv', ['key', 'type', 'default', 'env', 'enum', 'description'], configRows.filter(r => !seenKey.has(r[0]) && seenKey.add(r[0])));
 
+// 環境変数は config.schema.json の $defs.environment が一覧（P3-4）。サービスは process.env を読まず、
+// DIの config.runtime を読むので、参照箇所は runtime-options.csv に出す
 const envUse = new Map();
+const envScope = new Map();
+for (const [k, v] of Object.entries(schema.$defs.environment?.properties ?? {})) {
+	envUse.set(k, []);
+	envScope.set(k, v['x-scope'] ?? '');
+}
 for (const file of walk(src)) {
 	const text = readFileSync(file, 'utf8');
-	for (const m of text.matchAll(/process\.env\.(\w+)|process\.env\[\s*['"]([^'"]+)['"]\s*\]/g)) {
-		const k = m[1] ?? m[2];
+	for (const m of text.matchAll(/process\.env\.(\w+)|process\.env\[\s*['"]([^'"]+)['"]\s*\]|values\.(\w+)|values\[\s*'([^']+)'\s*\]|flag\('([^']+)'\)|port\('([^']+)'/g)) {
+		// values.X・flag('X')・port('X')は、環境変数を解釈する config/environment.ts だけで数える
+		if (m[1] === undefined && m[2] === undefined && !file.endsWith(join('config', 'environment.ts'))) continue;
+		const k = m[1] ?? m[2] ?? m[3] ?? m[4] ?? m[5] ?? m[6];
+		if (!/^[A-Z][A-Z0-9_]+$/.test(k)) continue;
 		if (!envUse.has(k)) envUse.set(k, []);
 		envUse.get(k).push(`${rel(file).replace('packages/backend/src/', '')}:${lineOf(text, m.index)}`);
 	}
 }
-{
-	const envTs = readFileSync(join(src, 'env.ts'), 'utf8');
-	const block = envTs.match(/const envOption = \{([\s\S]*?)\};/)?.[1] ?? '';
-	for (const m of block.matchAll(/(\w+):/g)) {
-		const k = 'CP_' + m[1].replace(/[A-Z]/g, l => `_${l}`).toUpperCase();
-		if (!envUse.has(k)) envUse.set(k, []);
-		envUse.get(k).push('env.ts (envOption)');
-	}
-	for (const r of configRows) if (r[3]) {
-		if (!envUse.has(r[3])) envUse.set(r[3], []);
-		envUse.get(r[3]).push(`config.schema.json (${r[0]})`);
+for (const r of configRows) if (r[3]) {
+	if (!envUse.has(r[3])) envUse.set(r[3], []);
+	envUse.get(r[3]).push(`config.schema.json (${r[0]})`);
+}
+const runtimeUse = new Map();
+for (const file of walk(src)) {
+	const text = readFileSync(file, 'utf8');
+	for (const m of text.matchAll(/runtime\.(production|development|test)\.(\w+)|runtime\.(nodeEnv)/g)) {
+		const k = m[3] ?? `${m[1]}.${m[2]}`;
+		if (!runtimeUse.has(k)) runtimeUse.set(k, []);
+		runtimeUse.get(k).push(`${rel(file).replace('packages/backend/src/', '')}:${lineOf(text, m.index)}`);
 	}
 }
-csv('env-vars.csv', ['name', 'useCount', 'uses'], [...envUse].sort().map(([k, v]) => [k, v.length, v]));
+csv('runtime-options.csv', ['option', 'useCount', 'uses'], [...runtimeUse].sort().map(([k, v]) => [k, v.length, v]));
+csv('env-vars.csv', ['name', 'scope', 'useCount', 'uses'], [...envUse].sort().map(([k, v]) => [k, envScope.get(k) ?? '', v.length, v]));
 //#endregion
 
 //#region 7. redis, caches, events, timers

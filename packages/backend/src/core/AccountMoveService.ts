@@ -7,6 +7,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { IsNull, In, MoreThan, Not } from 'typeorm';
 
 import { bindThis } from '@/decorators.js';
+import type { Config } from '@/config.js';
 import { DI } from '@/di-symbols.js';
 import type { MiLocalUser, MiRemoteUser, MiUser } from '@/models/User.js';
 import type { BlockingsRepository, FollowingsRepository, InstancesRepository, MiMeta, MutingsRepository, UserListMembershipsRepository, UsersRepository } from '@/models/_.js';
@@ -31,6 +32,9 @@ import { UserListService } from '@/core/UserListService.js';
 @Injectable()
 export class AccountMoveService {
 	constructor(
+		@Inject(DI.config)
+		private config: Config,
+
 		@Inject(DI.meta)
 		private meta: MiMeta,
 
@@ -111,7 +115,7 @@ export class AccountMoveService {
 		this.queueService.createDelayedUnfollowJob(followings.map(following => ({
 			from: { id: src.id },
 			to: { id: following.followeeId },
-		})), process.env.NODE_ENV === 'test' ? 10000 : 1000 * 60 * 60 * 24);
+		})), this.config.runtime.test.accountMoveUnfollowDelay);
 
 		await this.postMoveProcess(src, dst);
 
