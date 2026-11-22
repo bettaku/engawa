@@ -1702,7 +1702,8 @@ CREATE TABLE public.note (
     "reactionAndUserPairCache" character varying(1024)[] DEFAULT '{}'::character varying[] NOT NULL,
     "deleteAt" timestamp with time zone,
     "searchableBy" public.note_searchableby_enum,
-    "pageCount" smallint DEFAULT '0'::smallint NOT NULL
+    "pageCount" smallint DEFAULT '0'::smallint NOT NULL,
+    "renoteCounted" boolean
 );
 
 COMMENT ON COLUMN public.note."replyId" IS 'The ID of reply target.';
@@ -1794,6 +1795,27 @@ CREATE TABLE public.note_history (
     poll jsonb,
     event jsonb
 );
+
+CREATE TABLE public.note_outbox (
+    seq bigint NOT NULL,
+    type character varying(16) NOT NULL,
+    "noteId" character varying(32) NOT NULL,
+    "userId" character varying(32) NOT NULL,
+    payload jsonb DEFAULT '{}'::jsonb NOT NULL,
+    "doneSteps" character varying(32)[] DEFAULT '{}'::character varying[] NOT NULL,
+    attempts integer DEFAULT 0 NOT NULL,
+    "lockedUntil" timestamp with time zone,
+    "createdAt" timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE SEQUENCE public.note_outbox_seq_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+ALTER SEQUENCE public.note_outbox_seq_seq OWNED BY public.note_outbox.seq;
 
 CREATE TABLE public.note_reaction (
     id character varying(32) NOT NULL,
@@ -2496,6 +2518,8 @@ ALTER TABLE ONLY public.__chart_day__users ALTER COLUMN id SET DEFAULT nextval('
 
 ALTER TABLE ONLY public.migrations ALTER COLUMN id SET DEFAULT nextval('public.migrations_id_seq'::regclass);
 
+ALTER TABLE ONLY public.note_outbox ALTER COLUMN seq SET DEFAULT nextval('public.note_outbox_seq_seq'::regclass);
+
 ALTER TABLE ONLY public.user_ip ALTER COLUMN id SET DEFAULT nextval('public.user_ip_id_seq'::regclass);
 
 ALTER TABLE ONLY public.__chart_day__per_user_pv
@@ -2590,6 +2614,9 @@ ALTER TABLE ONLY public.drive_file
 
 ALTER TABLE ONLY public.__chart_day__instance
     ADD CONSTRAINT "PK_479a8ff9d959274981087043023" PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.note_outbox
+    ADD CONSTRAINT "PK_479dd3c6e40560df772bb598524" PRIMARY KEY (seq);
 
 ALTER TABLE ONLY public.note_watching
     ADD CONSTRAINT "PK_49286fdb23725945a74aa27d757" PRIMARY KEY (id);
@@ -3275,6 +3302,8 @@ CREATE INDEX "IDX_NOTE_DRAFT_VISIBLE_USER_IDS" ON public.note_draft USING gin ("
 CREATE INDEX "IDX_NOTE_FILE_IDS" ON public.note USING gin ("fileIds");
 
 CREATE INDEX "IDX_NOTE_MENTIONS" ON public.note USING gin (mentions);
+
+CREATE INDEX "IDX_NOTE_OUTBOX_NOTE_ID_SEQ" ON public.note_outbox USING btree ("noteId", seq);
 
 CREATE INDEX "IDX_NOTE_TAGS" ON public.note USING gin (tags);
 

@@ -104,6 +104,10 @@ export const REPEATABLE_SYSTEM_JOB_DEF: readonly { name: string; pattern: string
 	name: 'reconcileScheduledNotePosts',
 	// 予約時刻を過ぎても投稿されていないドラフトと、後処理が終わっていない投稿済みのドラフトを5分ごとに拾う
 	pattern: '*/5 * * * *',
+}, {
+	name: 'sweepNoteOutbox',
+	// ノートの後処理のoutboxで、プロセスの停止や失敗で残ったレコードを毎分拾う
+	pattern: '* * * * *',
 }];
 
 /**
@@ -703,6 +707,20 @@ export class QueueService {
 			backoff: { type: 'exponential', delay: 10 * 1000 },
 			removeOnComplete: true,
 			removeOnFail: { age: 7 * 24 * 60 * 60, count: 1000 },
+		});
+	}
+
+	/**
+	 * ノートの後処理のoutboxのレコードを処理するジョブ。同じレコードのジョブがキューにあれば登録しない。
+	 * 失敗したときの再試行はoutboxのレコード（lockedUntil・attempts）で管理するので、ジョブ自体は再試行しない。
+	 */
+	@bindThis
+	public createProcessNoteOutboxJob(seq: string) {
+		return this.dbQueue.add('processNoteOutbox', { v: JOB_DATA_VERSION, seq }, {
+			jobId: `noteOutbox-${seq}`,
+			attempts: 1,
+			removeOnComplete: true,
+			removeOnFail: true,
 		});
 	}
 

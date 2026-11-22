@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import { execPipeline } from '@/misc/redis-pipeline.js';
 import { Inject, Injectable } from '@nestjs/common';
 import * as Redis from 'ioredis';
 import { In } from 'typeorm';
@@ -679,13 +680,14 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 		const roles = await this.getUserRoles(note.userId);
 
 		const redisPipeline = this.redisForTimelines.pipeline();
+		const pending: Promise<unknown>[] = [];
 
 		for (const role of roles) {
-			this.fanoutTimelineService.push(`roleTimeline:${role.id}`, note.id, 1000, redisPipeline);
+			this.fanoutTimelineService.push(`roleTimeline:${role.id}`, note.id, 1000, redisPipeline, pending);
 			this.globalEventService.publishRoleTimelineStream(role.id, 'note', note);
 		}
 
-		redisPipeline.exec();
+		await execPipeline(redisPipeline, pending);
 	}
 
 	@bindThis

@@ -44,7 +44,7 @@ describe('ScheduledNoteDeleteProcessorService', () => {
 	let userProfilesRepository: UserProfilesRepository;
 
 	let publishNoteStream: MockInstance<GlobalEventService['publishNoteStream']>;
-	let deliverToUsers: MockInstance<ApDeliverManagerService['deliverToUsers']>;
+	let deliverToUsers: MockInstance<ApDeliverManagerService['deliverToFollowersAndUsers']>;
 
 	// Local user
 	let alice: MiUser;
@@ -158,8 +158,8 @@ describe('ScheduledNoteDeleteProcessorService', () => {
 		publishNoteStream = vi.spyOn(globalEventService, 'publishNoteStream');
 
 		const apDeliverManagerService = app.get(ApDeliverManagerService);
-		void apDeliverManagerService.deliverToUsers;
-		deliverToUsers = vi.spyOn(apDeliverManagerService, 'deliverToUsers').mockResolvedValue(undefined);
+		void apDeliverManagerService.deliverToFollowersAndUsers;
+		deliverToUsers = vi.spyOn(apDeliverManagerService, 'deliverToFollowersAndUsers').mockResolvedValue(undefined);
 
 		await queueService.scheduledNoteDeleteQueue.obliterate({ force: true });
 	});

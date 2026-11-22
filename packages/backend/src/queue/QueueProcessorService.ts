@@ -51,6 +51,7 @@ import { ScheduledNoteDeleteProcessorService } from './processors/ScheduledNoteD
 import { QueueLoggerService } from './QueueLoggerService.js';
 import { AutoDeleteNotesProcessorService } from './processors/AutoDeleteNotesProcessorService.js';
 import { SyncNoteIndexProcessorService } from './processors/SyncNoteIndexProcessorService.js';
+import { NoteOutboxService } from '@/core/NoteOutboxService.js';
 import { assertSupportedJobDataVersion } from './job-version.js';
 import { QUEUE, baseWorkerOptions } from './const.js';
 
@@ -142,6 +143,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 		private syncNoteIndexProcessorService: SyncNoteIndexProcessorService,
 		private cleanRemoteNotesProcessorService: CleanRemoteNotesProcessorService,
 		private scheduledNoteDeleteProcessorService: ScheduledNoteDeleteProcessorService,
+		private noteOutboxService: NoteOutboxService,
 	) {
 		this.logger = this.queueLoggerService.logger;
 
@@ -187,6 +189,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 					case 'autoDeleteNotes': return this.autoDeleteNotesProcessorService.process();
 					case 'reconcileScheduledNoteDeletes': return this.scheduledNoteDeleteProcessorService.reconcile();
 					case 'reconcileScheduledNotePosts': return this.postScheduledNoteProcessorService.reconcile();
+					case 'sweepNoteOutbox': return this.noteOutboxService.sweep();
 					default: throw new Error(`unrecognized job type ${job.name} for system`);
 				}
 			};
@@ -248,6 +251,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 					case 'truncateAccount': return this.truncateAccountProcessorService.process(job);
 					case 'autoDeleteUserNotes': return this.autoDeleteNotesProcessorService.processUser(job);
 					case 'syncNoteIndex': return this.syncNoteIndexProcessorService.process(job);
+					case 'processNoteOutbox': return this.noteOutboxService.process(job.data.seq);
 					default: throw new Error(`unrecognized job type ${job.name} for db`);
 				}
 			};

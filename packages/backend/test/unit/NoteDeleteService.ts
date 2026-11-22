@@ -27,7 +27,7 @@ describe('NoteDeleteService', () => {
 	let userProfilesRepository: UserProfilesRepository;
 
 	let publishNoteStream: MockInstance<GlobalEventService['publishNoteStream']>;
-	let deliverToFollowers: MockInstance<ApDeliverManagerService['deliverToFollowers']>;
+	let deliverToFollowers: MockInstance<ApDeliverManagerService['deliverToFollowersAndUsers']>;
 	let requestSyncNoteIndex: MockInstance<SearchService['requestSyncNoteIndex']>;
 
 	// Local users
@@ -112,10 +112,8 @@ describe('NoteDeleteService', () => {
 		publishNoteStream = vi.spyOn(globalEventService, 'publishNoteStream');
 
 		const apDeliverManagerService = app.get(ApDeliverManagerService);
-		void apDeliverManagerService.deliverToFollowers;
-		void apDeliverManagerService.deliverToUsers;
-		deliverToFollowers = vi.spyOn(apDeliverManagerService, 'deliverToFollowers').mockResolvedValue(undefined);
-		vi.spyOn(apDeliverManagerService, 'deliverToUsers').mockResolvedValue(undefined);
+		void apDeliverManagerService.deliverToFollowersAndUsers;
+		deliverToFollowers = vi.spyOn(apDeliverManagerService, 'deliverToFollowersAndUsers').mockResolvedValue(undefined);
 
 		const searchService = app.get(SearchService);
 		void searchService.requestSyncNoteIndex;
@@ -288,7 +286,7 @@ describe('NoteDeleteService', () => {
 		test('1件の副作用が失敗しても、他のノートの副作用は実行する', async () => {
 			const failing = await createNote({}, alice);
 			const other = await createNote({}, alice);
-			publishNoteStream.mockImplementation((n) => {
+			publishNoteStream.mockImplementation(async (n) => {
 				if (n.id === failing.id) throw new Error('boom');
 			});
 

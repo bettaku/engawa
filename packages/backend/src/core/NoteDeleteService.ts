@@ -4,10 +4,9 @@
  */
 
 import { Brackets, DataSource, In, IsNull, Not } from 'typeorm';
-import type { EntityManager } from 'typeorm';
 import { Injectable, Inject } from '@nestjs/common';
 import { MiUser } from '@/models/User.js';
-import type { MiLocalUser, MiRemoteUser } from '@/models/User.js';
+import type { MiRemoteUser } from '@/models/User.js';
 import { MiNote } from '@/models/Note.js';
 import type { IMentionedRemoteUsers } from '@/models/Note.js';
 import type { InstancesRepository, MiMeta, NotesRepository, UsersRepository } from '@/models/_.js';
@@ -28,7 +27,12 @@ import { ModerationLogService } from '@/core/ModerationLogService.js';
 import { LoggerService } from '@/core/LoggerService.js';
 import type Logger from '@/logger.js';
 import { isQuote, isRenote } from '@/misc/is-renote.js';
-import { renoteCountSql, SMALLINT_MAX } from '@/core/CounterConsistencyService.js';
+import { renoteCountSql, repliesCountSql, SMALLINT_MAX } from '@/core/CounterConsistencyService.js';
+import { NoteOutboxService } from '@/core/NoteOutboxService.js';
+import { retryOnDeadlock } from '@/misc/retry-on-deadlock.js';
+import type { NoteOutboxStep } from '@/core/NoteOutboxService.js';
+import type { MiNoteOutbox } from '@/models/NoteOutbox.js';
+import type { EntityManager } from 'typeorm';
 
 type NoteAuthor = { id: MiUser['id']; uri: MiUser['uri']; host: MiUser['host']; isBot: MiUser['isBot']; };
 
@@ -86,17 +90,40 @@ const QUIET_NOTE_DELETE_EFFECTS: Readonly<NoteDeleteEffects> = Object.freeze({
 });
 
 /**
- * 削除の副作用のうち、DBから読んでおくもの（配送先）。
- * 削除を確定した後は副作用だけを実行するよう、行を消す前に読んでおく。
+ * 削除の副作用のうち、行を消す前にDBから読んでおくもの（配送先）。
  */
 type NoteDeleteEffectsContext = {
-	/** 引用でないRenoteを削除するときの、Renote元のノート */
-	renote: MiNote | null;
+	/** 引用でないRenoteを削除するときの、Renote元のノートのURI */
+	renoteUri: string | null;
 	/** フォロワーとリレー以外の配送先 */
-	remoteUsers: MiRemoteUser[];
+	remoteUserIds: MiUser['id'][];
 };
 
-const EMPTY_CONTEXT: NoteDeleteEffectsContext = Object.freeze({ renote: null, remoteUsers: [] });
+const EMPTY_CONTEXT: NoteDeleteEffectsContext = Object.freeze({ renoteUri: null, remoteUserIds: [] });
+
+/** outboxで実行する削除の副作用。カウンタ（repliesCount・renoteCount・notesCount）は、行の削除と同じトランザクションで更新する */
+const OUTBOX_EFFECTS = ['stream', 'deliver', 'stats', 'unindex'] as const;
+type NoteDeleteOutboxEffect = typeof OUTBOX_EFFECTS[number];
+
+/**
+ * outboxの削除のレコードのpayload。
+ * 行が消えた後でも副作用を実行できるよう、配送先の計算とチャートに必要な情報だけを持つ。本文・CW・投票などの内容は持たない。
+ */
+export type NoteDeletedOutboxPayload = {
+	effects: NoteDeleteOutboxEffect[];
+	note: Pick<MiNote, 'id' | 'userId' | 'userHost' | 'visibility' | 'visibleUserIds' | 'localOnly' | 'searchableBy' | 'replyId' | 'renoteId' | 'fileIds'> & {
+		updatedAt: string | null;
+	};
+	/** 引用でないRenoteか（Deleteの代わりにUndo Announceを配送する） */
+	isPureRenote: boolean;
+	renoteUri: string | null;
+	remoteUserIds: MiUser['id'][];
+	/**
+	 * 作成の副作用を終える前に削除した場合の、実行済みの作成の副作用の名前。
+	 * ないときは作成の副作用がすべて終わっているので、チャートと配送をすべて取り消す。
+	 */
+	createdDone?: string[];
+};
 
 export type ScheduledNoteDeleteResult =
 	| { deleted: true }
@@ -106,9 +133,12 @@ export type ScheduledNoteDeleteResult =
 /**
  * ノートの削除を担う。ノートの行を消す処理は、すべてこのサービスを通す。
  *
- * どの経路も「行の削除を確定する → 確定できたノートについてだけ副作用を実行する」の順に処理する。
- * 同じノートを同時に削除しても、副作用（配送、カウンタの減算など）は1回しか実行されない。
- * 削除の確定後、副作用の途中でプロセスが停止すると副作用は欠落する（P3-1で扱う）。
+ * どの経路も、1つのトランザクションで次の3つを確定する。
+ * 1. 行の削除（`DELETE … RETURNING id`）。同時に同じ行を削除しても、確定できるのは1つの呼び出しだけ
+ * 2. 非正規化カウンタの減算（作成時の加算も、行のinsertと同じトランザクションで行う）
+ * 3. 残りの副作用（ストリーム、配送、チャート、検索索引）のoutboxへの記録
+ *
+ * outboxの副作用は、コミット後にこの呼び出しの中で処理する。途中でプロセスが停止しても、照合ジョブが残りを処理する（P3-1）。
  */
 @Injectable()
 export class NoteDeleteService {
@@ -145,8 +175,10 @@ export class NoteDeleteService {
 		private perUserNotesChart: PerUserNotesChart,
 		private instanceChart: InstanceChart,
 		private loggerService: LoggerService,
+		private noteOutboxService: NoteOutboxService,
 	) {
 		this.logger = this.loggerService.getLogger('note-delete');
+		this.noteOutboxService.registerHandler('deleted', this.handleDeleted);
 	}
 
 	/**
@@ -180,7 +212,7 @@ export class NoteDeleteService {
 	/**
 	 * 同じ投稿者の複数のノートをまとめて削除します。
 	 *
-	 * 行の削除は1つのDELETE文で確定し、実際に削除できたノートについてだけ`effects`で指定した副作用を実行します。
+	 * 行の削除は1つのトランザクションで確定し、実際に削除できたノートについてだけ`effects`で指定した副作用を実行します。
 	 *
 	 * @param user 投稿者。`null`は投稿者の異なるノートをまとめて消すときに使い、副作用は指定できない
 	 * @param notes 削除するノート。`user`のノートでないものは削除しない
@@ -210,30 +242,26 @@ export class NoteDeleteService {
 			contexts.set(note.id, await this.collectEffectsContext(user, note, effects));
 		}
 
-		const deletedIds = await this.deleteRows(this.db.manager, fullNotes.map(note => note.id), user.id);
-		const deletedNotes = fullNotes.filter(note => deletedIds.has(note.id));
+		// 削除する行とカウンタの行のロックが、ほかの作成・削除と競合してデッドロックになったら、トランザクションごとやり直す
+		const { deleted, outboxSeqs } = await retryOnDeadlock(() => this.db.transaction(manager => this.deleteInTransaction(manager, user, fullNotes, contexts, effects)));
 
-		if (effects.renoteCount) await this.decrementRenoteCounts(user, deletedNotes);
+		// 副作用ごとに失敗を切り分けるので、1件が失敗しても他のノートの副作用は続く。失敗した副作用はoutboxに残り、後で再試行する
+		await this.noteOutboxService.processNow(outboxSeqs);
 
-		// runEffectsは副作用ごとに失敗を切り分けるので、1件が失敗しても他のノートの副作用は続く
-		for (const note of deletedNotes) {
-			await this.runEffects(user, note, contexts.get(note.id) ?? EMPTY_CONTEXT, effects);
-		}
-
-		return deletedNotes;
+		return deleted;
 	}
 
 	/**
 	 * 削除予定時刻（deleteAt）を過ぎているノートだけを削除します。
 	 *
 	 * DBのdeleteAtを行ロックの中で確認してから削除を確定するので、予約の延期・解除と競合しても誤って削除しません。
-	 * 副作用（配送、カウンタ、検索索引、ストリーム）は、削除を確定できた呼び出しだけがコミット後に実行します。
+	 * 副作用（配送、ストリーム、チャート、検索索引）は、削除を確定できた呼び出しだけがコミット後に実行します。
 	 */
 	@bindThis
 	public async deleteIfScheduledTimeReached(noteId: MiNote['id']): Promise<ScheduledNoteDeleteResult> {
 		const effects = ALL_NOTE_DELETE_EFFECTS;
 
-		const confirmed = await this.db.transaction(async manager => {
+		const confirmed = await retryOnDeadlock(() => this.db.transaction(async manager => {
 			const note = await manager.createQueryBuilder(MiNote, 'note')
 				.setLock('pessimistic_write')
 				.where('note.id = :id', { id: noteId })
@@ -246,12 +274,10 @@ export class NoteDeleteService {
 			const user = await manager.findOneByOrFail(MiUser, { id: note.userId });
 			const context = await this.collectEffectsContext(user, note, effects, manager);
 
-			await this.deleteRows(manager, [note.id], user.id);
+			return await this.deleteInTransaction(manager, user, [note], new Map([[note.id, context]]), effects);
+		}));
 
-			return { note, user, context };
-		});
-
-		if (confirmed == null) {
+		if (confirmed == null || confirmed.deleted.length === 0) {
 			const current = await this.notesRepository.findOne({
 				where: { id: noteId },
 				select: { id: true, deleteAt: true },
@@ -259,10 +285,77 @@ export class NoteDeleteService {
 			return { deleted: false, deleteAt: current?.deleteAt ?? null };
 		}
 
-		if (effects.renoteCount) await this.decrementRenoteCounts(confirmed.user, [confirmed.note]);
-		await this.runEffects(confirmed.user, confirmed.note, confirmed.context, effects);
+		await this.noteOutboxService.processNow(confirmed.outboxSeqs);
 
 		return { deleted: true };
+	}
+
+	/**
+	 * 行の削除、カウンタの減算、outboxへの記録を、渡されたトランザクションの中で行う。
+	 */
+	@bindThis
+	private async deleteInTransaction(
+		manager: EntityManager,
+		user: NoteAuthor,
+		notes: MiNote[],
+		contexts: Map<MiNote['id'], NoteDeleteEffectsContext>,
+		effects: Readonly<NoteDeleteEffects>,
+	): Promise<{ deleted: MiNote[]; outboxSeqs: MiNoteOutbox['seq'][] }> {
+		// 削除する行と、カウンタを減らす行（返信先・Renote先）を、まとめてID順にロックしてから変更する。
+		// 作成側もカウンタの行をID順に更新するので、親と返信を並行して削除・作成してもロックの順序が食い違いにくい
+		// （食い違ってデッドロックになった場合は、呼び出し元がトランザクションごとやり直す）
+		const lockIds = new Set(notes.map(note => note.id));
+		for (const note of notes) {
+			if (effects.repliesCount && note.replyId != null) lockIds.add(note.replyId);
+			if (effects.renoteCount && note.renoteId != null) lockIds.add(note.renoteId);
+		}
+		await manager.query('SELECT "id" FROM "note" WHERE "id" = ANY($1) ORDER BY "id" FOR UPDATE', [[...lockIds]]);
+
+		const deletedIds = await this.deleteRows(manager, notes.map(note => note.id), user.id);
+		const deleted = notes.filter(note => deletedIds.has(note.id));
+		if (deleted.length === 0) return { deleted, outboxSeqs: [] };
+
+		await this.decrementCounters(manager, user, deleted, effects);
+
+		// まだ誰も処理を始めていない作成・更新のレコードは、副作用を実行する必要がなくなったので取り消す
+		const createdCancelled = await this.noteOutboxService.cancelUnstarted(manager, deleted.map(note => note.id));
+
+		const outboxEffects = OUTBOX_EFFECTS.filter(name => effects[name]);
+		if (outboxEffects.length === 0) return { deleted, outboxSeqs: [] };
+
+		const outboxSeqs = await this.noteOutboxService.add(manager, deleted.map(note => ({
+			type: 'deleted',
+			noteId: note.id,
+			userId: user.id,
+			payload: this.buildOutboxPayload(note, contexts.get(note.id) ?? EMPTY_CONTEXT, outboxEffects, createdCancelled.has(note.id)),
+		})));
+
+		return { deleted, outboxSeqs };
+	}
+
+	@bindThis
+	private buildOutboxPayload(note: MiNote, context: NoteDeleteEffectsContext, effects: NoteDeleteOutboxEffect[], createdCancelled: boolean): NoteDeletedOutboxPayload {
+		return {
+			effects,
+			note: {
+				id: note.id,
+				userId: note.userId,
+				userHost: note.userHost,
+				visibility: note.visibility,
+				visibleUserIds: note.visibleUserIds,
+				localOnly: note.localOnly,
+				searchableBy: note.searchableBy,
+				replyId: note.replyId,
+				renoteId: note.renoteId,
+				fileIds: note.fileIds,
+				updatedAt: note.updatedAt != null ? new Date(note.updatedAt).toISOString() : null,
+			},
+			isPureRenote: isRenote(note) && !isQuote(note),
+			renoteUri: context.renoteUri,
+			remoteUserIds: context.remoteUserIds,
+			// 作成の副作用は一度も実行されていないので、チャートと配送は取り消さない
+			...(createdCancelled ? { createdDone: [] } : {}),
+		};
 	}
 
 	/**
@@ -293,127 +386,172 @@ export class NoteDeleteService {
 			return EMPTY_CONTEXT;
 		}
 
+		const renote = (isRenote(note) && !isQuote(note))
+			? await manager.findOneBy(MiNote, { id: note.renoteId })
+			: null;
+
 		return {
-			renote: (isRenote(note) && !isQuote(note))
-				? await manager.findOneBy(MiNote, { id: note.renoteId })
-				: null,
-			remoteUsers: [
+			renoteUri: renote != null ? (renote.uri ?? `${this.config.url}/notes/${renote.id}`) : null,
+			remoteUserIds: [...new Set([
 				...await this.getMentionedRemoteUsers(note, manager),
 				...await this.getRenotedOrRepliedRemoteUsers(note, manager),
-			],
+			].map(u => u.id))],
 		};
 	}
 
 	/**
-	 * 削除を確定したノートのRenote先のrenoteCountを減らす。
+	 * 作成時にRenote先のrenoteCountに計上したか。
+	 * 作成時に記録した値（renoteCounted）を使う。記録する前に作成したノートは、作成時と同じ条件（Renote先の投稿者以外で、botでない投稿者）を
+	 * 現在の投稿者の状態で判定する。
+	 */
+	@bindThis
+	private isRenoteCounted(user: NoteAuthor, note: MiNote): boolean {
+		if (note.renoteId == null) return false;
+		return note.renoteCounted ?? (!user.isBot && note.renoteUserId !== user.id);
+	}
+
+	/**
+	 * 削除を確定したノートの、返信先のrepliesCount・Renote先のrenoteCount・投稿者のnotesCountを、同じトランザクションで減らす。
 	 *
-	 * 作成時（NoteCreateService.incRenoteCount）と同じ条件（Renote先の投稿者以外で、botでない投稿者のRenote・引用）で数える。
-	 * 上限（smallint）に丸めてある値は、引くと実際の件数より少なくなるので、行を削除した後の残りを数え直す。
-	 * 同じRenote先へのRenoteをまとめて削除したときに、数え直した値からさらに引かないよう、Renote先ごとに1回だけ更新する。
-	 * この関数は例外を投げない。
+	 * - 上限（smallint）に丸めてある値は、引くと実際の件数より少なくなるので、行を削除した後の残りを数え直す
+	 * - 数え直しの前に対象の行ロックを取る。READ COMMITTEDでは文ごとにスナップショットを取るので、ロックを待つ間にコミットされた
+	 *   別の削除・作成も数え直しに含まれる（並行する削除で数え直しの結果どうしが競合しない）
+	 * - 行ロックはID順に取り、ユーザーは最後に更新する（作成側と同じ順序）
+	 * - 同じ対象への複数のノートは、対象ごとに1回だけ更新する
 	 */
 	@bindThis
-	private async decrementRenoteCounts(user: NoteAuthor, notes: MiNote[]) {
-		if (user.isBot) return;
-
-		const counts = new Map<MiNote['id'], number>();
+	private async decrementCounters(manager: EntityManager, user: NoteAuthor, notes: MiNote[], effects: Readonly<NoteDeleteEffects>) {
+		const targets = new Map<MiNote['id'], { replies: number; renotes: number }>();
+		const target = (id: MiNote['id']) => {
+			let t = targets.get(id);
+			if (t == null) targets.set(id, t = { replies: 0, renotes: 0 });
+			return t;
+		};
 		for (const note of notes) {
-			if (note.renoteId == null) continue;
-			counts.set(note.renoteId, (counts.get(note.renoteId) ?? 0) + 1);
+			if (effects.repliesCount && note.replyId != null) target(note.replyId).replies++;
+			if (effects.renoteCount && note.renoteId != null && this.isRenoteCounted(user, note)) target(note.renoteId).renotes++;
 		}
 
-		for (const [renoteId, count] of counts) {
-			try {
-				await this.notesRepository.createQueryBuilder().update()
-					.set({ renoteCount: () => `CASE WHEN "renoteCount" >= ${SMALLINT_MAX} THEN LEAST(${renoteCountSql('"note"')}, ${SMALLINT_MAX}) ELSE GREATEST("renoteCount" - :renoteDecrement, 0) END` })
-					.where('id = :renoteId', { renoteId })
-					.andWhere('"userId" != :authorId', { authorId: user.id })
-					.setParameter('renoteDecrement', count)
+		const ids = [...targets.keys()].sort();
+		if (ids.length > 0) {
+			await manager.query('SELECT "id" FROM "note" WHERE "id" = ANY($1) ORDER BY "id" FOR UPDATE', [ids]);
+
+			for (const id of ids) {
+				const t = targets.get(id);
+				if (t == null) continue;
+				const set: Record<string, () => string> = {};
+				if (t.replies > 0) {
+					set.repliesCount = () => `CASE WHEN "repliesCount" >= ${SMALLINT_MAX} THEN LEAST(${repliesCountSql('"note"')}, ${SMALLINT_MAX}) ELSE GREATEST("repliesCount" - :repliesDecrement, 0) END`;
+				}
+				if (t.renotes > 0) {
+					set.renoteCount = () => `CASE WHEN "renoteCount" >= ${SMALLINT_MAX} THEN LEAST(${renoteCountSql('"note"')}, ${SMALLINT_MAX}) ELSE GREATEST("renoteCount" - :renotesDecrement, 0) END`;
+				}
+				await manager.createQueryBuilder().update(MiNote)
+					.set(set)
+					.where('id = :targetId', { targetId: id })
+					.setParameters({ repliesDecrement: t.replies, renotesDecrement: t.renotes })
 					.execute();
-			} catch (err) {
-				this.logger.error(`Failed to decrement renoteCount of note ${renoteId}`, { error: err });
 			}
+		}
+
+		if (effects.notesCount) {
+			await manager.createQueryBuilder().update(MiUser)
+				.set({ notesCount: () => 'GREATEST("notesCount" - :notesDecrement, 0)' })
+				.where('id = :userId', { userId: user.id })
+				.setParameter('notesDecrement', notes.length)
+				.execute();
 		}
 	}
 
 	/**
-	 * 削除を確定したノートの副作用を実行する。
-	 * 行の削除は確定済みで、再試行しても副作用の対象に戻らない。そのため、副作用ごとに失敗を切り分け、
-	 * 1つが失敗しても（例: 配送の組み立てが例外を投げる）残りの副作用は実行する。この関数は例外を投げない。
+	 * outboxの削除のレコードの処理。行はすでに消えているので、レコードに記録した情報だけで副作用を実行する。
 	 */
 	@bindThis
-	private async runEffects(user: NoteAuthor, note: MiNote, context: NoteDeleteEffectsContext, effects: Readonly<NoteDeleteEffects>) {
-		const deletedAt = new Date();
+	private async handleDeleted(record: MiNoteOutbox, step: NoteOutboxStep) {
+		const payload = record.payload as NoteDeletedOutboxPayload;
+		const note = new MiNote({
+			...payload.note,
+			updatedAt: payload.note.updatedAt != null ? new Date(payload.note.updatedAt) : null,
+		});
+		const effects = new Set(payload.effects);
 
-		const step = async (name: keyof NoteDeleteEffects, fn: () => unknown) => {
-			if (!effects[name]) return;
-			try {
-				await fn();
-			} catch (err) {
-				this.logger.error(`Failed to run delete effect "${name}" of note ${note.id}`, { error: err });
+		// 作成の副作用を終える前に削除したときは、作成の側で実行した分だけを取り消す（チャートなどの集計）
+		const undo = (name: string) => payload.createdDone == null || payload.createdDone.includes(name);
+
+		if (effects.has('stream')) {
+			await step('stream', () => this.globalEventService.publishNoteStream(note, 'deleted', {
+				deletedAt: new Date(record.createdAt),
+			}));
+		}
+
+		// ローカルの投稿なら削除アクティビティを配送。
+		// 作成の配送が一部の宛先（リレーなど）にだけ届いて止まった場合もあるので、作成の配送が終わっていなくても配送する。
+		// 作成を受け取っていない宛先には、存在しないノートの削除が届くだけである
+		// フォロワー・直接の宛先と、リレーとを別の副作用にする。それぞれ1回のaddBulkで登録するので、
+		// 片方が失敗して再試行しても、登録済みの側を重ねて登録しない
+		if (effects.has('deliver')) {
+			const deletion = this.renderDeletion(note, payload);
+			if (deletion != null) {
+				await step('deliver', async () => {
+					const remoteUsers = payload.remoteUserIds.length > 0
+						? (await this.usersRepository.findBy({ id: In(payload.remoteUserIds) })).filter(u => this.userEntityService.isRemoteUser(u))
+						: [];
+					await this.apDeliverManagerService.deliverToFollowersAndUsers(deletion.author, deletion.content, remoteUsers);
+				});
+				await step('deliverRelays', () => this.relayService.deliverToRelays(deletion.author, deletion.content));
 			}
-		};
+		}
 
-		await step('repliesCount', async () => {
-			if (note.replyId) {
-				await this.notesRepository.decrement({ id: note.replyId }, 'repliesCount', 1);
-			}
-		});
-
-		// renoteCountは、まとめて削除したノートをRenote先ごとに集計して減らす（decrementRenoteCounts）
-
-		await step('notesCount', async () => {
-			await this.usersRepository.createQueryBuilder().update()
-				.set({ notesCount: () => 'GREATEST("notesCount" - 1, 0)' })
-				.where('id = :userId', { userId: user.id })
-				.execute();
-		});
-
-		await step('stream', () => {
-			this.globalEventService.publishNoteStream(note, 'deleted', {
-				deletedAt: deletedAt,
-			});
-		});
-
-		// ローカルの投稿なら削除アクティビティを配送
-		await step('deliver', () => {
-			if (!this.userEntityService.isLocalUser(user) || note.localOnly) return;
-
-			const renote = context.renote;
-
-			// 公開範囲がspecifiedの純粋なRenoteは、作成時もrenderAnnounceが例外を投げるのでAnnounceを配送していない。
-			// 取り消す配送がないので、何も配送しない
-			if (renote && !['public', 'home', 'followers'].includes(note.visibility)) return;
-
-			const content = this.apRendererService.addContext(renote
-				? this.apRendererService.renderUndo(this.apRendererService.renderAnnounce(renote.uri ?? `${this.config.url}/notes/${renote.id}`, note), user)
-				: this.apRendererService.renderDelete(this.apRendererService.renderTombstone(`${this.config.url}/notes/${note.id}`), user));
-
-			this.deliverToConcerned(user, content, context.remoteUsers);
-		});
-
-		await step('stats', () => {
-			this.notesChart.update(note, false);
-			if (this.meta.enableChartsForRemoteUser || (user.host == null)) {
-				this.perUserNotesChart.update(user, note, false);
-			}
-
-			if (this.meta.enableStatsForFederatedInstances) {
-				if (this.userEntityService.isRemoteUser(user)) {
-					this.federatedInstanceService.fetchOrRegister(user.host).then(async i => {
-						this.instancesRepository.decrement({ id: i.id }, 'notesCount', 1);
-						if (this.meta.enableChartsForFederatedInstances) {
-							this.instanceChart.updateNote(i.host, note, false);
-						}
-					});
+		// チャートと連合サーバーの集計は、作成側と同じく別の副作用にする（片方だけ終わった状態での再試行で二重に減算しない）
+		if (effects.has('stats') && undo('stats')) {
+			// チャートはプロセス内のバッファに差分を積むので、データベースに保存されるまで完了にしない
+			await step('stats', async () => {
+				await this.notesChart.update(note, false);
+				const saves = [this.notesChart.waitForSave()];
+				if (this.meta.enableChartsForRemoteUser || (note.userHost == null)) {
+					await this.perUserNotesChart.update({ id: note.userId }, note, false);
+					saves.push(this.perUserNotesChart.waitForSave());
 				}
-			}
-		});
+				await Promise.all(saves);
+			});
+		}
 
-		await step('unindex', async () => {
-			// 削除の確定後に登録するので、ジョブはノートが存在しないことを確認して索引から削除する
-			await this.searchService.requestSyncNoteIndex(note.id);
-		});
+		if (effects.has('stats') && undo('instanceStats') && this.meta.enableStatsForFederatedInstances && note.userHost != null) {
+			await step('instanceStats', async () => {
+				const host = note.userHost;
+				if (host == null) return;
+				const i = await this.federatedInstanceService.fetchOrRegister(host);
+				await this.instancesRepository.decrement({ id: i.id }, 'notesCount', 1);
+				if (this.meta.enableChartsForFederatedInstances) {
+					await this.instanceChart.updateNote(i.host, note, false);
+					await this.instanceChart.waitForSave();
+				}
+			});
+		}
+
+		if (effects.has('unindex')) {
+			// ジョブはノートが存在しないことを確認して索引から削除する
+			await step('unindex', () => this.searchService.requestSyncNoteIndex(note.id));
+		}
+	}
+
+	/** 配送する削除のアクティビティ。配送しないならnull */
+	@bindThis
+	private renderDeletion(note: MiNote, payload: NoteDeletedOutboxPayload) {
+		if (note.userHost != null || note.localOnly) return null;
+
+		const author = { id: note.userId, host: null } as const;
+		const renoteUri = payload.isPureRenote ? payload.renoteUri : null;
+
+		// 公開範囲がspecifiedの純粋なRenoteは、作成時もrenderAnnounceが例外を投げるのでAnnounceを配送していない。
+		// 取り消す配送がないので、何も配送しない
+		if (renoteUri != null && !['public', 'home', 'followers'].includes(note.visibility)) return null;
+
+		const content = this.apRendererService.addContext(renoteUri != null
+			? this.apRendererService.renderUndo(this.apRendererService.renderAnnounce(renoteUri, note), author)
+			: this.apRendererService.renderDelete(this.apRendererService.renderTombstone(`${this.config.url}/notes/${note.id}`), author));
+
+		return { author, content };
 	}
 
 	@bindThis
@@ -454,12 +592,5 @@ export class NoteDeleteService {
 		const notes = await query.getMany() as (MiNote & { user: MiRemoteUser })[];
 		const remoteUsers = notes.map(({ user }) => user);
 		return remoteUsers;
-	}
-
-	@bindThis
-	private deliverToConcerned(user: { id: MiLocalUser['id']; host: null; }, content: any, remoteUsers: MiRemoteUser[]) {
-		this.apDeliverManagerService.deliverToFollowers(user, content);
-		this.relayService.deliverToRelays(user, content);
-		this.apDeliverManagerService.deliverToUsers(user, content, remoteUsers);
 	}
 }

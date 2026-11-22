@@ -3,21 +3,28 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import { setTimeout } from 'node:timers/promises';
+import { vi } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { In } from 'typeorm';
+import type { DataSource } from 'typeorm';
 import type { ClipNotesRepository, ClipsRepository, FollowingsRepository, MiNote, MiUser, NotesRepository, UsersRepository, UserProfilesRepository } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
 import { IdService } from '@/core/IdService.js';
 import { CoreModule } from '@/core/CoreModule.js';
 import { GlobalModule } from '@/GlobalModule.js';
 import { COUNTER_NAMES, CounterConsistencyService } from '@/core/CounterConsistencyService.js';
-import { NO_NOTE_DELETE_EFFECTS, NoteDeleteService } from '@/core/NoteDeleteService.js';
+import { ALL_NOTE_DELETE_EFFECTS, NO_NOTE_DELETE_EFFECTS, NoteDeleteService } from '@/core/NoteDeleteService.js';
+import { NoteCreateService } from '@/core/NoteCreateService.js';
+import { NoteOutboxService } from '@/core/NoteOutboxService.js';
 import { secureRndstr } from '@/misc/secure-rndstr.js';
 
 describe('CounterConsistencyService', () => {
 	let app: TestingModule;
 	let service: CounterConsistencyService;
 	let noteDeleteService: NoteDeleteService;
+	let noteCreateService: NoteCreateService;
+	let db: DataSource;
 	let idService: IdService;
 	let notesRepository: NotesRepository;
 	let usersRepository: UsersRepository;
@@ -83,6 +90,8 @@ describe('CounterConsistencyService', () => {
 
 		service = app.get(CounterConsistencyService);
 		noteDeleteService = app.get(NoteDeleteService);
+		noteCreateService = app.get(NoteCreateService);
+		db = app.get(DI.db);
 		idService = app.get(IdService);
 		notesRepository = app.get(DI.notesRepository);
 		usersRepository = app.get(DI.usersRepository);
@@ -95,7 +104,15 @@ describe('CounterConsistencyService', () => {
 	});
 
 	beforeEach(async () => {
+		// カウンタはノートの作成・削除と同じトランザクションで更新する。outboxの後処理（配送・チャートなど）はこのテストの対象外
+		const noteOutboxService = app.get(NoteOutboxService);
+		void noteOutboxService.dispatchClaimed;
+		void noteOutboxService.processNow;
+		vi.spyOn(noteOutboxService, 'dispatchClaimed').mockImplementation(() => {});
+		vi.spyOn(noteOutboxService, 'processNow').mockResolvedValue();
+
 		// 他のテストが残したデータの影響を受けないように、空のDBから始める
+		await db.query('DELETE FROM "note_outbox"');
 		await clipNotesRepository.createQueryBuilder().delete().execute();
 		await clipsRepository.createQueryBuilder().delete().execute();
 		await followingsRepository.createQueryBuilder().delete().execute();
@@ -291,6 +308,175 @@ describe('CounterConsistencyService', () => {
 		await noteDeleteService.deleteMany(bob, renotes.slice(0, 2), { effects: { ...NO_NOTE_DELETE_EFFECTS, renoteCount: true } });
 
 		expect((await notesRepository.findOneByOrFail({ id: parent.id })).renoteCount).toBe(1);
+	});
+
+	describe('ノートの作成・削除と同じトランザクションでの更新（P3-1）', () => {
+		async function renoteCountOf(note: MiNote) {
+			return (await notesRepository.findOneByOrFail({ id: note.id })).renoteCount;
+		}
+
+		test('作成直後に削除しても、カウンタに1が残らない', async () => {
+			const alice = await createUser({ host: null });
+			const bob = await createUser({ host: null });
+			const parent = await createNote({}, alice);
+			// 直接insertしたノートの分を合わせておく
+			await service.repair(['user.notesCount']);
+
+			const renote = await noteCreateService.create(bob, { renote: parent });
+			const reply = await noteCreateService.create(bob, { reply: parent, text: 'reply' });
+			expect(await renoteCountOf(parent)).toBe(1);
+			expect((await notesRepository.findOneByOrFail({ id: parent.id })).repliesCount).toBe(1);
+			expect((await usersRepository.findOneByOrFail({ id: bob.id })).notesCount).toBe(2);
+
+			// 作成の後処理（outbox）を待たずに削除する
+			await noteDeleteService.delete(bob, await notesRepository.findOneByOrFail({ id: renote.id }));
+			await noteDeleteService.delete(bob, await notesRepository.findOneByOrFail({ id: reply.id }));
+
+			expect(await renoteCountOf(parent)).toBe(0);
+			expect((await notesRepository.findOneByOrFail({ id: parent.id })).repliesCount).toBe(0);
+			expect((await usersRepository.findOneByOrFail({ id: bob.id })).notesCount).toBe(0);
+			expect(await mismatches()).toEqual({});
+		});
+
+		test('作成時に計上したかどうかを記録し、削除時の投稿者のbotの設定に左右されない', async () => {
+			const alice = await createUser({ host: null });
+			const bob = await createUser({ host: null, isBot: false });
+			const parent = await createNote({}, alice);
+			// 直接insertしたノートの分を合わせておく
+			await service.repair(['user.notesCount']);
+
+			const renote = await noteCreateService.create(bob, { renote: parent });
+			expect((await notesRepository.findOneByOrFail({ id: renote.id })).renoteCounted).toBe(true);
+			expect(await renoteCountOf(parent)).toBe(1);
+
+			// 作成後にbotに変えても、計上した事実は変わらない
+			await usersRepository.update(bob.id, { isBot: true });
+			expect(await mismatches()).toEqual({});
+
+			await noteDeleteService.delete(await usersRepository.findOneByOrFail({ id: bob.id }), await notesRepository.findOneByOrFail({ id: renote.id }));
+			expect(await renoteCountOf(parent)).toBe(0);
+		});
+
+		test('botのときに作成した（計上していない）Renoteは、botでなくなった後に削除しても、ほかのRenoteの分を減らさない', async () => {
+			const alice = await createUser({ host: null });
+			const bot = await createUser({ host: null, isBot: true });
+			const carol = await createUser({ host: null });
+			const parent = await createNote({}, alice);
+			// 直接insertしたノートの分を合わせておく
+			await service.repair(['user.notesCount']);
+
+			const botRenote = await noteCreateService.create(bot, { renote: parent });
+			await noteCreateService.create(carol, { renote: parent });
+			expect((await notesRepository.findOneByOrFail({ id: botRenote.id })).renoteCounted).toBe(false);
+			expect(await renoteCountOf(parent)).toBe(1);
+
+			await usersRepository.update(bot.id, { isBot: false });
+			expect(await mismatches()).toEqual({});
+
+			await noteDeleteService.delete(await usersRepository.findOneByOrFail({ id: bot.id }), await notesRepository.findOneByOrFail({ id: botRenote.id }));
+			expect(await renoteCountOf(parent)).toBe(1);
+			expect(await mismatches()).toEqual({});
+		});
+
+		test('計上したかを記録する前のノートは、投稿者の現在のbotの設定で判定する', async () => {
+			const alice = await createUser({ host: null });
+			const bob = await createUser({ host: null });
+			const parent = await createNote({}, alice);
+			const renote = await createNote({ renoteId: parent.id, renoteUserId: alice.id, text: null, renoteCounted: null }, bob);
+			await service.repair(['note.renoteCount']);
+			expect(await renoteCountOf(parent)).toBe(1);
+
+			await noteDeleteService.deleteMany(bob, [renote], { effects: ALL_NOTE_DELETE_EFFECTS });
+			expect(await renoteCountOf(parent)).toBe(0);
+		});
+
+		test('上限に丸めたRenote数は、並行する削除が先にコミットした分も含めて数え直す', async () => {
+			const alice = await createUser({ host: null });
+			const bob = await createUser({ host: null });
+			const parent = await createNote({}, alice);
+
+			await notesRepository.query(
+				'INSERT INTO "note" ("id", "userId", "renoteId", "renoteUserId", "visibility", "renoteCounted") SELECT \'rc\' || g, $1, $2, $3, \'public\', TRUE FROM generate_series(1, 32768) g',
+				[bob.id, parent.id, alice.id],
+			);
+			await notesRepository.update(parent.id, { renoteCount: 32767 });
+			const effects = { ...NO_NOTE_DELETE_EFFECTS, renoteCount: true };
+			const [rc1, rc2] = await Promise.all([
+				notesRepository.findOneByOrFail({ id: 'rc1' }),
+				notesRepository.findOneByOrFail({ id: 'rc2' }),
+			]);
+
+			// Renote先の行ロックを先に取り、2つの削除を、どちらも行の削除を終えてロックを待つ状態にする
+			const runner = db.createQueryRunner();
+			await runner.startTransaction();
+			try {
+				await runner.query('SELECT 1 FROM "note" WHERE "id" = $1 FOR UPDATE', [parent.id]);
+				const deletions = Promise.all([
+					noteDeleteService.deleteMany(bob, [rc1], { effects }),
+					noteDeleteService.deleteMany(bob, [rc2], { effects }),
+				]);
+				await setTimeout(500);
+				await runner.commitTransaction();
+				await deletions;
+			} finally {
+				await runner.release();
+			}
+
+			// 残りは32766件
+			expect(await renoteCountOf(parent)).toBe(32766);
+		});
+
+		test('親と返信を並行して削除しても失敗せず、カウンタは数え直した値と一致する', async () => {
+			const alice = await createUser({ host: null });
+			for (let i = 0; i < 10; i++) {
+				const parent = await noteCreateService.create(alice, { text: 'parent' });
+				const reply = await noteCreateService.create(alice, { text: 'reply', reply: parent });
+				const [p, r] = await Promise.all([
+					notesRepository.findOneByOrFail({ id: parent.id }),
+					notesRepository.findOneByOrFail({ id: reply.id }),
+				]);
+
+				await Promise.all([
+					noteDeleteService.deleteMany(alice, [p, r], { effects: ALL_NOTE_DELETE_EFFECTS }),
+					noteDeleteService.delete(alice, r),
+				]);
+
+				expect(await notesRepository.existsBy({ id: p.id })).toBe(false);
+				expect(await notesRepository.existsBy({ id: r.id })).toBe(false);
+			}
+			expect((await usersRepository.findOneByOrFail({ id: alice.id })).notesCount).toBe(0);
+		});
+
+		test('書き込み中に修復しても、修復を待たせた加算を数え直しに含める', async () => {
+			const alice = await createUser({ host: null });
+			const bob = await createUser({ host: null });
+			const parent = await createNote({}, alice);
+			await createNote({ renoteId: parent.id, renoteUserId: alice.id, text: null, renoteCounted: true }, bob);
+			// ずれた状態
+			await notesRepository.update(parent.id, { renoteCount: 5 });
+
+			// 作成のトランザクション（Renoteの行の追加と、Renote先の加算）を途中で止める
+			const runner = db.createQueryRunner();
+			await runner.startTransaction();
+			try {
+				await runner.query(
+					'INSERT INTO "note" ("id", "userId", "renoteId", "renoteUserId", "visibility", "renoteCounted") VALUES ($1, $2, $3, $4, \'public\', TRUE)',
+					[idService.gen(), bob.id, parent.id, alice.id],
+				);
+				await runner.query('UPDATE "note" SET "renoteCount" = "renoteCount" + 1 WHERE "id" = $1', [parent.id]);
+
+				// 修復は、加算がコミットされるまでRenote先の行ロックを待つ
+				const repair = service.repair(['note.renoteCount']);
+				await setTimeout(500);
+				await runner.commitTransaction();
+				await repair;
+			} finally {
+				await runner.release();
+			}
+
+			expect(await renoteCountOf(parent)).toBe(2);
+			expect((await mismatches())['note.renoteCount']).toBeUndefined();
+		});
 	});
 
 	test('0以下のbatchSizeは受け付けない', async () => {

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import { execPipeline } from '@/misc/redis-pipeline.js';
 import { Inject, Injectable } from '@nestjs/common';
 import * as Redis from 'ioredis';
 import { In } from 'typeorm';
@@ -107,13 +108,14 @@ export class AntennaService implements OnApplicationShutdown {
 		const matchedAntennas = antennasWithMatchResult.filter(([, hit]) => hit).map(([antenna]) => antenna);
 
 		const redisPipeline = this.redisForTimelines.pipeline();
+		const pending: Promise<unknown>[] = [];
 
 		for (const antenna of matchedAntennas) {
-			this.fanoutTimelineService.push(`antennaTimeline:${antenna.id}`, note.id, 200, redisPipeline);
+			this.fanoutTimelineService.push(`antennaTimeline:${antenna.id}`, note.id, 200, redisPipeline, pending);
 			this.globalEventService.publishAntennaStream(antenna.id, 'note', note);
 		}
 
-		redisPipeline.exec();
+		await execPipeline(redisPipeline, pending);
 	}
 
 	// NOTE: フォローしているユーザーのノート、リストのユーザーのノート、グループのユーザーのノート指定はパフォーマンス上の理由で無効になっている

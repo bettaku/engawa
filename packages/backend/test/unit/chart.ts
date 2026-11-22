@@ -21,6 +21,9 @@ import { entity as TestIntersectionChartEntity } from '@/core/chart/charts/entit
 import { loadConfig } from '@/config.js';
 import Logger from '@/logger.js';
 
+// 偽のタイマーに置き換えられる前の、本物のsetImmediate（データベースの応答を待つため）
+const realSetImmediate = globalThis.setImmediate;
+
 describe('Chart', () => {
 	const config = loadConfig();
 	const appLockService = {
@@ -589,6 +592,88 @@ describe('Chart', () => {
 					total: [100, 0, 0],
 				},
 			});
+		});
+	});
+
+	describe('保存', () => {
+		/** データベースへの保存（新しいログの作成）を、テストが解放するまで止めるチャート */
+		function createBlockedChart(failFirst = false) {
+			let release: () => void = () => {};
+			const released = new Promise<void>(resolve => release = resolve);
+			let notifyRequested: () => void = () => {};
+			const requested = new Promise<void>(resolve => notifyRequested = resolve);
+			let calls = 0;
+			const lockService = {
+				getChartInsertLock: async () => {
+					calls++;
+					if (failFirst && calls === 1) throw new Error('db is down');
+					notifyRequested();
+					await released;
+					return () => {};
+				},
+			} as unknown as Mocked<AppLockService>;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const chart = new TestChart(db!, lockService, new Logger('chart'));
+			return { chart, requested, release };
+		}
+
+		async function totalOf(chart: TestChart) {
+			const chartHours = await chart.getChart('hour', 1, null);
+			return chartHours.foo.total[0];
+		}
+
+		test('同時に保存しても、同じ差分を二重に足さない', async () => {
+			await testChart.increment();
+			await Promise.all([testChart.save(), testChart.save()]);
+
+			assert.strictEqual(await totalOf(testChart), 1);
+		});
+
+		test('保存中に追加された差分を消さず、次の保存で足す', async () => {
+			const { chart, requested, release } = createBlockedChart();
+			await chart.increment();
+			const saving = chart.save();
+			await requested;
+
+			await chart.increment();
+			release();
+			await saving;
+			assert.strictEqual(await totalOf(chart), 1);
+
+			await chart.save();
+			assert.strictEqual(await totalOf(chart), 2);
+		});
+
+		test('waitForSaveは、それまでの差分がデータベースに保存されてから解決する', async () => {
+			await testChart.increment();
+			await testChart.waitForSave();
+
+			assert.strictEqual(await totalOf(testChart), 1);
+		});
+
+		test('waitForSaveで待っている差分の保存に失敗したら、保存し直してから解決する', async () => {
+			const { chart, release } = createBlockedChart(true);
+			release();
+			await chart.increment();
+			let resolved = false;
+			const waiting = chart.waitForSave().then(() => resolved = true);
+
+			// 最初の保存は失敗し、差分はバッファに戻って、保存し直しが予約される
+			while (chart['saveRetryTimer'] == null) {
+				await new Promise(resolve => realSetImmediate(resolve));
+			}
+			assert.strictEqual(resolved, false);
+
+			// 保存し直しの時刻まで進める（保存し直しが予約されていれば、その時刻まで進め続ける）
+			for (let i = 0; i < 10 && !resolved; i++) {
+				await clock.tickAsync(1000 * 10);
+				while (!resolved && chart['saveRetryTimer'] == null && chart['saveScheduled']) {
+					await new Promise(resolve => realSetImmediate(resolve));
+				}
+				await new Promise(resolve => realSetImmediate(resolve));
+			}
+			await waiting;
+			assert.strictEqual(await totalOf(chart), 1);
 		});
 	});
 });

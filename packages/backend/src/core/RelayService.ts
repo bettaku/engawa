@@ -110,8 +110,8 @@ export class RelayService {
 
 		const signed = await this.apRendererService.attachLdSignature(copy, user);
 
-		for (const relay of relays) {
-			this.queueService.deliver(user, signed, relay.inbox, false);
-		}
+		// 全リレー分を1回のaddBulkで登録する（一部だけ登録された状態で再試行して、重ねて登録しないため）。
+		// 登録の失敗は呼び出し元（outboxの副作用など）へ伝える
+		await this.queueService.deliverMany(user, signed, new Map(relays.map(relay => [relay.inbox, false])));
 	}
 }
