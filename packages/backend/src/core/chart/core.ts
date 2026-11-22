@@ -103,10 +103,13 @@ type Unflatten<T extends Record<string, any>> = UnionToIntersection<
 	}[Extract<keyof T, string>]
 >;
 
+// チャートはすべてのキーを返す。optionalを明示して、型とOpenAPIの仕様（未指定は必須）をそろえる
 type ToJsonSchema<S> = {
 	type: 'object';
+	optional: false;
+	nullable: false;
 	properties: {
-		[K in keyof S]: S[K] extends number[] ? { type: 'array'; items: { type: 'number'; }; } : ToJsonSchema<S[K]>;
+		[K in keyof S]: S[K] extends number[] ? { type: 'array'; optional: false; nullable: false; items: { type: 'number'; }; } : ToJsonSchema<S[K]>;
 	},
 	required: (keyof S)[];
 };
@@ -122,10 +125,14 @@ export function getJsonSchema<S extends Schema>(schema: S): ToJsonSchema<Unflatt
 		if (parent.properties[key] == null) {
 			parent.properties[key] = nextKey ? {
 				type: 'object',
+				optional: false,
+				nullable: false,
 				properties: {},
 				required: [],
 			} : {
 				type: 'array',
+				optional: false,
+				nullable: false,
 				items: {
 					type: 'number',
 				},
@@ -137,6 +144,8 @@ export function getJsonSchema<S extends Schema>(schema: S): ToJsonSchema<Unflatt
 
 	const jsonSchema = {
 		type: 'object',
+		optional: false,
+		nullable: false,
 		properties: {} as Record<string, unknown>,
 		required: [],
 	};

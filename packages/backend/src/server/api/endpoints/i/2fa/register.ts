@@ -38,11 +38,11 @@ export const meta = {
 		nullable: false,
 		optional: false,
 		properties: {
-			qr: { type: 'string' },
-			url: { type: 'string' },
-			secret: { type: 'string' },
-			label: { type: 'string' },
-			issuer: { type: 'string' },
+			qr: { optional: false, type: 'string' },
+			url: { optional: false, type: 'string' },
+			secret: { optional: false, type: 'string' },
+			label: { optional: false, type: 'string' },
+			issuer: { optional: false, type: 'string' },
 		},
 	},
 } as const;

@@ -43,8 +43,8 @@ export const meta = {
 		nullable: false,
 		optional: false,
 		properties: {
-			id: { type: 'string' },
-			name: { type: 'string' },
+			id: { optional: false, type: 'string' },
+			name: { optional: false, type: 'string' },
 		},
 	},
 } as const;

@@ -31,12 +31,6 @@ import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { OnApplicationShutdown } from '@nestjs/common';
 import type { IEndpointMeta, IEndpoint } from './endpoints.js';
 
-const accessDenied = {
-	message: 'Access denied.',
-	code: 'ACCESS_DENIED',
-	id: '56f35758-7dd5-468b-8439-5d6fb8ec9b8e',
-};
-
 @Injectable()
 export class ApiCallService implements OnApplicationShutdown {
 	private logger: Logger;
@@ -104,11 +98,7 @@ export class ApiCallService implements OnApplicationShutdown {
 		if (err instanceof AuthenticationError) {
 			const message = 'Authentication failed. Please ensure your token is correct.';
 			reply.header('WWW-Authenticate', `Bearer realm="Engawa", error="invalid_token", error_description="${message}"`);
-			this.send(reply, 401, new ApiError({
-				message: 'Authentication failed. Please ensure your token is correct.',
-				code: 'AUTHENTICATION_FAILED',
-				id: 'b0a7f5f8-dc2f-4171-b91f-de88ad238e14',
-			}));
+			this.send(reply, 401, new ApiError(httpErrors.authenticationFailed));
 		} else {
 			this.send(reply, 500, new ApiError());
 		}
@@ -180,7 +170,7 @@ export class ApiCallService implements OnApplicationShutdown {
 			: body?.['i'];
 		if (token != null && typeof token !== 'string') {
 			// 以前は本文を送らず、応答が返らなかった
-			this.send(reply, 400, new ApiError(httpErrors.invalidCredentialFormat));
+			this.send(reply, 400, new ApiError(httpErrors.invalidCredentialFormat, { param: 'i', reason: 'must be a string' }));
 			return;
 		}
 		this.authenticateService.authenticate(token).then(([user, app, flashToken]) => {
@@ -236,7 +226,7 @@ export class ApiCallService implements OnApplicationShutdown {
 				? request.headers.authorization.slice(7)
 				: fields['i'];
 			if (token != null && typeof token !== 'string') {
-				this.send(reply, 400, new ApiError(httpErrors.invalidCredentialFormat));
+				this.send(reply, 400, new ApiError(httpErrors.invalidCredentialFormat, { param: 'i', reason: 'must be a string' }));
 				return;
 			}
 			await this.authenticateService.authenticate(token).then(async ([user, app, flashToken]) => {
@@ -332,7 +322,7 @@ export class ApiCallService implements OnApplicationShutdown {
 		const isSecure = user != null && token == null && flashToken == null;
 
 		if (ep.meta.secure && !isSecure) {
-			throw new ApiError(accessDenied);
+			throw new ApiError(httpErrors.accessDenied);
 		}
 
 		if (ep.meta.limit) {
@@ -357,62 +347,32 @@ export class ApiCallService implements OnApplicationShutdown {
 				// Rate limit
 				const rateLimit = await this.rateLimiterService.limit(limit as IEndpointMeta['limit'] & { key: NonNullable<string> }, limitActor, factor);
 				if (rateLimit != null) {
-					throw new ApiError({
-						message: 'Rate limit exceeded. Please try again later.',
-						code: 'RATE_LIMIT_EXCEEDED',
-						id: 'd5826d14-3982-4d2e-8011-b9e9f02499ef',
-						httpStatusCode: 429,
-					}, rateLimit.info);
+					throw new ApiError(httpErrors.rateLimitExceeded, rateLimit.info);
 				}
 			}
 		}
 
 		if (ep.meta.requireCredential || ep.meta.requireModerator || ep.meta.requireAdmin) {
 			if (user == null) {
-				throw new ApiError({
-					message: 'Credential required.',
-					code: 'CREDENTIAL_REQUIRED',
-					id: '1384574d-a912-4b81-8601-c7b1c4085df1',
-					httpStatusCode: 401,
-				});
+				throw new ApiError(httpErrors.credentialRequired);
 			} else if (user!.isSuspended) {
-				throw new ApiError({
-					message: 'Your account has been suspended.',
-					code: 'YOUR_ACCOUNT_SUSPENDED',
-					kind: 'permission',
-					id: 'a8c724b3-6e9c-4b46-b1a8-bc3ed6258370',
-				});
+				throw new ApiError(httpErrors.accountSuspended);
 			}
 		}
 
 		if (ep.meta.prohibitMoved) {
 			if (user?.movedToUri) {
-				throw new ApiError({
-					message: 'You have moved your account.',
-					code: 'YOUR_ACCOUNT_MOVED',
-					kind: 'permission',
-					id: '56f20ec9-fd06-4fa5-841b-edd6d7d4fa31',
-				});
+				throw new ApiError(httpErrors.accountMoved);
 			}
 		}
 
 		if ((ep.meta.requireModerator || ep.meta.requireAdmin) && (this.meta.rootUserId !== user!.id)) {
 			const myRoles = await this.roleService.getUserRoles(user!.id);
 			if (ep.meta.requireModerator && !myRoles.some(r => r.isModerator || r.isAdministrator)) {
-				throw new ApiError({
-					message: 'You are not assigned to a moderator role.',
-					code: 'ROLE_PERMISSION_DENIED',
-					kind: 'permission',
-					id: 'd33d5333-db36-423d-a8f9-1a2b9549da41',
-				});
+				throw new ApiError(httpErrors.notModerator);
 			}
 			if (ep.meta.requireAdmin && !myRoles.some(r => r.isAdministrator)) {
-				throw new ApiError({
-					message: 'You are not assigned to an administrator role.',
-					code: 'ROLE_PERMISSION_DENIED',
-					kind: 'permission',
-					id: 'c3d38592-54c0-429d-be96-5636b0431a61',
-				});
+				throw new ApiError(httpErrors.notAdministrator);
 			}
 		}
 
@@ -420,31 +380,17 @@ export class ApiCallService implements OnApplicationShutdown {
 			const myRoles = await this.roleService.getUserRoles(user!.id);
 			const policies = await this.roleService.getUserPolicies(user!.id);
 			if (!policies[ep.meta.requiredRolePolicy] && !myRoles.some(r => r.isAdministrator)) {
-				throw new ApiError({
-					message: 'You are not assigned to a required role.',
-					code: 'ROLE_PERMISSION_DENIED',
-					kind: 'permission',
-					id: '7f86f06f-7e15-4057-8561-f4b6d4ac755a',
-				});
+				throw new ApiError(httpErrors.requiredRolePolicy);
 			}
 		}
 
 		if (token && ((ep.meta.kind && !token.permission.some(p => p === ep.meta.kind))
 			|| (!ep.meta.kind && (ep.meta.requireCredential || ep.meta.requireModerator || ep.meta.requireAdmin)))) {
-			throw new ApiError({
-				message: 'Your app does not have the necessary permissions to use this endpoint.',
-				code: 'PERMISSION_DENIED',
-				kind: 'permission',
-				id: '1370e5b7-d4eb-4566-bb1d-7748ee6a1838',
-			});
+			throw new ApiError(httpErrors.permissionDenied);
 		}
 
 		if (flashToken && ep.meta.kind && !flashToken.permissions.some(p => p === ep.meta.kind)) {
-			throw new ApiError({
-				message: 'Your flash does not have the necessary permissions to use this endpoint.',
-				code: 'PERMISSION_DENIED',
-				id: '11924d17-113a-4ab0-954a-c567ee8a6ce5',
-			});
+			throw new ApiError(httpErrors.flashPermissionDenied);
 		}
 
 		// Cast non JSON input
@@ -455,11 +401,7 @@ export class ApiCallService implements OnApplicationShutdown {
 					try {
 						data[k] = JSON.parse(data[k]);
 					} catch (e) {
-						throw new ApiError({
-							message: 'Invalid param.',
-							code: 'INVALID_PARAM',
-							id: '0b5f1631-7c1a-41a6-b399-cce335f34d85',
-						}, {
+						throw new ApiError(httpErrors.invalidParamCast, {
 							param: k,
 							reason: `cannot cast to ${param.type}`,
 						});

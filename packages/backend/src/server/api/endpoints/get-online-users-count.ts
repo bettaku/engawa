@@ -21,6 +21,7 @@ export const meta = {
 		optional: false, nullable: false,
 		properties: {
 			count: {
+				optional: false,
 				type: 'number',
 				nullable: false,
 			},

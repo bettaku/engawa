@@ -27,7 +27,7 @@ export const meta = {
 		type: 'object',
 		optional: false, nullable: false,
 		properties: {
-			token: { type: 'string' },
+			token: { optional: false, type: 'string' },
 		},
 	},
 } as const;

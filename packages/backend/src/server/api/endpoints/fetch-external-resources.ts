@@ -38,9 +38,11 @@ export const meta = {
 		type: 'object',
 		properties: {
 			type: {
+				optional: false,
 				type: 'string',
 			},
 			data: {
+				optional: false,
 				type: 'string',
 			},
 		},

@@ -17,6 +17,7 @@ export const meta = {
 			type: 'object',
 			properties: {
 				scopes: {
+					optional: false,
 					type: 'array',
 					items: {
 						type: 'array',
@@ -26,6 +27,7 @@ export const meta = {
 					},
 				},
 				domain: {
+					optional: false,
 					type: 'string',
 					nullable: true,
 				},

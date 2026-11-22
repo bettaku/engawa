@@ -20,15 +20,16 @@ export const meta = {
 		type: 'object',
 		properties: {
 			emojis: {
+				optional: false,
 				type: 'array',
 				items: {
 					type: 'object',
 					ref: 'EmojiDetailedAdmin',
 				},
 			},
-			count: { type: 'integer' },
-			allCount: { type: 'integer' },
-			allPages: { type: 'integer' },
+			count: { optional: false, type: 'integer' },
+			allCount: { optional: false, type: 'integer' },
+			allPages: { optional: false, type: 'integer' },
 		},
 	},
 } as const;
