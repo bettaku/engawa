@@ -44,5 +44,6 @@ jobs:
     # コミットしたapi.jsonが、エンドポイントの定義と一致しているか（P2-6）
     - name: Check committed api.json
       run: |
-        pnpm --filter backend update-api-json
+        # 直前のステップでビルド済みなので、ビルドを省いて生成する（手元では pnpm --filter backend update-api-json）
+        (cd packages/backend && node ./scripts/generate_api_json.js --no-build --committed)
         git diff --exit-code -- packages/backend/api.json
