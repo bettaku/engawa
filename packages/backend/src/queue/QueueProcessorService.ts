@@ -11,6 +11,9 @@ import type { Config } from '@/config.js';
 import { DI } from '@/di-symbols.js';
 import type Logger from '@/logger.js';
 import { bindThis } from '@/decorators.js';
+import { FederatedInstanceService } from '@/core/FederatedInstanceService.js';
+import { NotificationService } from '@/core/NotificationService.js';
+import { ChatService } from '@/core/ChatService.js';
 import { CheckModeratorsActivityProcessorService } from '@/queue/processors/CheckModeratorsActivityProcessorService.js';
 import { UserWebhookDeliverProcessorService } from './processors/UserWebhookDeliverProcessorService.js';
 import { SystemWebhookDeliverProcessorService } from './processors/SystemWebhookDeliverProcessorService.js';
@@ -18,6 +21,7 @@ import { EndedPollNotificationProcessorService } from './processors/EndedPollNot
 import { PostScheduledNoteProcessorService } from './processors/PostScheduledNoteProcessorService.js';
 import { DeliverProcessorService } from './processors/DeliverProcessorService.js';
 import { InboxProcessorService } from './processors/InboxProcessorService.js';
+import { SigninNotificationProcessorService } from './processors/SigninNotificationProcessorService.js';
 import { DeleteDriveFilesProcessorService } from './processors/DeleteDriveFilesProcessorService.js';
 import { ExportCustomEmojisProcessorService } from './processors/ExportCustomEmojisProcessorService.js';
 import { ExportNotesProcessorService } from './processors/ExportNotesProcessorService.js';
@@ -144,6 +148,10 @@ export class QueueProcessorService implements OnApplicationShutdown {
 		private cleanRemoteNotesProcessorService: CleanRemoteNotesProcessorService,
 		private scheduledNoteDeleteProcessorService: ScheduledNoteDeleteProcessorService,
 		private noteOutboxService: NoteOutboxService,
+		private federatedInstanceService: FederatedInstanceService,
+		private notificationService: NotificationService,
+		private chatService: ChatService,
+		private signinNotificationProcessorService: SigninNotificationProcessorService,
 	) {
 		this.logger = this.queueLoggerService.logger;
 
@@ -190,6 +198,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 					case 'reconcileScheduledNoteDeletes': return this.scheduledNoteDeleteProcessorService.reconcile();
 					case 'reconcileScheduledNotePosts': return this.postScheduledNoteProcessorService.reconcile();
 					case 'sweepNoteOutbox': return this.noteOutboxService.sweep();
+					case 'flushInstanceRequestReceived': return this.federatedInstanceService.flushRequestReceived();
 					default: throw new Error(`unrecognized job type ${job.name} for system`);
 				}
 			};
@@ -252,6 +261,9 @@ export class QueueProcessorService implements OnApplicationShutdown {
 					case 'autoDeleteUserNotes': return this.autoDeleteNotesProcessorService.processUser(job);
 					case 'syncNoteIndex': return this.syncNoteIndexProcessorService.process(job);
 					case 'processNoteOutbox': return this.noteOutboxService.process(job.data.seq);
+					case 'unreadNotification': return this.notificationService.processUnreadNotification(job.data.userId, job.data.streamId);
+					case 'unreadChatMessage': return this.chatService.processUnreadMessage(job.data.messageId);
+					case 'signinNotification': return this.signinNotificationProcessorService.process(job);
 					default: throw new Error(`unrecognized job type ${job.name} for db`);
 				}
 			};

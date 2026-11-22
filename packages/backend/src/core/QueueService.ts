@@ -10,6 +10,9 @@ import { parse as parseRedisInfo } from 'redis-info';
 import type { IActivity } from '@/core/activitypub/type.js';
 import type { MiDriveFile } from '@/models/DriveFile.js';
 import type { MiNote } from '@/models/Note.js';
+import type { MiChatMessage } from '@/models/ChatMessage.js';
+import type { MiSignin } from '@/models/Signin.js';
+import type { MiUser } from '@/models/User.js';
 import type { MiNoteDraft } from '@/models/NoteDraft.js';
 import type { MiWebhook, WebhookEventTypes } from '@/models/Webhook.js';
 import type { MiSystemWebhook, SystemWebhookEventType } from '@/models/SystemWebhook.js';
@@ -108,6 +111,10 @@ export const REPEATABLE_SYSTEM_JOB_DEF: readonly { name: string; pattern: string
 	name: 'sweepNoteOutbox',
 	// ノートの後処理のoutboxで、プロセスの停止や失敗で残ったレコードを毎分拾う
 	pattern: '* * * * *',
+}, {
+	name: 'flushInstanceRequestReceived',
+	// Redisに集約した連合サーバーの最終受信時刻と自動停止の解除を、5分ごとにDBへ書く
+	pattern: '*/5 * * * *',
 }];
 
 /**
@@ -721,6 +728,48 @@ export class QueueService {
 			attempts: 1,
 			removeOnComplete: true,
 			removeOnFail: true,
+		});
+	}
+
+	/**
+	 * 通知を作ってから`delay`ミリ秒後に、未読なら「未読の通知がある」イベントとPush通知を送るジョブ（P3-2）。
+	 * 送信の途中で失敗した場合に重ねて送らないよう、再試行しない。
+	 */
+	@bindThis
+	public createUnreadNotificationJob(userId: MiUser['id'], streamId: string, delay: number) {
+		return this.dbQueue.add('unreadNotification', { v: JOB_DATA_VERSION, userId, streamId }, {
+			delay,
+			attempts: 1,
+			removeOnComplete: true,
+			removeOnFail: { age: 24 * 60 * 60, count: 1000 },
+		});
+	}
+
+	/**
+	 * チャットのメッセージを送ってから`delay`ミリ秒後に、未読の受信者へイベントとPush通知を送るジョブ（P3-2）。
+	 * 再試行しない理由は`createUnreadNotificationJob`と同じ。
+	 */
+	@bindThis
+	public createUnreadChatMessageJob(messageId: MiChatMessage['id'], delay: number) {
+		return this.dbQueue.add('unreadChatMessage', { v: JOB_DATA_VERSION, messageId }, {
+			delay,
+			attempts: 1,
+			removeOnComplete: true,
+			removeOnFail: { age: 24 * 60 * 60, count: 1000 },
+		});
+	}
+
+	/**
+	 * サインインの記録を作った後の、ログインの通知・ストリーム・メールを送るジョブ（P3-2）。
+	 * 同じ記録のジョブは1つだけにする。送信の途中で失敗した場合に重ねて送らないよう、再試行しない。
+	 */
+	@bindThis
+	public createSigninNotificationJob(signinId: MiSignin['id']) {
+		return this.dbQueue.add('signinNotification', { v: JOB_DATA_VERSION, signinId }, {
+			jobId: `signinNotification-${signinId}`,
+			attempts: 1,
+			removeOnComplete: true,
+			removeOnFail: { age: 7 * 24 * 60 * 60, count: 1000 },
 		});
 	}
 
