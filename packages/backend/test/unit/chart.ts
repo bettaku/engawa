@@ -664,7 +664,14 @@ describe('Chart', () => {
 			}
 			assert.strictEqual(resolved, false);
 
-			await clock.tickAsync(1000 * 10);
+			// 保存し直しの時刻まで進める（保存し直しが予約されていれば、その時刻まで進め続ける）
+			for (let i = 0; i < 10 && !resolved; i++) {
+				await clock.tickAsync(1000 * 10);
+				while (!resolved && chart['saveRetryTimer'] == null && chart['saveScheduled']) {
+					await new Promise(resolve => realSetImmediate(resolve));
+				}
+				await new Promise(resolve => realSetImmediate(resolve));
+			}
 			await waiting;
 			assert.strictEqual(await totalOf(chart), 1);
 		});

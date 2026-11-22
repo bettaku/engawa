@@ -592,12 +592,16 @@ export default abstract class Chart<T extends Schema> {
 		const groups: (string | null)[] = removeDuplicates(buffer.map(log => log.group));
 
 		const results = await Promise.allSettled(
-			groups.map(group =>
-				Promise.all([
+			groups.map(async group => {
+				// 片方の取得が失敗しても、もう片方が終わるまで待つ（作成中のログが残ったまま保存し直して、作成が重ならないように）
+				const [logHour, logDay] = await Promise.allSettled([
 					this.claimCurrentLog(group, 'hour'),
 					this.claimCurrentLog(group, 'day'),
-				]).then(([logHour, logDay]) =>
-					update(buffer.filter(q => q.group == null || q.group === group), logHour, logDay))));
+				]);
+				if (logHour.status === 'rejected') throw logHour.reason;
+				if (logDay.status === 'rejected') throw logDay.reason;
+				await update(buffer.filter(q => q.group == null || q.group === group), logHour.value, logDay.value);
+			}));
 
 		const failedGroups = groups.filter((_, i) => results[i].status === 'rejected');
 		if (failedGroups.length === 0) {
