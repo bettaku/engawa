@@ -3,9 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { setTimeout } from 'node:timers/promises';
 import * as Redis from 'ioredis';
-import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { In } from 'typeorm';
 import { ReplyError } from 'ioredis';
 import { DI } from '@/di-symbols.js';
@@ -20,14 +19,13 @@ import { IdService } from '@/core/IdService.js';
 import { CacheService } from '@/core/CacheService.js';
 import type { Config } from '@/config.js';
 import { UserListService } from '@/core/UserListService.js';
+import { QueueService } from '@/core/QueueService.js';
 import { FilterUnionByProperty, groupedNotificationTypes, obsoleteNotificationTypes } from '@/types.js';
 import { trackPromise } from '@/misc/promise-tracker.js';
 import { compareRedisStreamId, parseRedisStreamId, redisStreamIdFromParsedId } from '@/misc/redis-stream-id.js';
 
 @Injectable()
-export class NotificationService implements OnApplicationShutdown {
-	#shutdownController = new AbortController();
-
+export class NotificationService {
 	constructor(
 		@Inject(DI.config)
 		private config: Config,
@@ -44,6 +42,7 @@ export class NotificationService implements OnApplicationShutdown {
 		private pushNotificationService: PushNotificationService,
 		private cacheService: CacheService,
 		private userListService: UserListService,
+		private queueService: QueueService,
 	) {
 	}
 
@@ -187,19 +186,37 @@ export class NotificationService implements OnApplicationShutdown {
 
 		// 2秒経っても(今回作成した)通知が既読にならなかったら「未読の通知がありますよ」イベントを発行する
 		// テスト通知の場合は即時発行
-		const interval = notification.type === 'test' ? 0 : 2000;
-		setTimeout(interval, 'unread notification', { signal: this.#shutdownController.signal }).then(async () => {
-			const latestReadNotificationId = await this.redisClient.get(`latestReadNotification:${notifieeId}`);
-			if (this.isReadUpTo(latestReadNotificationId, redisId)) return;
-
-			this.globalEventService.publishMainStream(notifieeId, 'unreadNotification', packed);
-			this.pushNotificationService.pushNotification(notifieeId, 'notification', packed);
-
-			if (type === 'follow') this.emailNotificationFollow(notifieeId, await this.usersRepository.findOneByOrFail({ id: notifierId! }));
-			if (type === 'receiveFollowRequest') this.emailNotificationReceiveFollowRequest(notifieeId, await this.usersRepository.findOneByOrFail({ id: notifierId! }));
-		}, () => { /* aborted, ignore it */ });
+		// プロセスの停止で失われないよう、ジョブにする（P3-2）
+		const delay = notification.type === 'test' ? 0 : 2000;
+		await this.queueService.createUnreadNotificationJob(notifieeId, redisId, delay);
 
 		return notification;
+	}
+
+	/**
+	 * 通知を作ってから一定時間たっても既読になっていなければ、「未読の通知がある」イベントとPush通知を送る（`unreadNotification`ジョブ）。
+	 *
+	 * 通知はStreamから読み直してpackする。Streamから消えた通知（全削除・件数の上限）や、packできなくなった通知（ノートの削除など）は送らない。
+	 */
+	@bindThis
+	public async processUnreadNotification(userId: MiUser['id'], streamId: string): Promise<string> {
+		const latestReadNotificationId = await this.redisClient.get(`latestReadNotification:${userId}`);
+		if (this.isReadUpTo(latestReadNotificationId, streamId)) return 'skip: already read';
+
+		const entries = await this.redisClient.xrange(`notificationTimeline:${userId}`, streamId, streamId);
+		if (entries.length === 0) return 'skip: notification not found';
+		const notification = JSON.parse(entries[0][1][1]) as MiNotification;
+
+		const packed = await this.notificationEntityService.pack(notification, userId, {});
+		if (packed == null) return 'skip: notification is no longer available';
+
+		this.globalEventService.publishMainStream(userId, 'unreadNotification', packed);
+		await this.pushNotificationService.pushNotification(userId, 'notification', packed);
+
+		if (notification.type === 'follow') this.emailNotificationFollow(userId, await this.usersRepository.findOneByOrFail({ id: notification.notifierId }));
+		if (notification.type === 'receiveFollowRequest') this.emailNotificationReceiveFollowRequest(userId, await this.usersRepository.findOneByOrFail({ id: notification.notifierId }));
+
+		return 'ok';
 	}
 
 	// TODO
@@ -280,11 +297,6 @@ export class NotificationService implements OnApplicationShutdown {
 				}
 			} else console.log('(UserGroupInvitationNotification) Data field not found in fields:', fields);
 		}
-	}
-
-	@bindThis
-	public dispose(): void {
-		this.#shutdownController.abort();
 	}
 
 	private toXListId(id: string): string {
@@ -371,10 +383,5 @@ export class NotificationService implements OnApplicationShutdown {
 		}
 
 		return notifications;
-	}
-
-	@bindThis
-	public onApplicationShutdown(signal?: string | undefined): void {
-		this.dispose();
 	}
 }

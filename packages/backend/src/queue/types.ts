@@ -4,8 +4,10 @@
  */
 
 import type { Antenna } from '@/server/api/endpoints/i/import-antennas.js';
+import type { MiChatMessage } from '@/models/ChatMessage.js';
 import type { MiDriveFile } from '@/models/DriveFile.js';
 import type { MiNote } from '@/models/Note.js';
+import type { MiSignin } from '@/models/Signin.js';
 import type { SystemWebhookEventType } from '@/models/SystemWebhook.js';
 import type { MiUser } from '@/models/User.js';
 import type { MiWebhook, WebhookEventTypes } from '@/models/Webhook.js';
@@ -119,6 +121,29 @@ export type DbJobMap = {
 	autoDeleteUserNotes: DbJobDataWithUser;
 	syncNoteIndex: DbSyncNoteIndexJobData;
 	processNoteOutbox: DbProcessNoteOutboxJobData;
+	unreadNotification: DbUnreadNotificationJobData;
+	unreadChatMessage: DbUnreadChatMessageJobData;
+	signinNotification: DbSigninNotificationJobData;
+};
+
+/**
+ * 通知を作ってから一定時間後に、まだ既読になっていなければ「未読の通知がある」ことを知らせる（P3-2）。
+ * 通知の内容はRedisのStream（`notificationTimeline:<userId>`）にあり、payloadには持たせない
+ */
+export type DbUnreadNotificationJobData = JobDataV1 & {
+	userId: MiUser['id'];
+	/** 通知のStream ID */
+	streamId: string;
+};
+
+/** チャットのメッセージを送ってから一定時間後に、まだ既読になっていない受信者に知らせる（P3-2）。内容はDBから読み直す */
+export type DbUnreadChatMessageJobData = JobDataV1 & {
+	messageId: MiChatMessage['id'];
+};
+
+/** サインインの記録（`signin`テーブル）を作った後の、通知・ストリーム・メールの送信（P3-2）。内容はDBから読み直す */
+export type DbSigninNotificationJobData = JobDataV1 & {
+	signinId: MiSignin['id'];
 };
 
 /** ノートの後処理のoutboxのレコード（P3-1）。内容はDBのレコードにあり、payloadには持たせない */

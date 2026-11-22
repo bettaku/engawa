@@ -166,7 +166,7 @@ export class SigninWithPasskeyApiService {
 			});
 		}
 
-		const signinResponse = this.signinService.signin(request, reply, user);
+		const signinResponse = await this.signinService.signin(request, reply, user);
 		return {
 			signinResponse: signinResponse,
 		};
