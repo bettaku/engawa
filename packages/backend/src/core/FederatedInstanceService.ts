@@ -178,9 +178,8 @@ export class FederatedInstanceService implements OnApplicationShutdown {
 				[chunk.map(e => e.id), chunk.map(e => e.receivedAt.toISOString()), chunk.map(e => e.unsuspend)],
 			) as [MiInstance[], number];
 
-			for (const row of rows) {
-				this.federatedInstanceCache.set(row.host, row);
-			}
+			// キャッシュの書き込みも待つ（待たないと、ジョブの完了後やRedisの切断後に拒否される）
+			await Promise.all(rows.map(row => this.federatedInstanceCache.set(row.host, row)));
 			updated += rows.length;
 		}
 
