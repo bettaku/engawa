@@ -12,7 +12,7 @@ import { GlobalEventService } from '@/core/GlobalEventService.js';
 import type { UserProfilesRepository, UserSecurityKeysRepository } from '@/models/_.js';
 import { WebAuthnService } from '@/core/WebAuthnService.js';
 import { ApiError } from '@/server/api/error.js';
-import { UserAuthService } from '@/core/UserAuthService.js';
+import { TwoFactorAuthenticationError, UserAuthService } from '@/core/UserAuthService.js';
 
 export const meta = {
 	requireCredential: true,
@@ -86,7 +86,9 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 				try {
 					await this.userAuthService.twoFactorAuthenticate(profile, token);
 				} catch (e) {
-					throw new ApiError(meta.errors.twoFactorAuthenticationFailed);
+					// コードの不一致だけを認証の失敗にする。DB・Redisの障害はそのまま500にする
+					if (e instanceof TwoFactorAuthenticationError) throw new ApiError(meta.errors.twoFactorAuthenticationFailed);
+					throw e;
 				}
 			}
 

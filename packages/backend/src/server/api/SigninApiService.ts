@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import { signinErrorBody } from './signin-errors.js';
 import { Inject, Injectable } from '@nestjs/common';
 import * as OTPAuth from 'otpauth';
 import { IsNull } from 'typeorm';
@@ -89,7 +90,7 @@ export class SigninApiService {
 
 		function error(status: number, error: { id: string }) {
 			reply.code(status);
-			return { error };
+			return signinErrorBody(error.id);
 		}
 
 		// not more than 1 attempt per second and not more than 10 attempts per hour

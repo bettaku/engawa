@@ -14,7 +14,7 @@ import { DI } from '@/di-symbols.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { bindThis } from '@/decorators.js';
 import endpoints from './endpoints.js';
-import { errorBody, errorForStatus, httpErrors } from './http-errors.js';
+import { errorBody, errorForStatus, httpErrors, normalizeErrorPayload } from './http-errors.js';
 import { ApiCallService } from './ApiCallService.js';
 import { ApiLoggerService } from './ApiLoggerService.js';
 import { SignupApiService } from './SignupApiService.js';
@@ -213,11 +213,14 @@ export class ApiServerService {
 			reply.send(errorBody(status === 400 && error.code?.startsWith('FST_ERR_CTP_') ? httpErrors.invalidRequest : errorForStatus(status)));
 		});
 
-		// 本文を付けずに非2xxを返している箇所（サインアップなど）にも、ステータスに応じたエラーを付ける
+		// 共通の形でない非2xxの応答を直す。本文がないもの（サインアップなど）、プラグインの文字列（@fastify/corsなど）には
+		// ステータスに応じたエラーを付け、errorの項目が欠けているものは補う（idはそのまま）
 		fastify.addHook('onSend', async (request, reply, payload) => {
-			if (reply.statusCode < 400 || (payload != null && payload !== '')) return payload;
+			if (reply.statusCode < 400) return payload;
+			const body = normalizeErrorPayload(payload, reply.statusCode);
+			if (body === payload) return payload;
 			reply.header('Content-Type', 'application/json; charset=utf-8');
-			return JSON.stringify(errorBody(errorForStatus(reply.statusCode)));
+			return body;
 		});
 
 		done();

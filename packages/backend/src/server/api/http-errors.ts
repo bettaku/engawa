@@ -190,7 +190,7 @@ export function statusOf(err: { kind?: string; httpStatusCode?: number }): numbe
 	return 400;
 }
 
-export function errorBody(err: ApiError | ErrorDefinition, info?: unknown) {
+export function errorBody(err: Pick<ApiError, 'message' | 'code' | 'id'> & { kind?: string }, info?: unknown) {
 	return {
 		error: {
 			message: err.message,
@@ -200,4 +200,34 @@ export function errorBody(err: ApiError | ErrorDefinition, info?: unknown) {
 			...(info != null ? { info } : {}),
 		},
 	};
+}
+
+/**
+ * 非2xxの応答の本文を、共通の形（{ error: { message, code, id, kind } }）にする。
+ * すでに共通の形なら、同じ値を返す。文字列以外（ストリームなど）はそのまま返す
+ */
+export function normalizeErrorPayload(payload: unknown, status: number): unknown {
+	const fallback = errorBody(errorForStatus(status));
+	if (payload == null || payload === '') return JSON.stringify(fallback);
+	if (typeof payload !== 'string') return payload;
+
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(payload);
+	} catch {
+		return JSON.stringify(fallback);
+	}
+	if (typeof parsed !== 'object' || parsed == null || !('error' in parsed)) return JSON.stringify(fallback);
+	const error: unknown = parsed.error;
+	if (typeof error !== 'object' || error == null) return JSON.stringify(fallback);
+
+	const e = error as Record<string, unknown>;
+	if (['message', 'code', 'id', 'kind'].every(k => typeof e[k] === 'string')) return payload;
+	return JSON.stringify({
+		...parsed,
+		error: {
+			...fallback.error,
+			...Object.fromEntries(Object.entries(e).filter(([, v]) => v !== undefined)),
+		},
+	});
 }
