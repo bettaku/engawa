@@ -614,6 +614,23 @@ describe('UserEntityService', () => {
 				expect(packed.reply.reply).not.toHaveProperty('reply');
 				expect(packed.reply.reply).not.toHaveProperty('clippedCount');
 			});
+
+			test('detailにしない返信でも、返信先の投稿者はフォロワー限定の返信を見られる', async () => {
+				const me = await createUser();
+				const other = await createUser();
+				const myNote = await createNote(me);
+				const followersReply = await createNote(other, { replyId: myNote.id, replyUserId: me.id, visibility: 'followers' });
+				const reply1 = await createNote(me, { replyId: followersReply.id, replyUserId: other.id });
+				const reply2 = await createNote(me, { replyId: reply1.id, replyUserId: me.id });
+
+				const packed = await noteEntityService.pack(reply2.id, me) as any;
+
+				// 2段目（detailではない）のフォロワー限定の返信は、meのノートへの返信なので隠さない
+				expect(packed.reply.reply.id).toBe(followersReply.id);
+				expect(packed.reply.reply).not.toHaveProperty('reply');
+				expect(packed.reply.reply.isHidden).toBeUndefined();
+				expect(packed.reply.reply.text).toBe(followersReply.text);
+			});
 		});
 	});
 });

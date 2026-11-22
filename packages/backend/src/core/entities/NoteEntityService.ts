@@ -139,7 +139,10 @@ export class NoteEntityService implements OnModuleInit {
 	}
 
 	@bindThis
-	public async shouldHideNote(packedNote: Packed<'Note'>, meId: MiUser['id'] | null): Promise<boolean> {
+	/**
+	 * @param replyUserId 返信先の投稿者。`detail: false`でpackして`packedNote.reply`を含めなかった場合に、返信先の投稿者を判定するために渡す
+	 */
+	public async shouldHideNote(packedNote: Packed<'Note'>, meId: MiUser['id'] | null, replyUserId?: MiUser['id'] | null): Promise<boolean> {
 		if (meId === packedNote.userId) return false;
 		// TODO: isVisibleForMe を使うようにしても良さそう(型違うけど)
 
@@ -175,7 +178,7 @@ export class NoteEntityService implements OnModuleInit {
 		if (packedNote.visibility === 'followers') {
 			if (meId == null) {
 				return true;
-			} else if (packedNote.reply && (meId === packedNote.reply.userId)) {
+			} else if (meId === (packedNote.reply !== undefined ? packedNote.reply?.userId : replyUserId)) {
 				// 自分の投稿に対するリプライ
 				return false;
 			} else if (packedNote.mentions && packedNote.mentions.some(id => meId === id)) {
@@ -520,7 +523,7 @@ export class NoteEntityService implements OnModuleInit {
 
 		this.treatVisibility(packed);
 
-		if (!opts.skipHide && await this.shouldHideNote(packed, meId)) {
+		if (!opts.skipHide && await this.shouldHideNote(packed, meId, note.replyUserId)) {
 			this.hideNote(packed);
 		}
 

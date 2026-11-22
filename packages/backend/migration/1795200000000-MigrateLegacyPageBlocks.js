@@ -40,12 +40,31 @@ export class MigrateLegacyPageBlocks1795200000000 {
 			);
 			if (pages.length === 0) break;
 			for (const page of pages) {
-				if (Array.isArray(page.content) && migrate(page.content)) {
-					await queryRunner.query(`UPDATE "page" SET "content" = $1 WHERE "id" = $2`, [JSON.stringify(page.content), page.id]);
-				}
+				await this.migratePage(queryRunner, page);
 			}
 			lastId = pages[pages.length - 1].id;
 		}
+	}
+
+	/**
+	 * 読み取った内容のままのときだけ書き戻す。その間にページが編集されていたら（更新が0件）、読み直して変換し直す
+	 */
+	async migratePage(queryRunner, page) {
+		let current = page;
+		for (let i = 0; i < 10; i++) {
+			if (!Array.isArray(current.content)) return;
+			const original = JSON.stringify(current.content);
+			if (!migrate(current.content)) return;
+			const [, affected] = await queryRunner.query(
+				`UPDATE "page" SET "content" = $1 WHERE "id" = $2 AND "content" = $3::jsonb`,
+				[JSON.stringify(current.content), current.id, original],
+			);
+			if (affected > 0) return;
+			const rows = await queryRunner.query(`SELECT "id", "content" FROM "page" WHERE "id" = $1`, [current.id]);
+			if (rows.length === 0) return;
+			current = rows[0];
+		}
+		throw new Error(`Failed to migrate page ${page.id}: it kept being updated during the migration`);
 	}
 
 	async down() {

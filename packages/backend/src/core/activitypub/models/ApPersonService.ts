@@ -331,7 +331,11 @@ export class ApPersonService implements OnModuleInit {
 	}
 
 	@bindThis
-	public async createPerson(uri: string, resolver?: Resolver): Promise<MiRemoteUser> {
+	/**
+	 * @param options.resolveMoveTarget 移行先が未登録なら登録するジョブを作るか（既定はtrue）。
+	 *   `resolveRemoteUser`ジョブから登録する場合はfalseにして、移行先の移行先…と連鎖して取得しないようにする（P3-3）
+	 */
+	public async createPerson(uri: string, resolver?: Resolver, options: { resolveMoveTarget?: boolean } = {}): Promise<MiRemoteUser> {
 		if (typeof uri !== 'string') throw new Error('uri is not string');
 
 		const host = this.utilityService.punyHost(uri);
@@ -552,7 +556,7 @@ export class ApPersonService implements OnModuleInit {
 
 		await this.updateFeatured(user.id, resolver).catch(err => this.logger.error(err));
 
-		await this.requestResolveMoveTarget(user);
+		if (options.resolveMoveTarget !== false) await this.requestResolveMoveTarget(user);
 
 		return user;
 	}
@@ -804,8 +808,10 @@ export class ApPersonService implements OnModuleInit {
 	@bindThis
 	private async requestResolveMoveTarget(user: Pick<MiRemoteUser, 'movedToUri' | 'uri'>): Promise<void> {
 		const target = user.movedToUri;
-		if (target == null || target === user.uri || this.utilityService.isUriLocal(target)) return;
+		if (target == null || target === user.uri) return;
 		try {
+			// 不正なURIでは例外になるので、try内で判定する（リモートの値なので、登録・更新を失敗にしない）
+			if (this.utilityService.isUriLocal(target)) return;
 			if (await this.fetchPerson(target) != null) return;
 			await this.queueService.createResolveRemoteUserJob(target);
 		} catch (err) {
@@ -820,7 +826,8 @@ export class ApPersonService implements OnModuleInit {
 	public async processResolveRemoteUser(uri: string): Promise<string> {
 		if (this.utilityService.isUriLocal(uri)) return 'skip: local uri';
 		if (await this.fetchPerson(uri) != null) return 'skip: already registered';
-		const user = await this.resolvePerson(uri);
+		// 登録したユーザーの移行先はたどらない（移行先が連鎖していても、1回の受信で取得するのは1段だけにする）
+		const user = await this.createPerson(uri, await this.apResolverService.createResolver(), { resolveMoveTarget: false });
 		return `ok: ${user.id}`;
 	}
 
