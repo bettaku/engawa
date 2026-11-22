@@ -211,7 +211,7 @@ export class NotificationService {
 		if (packed == null) return 'skip: notification is no longer available';
 
 		this.globalEventService.publishMainStream(userId, 'unreadNotification', packed);
-		this.pushNotificationService.pushNotification(userId, 'notification', packed);
+		await this.pushNotificationService.pushNotification(userId, 'notification', packed);
 
 		if (notification.type === 'follow') this.emailNotificationFollow(userId, await this.usersRepository.findOneByOrFail({ id: notification.notifierId }));
 		if (notification.type === 'receiveFollowRequest') this.emailNotificationReceiveFollowRequest(userId, await this.usersRepository.findOneByOrFail({ id: notification.notifierId }));

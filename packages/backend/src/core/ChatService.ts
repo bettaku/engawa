@@ -236,11 +236,6 @@ export class ChatService {
 			this.globalEventService.publishChatUserStream(toUser.id, fromUser.id, 'message', packedMessage);
 		}
 
-		// 3秒経っても既読にならなかったらイベント発行（プロセスの停止で失われないよう、ジョブにする。P3-2）
-		if (this.userEntityService.isLocalUser(toUser)) {
-			await this.queueService.createUnreadChatMessageJob(inserted.id, 3000);
-		}
-
 		// Federation: Send to remote user if applicable
 		if (this.userEntityService.isLocalUser(fromUser) && this.userEntityService.isRemoteUser(toUser)) {
 			const fullFromUser = await this.usersRepository.findOneByOrFail({ id: fromUser.id });
@@ -252,6 +247,12 @@ export class ChatService {
 				published: this.idService.parse(inserted.id).date.toISOString(),
 			};
 			this.queueService.deliver(fullFromUser, this.apRendererService.addContext(activity), toUser.inbox, false);
+		}
+
+		// 3秒経っても既読にならなかったらイベント発行（プロセスの停止で失われないよう、ジョブにする。P3-2）
+		// 登録の失敗で保存済みのメッセージの配送が止まらないよう、配送の後に登録する
+		if (this.userEntityService.isLocalUser(toUser)) {
+			await this.queueService.createUnreadChatMessageJob(inserted.id, 3000);
 		}
 
 		return packedMessage;
@@ -277,7 +278,7 @@ export class ChatService {
 
 			const packedMessageForTo = await this.chatEntityService.packMessageDetailed(message, toUser);
 			this.globalEventService.publishMainStream(toUser.id, 'newChatMessage', packedMessageForTo);
-			this.pushNotificationService.pushNotification(toUser.id, 'newChatMessage', packedMessageForTo);
+			await this.pushNotificationService.pushNotification(toUser.id, 'newChatMessage', packedMessageForTo);
 			return 'ok';
 		}
 
@@ -306,13 +307,15 @@ export class ChatService {
 
 			const packedMessageForTo = await this.chatEntityService.packMessageDetailed(message);
 
+			const pushes: Promise<void>[] = [];
 			for (let i = 0; i < recipients.length; i++) {
 				const marker = markers[i][1];
 				if (marker == null) continue;
 
 				this.globalEventService.publishMainStream(recipients[i].userId, 'newChatMessage', packedMessageForTo);
-				this.pushNotificationService.pushNotification(recipients[i].userId, 'newChatMessage', packedMessageForTo);
+				pushes.push(this.pushNotificationService.pushNotification(recipients[i].userId, 'newChatMessage', packedMessageForTo));
 			}
+			await Promise.all(pushes);
 			return 'ok';
 		}
 
@@ -375,11 +378,6 @@ export class ChatService {
 		}
 		redisPipeline.exec();
 
-		// 3秒経っても既読にならなかったらイベント発行（プロセスの停止で失われないよう、ジョブにする。P3-2）
-		if (membershipsOtherThanMe.some(membership => !membership.isMuted)) {
-			await this.queueService.createUnreadChatMessageJob(inserted.id, 3000);
-		}
-
 		// Federation: Send to remote members if applicable
 		if (this.userEntityService.isLocalUser(fromUser)) {
 			// Get all members (including owner)
@@ -406,6 +404,12 @@ export class ChatService {
 					this.queueService.deliver(fullFromUser, contextedActivity, remoteMember.inbox, false);
 				}
 			}
+		}
+
+		// 3秒経っても既読にならなかったらイベント発行（プロセスの停止で失われないよう、ジョブにする。P3-2）
+		// 登録の失敗で保存済みのメッセージの配送が止まらないよう、配送の後に登録する
+		if (membershipsOtherThanMe.some(membership => !membership.isMuted)) {
+			await this.queueService.createUnreadChatMessageJob(inserted.id, 3000);
 		}
 
 		return packedMessage;

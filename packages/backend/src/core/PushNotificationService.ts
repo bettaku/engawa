@@ -90,6 +90,9 @@ export class PushNotificationService implements OnApplicationShutdown {
 
 		const subscriptions = await this.subscriptionsCache.fetch(userId);
 
+		// 送信が終わるまで待てるように集める（ジョブから呼ぶとき、送信の前にジョブが終わらないように）。送信の失敗は個別に処理するので、拒否されない
+		const sends: Promise<void>[] = [];
+
 		for (const subscription of subscriptions) {
 			if ([
 				'readAllNotifications',
@@ -106,7 +109,7 @@ export class PushNotificationService implements OnApplicationShutdown {
 				},
 			};
 
-			push.sendNotification(pushSubscription, JSON.stringify({
+			sends.push(push.sendNotification(pushSubscription, JSON.stringify({
 				type,
 				body: (type === 'notification' || type === 'unreadAntennaNote') ? truncateBody(type, body) : body,
 				userId,
@@ -131,8 +134,10 @@ export class PushNotificationService implements OnApplicationShutdown {
 						this.refreshCache(userId);
 					});
 				}
-			});
+			}).then(() => {}));
 		}
+
+		await Promise.all(sends);
 	}
 
 	@bindThis

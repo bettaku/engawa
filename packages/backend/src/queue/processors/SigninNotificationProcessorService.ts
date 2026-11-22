@@ -4,8 +4,10 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { DI } from '@/di-symbols.js';
-import type { SigninsRepository, UserProfilesRepository } from '@/models/_.js';
+import type { UserProfilesRepository } from '@/models/_.js';
+import { MiSignin } from '@/models/Signin.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { SigninEntityService } from '@/core/entities/SigninEntityService.js';
 import { EmailService } from '@/core/EmailService.js';
@@ -21,8 +23,8 @@ import type * as Bull from 'bullmq';
 @Injectable()
 export class SigninNotificationProcessorService {
 	constructor(
-		@Inject(DI.signinsRepository)
-		private signinsRepository: SigninsRepository,
+		@Inject(DI.db)
+		private db: DataSource,
 
 		@Inject(DI.userProfilesRepository)
 		private userProfilesRepository: UserProfilesRepository,
@@ -36,7 +38,14 @@ export class SigninNotificationProcessorService {
 
 	@bindThis
 	public async process(job: Bull.Job<DbSigninNotificationJobData>): Promise<string> {
-		const record = await this.signinsRepository.findOneBy({ id: job.data.signinId });
+		// 記録は応答の直前に書いたばかりなので、読み取りレプリカ（`dbReplications`）ではなく書き込み先から読む
+		const queryRunner = this.db.createQueryRunner('master');
+		let record: MiSignin | null;
+		try {
+			record = await queryRunner.manager.findOneBy(MiSignin, { id: job.data.signinId });
+		} finally {
+			await queryRunner.release();
+		}
 		if (record == null) return 'skip: signin record not found';
 
 		this.notificationService.createNotification(record.userId, 'login', {
