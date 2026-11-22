@@ -320,7 +320,7 @@ export class ApPersonService implements OnModuleInit {
 	@bindThis
 	private async fetchCollectionTotalItems(url: string): Promise<number | undefined> {
 		try {
-			if (!checkHttps(url)) return undefined;
+			if (!checkHttps(url, this.config.runtime.production.requireHttps)) return undefined;
 
 			const data = await this.httpRequestService.getJson<{ totalItems?: unknown }>(url, 'application/activity+json, application/json');
 			const totalItems = data?.totalItems;
@@ -382,7 +382,7 @@ export class ApPersonService implements OnModuleInit {
 			throw new Error('Refusing to create person without id');
 		}
 
-		if (url && !checkHttps(url)) {
+		if (url && !checkHttps(url, this.config.runtime.production.requireHttps)) {
 			throw new Error('unexpected schema of person url: ' + url);
 		}
 
@@ -630,7 +630,7 @@ export class ApPersonService implements OnModuleInit {
 		}
 
 		if (url != null) {
-			if (!checkHttps(url)) {
+			if (!checkHttps(url, this.config.runtime.production.requireHttps)) {
 				throw new Error('unexpected schema of person url: ' + url);
 			}
 

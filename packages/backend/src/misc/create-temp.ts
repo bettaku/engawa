@@ -4,6 +4,7 @@
  */
 
 import * as tmp from 'tmp';
+import { loadEnvironment } from '@/config/environment.js';
 
 export function createTemp(): Promise<[string, () => void]> {
 	return new Promise<[string, () => void]>((res, rej) => {
@@ -22,7 +23,7 @@ export function createTempDir(): Promise<[string, () => void]> {
 			},
 			(e, path, cleanup) => {
 				if (e) return rej(e);
-				res([path, process.env.NODE_ENV === 'production' ? cleanup : () => {}]);
+				res([path, loadEnvironment().runtime.production.removeTempFiles ? cleanup : () => {}]);
 			},
 		);
 	});

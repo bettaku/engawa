@@ -1,7 +1,7 @@
 ---
 title: バックエンドの環境変数
 description: バックエンドが参照する環境変数の用途、既定値、設定ファイルとの優先順位
-lastUpdated: 2026-09-20
+lastUpdated: 2026-11-22
 sidebar:
   order: 6
 ---
@@ -47,6 +47,8 @@ systemdやコンテナから起動する場合も同じで、そのプロセス�
 バックエンドのビルド後に、リポジトリのルートで `pnpm check:config [path]` を実行できます。DB や Redis への接続は不要です。パスを省略すると起動時と同じファイルを読み込み、YAML の内容と環境変数で補完した後の値を検証します。`--json` で診断を JSON として取得できます。終了コードは正常時 0、エラー時 1、警告のみの場合は 2 です。`--strict` を指定すると警告のみでも 1 になります。
 
 起動時は `CHERRYPICK_CONFIG_VALIDATION` で動作を選べます。既定の `warn` は問題を警告し、従来の設定値で起動を試みます。`error` は型や必須項目の違反で起動を中止します。未知キーと非推奨キーは警告になります。`off` は検証を省略します。
+
+このページの環境変数も、同じ仕組みで検証します。値の形式が決まっている変数（`NODE_ENV`、`VITE_PORT`、`1` だけで有効になる変数など）に不正な値を渡すとエラー、`CP_*` フラグに `0` や `false` を渡すと警告（無効にはならないため）、`CP_` や `CHERRYPICK_` で始まる未知の変数は警告になります。変数の一覧と形式は、設定のJSONスキーマ（`packages/backend/config.schema.json`）の `$defs.environment` にあります。
 
 Docker の `healthcheck.sh` は固定の `.config/default.yml` にある行頭の `port:` を読みます。設定パスやポートを環境変数で上書きした場合、または YAML のフロー記法を使う場合はコンテナのヘルスチェックを合わせて変更してください。
 
@@ -147,6 +149,8 @@ NODE_ENV=production CHERRYPICK_MIGRATION_CREATE_INDEX_CONCURRENTLY=1 pnpm migrat
 
 これらはあくまで接続先の指定です。バックエンドがViteサーバーを起動するわけではありません。
 
+`API_RES_VALIDATION_REPORT` にファイルのパスを指定すると、`NODE_ENV` が `test` か `development` のときに、APIの応答がスキーマに違反した内容をそのファイルに追記します。
+
 ## テスト・ローカル検証用
 
 通常の本番運用では設定しません。`CP_*` フラグと違い、有効になる文字列が変数ごとに決まっています。
@@ -163,4 +167,6 @@ NODE_ENV=production CHERRYPICK_MIGRATION_CREATE_INDEX_CONCURRENTLY=1 pnpm migrat
 - `CHERRYPICK_WEBFINGER_USE_HTTP`: URL形式の問い合わせは元のプロトコルを使います。`NODE_ENV` による限定はありません。
 - `FORCE_FOLLOW_REMOTE_USER_FOR_TESTING`: 鍵アカウントなど、他の保留条件は残ります。`NODE_ENV` による限定はありません。
 - `MISSKEY_TEST_CHECK_DUPLICATED_TOTP` と `CHERRYPICK_TEST_CHECK_IP_RANGE`: どちらも `NODE_ENV=test` のときだけ意味があります。テスト以外では、変数にかかわらず検証・チェックが行われます。後者は、HTTPリクエスト処理全体を本番相当にするフラグではありません。
+
+これらの変数は起動時に一度だけ読みます。起動後に値を変えても反映されません。バックエンドのe2eテストでは、テストサーバーの `/runtime` で同じ設定（`config.runtime.test`）を切り替えます。
 

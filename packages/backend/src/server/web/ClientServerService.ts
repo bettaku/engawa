@@ -236,14 +236,14 @@ export class ClientServerService {
 		} else {
 			const urlOriginWithoutPort = configUrl.origin.replace(/:\d+$/, '');
 
-			const port = (process.env.VITE_PORT ?? '5173');
+			const port = this.config.runtime.development.vitePort;
 			fastify.register(fastifyProxy, {
 				upstream: urlOriginWithoutPort + ':' + port,
 				prefix: '/vite',
 				rewritePrefix: '/vite',
 			});
 
-			const embedPort = (process.env.EMBED_VITE_PORT ?? '5174');
+			const embedPort = (this.config.runtime.development.embedVitePort);
 			fastify.register(fastifyProxy, {
 				upstream: urlOriginWithoutPort + ':' + embedPort,
 				prefix: '/embed_vite',

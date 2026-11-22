@@ -11,6 +11,7 @@ import { format as dateFormat } from 'date-fns';
 import stripAnsi from 'strip-ansi';
 import { bindThis } from '@/decorators.js';
 import { envOption } from './env.js';
+import { loadEnvironment } from './config/environment.js';
 import type { Log } from '@google-cloud/logging';
 import type { KEYWORD } from 'color-convert/conversions.js';
 
@@ -133,7 +134,7 @@ export default class Logger {
 
 	@bindThis
 	public debug(message: string, data?: Record<string, any> | null, important = false): void { // デバッグ用に使う(開発者に必要だが利用者に不要な情報)
-		if (process.env.NODE_ENV !== 'production' || envOption.verbose) {
+		if (loadEnvironment().runtime.nodeEnv !== 'production' || envOption.verbose) {
 			this.log('debug', message, data, important);
 		}
 	}

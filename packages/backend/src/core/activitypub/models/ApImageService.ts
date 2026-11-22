@@ -5,6 +5,7 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { DI } from '@/di-symbols.js';
+import type { Config } from '@/config.js';
 import type { DriveFilesRepository, MiMeta } from '@/models/_.js';
 import type { MiRemoteUser } from '@/models/User.js';
 import type { MiDriveFile } from '@/models/DriveFile.js';
@@ -23,6 +24,9 @@ export class ApImageService {
 	private logger: Logger;
 
 	constructor(
+		@Inject(DI.config)
+		private config: Config,
+
 		@Inject(DI.meta)
 		private meta: MiMeta,
 
@@ -58,7 +62,7 @@ export class ApImageService {
 			return null;
 		}
 
-		if (!checkHttps(image.url)) {
+		if (!checkHttps(image.url, this.config.runtime.production.requireHttps)) {
 			return null;
 		}
 

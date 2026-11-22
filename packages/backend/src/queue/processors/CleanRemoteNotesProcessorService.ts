@@ -10,6 +10,7 @@ import { DI } from '@/di-symbols.js';
 import type { MiMeta, MiNote, NotesRepository } from '@/models/_.js';
 import type Logger from '@/logger.js';
 import { bindThis } from '@/decorators.js';
+import type { Config } from '@/config.js';
 import { IdService } from '@/core/IdService.js';
 import { NO_NOTE_DELETE_EFFECTS, NoteDeleteService } from '@/core/NoteDeleteService.js';
 import { QueueLoggerService } from '../QueueLoggerService.js';
@@ -20,6 +21,9 @@ export class CleanRemoteNotesProcessorService {
 	private logger: Logger;
 
 	constructor(
+		@Inject(DI.config)
+		private config: Config,
+
 		@Inject(DI.meta)
 		private meta: MiMeta,
 
@@ -272,7 +276,7 @@ export class CleanRemoteNotesProcessorService {
 
 			job.log(`Deleted ${noteIds.length} notes; ${Date.now() - batchBeginAt}ms`);
 
-			if (process.env.NODE_ENV !== 'test') {
+			if (!this.config.runtime.test.disableCleanRemoteNotesWait) {
 				await setTimeout(Math.min(1000 * 5, queryDuration)); // Wait a moment to avoid overwhelming the db
 			}
 		};

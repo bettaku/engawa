@@ -44,9 +44,7 @@ export class ApiCallService implements OnApplicationShutdown {
 	private userIpHistoriesClearIntervalId: NodeJS.Timeout;
 
 	// 応答の検証はtest・development環境だけで行う。本番では応答ごとの検証コストをかけない
-	private responseValidator: ResponseValidator | null = process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development'
-		? new ResponseValidator()
-		: null;
+	private responseValidator: ResponseValidator | null;
 
 	constructor(
 		@Inject(DI.meta)
@@ -65,6 +63,8 @@ export class ApiCallService implements OnApplicationShutdown {
 	) {
 		this.logger = this.apiLoggerService.logger;
 		this.userIpHistories = new Map<MiUser['id'], Set<string>>();
+		// 応答の検証はtest・development環境だけで行う。本番では応答ごとの検証コストをかけない
+		this.responseValidator = this.config.runtime.development.validateApiResponses ? new ResponseValidator() : null;
 
 		this.userIpHistoriesClearIntervalId = setInterval(() => {
 			this.userIpHistories.clear();
@@ -497,7 +497,7 @@ export class ApiCallService implements OnApplicationShutdown {
 				this.logger.warn(`Response of ${ep.name} violates its contract (${toLog.kind}): ${toLog.errors.map(e => `${e.instancePath || '/'} ${e.message}`).join('; ')}`);
 			}
 
-			const reportPath = process.env.API_RES_VALIDATION_REPORT;
+			const reportPath = this.config.runtime.development.apiResponseValidationReport;
 			if (!reportPath) return;
 
 			const toReport = this.responseValidator.dedupe(found, 'report');

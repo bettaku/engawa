@@ -10,6 +10,7 @@ import { DI } from '@/di-symbols.js';
 import { MiMeta } from '@/models/Meta.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { bindThis } from '@/decorators.js';
+import type { Config } from '@/config.js';
 import { isInternalEventRef, type GlobalEvents } from '@/core/GlobalEventService.js';
 import { FeaturedService } from '@/core/FeaturedService.js';
 import type { OnApplicationShutdown } from '@nestjs/common';
@@ -24,6 +25,9 @@ export class MetaService implements OnApplicationShutdown {
 	private intervalId: NodeJS.Timeout;
 
 	constructor(
+		@Inject(DI.config)
+		private config: Config,
+
 		@Inject(DI.redisForSub)
 		private redisForSub: Redis.Redis,
 
@@ -35,7 +39,7 @@ export class MetaService implements OnApplicationShutdown {
 	) {
 		//this.onMessage = this.onMessage.bind(this);
 
-		if (process.env.NODE_ENV !== 'test') {
+		if (!this.config.runtime.test.disablePeriodicTasks) {
 			this.intervalId = setInterval(() => {
 				// キャッシュはfetchの中で更新する（読み込み中にイベントで更新されていれば更新しない）
 				this.fetch(true).catch(err => {
