@@ -2880,6 +2880,173 @@
         ]
       }
     },
+    "environment": {
+      "type": "object",
+      "properties": {
+        "NODE_ENV": {
+          "type": "string",
+          "x-scope": "operation",
+          "description": "Runtime mode. Any value other than production (including unset) disables the production-only protections listed in config.runtime.production.",
+          "enum": [
+            "production",
+            "development",
+            "test"
+          ]
+        },
+        "CHERRYPICK_CONFIG_YML": {
+          "type": "string",
+          "x-scope": "operation",
+          "description": "Configuration file, relative to .config/ (default default.yml, or test.yml when NODE_ENV=test)."
+        },
+        "CHERRYPICK_CONFIG_VALIDATION": {
+          "type": "string",
+          "x-scope": "operation",
+          "description": "What to do with invalid configuration and environment variables (default warn).",
+          "enum": [
+            "warn",
+            "error",
+            "off"
+          ]
+        },
+        "CHERRYPICK_URL": {
+          "type": "string",
+          "x-scope": "operation",
+          "description": "Used as url when the configuration file does not set it."
+        },
+        "PORT": {
+          "type": "string",
+          "x-scope": "operation",
+          "description": "Used as port when the configuration file does not set it."
+        },
+        "DATABASE_DB": {
+          "type": "string",
+          "x-scope": "operation",
+          "description": "Used as db.db when the configuration file does not set it."
+        },
+        "DATABASE_USER": {
+          "type": "string",
+          "x-scope": "operation",
+          "description": "Used as db.user when the configuration file does not set it."
+        },
+        "DATABASE_PASSWORD": {
+          "type": "string",
+          "x-scope": "operation",
+          "description": "Used as db.pass when the configuration file does not set it.",
+          "x-secret": true
+        },
+        "CHERRYPICK_MIGRATION_CREATE_INDEX_CONCURRENTLY": {
+          "type": "string",
+          "x-scope": "operation",
+          "description": "Recreate indexes of large tables with CREATE INDEX CONCURRENTLY during migrations. Only 1 enables it.",
+          "enum": [
+            "0",
+            "1"
+          ]
+        },
+        "CP_ONLY_QUEUE": {
+          "type": "string",
+          "x-scope": "operation",
+          "description": "Run only the job queue, without the web server. Any non-empty value enables it, including 0 and false.",
+          "x-flag": true
+        },
+        "CP_ONLY_SERVER": {
+          "type": "string",
+          "x-scope": "operation",
+          "description": "Run only the web server, without the job queue. Any non-empty value enables it, including 0 and false.",
+          "x-flag": true
+        },
+        "CP_DISABLE_CLUSTERING": {
+          "type": "string",
+          "x-scope": "operation",
+          "description": "Do not fork worker processes. Always enabled when NODE_ENV=test. Any non-empty value enables it, including 0 and false.",
+          "x-flag": true
+        },
+        "CP_NO_DAEMONS": {
+          "type": "string",
+          "x-scope": "operation",
+          "description": "Kept for compatibility. Has no effect. Any non-empty value enables it, including 0 and false.",
+          "x-flag": true
+        },
+        "CP_NO_JOB_SCHEDULERS": {
+          "type": "string",
+          "x-scope": "operation",
+          "description": "Do not register the repeatable jobs when the queue process starts. Any non-empty value enables it, including 0 and false.",
+          "x-flag": true
+        },
+        "CP_VERBOSE": {
+          "type": "string",
+          "x-scope": "operation",
+          "description": "Output debug logs even when NODE_ENV=production. Any non-empty value enables it, including 0 and false.",
+          "x-flag": true
+        },
+        "CP_WITH_LOG_TIME": {
+          "type": "string",
+          "x-scope": "operation",
+          "description": "Add timestamps to log lines. Any non-empty value enables it, including 0 and false.",
+          "x-flag": true
+        },
+        "CP_QUIET": {
+          "type": "string",
+          "x-scope": "operation",
+          "description": "Suppress log output and the startup logo. Always enabled when NODE_ENV=test. Any non-empty value enables it, including 0 and false.",
+          "x-flag": true
+        },
+        "VITE_PORT": {
+          "type": "string",
+          "x-scope": "development",
+          "description": "Port of the Vite development server proxied at /vite (default 5173). Used only when the frontend is not built.",
+          "pattern": "^[0-9]{1,5}$"
+        },
+        "EMBED_VITE_PORT": {
+          "type": "string",
+          "x-scope": "development",
+          "description": "Port of the embed Vite development server proxied at /embed_vite (default 5174). Used only when the frontend is not built.",
+          "pattern": "^[0-9]{1,5}$"
+        },
+        "API_RES_VALIDATION_REPORT": {
+          "type": "string",
+          "x-scope": "development",
+          "description": "File to append API response contract violations to. Used only when NODE_ENV is test or development."
+        },
+        "CHERRYPICK_WEBFINGER_USE_HTTP": {
+          "type": "string",
+          "x-scope": "test",
+          "description": "Query WebFinger over HTTP instead of HTTPS for user@host lookups (case-insensitive true). Not limited by NODE_ENV.",
+          "pattern": "^([Tt][Rr][Uu][Ee]|[Ff][Aa][Ll][Ss][Ee])$"
+        },
+        "FORCE_FOLLOW_REMOTE_USER_FOR_TESTING": {
+          "type": "string",
+          "x-scope": "test",
+          "description": "Follow remote users without a follow request (lowercase true only). Not limited by NODE_ENV.",
+          "enum": [
+            "true",
+            "false"
+          ]
+        },
+        "MISSKEY_TEST_CHECK_DUPLICATED_TOTP": {
+          "type": "string",
+          "x-scope": "test",
+          "description": "Verify TOTP codes and their reuse even when NODE_ENV=test. Only 1 enables it.",
+          "enum": [
+            "0",
+            "1"
+          ]
+        },
+        "CHERRYPICK_TEST_CHECK_IP_RANGE": {
+          "type": "string",
+          "x-scope": "test",
+          "description": "Check the IP range of OAuth client metadata hosts even when NODE_ENV=test. Only 1 enables it.",
+          "enum": [
+            "0",
+            "1"
+          ]
+        }
+      },
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Environment variables read by the backend. Unknown CP_* and CHERRYPICK_* variables are reported as warnings."
+    },
     "secret": {
       "type": "string",
       "x-secret": true

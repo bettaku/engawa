@@ -10,7 +10,7 @@ import * as assert from 'assert';
 import { setTimeout } from 'node:timers/promises';
 import { Redis } from 'ioredis';
 import { SignupResponse, Note, UserList } from 'cherrypick-js/entities.js';
-import { api, post, randomString, sendEnvUpdateRequest, signup, uploadUrl } from '../utils.js';
+import { api, post, randomString, setRuntimeTestOption, signup, uploadUrl } from '../utils.js';
 import { loadConfig } from '@/config.js';
 
 function genHost() {
@@ -449,7 +449,7 @@ describe('Timelines', () => {
 			test('フォローしているリモートユーザーのノートが含まれる', async () => {
 				const [alice, bob] = await Promise.all([signup(), signup({ host: genHost() })]);
 
-				await sendEnvUpdateRequest({ key: 'FORCE_FOLLOW_REMOTE_USER_FOR_TESTING', value: 'true' });
+				await setRuntimeTestOption('followRemoteImmediately', true);
 				await api('following/create', { userId: bob.id }, alice);
 
 				const bobNote = await post(bob, { text: 'hi' });
@@ -464,7 +464,7 @@ describe('Timelines', () => {
 			test('フォローしているリモートユーザーの visibility: home なノートが含まれる', async () => {
 				const [alice, bob] = await Promise.all([signup(), signup({ host: genHost() })]);
 
-				await sendEnvUpdateRequest({ key: 'FORCE_FOLLOW_REMOTE_USER_FOR_TESTING', value: 'true' });
+				await setRuntimeTestOption('followRemoteImmediately', true);
 				await api('following/create', { userId: bob.id }, alice);
 
 				const bobNote = await post(bob, { text: 'hi', visibility: 'home' });
@@ -728,7 +728,7 @@ describe('Timelines', () => {
 				beforeAll(async () => {
 					[alice, bob, carol] = await Promise.all([signup(), signup({ host: genHost() }), signup({ host: genHost() })]);
 
-					await sendEnvUpdateRequest({ key: 'FORCE_FOLLOW_REMOTE_USER_FOR_TESTING', value: 'true' });
+					await setRuntimeTestOption('followRemoteImmediately', true);
 					await api('following/create', { userId: bob.id }, alice);
 					await api('following/create', { userId: carol.id }, alice);
 					aliceNote = await post(alice, { text: 'hi' });
@@ -1169,7 +1169,7 @@ describe('Timelines', () => {
 			test('フォローしているリモートユーザーのノートが含まれる', async () => {
 				const [alice, bob] = await Promise.all([signup(), signup({ host: genHost() })]);
 
-				await sendEnvUpdateRequest({ key: 'FORCE_FOLLOW_REMOTE_USER_FOR_TESTING', value: 'true' });
+				await setRuntimeTestOption('followRemoteImmediately', true);
 				await api('following/create', { userId: bob.id }, alice);
 
 				const bobNote = await post(bob, { text: 'hi' });
@@ -1184,7 +1184,7 @@ describe('Timelines', () => {
 			test('フォローしているリモートユーザーの visibility: home なノートが含まれる', async () => {
 				const [alice, bob] = await Promise.all([signup(), signup({ host: genHost() })]);
 
-				await sendEnvUpdateRequest({ key: 'FORCE_FOLLOW_REMOTE_USER_FOR_TESTING', value: 'true' });
+				await setRuntimeTestOption('followRemoteImmediately', true);
 				await api('following/create', { userId: bob.id }, alice);
 
 				const bobNote = await post(bob, { text: 'hi', visibility: 'home' });
@@ -1300,7 +1300,7 @@ describe('Timelines', () => {
 				beforeAll(async () => {
 					[alice, carol, elle] = await Promise.all([signup(), signup({ host: genHost() }), signup({ host: genHost() })]);
 
-					await sendEnvUpdateRequest({ key: 'FORCE_FOLLOW_REMOTE_USER_FOR_TESTING', value: 'true' });
+					await setRuntimeTestOption('followRemoteImmediately', true);
 					await api('following/create', { userId: elle.id }, alice);
 					aliceNote = await post(alice, { text: 'hi' });
 					carolNote = await post(carol, { text: 'kon\'nichiwa' });

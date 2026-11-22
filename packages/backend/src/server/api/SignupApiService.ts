@@ -78,7 +78,7 @@ export class SignupApiService {
 
 		// Verify *Captcha
 		// ただしテスト時はこの機構は障害となるため無効にする
-		if (process.env.NODE_ENV !== 'test') {
+		if (!this.config.runtime.test.skipCaptcha) {
 			if (this.meta.enableHcaptcha && this.meta.hcaptchaSecretKey) {
 				await this.captchaService.verifyHcaptcha(this.meta.hcaptchaSecretKey, body['hcaptcha-response']).catch(err => {
 					throw new FastifyReplyError(400, err);
@@ -112,7 +112,7 @@ export class SignupApiService {
 
 		const username = body['username'];
 		const password = body['password'];
-		const host: string | null = process.env.NODE_ENV === 'test' ? (body['host'] ?? null) : null;
+		const host: string | null = this.config.runtime.test.allowSignupHost ? (body['host'] ?? null) : null;
 		const invitationCode = body['invitationCode'];
 		const emailAddress = body['emailAddress'];
 
@@ -132,7 +132,7 @@ export class SignupApiService {
 		let ticket: MiRegistrationTicket | null = null;
 
 		// テスト時はこの機構は障害となるため無効にする
-		if (process.env.NODE_ENV !== 'test' && this.meta.disableRegistration) {
+		if (!this.config.runtime.test.skipRegistrationRestriction && this.meta.disableRegistration) {
 			if (invitationCode == null || typeof invitationCode !== 'string') {
 				reply.code(400);
 				return;

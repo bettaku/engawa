@@ -1,7 +1,7 @@
 ---
 title: Backend environment variables
 description: What the backend reads from the environment, the defaults, and how it relates to the config file
-lastUpdated: 2026-09-20
+lastUpdated: 2026-11-22
 sidebar:
   order: 6
 ---
@@ -47,6 +47,8 @@ This variable is also used by the migrations and by the asset build. Pass it to 
 After building the backend, run `pnpm check:config [path]` from the repository root. The check validates the YAML and the values supplied through the environment without connecting to PostgreSQL or Redis. Omit the path to check the same file the server loads. Use `--json` for machine-readable diagnostics. Exit codes are 0 for a valid configuration, 1 for errors and 2 for warnings only. With `--strict`, warnings also return 1.
 
 At startup, `CHERRYPICK_CONFIG_VALIDATION` defaults to `warn`, which reports problems and continues with the existing conversion rules. Use `error` to stop on invalid types, missing settings and out-of-range values. Unknown and deprecated keys still produce warnings. Use `off` to skip startup validation.
+
+The variables on this page are validated the same way. An invalid value for a variable with a fixed format (`NODE_ENV`, `VITE_PORT`, the variables enabled only by `1`, and so on) is an error. Passing `0` or `false` to a `CP_*` flag is a warning, because it still enables the flag. Unknown variables starting with `CP_` or `CHERRYPICK_` are warnings. The list of variables and their formats is in `$defs.environment` of the configuration JSON schema (`packages/backend/config.schema.json`).
 
 The Docker health check reads a line beginning with `port:` from `.config/default.yml`. If you override the path or port using the environment or use flow-style YAML, adjust the container health check accordingly.
 
@@ -147,6 +149,8 @@ Whether the backend proxies at all is not decided by `NODE_ENV`. It depends on w
 
 These variables only say where to connect. The backend does not start a Vite server itself.
 
+Set `API_RES_VALIDATION_REPORT` to a file path to append API responses that violate their schema to that file. It is used only when `NODE_ENV` is `test` or `development`.
+
 ## Testing and local verification
 
 You would not set these in normal production use. Unlike the `CP_*` flags, each one has its own enabling value.
@@ -163,4 +167,6 @@ A few details:
 - `CHERRYPICK_WEBFINGER_USE_HTTP`: URL-form lookups keep their original protocol. This is not limited to any `NODE_ENV`.
 - `FORCE_FOLLOW_REMOTE_USER_FOR_TESTING`: Other reasons to hold a request, such as a locked account, still apply. This is not limited to any `NODE_ENV`.
 - `MISSKEY_TEST_CHECK_DUPLICATED_TOTP` and `CHERRYPICK_TEST_CHECK_IP_RANGE`: Both only matter under `NODE_ENV=test`. Outside tests, the verification and the check always run regardless of these variables. The latter does not make HTTP request handling production-like in general.
+
+These variables are read once at startup. Changing them afterwards has no effect. The backend e2e tests switch the same settings (`config.runtime.test`) through the test server's `/runtime` endpoint.
 

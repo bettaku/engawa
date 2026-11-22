@@ -9,6 +9,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { ApiCallService } from '@/server/api/ApiCallService.js';
 import { AuthenticationError } from '@/server/api/AuthenticateService.js';
 import { ApiError } from '@/server/api/error.js';
+import { loadEnvironment } from '@/config/environment.js';
 
 const temporary = vi.hoisted(() => ({ paths: [] as string[] }));
 vi.mock('@/misc/create-temp.js', async (importOriginal) => {
@@ -32,7 +33,7 @@ afterEach(() => {
 function fixture() {
 	const authenticate = vi.fn().mockResolvedValue([{ id: 'user' }, null, null]);
 	const service = new ApiCallService(
-		{ enableIpLogging: false } as never, {} as never, {} as never,
+		{ enableIpLogging: false } as never, { runtime: loadEnvironment().runtime } as never, {} as never,
 		{ authenticate } as never, {} as never, {} as never,
 		{ logger: { error: vi.fn() } } as never,
 	);
