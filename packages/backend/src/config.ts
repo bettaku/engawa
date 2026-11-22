@@ -101,9 +101,9 @@ let cached: Config | undefined;
 export function loadConfig(): Config {
 	if (cached) return cached;
 	const environment = loadEnvironment();
-	const { source, diagnostics: configDiagnostics } = parseConfigSource(path);
-	// parseConfigSourceが値を検査するので、ここでは'error'かどうかだけを見る
+	// 空文字列は未設定（warn）として扱う。それ以外の不正な値は、parseConfigSourceが拒否する
 	const mode = environment.values.CHERRYPICK_CONFIG_VALIDATION ?? 'warn';
+	const { source, diagnostics: configDiagnostics } = parseConfigSource(path, process.env, mode);
 	const diagnostics = mode === 'off' ? configDiagnostics : [...configDiagnostics, ...environment.diagnostics];
 	if (mode === 'error' && diagnostics.some(d => d.level === 'error')) {
 		throw new ConfigValidationError(diagnostics);

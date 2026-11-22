@@ -53,6 +53,13 @@ describe('environment variables', () => {
 		expect(JSON.stringify(diagnostics)).not.toContain('secret');
 	});
 
+	it('accepts only ports between 1 and 65535', () => {
+		for (const port of ['1', '5173', '65535']) expect(parseEnvironment({ EMBED_VITE_PORT: port }).diagnostics).toEqual([]);
+		for (const port of ['0', '65536', '99999', '05173']) {
+			expect(parseEnvironment({ EMBED_VITE_PORT: port }).diagnostics).toEqual([expect.objectContaining({ level: 'error', path: '$EMBED_VITE_PORT' })]);
+		}
+	});
+
 	it('enables the production protections only in production', () => {
 		const production = parseEnvironment({ NODE_ENV: 'production' }).runtime;
 		expect(production.production).toEqual({ rateLimit: true, blockPrivateAddresses: true, requireHttps: true, removeTempFiles: true });

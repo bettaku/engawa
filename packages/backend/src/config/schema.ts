@@ -469,7 +469,7 @@ const envFlag = (description: string) => ({
 const envBinary = (scope: EnvScope, description: string) =>
 	({ ...env(scope, `${description} Only 1 enables it.`), enum: ['0', '1'] }) as const;
 const envPort = (description: string) =>
-	({ ...env('development', description), pattern: '^[0-9]{1,5}$' }) as const;
+	({ ...env('development', description), pattern: '^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$' }) as const;
 const environment = {
 	type: 'object',
 	properties: {
