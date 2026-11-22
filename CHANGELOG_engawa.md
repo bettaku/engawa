@@ -110,6 +110,13 @@
 	- `i` に文字列以外を渡すと応答が返らなかった問題を修正（400 `INVALID_PARAM`）
 	- サインイン（`signin-flow`・`signin-with-passkey`）のエラーは、これまでの `id` に加えて `message`・`code`・`kind` も返すようになりました
 	- `users/translate` の `NO_SUCH_DESCRIPTION` のidが `notes/translate` の `NO_SUCH_NOTE` と重複していたので、新しいidにしました。`notes/drafts/update` のエラーコード `CANNOT_REPLY_TO_SPECIFIED_NOTE_WITH_EXTENDED_VISIBILITY` を、同じidを使う `notes/create` と同じ `CANNOT_REPLY_TO_SPECIFIED_VISIBILITY_NOTE_WITH_EXTENDED_VISIBILITY` にしました
+- Enhance: APIの仕様（OpenAPI、`/api.json`）を、実際の応答と一致させました
+	- エラー応答を、実際に返すHTTPステータスごとに記載するようになりました（これまでは、権限のエラーなども400の例に含めていました）。認証の失敗（`AUTHENTICATION_FAILED`）は401、権限・ロールのエラーは403、413・415も記載します
+	- 実際には返さない418（`I_AM_AI`）を削除しました
+	- GETで呼べるエンドポイントは、引数をクエリ文字列（`parameters`）として記載するようになりました
+	- エラーオブジェクトのスキーマに `kind` と `info` を加えました
+	- リポジトリに `packages/backend/api.json` をコミットし、エンドポイントの定義と一致しているかをCIで確認するようにしました（更新は `pnpm --filter backend update-api-json`）
+- Fix: Playのトークンで権限のないエンドポイントを呼んだとき、`PERMISSION_DENIED` が400で返っていたのを、アプリのトークンと同じ403にしました
 - Fix: ノートを作成した直後に削除すると、Renote先のRenote数・返信先の返信数・投稿者のノート数が1多いまま残ることがある問題を修正
 	- これらのカウンタは、ノートの作成・削除と同じトランザクションで更新するようになりました
 - Fix: Renoteした後で「Botとして設定」を切り替えてから削除すると、Renote先のRenote数がずれる問題を修正

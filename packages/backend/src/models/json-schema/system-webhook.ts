@@ -35,6 +35,7 @@ export const packedSystemWebhookSchema = {
 			optional: false, nullable: false,
 		},
 		on: {
+			optional: false,
 			type: 'array',
 			items: {
 				type: 'string',

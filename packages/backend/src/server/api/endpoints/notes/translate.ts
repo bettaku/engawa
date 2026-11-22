@@ -28,8 +28,8 @@ export const meta = {
 		type: 'object',
 		optional: true, nullable: false,
 		properties: {
-			sourceLang: { type: 'string' },
-			text: { type: 'string' },
+			sourceLang: { optional: false, type: 'string' },
+			text: { optional: false, type: 'string' },
 		},
 	},
 

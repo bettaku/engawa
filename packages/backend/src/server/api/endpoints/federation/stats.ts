@@ -35,7 +35,7 @@ export const meta = {
 					ref: 'FederationInstance',
 				},
 			},
-			otherFollowersCount: { type: 'number' },
+			otherFollowersCount: { optional: false, type: 'number' },
 			topPubInstances: {
 				type: 'array',
 				optional: false,
@@ -47,7 +47,7 @@ export const meta = {
 					ref: 'FederationInstance',
 				},
 			},
-			otherFollowingCount: { type: 'number' },
+			otherFollowingCount: { optional: false, type: 'number' },
 		},
 	},
 } as const;
