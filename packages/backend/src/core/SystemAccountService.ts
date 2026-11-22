@@ -116,8 +116,11 @@ export class SystemAccountService implements OnApplicationShutdown {
 		return accounts;
 	}
 
+	/**
+	 * 作成済みのシステムアカウントを返す。`fetch`と違い、なければ作らずにnullを返す（packなど、DBを読むだけの処理から使う。P3-3）
+	 */
 	@bindThis
-	public async fetch(type: typeof SYSTEM_ACCOUNT_TYPES[number]): Promise<MiLocalUser> {
+	public async fetchIfExists(type: typeof SYSTEM_ACCOUNT_TYPES[number]): Promise<MiLocalUser | null> {
 		const cached = this.cache.get(type);
 		if (cached) return cached;
 
@@ -125,18 +128,23 @@ export class SystemAccountService implements OnApplicationShutdown {
 			where: { type: type },
 			relations: ['user'],
 		});
+		if (systemAccount == null) return null;
 
-		if (systemAccount) {
-			this.cache.set(type, systemAccount.user as MiLocalUser);
-			return systemAccount.user as MiLocalUser;
-		} else {
-			const created = await this.createCorrespondingUser(type, {
-				username: `system.${type}`, // NOTE: (できれば避けたいが) . が含まれるかどうかでシステムアカウントかどうかを判定している処理もあるので変えないように
-				name: this.meta.name,
-			});
-			this.cache.set(type, created);
-			return created;
-		}
+		this.cache.set(type, systemAccount.user as MiLocalUser);
+		return systemAccount.user as MiLocalUser;
+	}
+
+	@bindThis
+	public async fetch(type: typeof SYSTEM_ACCOUNT_TYPES[number]): Promise<MiLocalUser> {
+		const existing = await this.fetchIfExists(type);
+		if (existing) return existing;
+
+		const created = await this.createCorrespondingUser(type, {
+			username: `system.${type}`, // NOTE: (できれば避けたいが) . が含まれるかどうかでシステムアカウントかどうかを判定している処理もあるので変えないように
+			name: this.meta.name,
+		});
+		this.cache.set(type, created);
+		return created;
 	}
 
 	@bindThis

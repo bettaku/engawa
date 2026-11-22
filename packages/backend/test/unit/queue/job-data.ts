@@ -132,6 +132,7 @@ describe('QueueServiceが登録するpayload', () => {
 		service.createTruncateAccountJob(user);
 		await service.createAutoDeleteUserNotesJobs([user]);
 		service.createSyncNoteIndexJob('note1');
+		service.createResolveRemoteUserJob('https://remote.example.com/users/a');
 		await service.createFollowJob([{ from: user, to: other }]);
 		await service.createUnfollowJob([{ from: user, to: other }]);
 		await service.createDelayedUnfollowJob([{ from: user, to: other }], 1000);

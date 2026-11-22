@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import { MetricsTime, type JobType } from 'bullmq';
 import { parse as parseRedisInfo } from 'redis-info';
@@ -770,6 +770,25 @@ export class QueueService {
 			attempts: 1,
 			removeOnComplete: true,
 			removeOnFail: { age: 7 * 24 * 60 * 60, count: 1000 },
+		});
+	}
+
+	/**
+	 * 未登録のリモートユーザー（アカウントの移行先）を取得して登録するジョブ（P3-3）。
+	 * 同じURIのジョブは、待っている間は1つだけにする（jobIdに`:`を使えないので、URIのハッシュにする）。
+	 * 失敗したジョブを残すと、同じjobIdの後の要求が重複として捨てられるので、失敗したら削除する（完了も同じ）。
+	 */
+	@bindThis
+	public createResolveRemoteUserJob(uri: string) {
+		return this.dbQueue.add('resolveRemoteUser', { v: JOB_DATA_VERSION, uri }, {
+			jobId: `resolveRemoteUser-${createHash('sha256').update(uri).digest('hex')}`,
+			attempts: 3,
+			backoff: {
+				type: 'exponential',
+				delay: 60 * 1000,
+			},
+			removeOnComplete: true,
+			removeOnFail: true,
 		});
 	}
 

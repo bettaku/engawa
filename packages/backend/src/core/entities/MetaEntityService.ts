@@ -160,14 +160,15 @@ export class MetaEntityService {
 
 		const packed = await this.pack(instance);
 
-		const proxyAccount = await this.systemAccountService.fetch('proxy');
+		// packの中では作成しない（P3-3）。まだ作られていなければnullを返す
+		const proxyAccount = await this.systemAccountService.fetchIfExists('proxy');
 
 		const packDetailed: Packed<'MetaDetailed'> = {
 			...packed,
 			cacheRemoteFiles: instance.cacheRemoteFiles,
 			cacheRemoteSensitiveFiles: instance.cacheRemoteSensitiveFiles,
 			requireSetup: this.meta.rootUserId == null,
-			proxyAccountName: proxyAccount.username,
+			proxyAccountName: proxyAccount?.username ?? null,
 			features: {
 				localTimeline: instance.policies.ltlAvailable,
 				globalTimeline: instance.policies.gtlAvailable,

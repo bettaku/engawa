@@ -56,6 +56,7 @@ import { QueueLoggerService } from './QueueLoggerService.js';
 import { AutoDeleteNotesProcessorService } from './processors/AutoDeleteNotesProcessorService.js';
 import { SyncNoteIndexProcessorService } from './processors/SyncNoteIndexProcessorService.js';
 import { NoteOutboxService } from '@/core/NoteOutboxService.js';
+import { ApPersonService } from '@/core/activitypub/models/ApPersonService.js';
 import { assertSupportedJobDataVersion } from './job-version.js';
 import { QUEUE, baseWorkerOptions } from './const.js';
 
@@ -152,6 +153,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 		private notificationService: NotificationService,
 		private chatService: ChatService,
 		private signinNotificationProcessorService: SigninNotificationProcessorService,
+		private apPersonService: ApPersonService,
 	) {
 		this.logger = this.queueLoggerService.logger;
 
@@ -264,6 +266,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 					case 'unreadNotification': return this.notificationService.processUnreadNotification(job.data.userId, job.data.streamId);
 					case 'unreadChatMessage': return this.chatService.processUnreadMessage(job.data.messageId);
 					case 'signinNotification': return this.signinNotificationProcessorService.process(job);
+					case 'resolveRemoteUser': return this.apPersonService.processResolveRemoteUser(job.data.uri);
 					default: throw new Error(`unrecognized job type ${job.name} for db`);
 				}
 			};
