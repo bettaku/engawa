@@ -103,7 +103,7 @@ export function loadConfig(): Config {
 	const environment = loadEnvironment();
 	// 空文字列は未設定（warn）として扱う。それ以外の不正な値は、parseConfigSourceが拒否する
 	const mode = environment.values.CHERRYPICK_CONFIG_VALIDATION ?? 'warn';
-	const { source, diagnostics: configDiagnostics } = parseConfigSource(path, process.env, mode);
+	const { source, diagnostics: configDiagnostics } = parseConfigSource(path, environment.values, mode);
 	const diagnostics = mode === 'off' ? configDiagnostics : [...configDiagnostics, ...environment.diagnostics];
 	if (mode === 'error' && diagnostics.some(d => d.level === 'error')) {
 		throw new ConfigValidationError(diagnostics);
