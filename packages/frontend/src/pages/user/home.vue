@@ -331,12 +331,15 @@ async function translate(): Promise<void> {
 
 	haptic();
 
-	const res = await misskeyApi('users/translate', {
-		userId: props.user.id,
-		targetLang: miLocalStorage.getItem('lang') ?? navigator.language,
-	});
-	translating.value = false;
-	translation.value = res;
+	try {
+		translation.value = await misskeyApi('users/translate', {
+			userId: props.user.id,
+			targetLang: miLocalStorage.getItem('lang') ?? navigator.language,
+		});
+	} finally {
+		// 翻訳に失敗しても、翻訳中の表示を解除する
+		translating.value = false;
+	}
 
 	hapticConfirm();
 }

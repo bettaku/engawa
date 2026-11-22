@@ -104,6 +104,7 @@
 	- 翻訳（`notes/translate`・`notes/polls/translate`・`users/translate`）で翻訳サービスの設定が足りないとき、HTTP 200で本文が `204` になっていたのを、`UNAVAILABLE` または `NO_TRANSLATE_SERVICE` のエラーにしました
 	- `notes/update` の応答（`updatedNote`）をAPIの定義に加えました。`users/groups/invitations/accept`・`reject` は値を返さなくなりました（204）
 	- `i` に文字列以外を渡すと応答が返らなかった問題を修正（400 `INVALID_PARAM`）
+	- サインイン（`signin-flow`・`signin-with-passkey`）のエラーは、これまでの `id` に加えて `message`・`code`・`kind` も返すようになりました
 	- `users/translate` の `NO_SUCH_DESCRIPTION` のidが `notes/translate` の `NO_SUCH_NOTE` と重複していたので、新しいidにしました。`notes/drafts/update` のエラーコード `CANNOT_REPLY_TO_SPECIFIED_NOTE_WITH_EXTENDED_VISIBILITY` を、同じidを使う `notes/create` と同じ `CANNOT_REPLY_TO_SPECIFIED_VISIBILITY_NOTE_WITH_EXTENDED_VISIBILITY` にしました
 - Fix: ノートを作成した直後に削除すると、Renote先のRenote数・返信先の返信数・投稿者のノート数が1多いまま残ることがある問題を修正
 	- これらのカウンタは、ノートの作成・削除と同じトランザクションで更新するようになりました

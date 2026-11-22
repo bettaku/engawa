@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import { signinErrorBody } from './signin-errors.js';
 import { randomUUID } from 'crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import { IsNull } from 'typeorm';
@@ -69,7 +70,7 @@ export class SigninWithPasskeyApiService {
 
 		function error(status: number, error: { id: string }) {
 			reply.code(status);
-			return { error };
+			return signinErrorBody(error.id);
 		}
 
 		const fail = async (userId: MiUser['id'], status?: number, failure?: { id: string }) => {

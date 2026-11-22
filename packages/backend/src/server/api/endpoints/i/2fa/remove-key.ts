@@ -11,7 +11,7 @@ import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { DI } from '@/di-symbols.js';
 import { ApiError } from '@/server/api/error.js';
-import { UserAuthService } from '@/core/UserAuthService.js';
+import { TwoFactorAuthenticationError, UserAuthService } from '@/core/UserAuthService.js';
 import { CacheService } from '@/core/CacheService.js';
 
 export const meta = {
@@ -75,7 +75,9 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				try {
 					await this.userAuthService.twoFactorAuthenticate(profile, token);
 				} catch (e) {
-					throw new ApiError(meta.errors.twoFactorAuthenticationFailed);
+					// コードの不一致だけを認証の失敗にする。DB・Redisの障害はそのまま500にする
+					if (e instanceof TwoFactorAuthenticationError) throw new ApiError(meta.errors.twoFactorAuthenticationFailed);
+					throw e;
 				}
 			}
 

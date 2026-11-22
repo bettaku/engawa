@@ -352,6 +352,16 @@ describe('API', () => {
 			await expectError(await relativeFetch('api/signin-flow', json(JSON.stringify({}))), 400, 'INVALID_REQUEST');
 		});
 
+		test('サインインのエラーはidを保ったまま共通の形にする', async () => {
+			const res = await relativeFetch('api/signin-flow', json(JSON.stringify({ username: 'no_such_user_for_signin' })));
+			await expectError(res.clone(), 404, 'NO_SUCH_USER');
+			assert.strictEqual(((await res.json()) as { error: { id: string } }).error.id, '6cc579cc-885d-43d8-95c2-b8c7fc963280');
+		});
+
+		test('プラグインが文字列で返すエラー（CORSのpreflight）も共通の形にする', async () => {
+			await expectError(await relativeFetch('api/meta', { method: 'OPTIONS' }), 400, 'INVALID_REQUEST');
+		});
+
 		test('パスワードの誤りは500ではなくINCORRECT_PASSWORD', async () => {
 			const res = await api('i/change-password', { currentPassword: 'wrong', newPassword: 'new' }, alice);
 			assert.strictEqual(res.status, 400);
