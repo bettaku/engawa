@@ -12,7 +12,7 @@ import { DI } from '@/di-symbols.js';
 import type { Config } from '@/config.js';
 import { resetDb } from '@/misc/reset-db.js';
 import { MetaService } from '@/core/MetaService.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
+import { GlobalEventService, toMetaUpdatedEventRef } from '@/core/GlobalEventService.js';
 
 export const meta = {
 	tags: ['non-productive'],
@@ -60,7 +60,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			// DIコンテナで管理しているmetaのインスタンスには上記のリセット処理が届かないため、
 			// 初期値を流して明示的にリフレッシュする
 			const meta = await this.metaService.fetch(true);
-			this.globalEventService.publishInternalEvent('metaUpdated', { after: meta });
+			this.globalEventService.publishInternalEvent('metaUpdated', toMetaUpdatedEventRef(undefined, meta));
 
 			logger.info('---- Database reset complete.');
 

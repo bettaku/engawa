@@ -13,6 +13,21 @@ import { getNoteSummary } from '@/misc/get-note-summary.js';
 import type { MiMeta, MiSwSubscription, SwSubscriptionsRepository } from '@/models/_.js';
 import { bindThis } from '@/decorators.js';
 import { RedisKVCache } from '@/misc/cache.js';
+import { type ColumnKinds, arrayCodec, objectCodec, redisConverters } from '@/misc/cache-codec.js';
+
+/** `userSwSubscriptions`のキャッシュに保存する値（P2-1）。リレーション（`user`）を除くすべての列 */
+type CachedSwSubscription = Omit<MiSwSubscription, 'user'>;
+
+const SW_SUBSCRIPTION_CACHE_COLUMNS: ColumnKinds<CachedSwSubscription> = {
+	id: 'value',
+	userId: 'value',
+	endpoint: 'value',
+	auth: 'value',
+	publickey: 'value',
+	sendReadMessage: 'value',
+};
+
+const swSubscriptionsCodec = arrayCodec(objectCodec<CachedSwSubscription>(SW_SUBSCRIPTION_CACHE_COLUMNS));
 import { isAllowedPushEndpoint } from '@/misc/is-allowed-push-endpoint.js';
 import { HttpRequestService } from '@/core/HttpRequestService.js';
 import { CacheInvalidationService } from '@/core/CacheInvalidationService.js';
@@ -51,7 +66,7 @@ function truncateBody<T extends keyof PushNotificationsTypes>(type: T, body: Pus
 
 @Injectable()
 export class PushNotificationService implements OnApplicationShutdown {
-	private subscriptionsCache: RedisKVCache<MiSwSubscription[]>;
+	private subscriptionsCache: RedisKVCache<CachedSwSubscription[]>;
 
 	constructor(
 		@Inject(DI.config)
@@ -69,12 +84,11 @@ export class PushNotificationService implements OnApplicationShutdown {
 		private httpRequestService: HttpRequestService,
 		private cacheInvalidationService: CacheInvalidationService,
 	) {
-		this.subscriptionsCache = new RedisKVCache<MiSwSubscription[]>(this.redisClient, 'userSwSubscriptions', {
+		this.subscriptionsCache = new RedisKVCache<CachedSwSubscription[]>(this.redisClient, 'userSwSubscriptions', {
 			lifetime: 1000 * 60 * 60 * 1, // 1h
 			memoryCacheLifetime: 1000 * 60 * 3, // 3m
 			fetcher: (key) => this.swSubscriptionsRepository.findBy({ userId: key }),
-			toRedisConverter: (value) => JSON.stringify(value),
-			fromRedisConverter: (value) => JSON.parse(value),
+			...redisConverters(swSubscriptionsCodec),
 			invalidation: this.cacheInvalidationService,
 		});
 	}

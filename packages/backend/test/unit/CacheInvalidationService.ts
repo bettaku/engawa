@@ -13,8 +13,7 @@ import { CacheService } from '@/core/CacheService.js';
 import { IdService } from '@/core/IdService.js';
 import { UserListService } from '@/core/UserListService.js';
 import { UserMutingService } from '@/core/UserMutingService.js';
-import { AchievementService } from '@/core/AchievementService.js';
-import { kvCacheKey } from '@/misc/cache.js';
+import { CURRENT_CACHE_KEY_VERSION, kvCacheKey } from '@/misc/cache.js';
 import { secureRndstr } from '@/misc/secure-rndstr.js';
 
 async function waitFor(condition: () => Promise<boolean> | boolean, timeout = 5000) {
@@ -96,7 +95,7 @@ describe('CacheInvalidationService', () => {
 		await a.get(UserListService).addMember(bob, list, alice);
 		await waitFor(async () => (await membersB.fetch(listId)).has(bob.id));
 		// 以前はメモリ上のSetだけを書き換え、Redisには古い値が残っていた
-		expect(JSON.parse(await a.get<Redis.Redis>(DI.redis).get(kvCacheKey('userListMembers', listId, 1)) ?? '[]')).not.toEqual([]);
+		expect(JSON.parse(await a.get<Redis.Redis>(DI.redis).get(kvCacheKey('userListMembers', listId, CURRENT_CACHE_KEY_VERSION)) ?? '[]')).not.toEqual([]);
 
 		await a.get(UserListService).removeMember(bob, list);
 		await waitFor(async () => !(await membersB.fetch(listId)).has(bob.id));
@@ -104,18 +103,20 @@ describe('CacheInvalidationService', () => {
 
 	test('i/update以外の経路でプロフィールを更新しても、ほかのプロセスは次の取得で最新の値を読む', async () => {
 		const cacheB = b.get(CacheService);
-		expect((await cacheB.userProfileCache.fetch(alice.id)).achievements).toEqual([]);
+		expect((await cacheB.userProfileCache.fetch(alice.id)).mutedInstances).toEqual([]);
 
-		await a.get(AchievementService).create(alice.id, 'profileFilled');
+		// 管理画面などの経路と同じく、DBを更新してからキャッシュを消す
+		await userProfilesRepository.update({ userId: alice.id }, { mutedInstances: ['muted.example.com'] });
+		await a.get(CacheService).userProfileCache.delete(alice.id);
 
-		await waitFor(async () => (await cacheB.userProfileCache.fetch(alice.id)).achievements.some(x => x.name === 'profileFilled'));
+		await waitFor(async () => (await cacheB.userProfileCache.fetch(alice.id)).mutedInstances.includes('muted.example.com'));
 	});
 
 	test('自分が発行した無効化では、メモリ層を消さない', async () => {
 		const cacheA = a.get(CacheService);
 		await cacheA.userBlockingCache.set(alice.id, new Set(['x']));
 		// Redisだけを書き換える。メモリ層が残っていれば、書き換える前の値を返す
-		await a.get<Redis.Redis>(DI.redis).set(kvCacheKey('userBlocking', alice.id, 1), JSON.stringify(['y']));
+		await a.get<Redis.Redis>(DI.redis).set(kvCacheKey('userBlocking', alice.id, CURRENT_CACHE_KEY_VERSION), JSON.stringify(['y']));
 		await new Promise(r => setTimeout(r, 200));
 
 		expect(await cacheA.userBlockingCache.get(alice.id)).toEqual(new Set(['x']));
@@ -124,7 +125,7 @@ describe('CacheInvalidationService', () => {
 	test('Pub/Subをつなぎ直すと、メモリ層を捨てる', async () => {
 		const cacheB = b.get(CacheService);
 		await cacheB.userBlockingCache.fetch(bob.id);
-		await b.get<Redis.Redis>(DI.redis).set(kvCacheKey('userBlocking', bob.id, 1), JSON.stringify(['changed-while-disconnected']));
+		await b.get<Redis.Redis>(DI.redis).set(kvCacheKey('userBlocking', bob.id, CURRENT_CACHE_KEY_VERSION), JSON.stringify(['changed-while-disconnected']));
 		expect(await cacheB.userBlockingCache.get(bob.id)).toEqual(new Set());
 
 		const redisForSub = b.get<Redis.Redis>(DI.redisForSub);

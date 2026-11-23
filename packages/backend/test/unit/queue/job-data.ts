@@ -105,11 +105,11 @@ describe('QueueServiceが登録するpayload', () => {
 		const user = { id: 'user1' };
 		const other = { id: 'user2' };
 		const activity: IActivity = { id: 'https://remote.example.com/activity', type: 'Create', actor: 'https://remote.example.com/users/a', object: 'https://remote.example.com/notes/1' };
-		const webhook = { id: 'hook1', userId: user.id, url: 'https://hook.example.com', secret: 'secret' };
+		const webhook = { id: 'hook1', userId: user.id };
 
 		service.deliver(user, activity, 'https://remote.example.com/inbox', false);
 		await service.deliverMany(user, activity, new Map([['https://remote.example.com/inbox', false]]));
-		service.inbox(activity, { scheme: 'Signature', params: { keyId: 'k', algorithm: 'rsa-sha256', headers: [], signature: 's' }, signingString: '', algorithm: 'RSA-SHA256', keyId: 'k' });
+		service.inbox(activity, { scheme: 'Signature', params: { keyId: 'k', algorithm: 'rsa-sha256', headers: [], signature: 's' }, signingString: '', algorithm: 'RSA-SHA256', keyId: 'k' }, { method: 'POST', url: '/inbox', digest: 'SHA-256=x' });
 		service.createDeleteDriveFilesJob(user);
 		service.createExportCustomEmojisJob(user);
 		service.createExportNotesJob(user);
@@ -127,7 +127,7 @@ describe('QueueServiceが登録するpayload', () => {
 		await service.createImportBlockingToDbJob(user, ['a@example.com']);
 		service.createImportUserListsJob(user, 'file1');
 		service.createImportCustomEmojisJob(user, 'file1');
-		service.createImportAntennasJob(user, []);
+		service.createImportAntennasJob(user, 'file1');
 		service.createDeleteAccountJob(user);
 		service.createTruncateAccountJob(user);
 		await service.createAutoDeleteUserNotesJobs([user]);
@@ -140,8 +140,8 @@ describe('QueueServiceが登録するpayload', () => {
 		await service.createUnblockJob([{ from: user, to: other }]);
 		service.createDeleteObjectStorageFileJob('key');
 		service.createCleanRemoteFilesJob();
-		service.userWebhookDeliver(webhook as never, 'note', {} as never);
-		service.systemWebhookDeliver({ ...webhook, isActive: true } as never, 'abuseReport', {} as never);
+		service.userWebhookDeliver(webhook, 'note', {} as never);
+		service.systemWebhookDeliver(webhook, 'abuseReport', {} as never);
 		await service.ensureNoteDeleteScheduled('note1', new Date());
 		await service.ensureNotePostScheduled('draft1', new Date());
 
@@ -150,8 +150,60 @@ describe('QueueServiceが登録するpayload', () => {
 
 		expect(added.length).toBeGreaterThanOrEqual(36);
 		for (const { queue, name, data } of added) {
-			expect({ queue, name, v: (data as { v?: unknown }).v }).toEqual({ queue, name, v: JOB_DATA_VERSION });
+			const expected = SWITCHED_TO_V2.some(s => s.queue === queue && (s.name == null || s.name === name)) ? 2 : JOB_DATA_VERSION;
+			expect({ queue, name, v: (data as { v?: unknown }).v }).toEqual({ queue, name, v: expected });
+			// 生成側が書く版は、処理側が受け付ける版である
+			expect(isSupportedJobDataVersion(queue as never, name, data)).toBe(true);
 		}
+	});
+
+	/** 第2リリースで生成側を新しい形に切り替えた種別（docs/rust-migration/queue-jobs.md） */
+	const SWITCHED_TO_V2: { queue: string; name?: string; }[] = [
+		{ queue: QUEUE.INBOX },
+		{ queue: QUEUE.USER_WEBHOOK_DELIVER },
+		{ queue: QUEUE.SYSTEM_WEBHOOK_DELIVER },
+		{ queue: QUEUE.DB, name: 'importAntennas' },
+	];
+
+	test('新しい形のpayloadは、送信先・secret・アンテナの中身・ライブラリの型を持たない', async () => {
+		const { service, added } = createQueueService();
+		const activity: IActivity = { id: 'https://remote.example.com/activity', type: 'Create', actor: 'https://remote.example.com/users/a', object: 'https://remote.example.com/notes/1' };
+
+		service.inbox(activity, { scheme: 'Signature', params: { keyId: 'k', algorithm: 'rsa-sha256', headers: ['(request-target)', 'host'], signature: 's' }, signingString: 'str', algorithm: 'RSA-SHA256', keyId: 'k' }, { method: 'POST', url: '/inbox', digest: 'SHA-256=x' });
+		service.createImportAntennasJob({ id: 'user1' }, 'file1');
+		service.userWebhookDeliver({ id: 'hook1', userId: 'user1' }, 'note', {} as never);
+		service.systemWebhookDeliver({ id: 'hook2' }, 'abuseReport', {} as never);
+		await new Promise(resolve => setImmediate(resolve));
+
+		const [inbox, importAntennas, userWebhook, systemWebhook] = added.map(a => a.data as Record<string, unknown>);
+		expect(inbox).toEqual({
+			v: 2,
+			activity,
+			signature: { keyId: 'k', algorithm: 'rsa-sha256', headers: ['(request-target)', 'host'], signature: 's', signingString: 'str' },
+			request: { method: 'POST', target: '/inbox', digest: 'SHA-256=x' },
+		});
+		expect(importAntennas).toEqual({ v: 2, user: { id: 'user1' }, fileId: 'file1' });
+		expect(userWebhook).toMatchObject({ v: 2, webhookId: 'hook1', userId: 'user1' });
+		expect(userWebhook).not.toHaveProperty('to');
+		expect(userWebhook).not.toHaveProperty('secret');
+		expect(systemWebhook).toMatchObject({ v: 2, webhookId: 'hook2' });
+		expect(systemWebhook).not.toHaveProperty('to');
+		expect(systemWebhook).not.toHaveProperty('secret');
+	});
+
+	test('テスト送信は、保存前の送信先とsecretを持つ旧形式で、試行1回で登録する', async () => {
+		const { service, added } = createQueueService();
+		const userQueue = (service.userWebhookDeliverQueue.add as ReturnType<typeof vi.fn>);
+		const systemQueue = (service.systemWebhookDeliverQueue.add as ReturnType<typeof vi.fn>);
+
+		service.userWebhookTestDeliver({ id: 'hook1', userId: 'user1', url: 'https://unsaved.example.com', secret: 'unsaved' }, 'note', {} as never);
+		service.systemWebhookTestDeliver({ id: 'hook2', url: 'https://unsaved.example.com', secret: 'unsaved' }, 'abuseReport', {} as never);
+		await new Promise(resolve => setImmediate(resolve));
+
+		expect(added[0].data).toMatchObject({ v: 1, to: 'https://unsaved.example.com', secret: 'unsaved' });
+		expect(added[1].data).toMatchObject({ v: 1, to: 'https://unsaved.example.com', secret: 'unsaved' });
+		expect(userQueue.mock.calls[0][2]).toMatchObject({ attempts: 1 });
+		expect(systemQueue.mock.calls[0][2]).toMatchObject({ attempts: 1 });
 	});
 });
 

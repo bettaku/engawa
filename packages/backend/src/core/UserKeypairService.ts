@@ -4,40 +4,34 @@
  */
 
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
-import * as Redis from 'ioredis';
 import type { MiUser } from '@/models/User.js';
 import type { UserKeypairsRepository } from '@/models/_.js';
-import { RedisKVCache } from '@/misc/cache.js';
+import { MemoryKVCache } from '@/misc/cache.js';
 import type { MiUserKeypair } from '@/models/UserKeypair.js';
 import { DI } from '@/di-symbols.js';
 import { bindThis } from '@/decorators.js';
-import { CacheInvalidationService } from '@/core/CacheInvalidationService.js';
 
+/**
+ * ユーザーの鍵ペア。
+ *
+ * 秘密鍵をRedisに置かないように、プロセスのメモリだけにキャッシュする（pre-rust-tech-debt.md P2-1、アドバイザリ[A5]）。
+ * 以前は`kvcache:userKeypair:<userId>`（v1）に24時間保存していた。v2のnamespaceには保存しない。
+ * 鍵ペアは作成した後に変わらないので、ほかのプロセスへの無効化の通知は要らない。
+ */
 @Injectable()
 export class UserKeypairService implements OnApplicationShutdown {
-	private cache: RedisKVCache<MiUserKeypair>;
+	private cache: MemoryKVCache<MiUserKeypair>;
 
 	constructor(
-		@Inject(DI.redis)
-		private redisClient: Redis.Redis,
-
 		@Inject(DI.userKeypairsRepository)
 		private userKeypairsRepository: UserKeypairsRepository,
-		private cacheInvalidationService: CacheInvalidationService,
 	) {
-		this.cache = new RedisKVCache<MiUserKeypair>(this.redisClient, 'userKeypair', {
-			lifetime: 1000 * 60 * 60 * 24, // 24h
-			memoryCacheLifetime: 1000 * 60 * 60, // 1h
-			fetcher: (key) => this.userKeypairsRepository.findOneByOrFail({ userId: key }),
-			toRedisConverter: (value) => JSON.stringify(value),
-			fromRedisConverter: (value) => JSON.parse(value),
-			invalidation: this.cacheInvalidationService,
-		});
+		this.cache = new MemoryKVCache<MiUserKeypair>(1000 * 60 * 60); // 1h
 	}
 
 	@bindThis
 	public async getUserKeypair(userId: MiUser['id']): Promise<MiUserKeypair> {
-		return await this.cache.fetch(userId);
+		return await this.cache.fetch(userId, () => this.userKeypairsRepository.findOneByOrFail({ userId }));
 	}
 
 	@bindThis

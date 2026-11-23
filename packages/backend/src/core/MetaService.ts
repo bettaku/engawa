@@ -8,7 +8,7 @@ import { DataSource } from 'typeorm';
 import * as Redis from 'ioredis';
 import { DI } from '@/di-symbols.js';
 import { MiMeta } from '@/models/Meta.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
+import { GlobalEventService, toMetaUpdatedEventRef } from '@/core/GlobalEventService.js';
 import { bindThis } from '@/decorators.js';
 import type { Config } from '@/config.js';
 import { isInternalEventRef, type GlobalEvents } from '@/core/GlobalEventService.js';
@@ -163,7 +163,7 @@ export class MetaService implements OnApplicationShutdown {
 			});
 		}
 
-		this.globalEventService.publishInternalEvent('metaUpdated', { before, after: updated });
+		this.globalEventService.publishInternalEvent('metaUpdated', toMetaUpdatedEventRef(before, updated));
 
 		return updated;
 	}
