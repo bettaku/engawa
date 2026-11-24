@@ -236,14 +236,14 @@ export class ClientServerService {
 		} else {
 			const urlOriginWithoutPort = configUrl.origin.replace(/:\d+$/, '');
 
-			const port = this.config.runtime.development.vitePort;
+			const port = (process.env.VITE_PORT ?? '5173');
 			fastify.register(fastifyProxy, {
 				upstream: urlOriginWithoutPort + ':' + port,
 				prefix: '/vite',
 				rewritePrefix: '/vite',
 			});
 
-			const embedPort = (this.config.runtime.development.embedVitePort);
+			const embedPort = (process.env.EMBED_VITE_PORT ?? '5174');
 			fastify.register(fastifyProxy, {
 				upstream: urlOriginWithoutPort + ':' + embedPort,
 				prefix: '/embed_vite',
@@ -787,10 +787,8 @@ export class ClientServerService {
 
 			const clip = await this.clipsRepository.findOneBy({
 				id: request.params.clip,
-				isPublic: true,
 			});
 
-			// 非公開のクリップは、存在しない場合と同じ応答にする
 			if (clip == null) return;
 
 			const _clip = await this.clipEntityService.pack(clip);

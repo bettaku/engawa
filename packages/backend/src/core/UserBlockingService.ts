@@ -12,7 +12,6 @@ import { QueueService } from '@/core/QueueService.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { DI } from '@/di-symbols.js';
 import type { FollowRequestsRepository, BlockingsRepository, UserListsRepository, UserListMembershipsRepository } from '@/models/_.js';
-import type { Config } from '@/config.js';
 import Logger from '@/logger.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { ApRendererService } from '@/core/activitypub/ApRendererService.js';
@@ -21,7 +20,6 @@ import { UserWebhookService } from '@/core/UserWebhookService.js';
 import { bindThis } from '@/decorators.js';
 import { CacheService } from '@/core/CacheService.js';
 import { UserFollowingService } from '@/core/UserFollowingService.js';
-import { UserListService } from '@/core/UserListService.js';
 
 @Injectable()
 export class UserBlockingService implements OnModuleInit {
@@ -30,9 +28,6 @@ export class UserBlockingService implements OnModuleInit {
 
 	constructor(
 		private moduleRef: ModuleRef,
-
-		@Inject(DI.config)
-		private config: Config,
 
 		@Inject(DI.followRequestsRepository)
 		private followRequestsRepository: FollowRequestsRepository,
@@ -54,7 +49,6 @@ export class UserBlockingService implements OnModuleInit {
 		private webhookService: UserWebhookService,
 		private apRendererService: ApRendererService,
 		private loggerService: LoggerService,
-		private userListService: UserListService,
 	) {
 		this.logger = this.loggerService.getLogger('user-block');
 	}
@@ -130,8 +124,7 @@ export class UserBlockingService implements OnModuleInit {
 
 		// リモートにフォローリクエストをしていたらUndoFollow送信
 		if (this.userEntityService.isLocalUser(follower) && this.userEntityService.isRemoteUser(followee)) {
-			const requestId = request.requestId ?? `${this.config.url}/follows/${request.id}`;
-			const content = this.apRendererService.addContext(this.apRendererService.renderUndo(this.apRendererService.renderFollow(follower, followee, requestId), follower));
+			const content = this.apRendererService.addContext(this.apRendererService.renderUndo(this.apRendererService.renderFollow(follower, followee), follower));
 			this.queueService.deliver(follower, content, followee.inbox, false);
 		}
 
@@ -154,7 +147,6 @@ export class UserBlockingService implements OnModuleInit {
 				userId: user.id,
 			});
 		}
-		await this.userListService.invalidateMembersCache(userLists.map(x => x.id));
 	}
 
 	@bindThis

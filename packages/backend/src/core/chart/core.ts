@@ -19,20 +19,6 @@ import type { DataSource, Repository } from 'typeorm';
 
 const COLUMN_PREFIX = '___' as const;
 const UNIQUE_TEMP_COLUMN_PREFIX = 'unique_temp___' as const;
-
-/**
- * 文字列の配列を、SQLに直接埋め込める varchar[] の式にする。
- * 値は外部から来る（閲覧者のIPアドレスやホスト名など）ので、SQLの文字列として解釈される余地を残さないよう、
- * 16進数に変換して渡しDB側で文字列に戻す。引用符・括弧・バックスラッシュを含んでいても1つの要素として保存される。
- */
-export function toSqlVarcharArray(items: string[]): string {
-	const elements = items.map(item => {
-		// PostgreSQLの文字列はNUL文字を含められない
-		const hex = Buffer.from(String(item).replaceAll('\0', ''), 'utf8').toString('hex');
-		return `convert_from(decode('${hex}', 'hex'), 'UTF8')`;
-	});
-	return `ARRAY[${elements.join(', ')}]::varchar[]`;
-}
 const COLUMN_DELIMITER = '_' as const;
 
 type Schema = Record<string, {
@@ -76,9 +62,6 @@ const camelToSnake = (str: string): string => {
 
 const removeDuplicates = (array: any[]) => Array.from(new Set(array));
 
-/** waitForSaveで待っている差分の保存に失敗したとき、保存し直すまでの時間 */
-const SAVE_RETRY_DELAY = 1000 * 10;
-
 type Commit<S extends Schema> = {
 	[K in keyof S]?: S[K]['uniqueIncrement'] extends true ? string[] : number;
 };
@@ -103,13 +86,10 @@ type Unflatten<T extends Record<string, any>> = UnionToIntersection<
 	}[Extract<keyof T, string>]
 >;
 
-// チャートはすべてのキーを返す。optionalを明示して、型とOpenAPIの仕様（未指定は必須）をそろえる
 type ToJsonSchema<S> = {
 	type: 'object';
-	optional: false;
-	nullable: false;
 	properties: {
-		[K in keyof S]: S[K] extends number[] ? { type: 'array'; optional: false; nullable: false; items: { type: 'number'; }; } : ToJsonSchema<S[K]>;
+		[K in keyof S]: S[K] extends number[] ? { type: 'array'; items: { type: 'number'; }; } : ToJsonSchema<S[K]>;
 	},
 	required: (keyof S)[];
 };
@@ -125,14 +105,10 @@ export function getJsonSchema<S extends Schema>(schema: S): ToJsonSchema<Unflatt
 		if (parent.properties[key] == null) {
 			parent.properties[key] = nextKey ? {
 				type: 'object',
-				optional: false,
-				nullable: false,
 				properties: {},
 				required: [],
 			} : {
 				type: 'array',
-				optional: false,
-				nullable: false,
 				items: {
 					type: 'number',
 				},
@@ -144,8 +120,6 @@ export function getJsonSchema<S extends Schema>(schema: S): ToJsonSchema<Unflatt
 
 	const jsonSchema = {
 		type: 'object',
-		optional: false,
-		nullable: false,
 		properties: {} as Record<string, unknown>,
 		required: [],
 	};
@@ -171,14 +145,6 @@ export default abstract class Chart<T extends Schema> {
 		diff: Commit<T>;
 		group: string | null;
 	}[] = [];
-
-	/** バッファにある差分の保存を待っている呼び出し（waitForSave）。保存を始めるときにバッファと一緒に引き取る */
-	private saveWaiters: (() => void)[] = [];
-	/** 保存は1つずつ順に行う（同じ差分を2回足したり、保存中に追加された差分を消したりしないため） */
-	private saving: Promise<void> = Promise.resolve();
-	/** waitForSaveで予約した、まだ始まっていない保存があるか */
-	private saveScheduled = false;
-	private saveRetryTimer: NodeJS.Timeout | null = null;
 	// ↓にしたいけどfindOneとかで型エラーになる
 	//private repositoryForHour: Repository<RawRecord<T>> & MiRepository<RawRecord<T>>;
 	//private repositoryForDay: Repository<RawRecord<T>> & MiRepository<RawRecord<T>>;
@@ -449,53 +415,10 @@ export default abstract class Chart<T extends Schema> {
 		});
 	}
 
-	/**
-	 * バッファにある差分をデータベースに保存する。
-	 * 保存は1つずつ順に行う。保存を始めた時点のバッファを引き取り、保存中に追加された差分は次の保存に回す。
-	 * 保存に失敗したグループの差分はバッファに戻す
-	 */
 	@bindThis
-	public save(): Promise<void> {
-		const result = this.saving.then(() => this.saveBuffer());
-		this.saving = result.catch(() => {});
-		return result;
-	}
-
-	/**
-	 * 今バッファにある差分（呼び出し元がこれまでにcommitしたもの）がデータベースに保存されるまで待つ。
-	 * 保存はすぐに予約する。保存中なら、その次の保存にまとめる。
-	 * 保存に失敗したら、差分をバッファに戻して保存し直し、保存できたときに解決する
-	 */
-	@bindThis
-	public waitForSave(): Promise<void> {
-		return new Promise(resolve => {
-			this.saveWaiters.push(resolve);
-			this.scheduleSave();
-		});
-	}
-
-	@bindThis
-	private scheduleSave(): void {
-		if (this.saveScheduled) return;
-		this.saveScheduled = true;
-		this.saving = this.saving.then(() => {
-			this.saveScheduled = false;
-			return this.saveBuffer();
-		}).catch(err => {
-			this.logger.error(`${this.name}: Failed to save`, { error: err });
-		});
-	}
-
-	@bindThis
-	private async saveBuffer(): Promise<void> {
-		const buffer = this.buffer;
-		const waiters = this.saveWaiters;
-		this.buffer = [];
-		this.saveWaiters = [];
-
-		if (buffer.length === 0) {
+	public async save(): Promise<void> {
+		if (this.buffer.length === 0) {
 			this.logger.info(`${this.name}: Write skipped`);
-			for (const resolve of waiters) resolve();
 			return;
 		}
 
@@ -505,10 +428,10 @@ export default abstract class Chart<T extends Schema> {
 		// そのログは本来は 01:00~ のログとしてDBに保存されて欲しいのに、02:00~ のログ扱いになってしまう。
 		// これを回避するための実装は複雑になりそうなため、一旦保留。
 
-		const update = async (entries: typeof this.buffer, logHour: RawRecord<T>, logDay: RawRecord<T>): Promise<void> => {
+		const update = async (logHour: RawRecord<T>, logDay: RawRecord<T>): Promise<void> => {
 			const finalDiffs = {} as Record<string, number | string[]>;
 
-			for (const diff of entries.map(q => q.diff)) {
+			for (const diff of this.buffer.filter(q => q.group == null || (q.group === logHour.group)).map(q => q.diff)) {
 				for (const [k, v] of Object.entries(diff)) {
 					if (finalDiffs[k] == null) {
 						finalDiffs[k] = v;
@@ -533,10 +456,11 @@ export default abstract class Chart<T extends Schema> {
 					if (v < 0) queryForDay[name] = () => `"${name}" - ${Math.abs(v)}`;
 				} else if (Array.isArray(v) && v.length > 0) { // ユニークインクリメント
 					const tempColumnName = UNIQUE_TEMP_COLUMN_PREFIX + k.replaceAll('.', COLUMN_DELIMITER) as string & keyof TempColumnsForUnique<T>;
-					const itemsForHour = v.filter(item => !(logHour[tempColumnName] as unknown as string[]).includes(item));
-					const itemsForDay = v.filter(item => !(logDay[tempColumnName] as unknown as string[]).includes(item));
-					if (itemsForHour.length > 0) queryForHour[tempColumnName] = () => `array_cat("${tempColumnName}", ${toSqlVarcharArray(itemsForHour)})`;
-					if (itemsForDay.length > 0) queryForDay[tempColumnName] = () => `array_cat("${tempColumnName}", ${toSqlVarcharArray(itemsForDay)})`;
+					// TODO: item をSQLエスケープ
+					const itemsForHour = v.filter(item => !(logHour[tempColumnName] as unknown as string[]).includes(item)).map(item => `"${item}"`);
+					const itemsForDay = v.filter(item => !(logDay[tempColumnName] as unknown as string[]).includes(item)).map(item => `"${item}"`);
+					if (itemsForHour.length > 0) queryForHour[tempColumnName] = () => `array_cat("${tempColumnName}", '{${itemsForHour.join(',')}}'::varchar[])`;
+					if (itemsForDay.length > 0) queryForDay[tempColumnName] = () => `array_cat("${tempColumnName}", '{${itemsForDay.join(',')}}'::varchar[])`;
 				}
 			}
 
@@ -581,59 +505,35 @@ export default abstract class Chart<T extends Schema> {
 				}
 			}
 
-			// ログ更新。時間と日のログを同じトランザクションで更新する（片方だけ反映された状態で、再び保存して二重に足さないため）
-			await this.repositoryForHour.manager.transaction(async manager => {
-				await manager.createQueryBuilder()
-					.update(this.repositoryForHour.target)
+			// ログ更新
+			await Promise.all([
+				this.repositoryForHour.createQueryBuilder()
+					.update()
 					.set(queryForHour as any)
 					.where('id = :id', { id: logHour.id })
-					.execute();
-				await manager.createQueryBuilder()
-					.update(this.repositoryForDay.target)
+					.execute(),
+				this.repositoryForDay.createQueryBuilder()
+					.update()
 					.set(queryForDay as any)
 					.where('id = :id', { id: logDay.id })
-					.execute();
-			});
+					.execute(),
+			]);
 
 			this.logger.info(`${this.name + (logHour.group ? `:${logHour.group}` : '')}: Updated`);
+
+			// TODO: この一連の処理が始まった後に新たにbufferに入ったものは消さないようにする
+			this.buffer = this.buffer.filter(q => q.group != null && (q.group !== logHour.group));
 		};
 
-		const groups: (string | null)[] = removeDuplicates(buffer.map(log => log.group));
+		const groups = removeDuplicates(this.buffer.map(log => log.group));
 
-		const results = await Promise.allSettled(
-			groups.map(async group => {
-				// 片方の取得が失敗しても、もう片方が終わるまで待つ（作成中のログが残ったまま保存し直して、作成が重ならないように）
-				const [logHour, logDay] = await Promise.allSettled([
+		await Promise.all(
+			groups.map(group =>
+				Promise.all([
 					this.claimCurrentLog(group, 'hour'),
 					this.claimCurrentLog(group, 'day'),
-				]);
-				if (logHour.status === 'rejected') throw logHour.reason;
-				if (logDay.status === 'rejected') throw logDay.reason;
-				await update(buffer.filter(q => q.group == null || q.group === group), logHour.value, logDay.value);
-			}));
-
-		const failedGroups = groups.filter((_, i) => results[i].status === 'rejected');
-		if (failedGroups.length === 0) {
-			for (const resolve of waiters) resolve();
-			return;
-		}
-
-		// 保存できなかったグループの差分をバッファに戻す。待っている呼び出しは、保存し直せたときに解決する
-		this.buffer = [...buffer.filter(q => failedGroups.includes(q.group)), ...this.buffer];
-		if (waiters.length > 0) {
-			this.saveWaiters = [...waiters, ...this.saveWaiters];
-			if (this.saveRetryTimer == null) {
-				this.saveRetryTimer = setTimeout(() => {
-					this.saveRetryTimer = null;
-					this.scheduleSave();
-				}, SAVE_RETRY_DELAY);
-				// 停止を妨げない（停止時の保存はChartManagementServiceが行う）
-				this.saveRetryTimer.unref();
-			}
-		}
-
-		const failure = results.find(r => r.status === 'rejected');
-		throw failure?.reason;
+				]).then(([logHour, logDay]) =>
+					update(logHour, logDay))));
 	}
 
 	@bindThis

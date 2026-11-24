@@ -11,26 +11,14 @@ import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { DI } from '@/di-symbols.js';
 import { ApiError } from '@/server/api/error.js';
-import { TwoFactorAuthenticationError, UserAuthService } from '@/core/UserAuthService.js';
-import { CacheService } from '@/core/CacheService.js';
+import { UserAuthService } from '@/core/UserAuthService.js';
 
 export const meta = {
 	requireCredential: true,
 
 	secure: true,
 
-	// 互換性のため、空のオブジェクトをHTTP 200で返す
-	res: {
-		type: 'object',
-		optional: false, nullable: false,
-	},
-
 	errors: {
-		twoFactorAuthenticationFailed: {
-			message: 'Two-factor authentication failed.',
-			code: 'TWO_FACTOR_AUTHENTICATION_FAILED',
-			id: 'bfe88397-61f6-4afc-aa46-b716bcf11d16',
-		},
 		incorrectPassword: {
 			message: 'Incorrect password.',
 			code: 'INCORRECT_PASSWORD',
@@ -61,7 +49,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private userEntityService: UserEntityService,
 		private userAuthService: UserAuthService,
 		private globalEventService: GlobalEventService,
-		private cacheService: CacheService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const token = ps.token;
@@ -69,15 +56,13 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			if (profile.twoFactorEnabled) {
 				if (token == null) {
-					throw new ApiError(meta.errors.twoFactorAuthenticationFailed);
+					throw new Error('authentication failed');
 				}
 
 				try {
 					await this.userAuthService.twoFactorAuthenticate(profile, token);
 				} catch (e) {
-					// コードの不一致だけを認証の失敗にする。DB・Redisの障害はそのまま500にする
-					if (e instanceof TwoFactorAuthenticationError) throw new ApiError(meta.errors.twoFactorAuthenticationFailed);
-					throw e;
+					throw new Error('authentication failed');
 				}
 			}
 
@@ -108,7 +93,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				await this.userProfilesRepository.update(me.id, {
 					usePasswordLessLogin: false,
 				});
-				await this.cacheService.userProfileCache.delete(me.id);
 			}
 
 			// Publish meUpdated event

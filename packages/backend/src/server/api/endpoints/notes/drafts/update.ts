@@ -72,7 +72,7 @@ export const meta = {
 
 		cannotReplyToSpecifiedNoteWithExtendedVisibility: {
 			message: 'You cannot reply to a specified visibility note with extended visibility.',
-			code: 'CANNOT_REPLY_TO_SPECIFIED_VISIBILITY_NOTE_WITH_EXTENDED_VISIBILITY',
+			code: 'CANNOT_REPLY_TO_SPECIFIED_NOTE_WITH_EXTENDED_VISIBILITY',
 			id: 'ed940410-535c-4d5e-bfa3-af798671e93c',
 		},
 

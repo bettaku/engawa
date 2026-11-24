@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import { setTimeout } from 'node:timers/promises';
 import * as Redis from 'ioredis';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { In } from 'typeorm';
 import { ReplyError } from 'ioredis';
 import { DI } from '@/di-symbols.js';
@@ -19,13 +20,13 @@ import { IdService } from '@/core/IdService.js';
 import { CacheService } from '@/core/CacheService.js';
 import type { Config } from '@/config.js';
 import { UserListService } from '@/core/UserListService.js';
-import { QueueService } from '@/core/QueueService.js';
 import { FilterUnionByProperty, groupedNotificationTypes, obsoleteNotificationTypes } from '@/types.js';
 import { trackPromise } from '@/misc/promise-tracker.js';
-import { compareRedisStreamId, parseRedisStreamId, redisStreamIdFromParsedId } from '@/misc/redis-stream-id.js';
 
 @Injectable()
-export class NotificationService {
+export class NotificationService implements OnApplicationShutdown {
+	#shutdownController = new AbortController();
+
 	constructor(
 		@Inject(DI.config)
 		private config: Config,
@@ -42,7 +43,6 @@ export class NotificationService {
 		private pushNotificationService: PushNotificationService,
 		private cacheService: CacheService,
 		private userListService: UserListService,
-		private queueService: QueueService,
 	) {
 	}
 
@@ -64,7 +64,7 @@ export class NotificationService {
 
 		this.redisClient.set(`latestReadNotification:${userId}`, latestNotificationId);
 
-		if (force || !this.isReadUpTo(latestReadNotificationId, latestNotificationId)) {
+		if (force || latestReadNotificationId == null || (latestReadNotificationId < latestNotificationId)) {
 			return this.postReadAllNotifications(userId);
 		}
 	}
@@ -186,37 +186,19 @@ export class NotificationService {
 
 		// 2秒経っても(今回作成した)通知が既読にならなかったら「未読の通知がありますよ」イベントを発行する
 		// テスト通知の場合は即時発行
-		// プロセスの停止で失われないよう、ジョブにする（P3-2）
-		const delay = notification.type === 'test' ? 0 : 2000;
-		await this.queueService.createUnreadNotificationJob(notifieeId, redisId, delay);
+		const interval = notification.type === 'test' ? 0 : 2000;
+		setTimeout(interval, 'unread notification', { signal: this.#shutdownController.signal }).then(async () => {
+			const latestReadNotificationId = await this.redisClient.get(`latestReadNotification:${notifieeId}`);
+			if (latestReadNotificationId && (latestReadNotificationId >= redisId)) return;
+
+			this.globalEventService.publishMainStream(notifieeId, 'unreadNotification', packed);
+			this.pushNotificationService.pushNotification(notifieeId, 'notification', packed);
+
+			if (type === 'follow') this.emailNotificationFollow(notifieeId, await this.usersRepository.findOneByOrFail({ id: notifierId! }));
+			if (type === 'receiveFollowRequest') this.emailNotificationReceiveFollowRequest(notifieeId, await this.usersRepository.findOneByOrFail({ id: notifierId! }));
+		}, () => { /* aborted, ignore it */ });
 
 		return notification;
-	}
-
-	/**
-	 * 通知を作ってから一定時間たっても既読になっていなければ、「未読の通知がある」イベントとPush通知を送る（`unreadNotification`ジョブ）。
-	 *
-	 * 通知はStreamから読み直してpackする。Streamから消えた通知（全削除・件数の上限）や、packできなくなった通知（ノートの削除など）は送らない。
-	 */
-	@bindThis
-	public async processUnreadNotification(userId: MiUser['id'], streamId: string): Promise<string> {
-		const latestReadNotificationId = await this.redisClient.get(`latestReadNotification:${userId}`);
-		if (this.isReadUpTo(latestReadNotificationId, streamId)) return 'skip: already read';
-
-		const entries = await this.redisClient.xrange(`notificationTimeline:${userId}`, streamId, streamId);
-		if (entries.length === 0) return 'skip: notification not found';
-		const notification = JSON.parse(entries[0][1][1]) as MiNotification;
-
-		const packed = await this.notificationEntityService.pack(notification, userId, {});
-		if (packed == null) return 'skip: notification is no longer available';
-
-		this.globalEventService.publishMainStream(userId, 'unreadNotification', packed);
-		await this.pushNotificationService.pushNotification(userId, 'notification', packed);
-
-		if (notification.type === 'follow') this.emailNotificationFollow(userId, await this.usersRepository.findOneByOrFail({ id: notification.notifierId }));
-		if (notification.type === 'receiveFollowRequest') this.emailNotificationReceiveFollowRequest(userId, await this.usersRepository.findOneByOrFail({ id: notification.notifierId }));
-
-		return 'ok';
 	}
 
 	// TODO
@@ -299,22 +281,14 @@ export class NotificationService {
 		}
 	}
 
-	private toXListId(id: string): string {
-		return redisStreamIdFromParsedId(this.idService.parseFull(id));
+	@bindThis
+	public dispose(): void {
+		this.#shutdownController.abort();
 	}
 
-	/**
-	 * 既読位置 `latestReadId` が、通知の Stream ID `notificationId` 以降に達しているか。
-	 * Stream ID は数値として比較する（文字列で比べると、同じミリ秒で seq の桁数が違うときに誤る）。
-	 * 既読位置がない、または解析できない場合は未読として扱う。
-	 */
-	@bindThis
-	private isReadUpTo(latestReadId: string | null, notificationId: string): boolean {
-		if (latestReadId == null) return false;
-		const latestRead = parseRedisStreamId(latestReadId);
-		const target = parseRedisStreamId(notificationId);
-		if (latestRead == null || target == null) return false;
-		return compareRedisStreamId(latestRead, target) >= 0;
+	private toXListId(id: string): string {
+		const { date, additional } = this.idService.parseFull(id);
+		return date.toString() + '-' + additional.toString();
 	}
 
 	@bindThis
@@ -383,5 +357,10 @@ export class NotificationService {
 		}
 
 		return notifications;
+	}
+
+	@bindThis
+	public onApplicationShutdown(signal?: string | undefined): void {
+		this.dispose();
 	}
 }

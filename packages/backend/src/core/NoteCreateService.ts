@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import { setImmediate } from 'node:timers/promises';
 import * as mfm from 'mfc-js';
 import { In, DataSource, IsNull, LessThan } from 'typeorm';
 import * as Redis from 'ioredis';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import RE2 from 're2';
 import { Data } from 'ws';
 import { extractMentions } from '@/misc/extract-mentions.js';
@@ -15,16 +16,13 @@ import { extractHashtags } from '@/misc/extract-hashtags.js';
 import type { IMentionedRemoteUsers } from '@/models/Note.js';
 import { MiNote } from '@/models/Note.js';
 import { MiEvent } from '@/models/Event.js';
-import { getNoteDeliveryScope } from '@/misc/note-delivery-scope.js';
-import { sanitizeEventMetadata } from '@/misc/sanitize-event-metadata.js';
 import type { IEvent } from '@/models/Event.js';
 import type { BlockingsRepository, DriveFilesRepository, FollowingsRepository, InstancesRepository, MiFollowing, MiMeta, MutingsRepository, NotesRepository, NoteThreadMutingsRepository, UserListMembershipsRepository, UserProfilesRepository, UsersRepository } from '@/models/_.js';
 import type { MiDriveFile } from '@/models/DriveFile.js';
 import type { MiApp } from '@/models/App.js';
 import { concat } from '@/misc/prelude/array.js';
 import { IdService } from '@/core/IdService.js';
-import { MiUser } from '@/models/User.js';
-import type { MiLocalUser, MiRemoteUser } from '@/models/User.js';
+import type { MiUser, MiLocalUser, MiRemoteUser } from '@/models/User.js';
 import type { IPoll } from '@/models/Poll.js';
 import { MiPoll } from '@/models/Poll.js';
 import { isDuplicateKeyValueError } from '@/misc/is-duplicate-key-value-error.js';
@@ -42,7 +40,6 @@ import { NotificationService } from '@/core/NotificationService.js';
 import { UserWebhookService } from '@/core/UserWebhookService.js';
 import { HashtagService } from '@/core/HashtagService.js';
 import { AntennaService } from '@/core/AntennaService.js';
-import { JOB_DATA_VERSION } from '@/queue/job-version.js';
 import { QueueService } from '@/core/QueueService.js';
 import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
@@ -58,18 +55,11 @@ import { FanoutTimelineService } from '@/core/FanoutTimelineService.js';
 import { UtilityService } from '@/core/UtilityService.js';
 import { UserBlockingService } from '@/core/UserBlockingService.js';
 import { isReply } from '@/misc/is-reply.js';
+import { trackPromise } from '@/misc/promise-tracker.js';
 import { IdentifiableError } from '@/misc/identifiable-error.js';
+import { CollapsedQueue } from '@/misc/collapsed-queue.js';
 import { CacheService } from '@/core/CacheService.js';
 import { isQuote, isRenote } from '@/misc/is-renote.js';
-import type { noteSearchableBy } from '@/types.js';
-import type { Packed } from '@/misc/json-schema.js';
-import { NoteOutboxService } from '@/core/NoteOutboxService.js';
-import type { NoteOutboxStep } from '@/core/NoteOutboxService.js';
-import type { MiNoteOutbox } from '@/models/NoteOutbox.js';
-import { SMALLINT_MAX } from '@/core/CounterConsistencyService.js';
-import { retryOnDeadlock } from '@/misc/retry-on-deadlock.js';
-import { execPipeline } from '@/misc/redis-pipeline.js';
-import type { EntityManager } from 'typeorm';
 
 type NotificationType = 'reply' | 'renote' | 'quote' | 'mention';
 
@@ -159,41 +149,15 @@ type Option = {
 	url?: string | null;
 	app?: MiApp | null;
 	deleteAt?: Date | null;
-	searchableBy?: typeof noteSearchableBy[number] | null;
-};
-
-/** 作成の副作用を実行するのに使うもの。照合ジョブからの処理ではDBから読み直す */
-type CreatedEffectsContext = {
-	note: MiNote;
-	user: {
-		id: MiUser['id'];
-		username: MiUser['username'];
-		host: MiUser['host'];
-		isBot: MiUser['isBot'];
-		isIndexable: MiUser['isIndexable'];
-		isSensitive: MiUser['isSensitive'];
-	};
-	reply: MiNote | null;
-	renote: MiNote | null;
-	mentionedUsers: MinimumUser[];
-	silent: boolean;
-};
-
-/**
- * 内部の処理だけが指定する作成オプション。APIからは指定できない。
- */
-export type NoteCreateInternalOptions = {
-	/**
-	 * ノートのinsertと同じトランザクションの中で、insertの後に呼ばれる。
-	 * 例外を投げると、ノートのinsertを含むトランザクション全体がロールバックし、
-	 * 後処理（配信・配送・索引など）も行われない。
-	 */
-	onInserted?: (manager: EntityManager, note: MiNote) => Promise<void>;
+	searchableBy?: string[] | string;
 };
 
 @Injectable()
-export class NoteCreateService {
+export class NoteCreateService implements OnApplicationShutdown {
+	#shutdownController = new AbortController();
+
 	public static ContainsProhibitedWordsError = class extends Error {};
+	private updateNotesCountQueue: CollapsedQueue<MiNote['id'], number>;
 
 	constructor(
 		@Inject(DI.config)
@@ -263,9 +227,8 @@ export class NoteCreateService {
 		private utilityService: UtilityService,
 		private userBlockingService: UserBlockingService,
 		private cacheService: CacheService,
-		private noteOutboxService: NoteOutboxService,
 	) {
-		this.noteOutboxService.registerHandler('created', this.handleCreated);
+		this.updateNotesCountQueue = new CollapsedQueue(process.env.NODE_ENV !== 'test' ? 60 * 1000 * 5 : 0, this.collapseNotesCount, this.performUpdateNotesCount);
 	}
 
 	@bindThis
@@ -296,8 +259,8 @@ export class NoteCreateService {
 		apHashtags?: string[] | null;
 		apEmojis?: string[] | null;
 		deleteAt?: Date | null;
-		searchableBy?: typeof noteSearchableBy[number] | null;
-	}, internalOptions: NoteCreateInternalOptions = {}): Promise<MiNote> {
+		searchableBy?: string[] | string;
+	}): Promise<MiNote> {
 		const visibleUsers = data.visibleUserIds.length > 0 ? await this.usersRepository.findBy({
 			id: In(data.visibleUserIds),
 		}) : [];
@@ -421,8 +384,7 @@ export class NoteCreateService {
 			apHashtags: data.apHashtags,
 			apEmojis: data.apEmojis,
 			deleteAt: data.deleteAt,
-			searchableBy: data.searchableBy,
-		}, false, internalOptions);
+		});
 	}
 
 	@bindThis
@@ -434,12 +396,10 @@ export class NoteCreateService {
 		isCat: MiUser['isCat'];
 		isIndexable: MiUser['isIndexable'];
 		isSensitive: MiUser['isSensitive'];
-	}, data: Option, silent = false, internalOptions: NoteCreateInternalOptions = {}): Promise<MiNote> {
+	}, data: Option, silent = false): Promise<MiNote> {
 		if (data.createdAt == null) data.createdAt = new Date();
 		if (data.visibility == null) data.visibility = 'public';
 		if (data.localOnly == null) data.localOnly = false;
-		// 「自分のみ」の投稿は、クライアントの指定に関わらず連合しない
-		if (data.visibility === 'private') data.localOnly = true;
 		if (data.disableRightClick == null) data.disableRightClick = false;
 
 		if (data.visibility === 'public') {
@@ -496,13 +456,6 @@ export class NoteCreateService {
 					// specified / direct note/ private noteはreject
 					throw new Error('Renote target is not public or home');
 			}
-		}
-
-		// 公開範囲が specified の純粋なRenoteは作らない（Announceとして配送・削除できないため）。引用は許可する
-		// 作成元（API・予約投稿・AP受信）は Option の形で渡ってくるので、misc/is-renote.ts と同期している
-		// this.isRenote / this.isQuote で判定する
-		if (this.isRenote(data) && !this.isQuote(data) && data.visibility === 'specified') {
-			throw new IdentifiableError('a093350c-a7cf-4293-8dbd-497fb1426e74', 'Cannot create pure renote with specified visibility');
 		}
 
 		// Check blocking
@@ -604,25 +557,18 @@ export class NoteCreateService {
 			throw new IdentifiableError('9f466dab-c856-48cd-9e65-ff90ff750580', 'Note contains too many mentions');
 		}
 
-		const { note, outboxRecord } = await this.insertNote(user, data, tags, emojis, mentionedUsers, silent, internalOptions.onInserted);
+		const note = await this.insertNote(user, data, tags, emojis, mentionedUsers);
 
-		// 後処理はoutboxに記録済み。コミット後すぐにこのプロセスで処理し、停止などで残った分は照合ジョブが拾う。
-		// コミット直後なので、DBを読み直さずに作成に使ったオブジェクトを渡す（従来と同じ遅延で副作用を始める）
-		const context: CreatedEffectsContext = {
-			note,
-			user,
-			reply: data.reply ?? null,
-			renote: data.renote ?? null,
-			mentionedUsers,
-			silent,
-		};
-		this.noteOutboxService.dispatchClaimed(outboxRecord, context);
+		setImmediate('post created', { signal: this.#shutdownController.signal }).then(
+			() => this.postNoteCreated(note, user, data, silent, tags!, mentionedUsers!),
+			() => { /* aborted, ignore this */ },
+		);
 
 		return note;
 	}
 
 	@bindThis
-	private async insertNote(user: { id: MiUser['id']; host: MiUser['host']; isBot: MiUser['isBot']; }, data: Option, tags: string[], emojis: string[], mentionedUsers: MinimumUser[], silent: boolean, onInserted?: NoteCreateInternalOptions['onInserted']) {
+	private async insertNote(user: { id: MiUser['id']; host: MiUser['host']; }, data: Option, tags: string[], emojis: string[], mentionedUsers: MinimumUser[]) {
 		const insert = new MiNote({
 			id: this.idService.gen(data.createdAt?.getTime()),
 			fileIds: data.files ? data.files.map(file => file.id) : [],
@@ -654,7 +600,7 @@ export class NoteCreateService {
 
 			attachedFileTypes: data.files ? data.files.map(file => file.type) : [],
 
-			searchableBy: data.searchableBy ?? 'public',
+			searchableBy: data.searchableBy ? data.searchableBy as any : 'public',
 
 			// 以下非正規化データ
 			replyUserId: data.reply ? data.reply.userId : null,
@@ -662,8 +608,6 @@ export class NoteCreateService {
 			renoteUserId: data.renote ? data.renote.userId : null,
 			renoteUserHost: data.renote ? data.renote.userHost : null,
 			userHost: user.host,
-			// Renote先のrenoteCountに計上するか。削除時と修復でも、この値で判定する
-			renoteCounted: data.renote ? (data.renote.userId !== user.id && !user.isBot) : null,
 		});
 
 		if (data.uri != null) insert.uri = data.uri;
@@ -687,67 +631,53 @@ export class NoteCreateService {
 
 		// 投稿を作成
 		try {
-			// ノートの行、非正規化カウンタ、後処理のoutboxを同じトランザクションで書く
-			// 返信先・Renote先のカウンタの行ロックが削除と競合してデッドロックになったら、トランザクションごとやり直す
-			const outboxRecord = await retryOnDeadlock(() => this.db.transaction(async transactionalEntityManager => {
-				await transactionalEntityManager.insert(MiNote, insert);
+			if (insert.hasPoll || insert.hasEvent) {
+				// Start transaction
+				await this.db.transaction(async transactionalEntityManager => {
+					await transactionalEntityManager.insert(MiNote, insert);
 
-				if (insert.hasPoll) {
-					const poll = new MiPoll({
-						noteId: insert.id,
-						choices: data.poll!.choices,
-						expiresAt: data.poll!.expiresAt,
-						multiple: data.poll!.multiple,
-						votes: new Array(data.poll!.choices.length).fill(0),
-						noteVisibility: insert.visibility,
-						userId: user.id,
-						userHost: user.host,
-					});
+					if (insert.hasPoll) {
+						const poll = new MiPoll({
+							noteId: insert.id,
+							choices: data.poll!.choices,
+							expiresAt: data.poll!.expiresAt,
+							multiple: data.poll!.multiple,
+							votes: new Array(data.poll!.choices.length).fill(0),
+							noteVisibility: insert.visibility,
+							userId: user.id,
+							userHost: user.host,
+						});
 
-					await transactionalEntityManager.insert(MiPoll, poll);
-				}
+						await transactionalEntityManager.insert(MiPoll, poll);
+					}
 
-				if (insert.hasEvent) {
-					const event = new MiEvent({
-						noteId: insert.id,
-						start: data.event!.start,
-						end: data.event!.end ?? undefined,
-						title: data.event!.title,
-						metadata: sanitizeEventMetadata(data.event!.metadata),
-						noteVisibility: insert.visibility,
-						userId: user.id,
-						userHost: user.host,
-					});
+					if (insert.hasEvent) {
+						const event = new MiEvent({
+							noteId: insert.id,
+							start: data.event!.start,
+							end: data.event!.end ?? undefined,
+							title: data.event!.title,
+							metadata: data.event!.metadata,
+							noteVisibility: insert.visibility,
+							userId: user.id,
+							userHost: user.host,
+						});
 
-					await transactionalEntityManager.insert(MiEvent, event);
-				}
+						await transactionalEntityManager.insert(MiEvent, event);
+					}
 
-				if (insert.visibility === 'private') {
-					insert.localOnly = true;
-				}
-
-				if (onInserted != null) {
-					await onInserted(transactionalEntityManager, insert);
-				}
-
-				await this.incrementCounters(transactionalEntityManager, insert);
-
-				// このプロセスがコミット直後に処理するので、処理中の状態で記録する
-				return await this.noteOutboxService.addClaimed(transactionalEntityManager, {
-					type: 'created',
-					noteId: insert.id,
-					userId: user.id,
-					payload: { silent },
+					if (insert.visibility === 'private') {
+						insert.localOnly = true;
+					}
 				});
-			}));
+			} else {
+				await this.notesRepository.insert(insert);
+			}
 
 			return {
-				note: {
-					...insert,
-					reply: data.reply ?? null,
-					renote: data.renote ?? null,
-				},
-				outboxRecord,
+				...insert,
+				reply: data.reply ?? null,
+				renote: data.renote ?? null,
 			};
 		} catch (e) {
 			// duplicate key error
@@ -757,328 +687,214 @@ export class NoteCreateService {
 				throw err;
 			}
 
-			// onInsertedが意図して投げた例外は、呼び出し元が扱う
-			if (e instanceof IdentifiableError) throw e;
-
 			console.error(e);
 
 			throw e;
 		}
 	}
 
-	/**
-	 * 作成のトランザクションの中で、非正規化カウンタ（返信先のrepliesCount、Renote先のrenoteCount、投稿者のnotesCount）を加算する。
-	 *
-	 * 削除の減算（NoteDeleteService）も行の削除と同じトランザクションで行うので、作成直後に削除しても加算が後から残ることはない。
-	 * 行ロックの順序を削除側と揃えるため、ノートはID順に更新し、ユーザーは最後に更新する。
-	 * smallintの列は上限で頭打ちにする（上限に達した値は、削除のときに数え直す）。
-	 */
 	@bindThis
-	private async incrementCounters(manager: EntityManager, note: MiNote) {
-		const targets = new Map<MiNote['id'], { replies: number; renotes: number }>();
-		const target = (id: MiNote['id']) => {
-			let t = targets.get(id);
-			if (t == null) targets.set(id, t = { replies: 0, renotes: 0 });
-			return t;
-		};
-		if (note.replyId != null) target(note.replyId).replies++;
-		if (note.renoteId != null && note.renoteCounted) target(note.renoteId).renotes++;
-
-		for (const id of [...targets.keys()].sort()) {
-			const t = targets.get(id);
-			if (t == null) continue;
-			const set: Record<string, () => string> = {};
-			if (t.replies > 0) set.repliesCount = () => `LEAST("repliesCount" + ${t.replies}, ${SMALLINT_MAX})`;
-			if (t.renotes > 0) set.renoteCount = () => `LEAST("renoteCount" + ${t.renotes}, ${SMALLINT_MAX})`;
-			await manager.createQueryBuilder().update(MiNote)
-				.set(set)
-				.where('id = :id', { id })
-				.execute();
+	private async postNoteCreated(note: MiNote, user: {
+		id: MiUser['id'];
+		username: MiUser['username'];
+		host: MiUser['host'];
+		isBot: MiUser['isBot'];
+		isIndexable: MiUser['isIndexable'];
+		isSensitive: MiUser['isSensitive'];
+	}, data: Option, silent: boolean, tags: string[], mentionedUsers: MinimumUser[]) {
+		this.notesChart.update(note, true);
+		if (note.visibility !== 'specified' && (this.meta.enableChartsForRemoteUser || (user.host == null))) {
+			this.perUserNotesChart.update(user, note, true);
 		}
 
-		await manager.createQueryBuilder().update(MiUser)
-			.set({
-				updatedAt: new Date(),
-				notesCount: () => '"notesCount" + 1',
-			})
-			.where('id = :id', { id: note.userId })
-			.execute();
-	}
-
-	/**
-	 * outboxの作成のレコードの処理。処理する時点のノートの状態を読み直して副作用を実行する。
-	 */
-	@bindThis
-	private async handleCreated(record: MiNoteOutbox, step: NoteOutboxStep, context?: unknown) {
-		if (context != null) {
-			// 作成したプロセスがコミット直後に処理する
-			await this.runCreatedEffects(step, context as CreatedEffectsContext);
-			return;
-		}
-
-		const note = await this.notesRepository.findOneBy({ id: record.noteId });
-		if (note == null) {
-			// 副作用を終える前に削除された。削除の側は、ここまでに実行した副作用だけを取り消す
-			await this.noteOutboxService.reportCreatedStepsToDeletion(record.noteId, record.doneSteps);
-			return;
-		}
-
-		const user = await this.usersRepository.findOneBy({ id: note.userId });
-		if (user == null) return;
-
-		const [reply, renote, mentionedUsers] = await Promise.all([
-			note.replyId != null ? this.notesRepository.findOneBy({ id: note.replyId }) : null,
-			note.renoteId != null ? this.notesRepository.findOneBy({ id: note.renoteId }) : null,
-			note.mentions.length > 0 ? this.usersRepository.findBy({ id: In(note.mentions) }) : [],
-		]);
-
-		await this.runCreatedEffects(step, {
-			note,
-			user,
-			reply,
-			renote,
-			mentionedUsers,
-			silent: record.payload.silent === true,
-		});
-	}
-
-	/**
-	 * 作成の副作用。各副作用は`step`の名前で完了を記録するので、名前を変えるときは処理中のレコードに注意する。
-	 * 削除のレコードは`stats`と`deliver`の完了を見て取り消すかどうかを決める（NoteDeleteService）。
-	 */
-	@bindThis
-	private async runCreatedEffects(step: NoteOutboxStep, ctx: CreatedEffectsContext) {
-		const { note, user, silent } = ctx;
-		const isPureRenote = isRenote(note) && !isQuote(note);
-
-		// チャートの集計は、データベースへの保存を待つ（数回の問い合わせになる）。
-		// ほかの副作用（タイムライン・通知・配送など）を遅らせないよう、並行して始め、最後に終わるのを待つ
-		const statsSteps = Promise.all([
-			// チャートと連合サーバーの集計は、独立して失敗する（後者はサーバーの登録を待つ）ので、別の副作用にする。
-			// 片方だけが終わった状態で再試行しても、終わった方を二重に加算しない
-			// チャートはプロセス内のバッファに差分を積むので、データベースに保存されるまで完了にしない
-			// （保存の前に停止したら、再試行で積み直す）
-			step('stats', async () => {
-				await this.notesChart.update(note, true);
-				const saves = [this.notesChart.waitForSave()];
-				if (note.visibility !== 'specified' && (this.meta.enableChartsForRemoteUser || (user.host == null))) {
-					await this.perUserNotesChart.update(user, note, true);
-					saves.push(this.perUserNotesChart.waitForSave());
-				}
-				await Promise.all(saves);
-			}),
-
-			// Register host
-			step('instanceStats', async () => {
-				if (!this.meta.enableStatsForFederatedInstances || !this.userEntityService.isRemoteUser(user)) return;
-				const i = await this.federatedInstanceService.fetchOrRegister(user.host);
-				// 完了にする前に保存されるように、まとめずに直接加算する（削除の側の減算と同じ）
-				await this.instancesRepository.increment({ id: i.id }, 'notesCount', 1);
-				if (this.meta.enableChartsForFederatedInstances) {
-					await this.instanceChart.updateNote(i.host, note, true);
-					await this.instanceChart.waitForSave();
-				}
-			}),
-
-			step('activeUsers', async () => {
-				if (silent || !this.userEntityService.isLocalUser(user)) return;
-				await this.activeUsersChart.write(user);
-				await this.activeUsersChart.waitForSave();
-			}),
-		]);
-
-		try {
-			await this.runCreatedEffectsExceptStats(step, ctx, isPureRenote);
-		} finally {
-			await statsSteps;
-		}
-	}
-
-	@bindThis
-	private async runCreatedEffectsExceptStats(step: NoteOutboxStep, ctx: CreatedEffectsContext, isPureRenote: boolean) {
-		const { note, user, reply, renote, mentionedUsers, silent } = ctx;
-
-		// 従来はどれも待たずに並行して始めていた副作用。タイムライン・アンテナへの反映を遅らせないよう、並行して実行する
-		await Promise.all([
-			step('timeline', () => this.pushToTl(note, user)),
-
-			step('antenna', () => this.antennaService.addNoteToAntennas({ ...note }, user)),
-
-			// ハッシュタグ更新
-			step('hashtags', async () => {
-				if (note.visibility === 'public' || note.visibility === 'home') {
-					await this.hashtagService.updateHashtags(user, note.tags);
-				}
-			}),
-
-			step('followerNotification', async () => {
-				if (note.replyId != null || note.visibility === 'specified') return;
-
-				// TODO: キャッシュ
-				const followings = await this.followingsRepository.findBy({
-					followeeId: user.id,
-					notify: 'normal',
-				});
-				for (const following of followings) {
-					// TODO: ワードミュート考慮
-					let isRenoteMuted = false;
-					if (isPureRenote) {
-						const userIdsWhoMeMutingRenotes = await this.cacheService.renoteMutingsCache.fetch(following.followerId);
-						isRenoteMuted = userIdsWhoMeMutingRenotes.has(user.id);
+		// Register host
+		if (this.meta.enableStatsForFederatedInstances) {
+			if (this.userEntityService.isRemoteUser(user)) {
+				this.federatedInstanceService.fetchOrRegister(user.host).then(async i => {
+					this.updateNotesCountQueue.enqueue(i.id, 1);
+					if (this.meta.enableChartsForFederatedInstances) {
+						this.instanceChart.updateNote(i.host, note, true);
 					}
-					if (!isRenoteMuted) {
-						this.notificationService.createNotification(following.followerId, 'note', {
-							noteId: note.id,
-						}, user.id);
-					}
-				}
-			}),
-
-			step('featured', async () => {
-				if (renote == null || !note.renoteCounted) return;
-				if (renote.visibility === 'public' && renote.userHost == null) {
-					await this.featuredService.updateGlobalNotesRanking(renote.id, 5);
-					await this.featuredService.updatePerUserNotesRanking(renote.userId, renote.id, 5);
-				}
-			}),
-
-			step('pollEnd', async () => {
-				if (!note.hasPoll) return;
-				const poll = await this.db.getRepository(MiPoll).findOneBy({ noteId: note.id });
-				if (poll?.expiresAt == null) return;
-				const delay = poll.expiresAt.getTime() - Date.now();
-				await this.queueService.endedPollNotificationQueue.add(note.id, {
-					v: JOB_DATA_VERSION,
-					noteId: note.id,
-				}, {
-					delay,
-					removeOnComplete: {
-						age: 3600 * 24 * 7, // keep up to 7 days
-						count: 30,
-					},
-					removeOnFail: {
-						age: 3600 * 24 * 7, // keep up to 7 days
-						count: 100,
-					},
 				});
-			}),
-		]);
-
-		await step('scheduledDelete', async () => {
-			if (note.deleteAt) {
-				await this.queueService.syncScheduledNoteDelete(note.id, note.deleteAt);
 			}
-		});
+		}
+
+		// ハッシュタグ更新
+		if (data.visibility === 'public' || data.visibility === 'home') {
+			this.hashtagService.updateHashtags(user, tags);
+		}
+
+		// Increment notes count (user)
+		this.incNotesCountOfUser(user);
+
+		this.pushToTl(note, user);
+
+		this.antennaService.addNoteToAntennas({
+			...note,
+		}, user);
+
+		if (data.reply) {
+			this.saveReply(data.reply, note);
+		}
+
+		if (data.reply == null) {
+			// TODO: キャッシュ
+			this.followingsRepository.findBy({
+				followeeId: user.id,
+				notify: 'normal',
+			}).then(async followings => {
+				if (note.visibility !== 'specified') {
+					const isPureRenote = this.isRenote(data) && !this.isQuote(data) ? true : false;
+					for (const following of followings) {
+						// TODO: ワードミュート考慮
+						let isRenoteMuted = false;
+						if (isPureRenote) {
+							const userIdsWhoMeMutingRenotes = await this.cacheService.renoteMutingsCache.fetch(following.followerId);
+							isRenoteMuted = userIdsWhoMeMutingRenotes.has(user.id);
+						}
+						if (!isRenoteMuted) {
+							this.notificationService.createNotification(following.followerId, 'note', {
+								noteId: note.id,
+							}, user.id);
+						}
+					}
+				}
+			});
+		}
+
+		if (data.renote && data.renote.userId !== user.id && !user.isBot) {
+			this.incRenoteCount(data.renote);
+		}
+
+		if (data.poll && data.poll.expiresAt) {
+			const delay = data.poll.expiresAt.getTime() - Date.now();
+			this.queueService.endedPollNotificationQueue.add(note.id, {
+				noteId: note.id,
+			}, {
+				delay,
+				removeOnComplete: {
+					age: 3600 * 24 * 7, // keep up to 7 days
+					count: 30,
+				},
+				removeOnFail: {
+					age: 3600 * 24 * 7, // keep up to 7 days
+					count: 100,
+				},
+			});
+		}
+
+		if (data.deleteAt) {
+			const delay = data.deleteAt.getTime() - Date.now();
+			this.queueService.scheduledNoteDeleteQueue.add(note.id, {
+				noteId: note.id,
+			}, {
+				delay,
+				removeOnComplete: true,
+			});
+		}
 
 		if (!silent) {
+			if (this.userEntityService.isLocalUser(user)) this.activeUsersChart.write(user);
+
 			// Pack the note
-			let packed: Packed<'Note'> | null = null;
-			const getPacked = async () => packed ??= await this.noteEntityService.pack(note, null, { skipHide: true, withReactionAndUserPairCache: true });
+			const noteObj = await this.noteEntityService.pack(note, null, { skipHide: true, withReactionAndUserPairCache: true });
 
-			await step('stream', async () => {
-				const noteObj = await getPacked();
-				await this.globalEventService.publishNotesStream(noteObj);
-				await this.roleService.addNoteToRoleTimeline(noteObj);
-			});
+			this.globalEventService.publishNotesStream(noteObj);
 
-			await step('webhook', async () => {
-				await this.webhookService.enqueueUserWebhook(user.id, 'note', { note: await getPacked() });
-			});
+			this.roleService.addNoteToRoleTimeline(noteObj);
 
-			await step('interactions', async () => {
-				const noteObj = await getPacked();
-				const nm = new NotificationManager(this.mutingsRepository, this.notificationService, user, note);
+			this.webhookService.enqueueUserWebhook(user.id, 'note', { note: noteObj });
 
-				await this.createMentionedEvents(mentionedUsers, note, nm);
+			const nm = new NotificationManager(this.mutingsRepository, this.notificationService, user, note);
 
-				// If has in reply to note
-				if (reply != null && reply.userHost === null) {
-					// 通知
+			await this.createMentionedEvents(mentionedUsers, note, nm);
+
+			// If has in reply to note
+			if (data.reply) {
+				// 通知
+				if (data.reply.userHost === null) {
 					const isThreadMuted = await this.noteThreadMutingsRepository.exists({
 						where: {
-							userId: reply.userId,
-							threadId: reply.threadId ?? reply.id,
+							userId: data.reply.userId,
+							threadId: data.reply.threadId ?? data.reply.id,
 						},
 					});
 
 					if (!isThreadMuted) {
-						nm.push(reply.userId, 'reply');
-						this.globalEventService.publishMainStream(reply.userId, 'reply', noteObj);
-						await this.webhookService.enqueueUserWebhook(reply.userId, 'reply', { note: noteObj });
+						nm.push(data.reply.userId, 'reply');
+						this.globalEventService.publishMainStream(data.reply.userId, 'reply', noteObj);
+						this.webhookService.enqueueUserWebhook(data.reply.userId, 'reply', { note: noteObj });
 					}
 				}
+			}
 
-				// If it is renote
-				if (renote != null) {
-					const type = isPureRenote ? 'renote' : 'quote';
+			// If it is renote
+			if (this.isRenote(data)) {
+				const type = this.isQuote(data) ? 'quote' : 'renote';
 
-					// Notify
-					if (renote.userHost === null) {
-						nm.push(renote.userId, type);
-					}
-
-					// Publish event
-					if ((user.id !== renote.userId) && renote.userHost === null) {
-						this.globalEventService.publishMainStream(renote.userId, 'renote', noteObj);
-						await this.webhookService.enqueueUserWebhook(renote.userId, 'renote', { note: noteObj });
-					}
+				// Notify
+				if (data.renote.userHost === null) {
+					nm.push(data.renote.userId, type);
 				}
 
-				await nm.notify();
-			});
+				// Publish event
+				if ((user.id !== data.renote.userId) && data.renote.userHost === null) {
+					this.globalEventService.publishMainStream(data.renote.userId, 'renote', noteObj);
+					this.webhookService.enqueueUserWebhook(data.renote.userId, 'renote', { note: noteObj });
+				}
+			}
+
+			nm.notify();
 
 			//#region AP deliver
-			// 配送先は、処理する時点のノートの公開範囲から決める。
-			// フォロワー・直接の宛先と、リレーとを別の副作用にする。それぞれ1回のaddBulkで登録するので、
-			// 片方が失敗して再試行しても、登録済みの側を重ねて登録しない
-			const deliveryScope = getNoteDeliveryScope(note);
-			let noteActivity: Awaited<ReturnType<typeof this.renderNoteOrRenoteActivity>> | undefined;
-			const getActivity = async () => noteActivity === undefined ? (noteActivity = await this.renderNoteOrRenoteActivity(note, renote)) : noteActivity;
-			const federate = !note.localOnly && deliveryScope.federate && this.userEntityService.isLocalUser(user);
+			if (!data.localOnly && this.userEntityService.isLocalUser(user)) {
+				await (async () => {
+					const noteActivity = await this.renderNoteOrRenoteActivity(data, note);
+					const dm = this.apDeliverManagerService.createDeliverManager(user, noteActivity);
 
-			if (federate) await step('deliver', async () => {
-				const noteActivity = await getActivity();
-				// 引用でないRenoteで、Renote先が削除済みなら配送するものがない
-				if (noteActivity == null) return;
+					// メンションされたリモートユーザーに配送
+					for (const u of mentionedUsers.filter(u => this.userEntityService.isRemoteUser(u))) {
+						dm.addDirectRecipe(u as MiRemoteUser);
+					}
 
-				const dm = this.apDeliverManagerService.createDeliverManager(user, noteActivity);
+					// 投稿がリプライかつ投稿者がローカルユーザーかつリプライ先の投稿の投稿者がリモートユーザーなら配送
+					if (data.reply && data.reply.userHost !== null) {
+						const u = await this.usersRepository.findOneBy({ id: data.reply.userId });
+						if (u && this.userEntityService.isRemoteUser(u)) dm.addDirectRecipe(u);
+					}
 
-				// メンションされたリモートユーザーに配送
-				for (const u of mentionedUsers.filter(u => this.userEntityService.isRemoteUser(u))) {
-					dm.addDirectRecipe(u as MiRemoteUser);
-				}
+					// 投稿がRenoteかつ投稿者がローカルユーザーかつRenote元の投稿の投稿者がリモートユーザーなら配送
+					if (data.renote && data.renote.userHost !== null) {
+						const u = await this.usersRepository.findOneBy({ id: data.renote.userId });
+						if (u && this.userEntityService.isRemoteUser(u)) dm.addDirectRecipe(u);
+					}
 
-				// 投稿がリプライかつ投稿者がローカルユーザーかつリプライ先の投稿の投稿者がリモートユーザーなら配送
-				if (reply != null && reply.userHost !== null) {
-					const u = await this.usersRepository.findOneBy({ id: reply.userId });
-					if (u && this.userEntityService.isRemoteUser(u)) dm.addDirectRecipe(u);
-				}
+					// フォロワーに配送
+					if (['public', 'home', 'followers'].includes(note.visibility)) {
+						dm.addFollowersRecipe();
+					}
 
-				// 投稿がRenoteかつ投稿者がローカルユーザーかつRenote元の投稿の投稿者がリモートユーザーなら配送
-				if (renote != null && renote.userHost !== null) {
-					const u = await this.usersRepository.findOneBy({ id: renote.userId });
-					if (u && this.userEntityService.isRemoteUser(u)) dm.addDirectRecipe(u);
-				}
+					if (['public'].includes(note.visibility)) {
+						this.relayService.deliverToRelays(user, noteActivity);
+					}
 
-				// フォロワーに配送
-				if (deliveryScope.followers) {
-					dm.addFollowersRecipe();
-				}
-
-				await dm.execute();
-			});
-
-			if (federate && deliveryScope.relays) await step('deliverRelays', async () => {
-				const noteActivity = await getActivity();
-				if (noteActivity == null) return;
-				await this.relayService.deliverToRelays({ id: user.id, host: null }, noteActivity);
-			});
+					trackPromise(dm.execute());
+				})();
+			}
 			//#endregion
 		}
 
-		await step('index', async () => {
-			if (user.isIndexable) await this.index(note);
-		});
+		if (data.deleteAt) {
+			const delay = data.deleteAt.getTime() - Date.now();
+			this.queueService.scheduledNoteDeleteQueue.add(note.id, {
+				noteId: note.id,
+			}, {
+				delay,
+				removeOnComplete: true,
+			});
+		}
+
+		if (user.isIndexable) this.index(note);
 	}
 
 	@bindThis
@@ -1096,6 +912,21 @@ export class NoteCreateService {
 			note.cw != null ||
 			note.poll != null ||
 			(note.files != null && note.files.length > 0);
+	}
+
+	@bindThis
+	private incRenoteCount(renote: MiNote) {
+		this.notesRepository.createQueryBuilder().update()
+			.set({
+				renoteCount: () => '"renoteCount" + 1',
+			})
+			.where('id = :id', { id: renote.id })
+			.execute();
+
+		if (renote.visibility === 'public' && renote.userHost == null) {
+			this.featuredService.updateGlobalNotesRanking(renote.id, 5);
+			this.featuredService.updatePerUserNotesRanking(renote.userId, renote.id, 5);
+		}
 	}
 
 	@bindThis
@@ -1117,7 +948,7 @@ export class NoteCreateService {
 			});
 
 			this.globalEventService.publishMainStream(u.id, 'mention', detailPackedNote);
-			await this.webhookService.enqueueUserWebhook(u.id, 'mention', { note: detailPackedNote });
+			this.webhookService.enqueueUserWebhook(u.id, 'mention', { note: detailPackedNote });
 
 			// Create notification
 			nm.push(u.id, 'mention');
@@ -1125,28 +956,37 @@ export class NoteCreateService {
 	}
 
 	@bindThis
-	private async renderNoteOrRenoteActivity(note: MiNote, renote: MiNote | null) {
-		if (note.localOnly) return null;
+	private saveReply(reply: MiNote, note: MiNote) {
+		this.notesRepository.increment({ id: reply.id }, 'repliesCount', 1);
+	}
 
-		let content;
-		if (isRenote(note) && !isQuote(note)) {
-			if (renote == null) return null;
-			content = this.apRendererService.renderAnnounce(renote.uri ? renote.uri : `${this.config.url}/notes/${renote.id}`, note);
-		} else {
-			content = this.apRendererService.renderCreate(await this.apRendererService.renderNote(note, false), note);
-		}
+	@bindThis
+	private async renderNoteOrRenoteActivity(data: Option, note: MiNote) {
+		if (data.localOnly) return null;
+
+		const content = this.isRenote(data) && !this.isQuote(data)
+			? this.apRendererService.renderAnnounce(data.renote.uri ? data.renote.uri : `${this.config.url}/notes/${data.renote.id}`, note)
+			: this.apRendererService.renderCreate(await this.apRendererService.renderNote(note, false), note);
 
 		return this.apRendererService.addContext(content);
 	}
 
 	@bindThis
-	private async index(note: MiNote) {
-		// 作成時に索引の対象外であることが明らかなノートは、ジョブを登録しない（索引から消すものもない）
+	private index(note: MiNote) {
 		if (note.text == null && note.cw == null) return;
-		if (!['home', 'public'].includes(note.visibility)) return;
 
-		// 登録の失敗はoutboxの副作用の失敗として返し、再試行させる
-		await this.searchService.requestSyncNoteIndex(note.id);
+		this.searchService.indexNote(note);
+	}
+
+	@bindThis
+	private incNotesCountOfUser(user: { id: MiUser['id']; }) {
+		this.usersRepository.createQueryBuilder().update()
+			.set({
+				updatedAt: new Date(),
+				notesCount: () => '"notesCount" + 1',
+			})
+			.where('id = :id', { id: user.id })
+			.execute();
 	}
 
 	@bindThis
@@ -1171,8 +1011,6 @@ export class NoteCreateService {
 		if (!this.meta.enableFanoutTimeline) return;
 
 		const r = this.redisForTimelines.pipeline();
-		// パイプラインの外で行う古いノートの追加も、完了と失敗を待つ
-		const pending: Promise<unknown>[] = [];
 
 		// TODO: キャッシュ？
 		// eslint-disable-next-line prefer-const
@@ -1208,9 +1046,9 @@ export class NoteCreateService {
 				if (!following.withReplies) continue;
 			}
 
-			this.fanoutTimelineService.push(`homeTimeline:${following.followerId}`, note.id, this.meta.perUserHomeTimelineCacheMax, r, pending);
+			this.fanoutTimelineService.push(`homeTimeline:${following.followerId}`, note.id, this.meta.perUserHomeTimelineCacheMax, r);
 			if (note.fileIds.length > 0) {
-				this.fanoutTimelineService.push(`homeTimelineWithFiles:${following.followerId}`, note.id, this.meta.perUserHomeTimelineCacheMax / 2, r, pending);
+				this.fanoutTimelineService.push(`homeTimelineWithFiles:${following.followerId}`, note.id, this.meta.perUserHomeTimelineCacheMax / 2, r);
 			}
 		}
 
@@ -1227,42 +1065,42 @@ export class NoteCreateService {
 				if (!userListMembership.withReplies) continue;
 			}
 
-			this.fanoutTimelineService.push(`userListTimeline:${userListMembership.userListId}`, note.id, this.meta.perUserListTimelineCacheMax, r, pending);
+			this.fanoutTimelineService.push(`userListTimeline:${userListMembership.userListId}`, note.id, this.meta.perUserListTimelineCacheMax, r);
 			if (note.fileIds.length > 0) {
-				this.fanoutTimelineService.push(`userListTimelineWithFiles:${userListMembership.userListId}`, note.id, this.meta.perUserListTimelineCacheMax / 2, r, pending);
+				this.fanoutTimelineService.push(`userListTimelineWithFiles:${userListMembership.userListId}`, note.id, this.meta.perUserListTimelineCacheMax / 2, r);
 			}
 		}
 
 		// 自分自身のHTL
 		if (note.userHost == null) {
 			if (note.visibility !== 'specified' || !note.visibleUserIds.some(v => v === user.id)) {
-				this.fanoutTimelineService.push(`homeTimeline:${user.id}`, note.id, this.meta.perUserHomeTimelineCacheMax, r, pending);
+				this.fanoutTimelineService.push(`homeTimeline:${user.id}`, note.id, this.meta.perUserHomeTimelineCacheMax, r);
 				if (note.fileIds.length > 0) {
-					this.fanoutTimelineService.push(`homeTimelineWithFiles:${user.id}`, note.id, this.meta.perUserHomeTimelineCacheMax / 2, r, pending);
+					this.fanoutTimelineService.push(`homeTimelineWithFiles:${user.id}`, note.id, this.meta.perUserHomeTimelineCacheMax / 2, r);
 				}
 			}
 		}
 
 		// 自分自身以外への返信
 		if (isReply(note)) {
-			this.fanoutTimelineService.push(`userTimelineWithReplies:${user.id}`, note.id, note.userHost == null ? this.meta.perLocalUserUserTimelineCacheMax : this.meta.perRemoteUserUserTimelineCacheMax, r, pending);
+			this.fanoutTimelineService.push(`userTimelineWithReplies:${user.id}`, note.id, note.userHost == null ? this.meta.perLocalUserUserTimelineCacheMax : this.meta.perRemoteUserUserTimelineCacheMax, r);
 
 			if (note.visibility === 'public' && note.userHost == null) {
-				this.fanoutTimelineService.push('localTimelineWithReplies', note.id, 300, r, pending);
+				this.fanoutTimelineService.push('localTimelineWithReplies', note.id, 300, r);
 				if (note.replyUserHost == null) {
-					this.fanoutTimelineService.push(`localTimelineWithReplyTo:${note.replyUserId}`, note.id, 300 / 10, r, pending);
+					this.fanoutTimelineService.push(`localTimelineWithReplyTo:${note.replyUserId}`, note.id, 300 / 10, r);
 				}
 			}
 		} else {
-			this.fanoutTimelineService.push(`userTimeline:${user.id}`, note.id, note.userHost == null ? this.meta.perLocalUserUserTimelineCacheMax : this.meta.perRemoteUserUserTimelineCacheMax, r, pending);
+			this.fanoutTimelineService.push(`userTimeline:${user.id}`, note.id, note.userHost == null ? this.meta.perLocalUserUserTimelineCacheMax : this.meta.perRemoteUserUserTimelineCacheMax, r);
 			if (note.fileIds.length > 0) {
-				this.fanoutTimelineService.push(`userTimelineWithFiles:${user.id}`, note.id, note.userHost == null ? this.meta.perLocalUserUserTimelineCacheMax / 2 : this.meta.perRemoteUserUserTimelineCacheMax / 2, r, pending);
+				this.fanoutTimelineService.push(`userTimelineWithFiles:${user.id}`, note.id, note.userHost == null ? this.meta.perLocalUserUserTimelineCacheMax / 2 : this.meta.perRemoteUserUserTimelineCacheMax / 2, r);
 			}
 
 			if (note.visibility === 'public' && note.userHost == null) {
-				this.fanoutTimelineService.push('localTimeline', note.id, 1000, r, pending);
+				this.fanoutTimelineService.push('localTimeline', note.id, 1000, r);
 				if (note.fileIds.length > 0) {
-					this.fanoutTimelineService.push('localTimelineWithFiles', note.id, 500, r, pending);
+					this.fanoutTimelineService.push('localTimelineWithFiles', note.id, 500, r);
 				}
 			}
 		}
@@ -1273,7 +1111,7 @@ export class NoteCreateService {
 			});
 		}
 
-		await execPipeline(r, pending);
+		r.exec();
 	}
 
 	@bindThis
@@ -1329,5 +1167,26 @@ export class NoteCreateService {
 		}
 
 		return false;
+	}
+
+	@bindThis
+	private collapseNotesCount(oldValue: number, newValue: number) {
+		return oldValue + newValue;
+	}
+
+	@bindThis
+	private async performUpdateNotesCount(id: MiNote['id'], incrBy: number) {
+		await this.instancesRepository.increment({ id: id }, 'notesCount', incrBy);
+	}
+
+	@bindThis
+	public async dispose(): Promise<void> {
+		this.#shutdownController.abort();
+		await this.updateNotesCountQueue.performAllNow();
+	}
+
+	@bindThis
+	public async onApplicationShutdown(signal?: string | undefined): Promise<void> {
+		await this.dispose();
 	}
 }

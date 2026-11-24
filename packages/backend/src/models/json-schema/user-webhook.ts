@@ -23,7 +23,6 @@ export const packedUserWebhookSchema = {
 			optional: false, nullable: false,
 		},
 		on: {
-			optional: false,
 			type: 'array',
 			items: {
 				type: 'string',

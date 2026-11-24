@@ -5,7 +5,6 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
-import { ApiError } from '@/server/api/error.js';
 import type { UsersRepository } from '@/models/_.js';
 import { safeForSql } from '@/misc/safe-for-sql.js';
 import { normalizeForSearch } from '@/misc/normalize-for-search.js';
@@ -24,14 +23,6 @@ export const meta = {
 			type: 'object',
 			optional: false, nullable: false,
 			ref: 'UserDetailed',
-		},
-	},
-
-	errors: {
-		invalidTag: {
-			message: 'Invalid tag.',
-			code: 'INVALID_TAG',
-			id: '02f90550-2357-4dbf-9736-4ebee4b83d38',
 		},
 	},
 } as const;
@@ -57,7 +48,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private userEntityService: UserEntityService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
-			if (!safeForSql(normalizeForSearch(ps.tag))) throw new ApiError(meta.errors.invalidTag);
+			if (!safeForSql(normalizeForSearch(ps.tag))) throw new Error('Injection');
 			const query = this.usersRepository.createQueryBuilder('user')
 				.where(':tag <@ user.tags', { tag: [normalizeForSearch(ps.tag)] })
 				.andWhere('user.isSuspended = FALSE');

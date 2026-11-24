@@ -477,30 +477,6 @@ describe('Endpoints', () => {
 		});
 	});
 
-	describe('users/following', () => {
-		test('birthday で、誕生日（月日）が一致するフォロー先だけに絞り込める', async () => {
-			await api('i/update', { birthday: '1990-03-15' }, carol);
-			await api('i/update', { birthday: '1990-04-01' }, dave);
-			await api('following/create', { userId: carol.id }, bob);
-			await api('following/create', { userId: dave.id }, bob);
-
-			try {
-				const res = await api('users/following', { userId: bob.id, birthday: '2026-03-15' }, bob);
-				assert.strictEqual(res.status, 200);
-				assert.deepStrictEqual(res.body.map(f => f.followeeId), [carol.id]);
-
-				const all = await api('users/following', { userId: bob.id }, bob);
-				assert.strictEqual(all.status, 200);
-				assert.deepStrictEqual(all.body.map(f => f.followeeId).sort(), [carol.id, dave.id].sort());
-			} finally {
-				await api('following/delete', { userId: carol.id }, bob);
-				await api('following/delete', { userId: dave.id }, bob);
-				await api('i/update', { birthday: null }, carol);
-				await api('i/update', { birthday: null }, dave);
-			}
-		});
-	});
-
 	describe('drive', () => {
 		test('ドライブ情報を取得できる', async () => {
 			const res = await api('drive', {}, alice);

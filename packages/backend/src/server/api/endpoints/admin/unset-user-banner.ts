@@ -6,7 +6,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { UsersRepository } from '@/models/_.js';
 import { Endpoint } from '@/server/api/endpoint-base.js';
-import { ApiError } from '@/server/api/error.js';
 import { DI } from '@/di-symbols.js';
 import { ModerationLogService } from '@/core/ModerationLogService.js';
 
@@ -16,14 +15,6 @@ export const meta = {
 	requireCredential: true,
 	requireModerator: true,
 	kind: 'write:admin:unset-user-banner',
-
-	errors: {
-		noSuchUser: {
-			message: 'No such user.',
-			code: 'NO_SUCH_USER',
-			id: '37a8f590-2967-4d07-aa78-ce44c1de357c',
-		},
-	},
 } as const;
 
 export const paramDef = {
@@ -46,7 +37,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 			const user = await this.usersRepository.findOneBy({ id: ps.userId });
 
 			if (user == null) {
-				throw new ApiError(meta.errors.noSuchUser);
+				throw new Error('user not found');
 			}
 
 			if (user.bannerId == null) return;

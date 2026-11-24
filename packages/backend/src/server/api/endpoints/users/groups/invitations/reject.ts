@@ -53,7 +53,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			}
 
 			await this.notificationService.deleteUserGroupInvitation(me.id, invitation.id);
-			await this.userGroupInvitationsRepository.delete(invitation.id);
+			return await this.userGroupInvitationsRepository.delete(invitation.id);
 		});
 	}
 }

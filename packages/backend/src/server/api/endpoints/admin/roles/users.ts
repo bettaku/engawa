@@ -33,10 +33,10 @@ export const meta = {
 		items: {
 			type: 'object',
 			properties: {
-				id: { optional: false, type: 'string', format: 'misskey:id' },
-				createdAt: { optional: false, type: 'string', format: 'date-time' },
-				user: { optional: false, ref: 'UserDetailed' },
-				expiresAt: { optional: false, type: 'string', format: 'date-time', nullable: true },
+				id: { type: 'string', format: 'misskey:id' },
+				createdAt: { type: 'string', format: 'date-time' },
+				user: { ref: 'UserDetailed' },
+				expiresAt: { type: 'string', format: 'date-time', nullable: true },
 			},
 			required: ['id', 'createdAt', 'user'],
 		},

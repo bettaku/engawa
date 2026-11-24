@@ -10,7 +10,6 @@ import type { MiLocalUser } from '@/models/User.js';
 import type { MiAccessToken } from '@/models/AccessToken.js';
 import type { FlashToken } from '@/misc/flash-token.js';
 import { ApiError } from './error.js';
-import { httpErrors } from './http-errors.js';
 import type { IEndpointMeta } from './endpoints.js';
 
 const Ajv = _Ajv.default;
@@ -47,7 +46,11 @@ export abstract class Endpoint<T extends IEndpointMeta, Ps extends Schema> {
 					if (file) fs.unlink(file.path, () => {});
 				};
 
-				if (file == null) return Promise.reject(new ApiError(httpErrors.fileRequired));
+				if (file == null) return Promise.reject(new ApiError({
+					message: 'File required.',
+					code: 'FILE_REQUIRED',
+					id: '4267801e-70d1-416a-b011-4ee502885d8b',
+				}));
 			}
 
 			const valid = validate(params);
@@ -55,7 +58,11 @@ export abstract class Endpoint<T extends IEndpointMeta, Ps extends Schema> {
 				if (file) cleanup!();
 
 				const errors = validate.errors!;
-				const err = new ApiError(httpErrors.invalidParam, {
+				const err = new ApiError({
+					message: 'Invalid param.',
+					code: 'INVALID_PARAM',
+					id: '3d81ceae-475f-4600-b2a8-2bc116157532',
+				}, {
 					param: errors[0].schemaPath,
 					reason: errors[0].message,
 				});

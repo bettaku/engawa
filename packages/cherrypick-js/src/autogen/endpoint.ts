@@ -401,10 +401,8 @@ import type {
 	I2faRegisterKeyRequest,
 	I2faRegisterKeyResponse,
 	I2faRemoveKeyRequest,
-	I2faRemoveKeyResponse,
 	I2faUnregisterRequest,
 	I2faUpdateKeyRequest,
-	I2faUpdateKeyResponse,
 	IAppsRequest,
 	IAppsResponse,
 	IAuthorizedAppsRequest,
@@ -556,7 +554,6 @@ import type {
 	NotesTranslateResponse,
 	NotesUnrenoteRequest,
 	NotesUpdateRequest,
-	NotesUpdateResponse,
 	NotesUserListTimelineRequest,
 	NotesUserListTimelineResponse,
 	NotificationsCreateRequest,
@@ -939,9 +936,9 @@ export type Endpoints = {
 	'i/2fa/password-less': { req: I2faPasswordLessRequest; res: EmptyResponse };
 	'i/2fa/register': { req: I2faRegisterRequest; res: I2faRegisterResponse };
 	'i/2fa/register-key': { req: I2faRegisterKeyRequest; res: I2faRegisterKeyResponse };
-	'i/2fa/remove-key': { req: I2faRemoveKeyRequest; res: I2faRemoveKeyResponse };
+	'i/2fa/remove-key': { req: I2faRemoveKeyRequest; res: EmptyResponse };
 	'i/2fa/unregister': { req: I2faUnregisterRequest; res: EmptyResponse };
-	'i/2fa/update-key': { req: I2faUpdateKeyRequest; res: I2faUpdateKeyResponse };
+	'i/2fa/update-key': { req: I2faUpdateKeyRequest; res: EmptyResponse };
 	'i/apps': { req: IAppsRequest; res: IAppsResponse };
 	'i/authorized-apps': { req: IAuthorizedAppsRequest; res: IAuthorizedAppsResponse };
 	'i/auto-delete-settings': { req: EmptyRequest; res: IAutoDeleteSettingsResponse };
@@ -1043,7 +1040,7 @@ export type Endpoints = {
 	'notes/timeline': { req: NotesTimelineRequest; res: NotesTimelineResponse };
 	'notes/translate': { req: NotesTranslateRequest; res: NotesTranslateResponse };
 	'notes/unrenote': { req: NotesUnrenoteRequest; res: EmptyResponse };
-	'notes/update': { req: NotesUpdateRequest; res: NotesUpdateResponse };
+	'notes/update': { req: NotesUpdateRequest; res: EmptyResponse };
 	'notes/user-list-timeline': { req: NotesUserListTimelineRequest; res: NotesUserListTimelineResponse };
 	'notifications/create': { req: NotificationsCreateRequest; res: EmptyResponse };
 	'notifications/flush': { req: EmptyRequest; res: EmptyResponse };

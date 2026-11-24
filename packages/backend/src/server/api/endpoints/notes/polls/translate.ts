@@ -15,8 +15,6 @@ import { RoleService } from '@/core/RoleService.js';
 import { MiMeta } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
 import type { PollsRepository } from '@/models/_.js';
-import { GetterService } from '@/server/api/GetterService.js';
-import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
 import { ApiError } from '../../../error.js';
 
 export const meta = {
@@ -29,7 +27,7 @@ export const meta = {
 		type: 'object',
 		optional: true, nullable: false,
 		properties: {
-			sourceLang: { optional: false, type: 'string' },
+			sourceLang: { type: 'string' },
 			text: {
 				type: 'array',
 				optional: true, nullable: false,
@@ -42,16 +40,6 @@ export const meta = {
 	},
 
 	errors: {
-		noSuchNote: {
-			message: 'No such note.',
-			code: 'NO_SUCH_NOTE',
-			id: '0b6a7d2e-5f3c-4c1b-9d0a-7e1f4a8b2c93',
-		},
-		cannotTranslateInvisibleNote: {
-			message: 'Cannot translate invisible note.',
-			code: 'CANNOT_TRANSLATE_INVISIBLE_NOTE',
-			id: '3d9e1b7a-8c2f-4e5d-a6b0-1f2c3d4e5f60',
-		},
 		unavailable: {
 			message: 'Translate of polls unavailable.',
 			code: 'UNAVAILABLE',
@@ -85,8 +73,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 		private httpRequestService: HttpRequestService,
 		private roleService: RoleService,
-		private getterService: GetterService,
-		private noteEntityService: NoteEntityService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const policies = await this.roleService.getUserPolicies(me.id);
@@ -94,21 +80,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				throw new ApiError(meta.errors.unavailable);
 			}
 
-			// 翻訳の前に、アンケートが付いているノートを閲覧できるかを確認する
-			const note = await this.getterService.getNote(ps.noteId).catch(err => {
-				if (err.id === '9725d0ce-ba28-4dde-95a7-2cbb2c15de24') throw new ApiError(meta.errors.noSuchNote);
-				throw err;
-			});
-
-			if (!(await this.noteEntityService.isCurrentlyVisibleForMe(note, me.id))) {
-				throw new ApiError(meta.errors.cannotTranslateInvisibleNote);
-			}
-
-			const poll = await this.pollsRepository.findOneBy({ noteId: note.id });
-
-			if (poll == null) {
-				throw new ApiError(meta.errors.noSuchNote);
-			}
+			const poll = await this.pollsRepository.findOneByOrFail({ noteId: ps.noteId });
 
 			if (poll.choices == null) {
 				return;
@@ -151,16 +123,16 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					translator: this.serverSettings.translatorType, // 修正点: 配列ではなく単一の文字列
 				};
 			} else if (this.serverSettings.translatorType === 'ctav3') {
-				if (this.serverSettings.ctav3SaKey == null || this.serverSettings.ctav3ProjectId == null || this.serverSettings.ctav3Location == null) {
-					throw new ApiError(meta.errors.unavailable);
-				}
+				if (this.serverSettings.ctav3SaKey == null) return Promise.resolve(204);
+				else if (this.serverSettings.ctav3ProjectId == null) return Promise.resolve(204);
+				else if (this.serverSettings.ctav3Location == null) return Promise.resolve(204);
 				translationResult = await this.apiCloudTranslationAdvanced(poll.choices, targetLang, this.serverSettings.ctav3SaKey, this.serverSettings.ctav3ProjectId, this.serverSettings.ctav3Location, this.serverSettings.ctav3Model, this.serverSettings.ctav3Glossary, this.serverSettings.translatorType);
 			} else if (this.serverSettings.translatorType === 'Libretranslate') {
 				const endPoint = this.serverSettings.libreTranslateEndPoint;
-				if (endPoint === null) throw new ApiError(meta.errors.unavailable);
+				if (endPoint === null) throw new Error('libreTranslateEndPoint is null');
 				translationResult = await this.translateLibretranslate(poll.choices, targetLang, endPoint, this.serverSettings.libreTranslateApiKey);
 			} else {
-				throw new ApiError(meta.errors.noTranslateService);
+				throw new Error('Unsupported translator type');
 			}
 
 			return Promise.resolve({

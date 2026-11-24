@@ -8,13 +8,12 @@ import _Ajv from 'ajv';
 import { IdService } from '@/core/IdService.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import Logger from '@/logger.js';
-import type { AntennasRepository, DriveFilesRepository, MiUser } from '@/models/_.js';
-import { DownloadService } from '@/core/DownloadService.js';
+import type { AntennasRepository } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
 import { bindThis } from '@/decorators.js';
 import { Schema, SchemaType } from '@/misc/json-schema.js';
 import { QueueLoggerService } from '../QueueLoggerService.js';
-import type { DBAntennaImportJobData } from '../types.js';
+import { DBAntennaImportJobData } from '../types.js';
 import type * as Bull from 'bullmq';
 
 const Ajv = _Ajv.default;
@@ -66,11 +65,6 @@ export class ImportAntennasProcessorService {
 		@Inject(DI.antennasRepository)
 		private antennasRepository: AntennasRepository,
 
-		@Inject(DI.driveFilesRepository)
-		private driveFilesRepository: DriveFilesRepository,
-
-		private downloadService: DownloadService,
-
 		private queueLoggerService: QueueLoggerService,
 		private idService: IdService,
 		private globalEventService: GlobalEventService,
@@ -79,55 +73,25 @@ export class ImportAntennasProcessorService {
 	}
 
 	@bindThis
-	public async process(job: Bull.Job<DBAntennaImportJobData>): Promise<string> {
-		const userId = job.data.user.id;
-
-		let antennas: unknown;
-		if (job.data.v === 2) {
-			// v2: ファイルのIDだけを受け取り、中身は処理時にドライブから読む
-			const file = await this.driveFilesRepository.findOneBy({ id: job.data.fileId, userId });
-			if (file == null) return 'skip: file not found';
-			// ダウンロードの失敗は一時的なことがあるので、例外のまま失敗させる。JSONとして読めないファイルは再試行しても直らないので、スキップする
-			const text = await this.downloadService.downloadTextFile(file.url);
-			try {
-				antennas = JSON.parse(text);
-			} catch (err) {
-				this.logger.warn(`Failed to parse the antennas file: ${file.id}`, { error: err });
-				return 'skip: failed to parse the file';
-			}
-		} else {
-			antennas = job.data.antenna;
-		}
-
-		if (!Array.isArray(antennas)) {
-			this.logger.warn('Validation Failed: not an array');
-			return 'skip: not an array';
-		}
-
-		await this.importAntennas(userId, antennas);
-		return 'ok';
-	}
-
-	@bindThis
-	private async importAntennas(userId: MiUser['id'], antennas: unknown[]): Promise<void> {
+	public async process(job: Bull.Job<DBAntennaImportJobData>): Promise<void> {
 		const now = new Date();
 		try {
-			for (const antenna of antennas) {
+			for (const antenna of job.data.antenna) {
+				if (antenna.keywords.length === 0 || antenna.keywords[0].every(x => x === '')) continue;
 				if (!validate(antenna)) {
 					this.logger.warn('Validation Failed');
 					continue;
 				}
-				if (antenna.keywords.length === 0 || antenna.keywords[0].every(x => x === '')) continue;
 				const result = await this.antennasRepository.insertOne({
 					id: this.idService.gen(now.getTime()),
 					lastUsedAt: now,
-					userId,
+					userId: job.data.user.id,
 					name: antenna.name,
 					src: antenna.src === 'list' && antenna.userListAccts ? 'users' : antenna.src,
 					userListId: null,
 					keywords: antenna.keywords,
 					excludeKeywords: antenna.excludeKeywords,
-					users: (antenna.src === 'list' && antenna.userListAccts != null ? antenna.userListAccts : antenna.users).filter(Boolean),
+					users: (antenna.src === 'list' && antenna.userListAccts !== null ? antenna.userListAccts : antenna.users).filter(Boolean),
 					caseSensitive: antenna.caseSensitive,
 					localOnly: antenna.localOnly,
 					excludeBots: antenna.excludeBots,

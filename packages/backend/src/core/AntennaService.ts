@@ -3,18 +3,14 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { execPipeline } from '@/misc/redis-pipeline.js';
 import { Inject, Injectable } from '@nestjs/common';
 import * as Redis from 'ioredis';
 import { In } from 'typeorm';
 import { FanoutTimelineService } from '@/core/FanoutTimelineService.js';
-import { isInternalEventRef, type GlobalEvents } from '@/core/GlobalEventService.js';
+import type { GlobalEvents } from '@/core/GlobalEventService.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { UtilityService } from '@/core/UtilityService.js';
 import { bindThis } from '@/decorators.js';
-import { LoggerService } from '@/core/LoggerService.js';
-import type Logger from '@/logger.js';
-import { ReloadableList, replaceById } from '@/misc/reloadable-list.js';
 import { DI } from '@/di-symbols.js';
 import * as Acct from '@/misc/acct.js';
 import type { Packed } from '@/misc/json-schema.js';
@@ -25,13 +21,11 @@ import type { MiUser } from '@/models/User.js';
 import { CacheService } from '@/core/CacheService.js';
 import { deserializeAntenna } from '@/core/deserializeAntenna.js';
 import type { OnApplicationShutdown } from '@nestjs/common';
-import { onRedisReconnected } from '@/misc/redis-reconnected.js';
 
 @Injectable()
 export class AntennaService implements OnApplicationShutdown {
-	private readonly offRedisReconnected: () => void;
-	private readonly logger: Logger;
-	private readonly antennas: ReloadableList<MiAntenna>;
+	private antennasFetched: boolean;
+	private antennas: MiAntenna[];
 
 	constructor(
 		@Inject(DI.redisForTimelines)
@@ -53,16 +47,11 @@ export class AntennaService implements OnApplicationShutdown {
 		private utilityService: UtilityService,
 		private globalEventService: GlobalEventService,
 		private fanoutTimelineService: FanoutTimelineService,
-		loggerService: LoggerService,
 	) {
-		this.logger = loggerService.getLogger('antenna');
-		this.antennas = new ReloadableList(
-			() => this.antennasRepository.findBy({ isActive: true }),
-			{ onError: err => this.logger.error('Failed to load active antennas', { e: err }) },
-		);
+		this.antennasFetched = false;
+		this.antennas = [];
 
 		this.redisForSub.on('message', this.onRedisMessage);
-		this.offRedisReconnected = onRedisReconnected(this.redisForSub, this.onRedisReconnected);
 	}
 
 	@bindThis
@@ -71,24 +60,22 @@ export class AntennaService implements OnApplicationShutdown {
 
 		if (obj.channel === 'internal') {
 			const { type, body } = obj.message as GlobalEvents['internal']['payload'];
-			if (isInternalEventRef(body) && (type === 'antennaCreated' || type === 'antennaUpdated' || type === 'antennaDeleted')) {
-				// 新本文は値を持たないので、一覧を捨てて次の取得でDBから読み直す。
-				// 1件ずつ読み直すと、読み込み中に届いた後続のイベントや、取得中の一覧との順序が入れ替わる
-				this.antennas.invalidate();
-				return;
-			}
-
-			// 旧本文（エンティティ全体）。読み込み済みの一覧に差分を反映する（読み込み中の一覧は保存しない）
-			if (isInternalEventRef(body)) return;
 			switch (type) {
 				case 'antennaCreated':
-				case 'antennaUpdated':
-				case 'antennaDeleted': {
-					// 旧本文の作成・更新は、これまでどおり無効なアンテナも一覧に入れる
-					const antenna = type === 'antennaDeleted' ? null : deserializeAntenna(body);
-					this.antennas.modify(antennas => replaceById(antennas, body.id, antenna));
+					this.antennas.push(deserializeAntenna(body));
 					break;
+				case 'antennaUpdated': {
+					const idx = this.antennas.findIndex(a => a.id === body.id);
+					if (idx >= 0) {
+						this.antennas[idx] = deserializeAntenna(body);
+					} else {
+						this.antennas.push(deserializeAntenna(body));
+					}
 				}
+					break;
+				case 'antennaDeleted':
+					this.antennas = this.antennas.filter(a => a.id !== body.id);
+					break;
 				default:
 					break;
 			}
@@ -97,25 +84,18 @@ export class AntennaService implements OnApplicationShutdown {
 
 	@bindThis
 	public async addNoteToAntennas(note: MiNote, noteUser: { id: MiUser['id']; username: string; host: string | null; isBot: boolean; }): Promise<void> {
-		let antennas: MiAntenna[];
-		try {
-			antennas = await this.getAntennas();
-		} catch {
-			// 再試行しても読み込めなかった（ログは読み込み側で出している）。呼び出し元はこの処理を待たないので、ここで止める
-			return;
-		}
+		const antennas = await this.getAntennas();
 		const antennasWithMatchResult = await Promise.all(antennas.map(antenna => this.checkHitAntenna(antenna, note, noteUser).then(hit => [antenna, hit] as const)));
 		const matchedAntennas = antennasWithMatchResult.filter(([, hit]) => hit).map(([antenna]) => antenna);
 
 		const redisPipeline = this.redisForTimelines.pipeline();
-		const pending: Promise<unknown>[] = [];
 
 		for (const antenna of matchedAntennas) {
-			this.fanoutTimelineService.push(`antennaTimeline:${antenna.id}`, note.id, 200, redisPipeline, pending);
+			this.fanoutTimelineService.push(`antennaTimeline:${antenna.id}`, note.id, 200, redisPipeline);
 			this.globalEventService.publishAntennaStream(antenna.id, 'note', note);
 		}
 
-		await execPipeline(redisPipeline, pending);
+		redisPipeline.exec();
 	}
 
 	// NOTE: フォローしているユーザーのノート、リストのユーザーのノート、グループのユーザーのノート指定はパフォーマンス上の理由で無効になっている
@@ -227,7 +207,14 @@ export class AntennaService implements OnApplicationShutdown {
 
 	@bindThis
 	public async getAntennas() {
-		return await this.antennas.get();
+		if (!this.antennasFetched) {
+			this.antennas = await this.antennasRepository.findBy({
+				isActive: true,
+			});
+			this.antennasFetched = true;
+		}
+
+		return this.antennas;
 	}
 
 	@bindThis
@@ -265,17 +252,8 @@ export class AntennaService implements OnApplicationShutdown {
 		}
 	}
 
-	/**
-	 * Pub/Subをつなぎ直したとき。切れている間のイベントを受け取れていないので、イベントで更新しているキャッシュを捨てる
-	 */
-	@bindThis
-	private onRedisReconnected(): void {
-		this.antennas.invalidate();
-	}
-
 	@bindThis
 	public dispose(): void {
-		this.offRedisReconnected();
 		this.redisForSub.off('message', this.onRedisMessage);
 	}
 

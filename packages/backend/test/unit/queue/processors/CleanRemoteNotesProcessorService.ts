@@ -21,7 +21,6 @@ import { DI } from '@/di-symbols.js';
 import { IdService } from '@/core/IdService.js';
 import { QueueLoggerService } from '@/queue/QueueLoggerService.js';
 import { GlobalModule } from '@/GlobalModule.js';
-import { CoreModule } from '@/core/CoreModule.js';
 import { secureRndstr } from '@/misc/secure-rndstr.js';
 
 describe('CleanRemoteNotesProcessorService', () => {
@@ -88,7 +87,6 @@ describe('CleanRemoteNotesProcessorService', () => {
 			.createTestingModule({
 				imports: [
 					GlobalModule,
-					CoreModule,
 				],
 				providers: [
 					CleanRemoteNotesProcessorService,

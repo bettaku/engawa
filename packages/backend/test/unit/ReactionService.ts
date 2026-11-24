@@ -9,63 +9,15 @@ import { Test } from '@nestjs/testing';
 import { CoreModule } from '@/core/CoreModule.js';
 import { ReactionService } from '@/core/ReactionService.js';
 import { GlobalModule } from '@/GlobalModule.js';
-import { DI } from '@/di-symbols.js';
-import { IdService } from '@/core/IdService.js';
-import { secureRndstr } from '@/misc/secure-rndstr.js';
-import type { MiMeta, MiUser, NotesRepository, UserProfilesRepository, UsersRepository } from '@/models/_.js';
 
 describe('ReactionService', () => {
 	let reactionService: ReactionService;
-	let app: Awaited<ReturnType<ReturnType<typeof Test.createTestingModule>['compile']>>;
 
 	beforeAll(async () => {
-		app = await Test.createTestingModule({
+		const app = await Test.createTestingModule({
 			imports: [GlobalModule, CoreModule],
 		}).compile();
 		reactionService = app.get<ReactionService>(ReactionService);
-	});
-
-	describe('バッファリングを使わない経路', () => {
-		let idService: IdService;
-		let notesRepository: NotesRepository;
-		let usersRepository: UsersRepository;
-		let userProfilesRepository: UserProfilesRepository;
-		let meta: MiMeta;
-
-		async function createUser(): Promise<MiUser> {
-			const id = idService.gen();
-			const username = secureRndstr(16);
-			await usersRepository.insert({ id, username, usernameLower: username.toLowerCase() });
-			await userProfilesRepository.insert({ userId: id });
-			return await usersRepository.findOneByOrFail({ id });
-		}
-
-		beforeAll(() => {
-			idService = app.get(IdService);
-			notesRepository = app.get(DI.notesRepository);
-			usersRepository = app.get(DI.usersRepository);
-			userProfilesRepository = app.get(DI.userProfilesRepository);
-			meta = app.get(DI.meta);
-			meta.enableReactionsBuffering = false;
-		});
-
-		test('リアクションの作成と削除で、件数とペアのキャッシュを更新する', async () => {
-			// 自分のノートへのリアクションにして、通知の作成を起こさない
-			const author = await createUser();
-			const reactor = author;
-			const id = idService.gen();
-			await notesRepository.insert({ id, text: 'test', userId: author.id, userHost: null, visibility: 'public', reactions: { '👍': 2 } });
-
-			await reactionService.create(reactor, await notesRepository.findOneByOrFail({ id }), '🍮');
-			let note = await notesRepository.findOneByOrFail({ id });
-			assert.deepStrictEqual(note.reactions, { '👍': 2, '🍮': 1 });
-			assert.deepStrictEqual(note.reactionAndUserPairCache, [`${reactor.id}/🍮`]);
-
-			await reactionService.delete(reactor, note);
-			note = await notesRepository.findOneByOrFail({ id });
-			assert.deepStrictEqual(note.reactions, { '👍': 2, '🍮': 0 });
-			assert.deepStrictEqual(note.reactionAndUserPairCache, []);
-		});
 	});
 
 	describe('normalize', () => {

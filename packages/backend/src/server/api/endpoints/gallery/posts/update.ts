@@ -6,7 +6,6 @@
 import ms from 'ms';
 import { Inject, Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
-import { ApiError } from '@/server/api/error.js';
 import type { DriveFilesRepository, GalleryPostsRepository } from '@/models/_.js';
 import type { MiDriveFile } from '@/models/DriveFile.js';
 import { GalleryPostEntityService } from '@/core/entities/GalleryPostEntityService.js';
@@ -33,16 +32,7 @@ export const meta = {
 	},
 
 	errors: {
-		noSuchPost: {
-			message: 'No such post.',
-			code: 'NO_SUCH_POST',
-			id: '15c7b18b-058e-4e96-99e3-5c6813189444',
-		},
-		noSuchFile: {
-			message: 'No valid files are specified.',
-			code: 'NO_SUCH_FILE',
-			id: 'ad4a11e9-234a-4551-b881-58b4ae6d473d',
-		},
+
 	},
 } as const;
 
@@ -83,11 +73,11 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				))).filter(x => x != null);
 
 				if (files.length === 0) {
-					throw new ApiError(meta.errors.noSuchFile);
+					throw new Error();
 				}
 			}
 
-			const result = await this.galleryPostsRepository.update({
+			await this.galleryPostsRepository.update({
 				id: ps.postId,
 				userId: me.id,
 			}, {
@@ -97,10 +87,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				isSensitive: ps.isSensitive,
 				fileIds: files ? files.map(file => file.id) : undefined,
 			});
-
-			if (result.affected === 0) {
-				throw new ApiError(meta.errors.noSuchPost);
-			}
 
 			const post = await this.galleryPostsRepository.findOneByOrFail({ id: ps.postId });
 

@@ -27,7 +27,7 @@ export const meta = {
 		type: 'object',
 		optional: false, nullable: false,
 		properties: {
-			token: { optional: false, type: 'string' },
+			token: { type: 'string' },
 		},
 	},
 } as const;
@@ -50,7 +50,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		super(meta, paramDef, async (ps, me) => {
 			const token = secureRndstr(32);
 			await this.cacheService.flashAccessTokensCache.set(token, {
-				userId: me.id,
+				user: me,
 				permissions: ps.permissions,
 			});
 			return {

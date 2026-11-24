@@ -13,7 +13,6 @@ import type { Config } from '@/config.js';
 import type { MiUser } from '@/models/User.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
-import { shouldHideNoteByTime } from '@/misc/should-hide-note-by-time.js';
 import { bindThis } from '@/decorators.js';
 import { IdService } from '@/core/IdService.js';
 import { MfmService } from '@/core/MfmService.js';
@@ -49,10 +48,7 @@ export class FeedService {
 
 		const profile = await this.userProfilesRepository.findOneByOrFail({ userId: user.id });
 
-		// フィードは未ログインの第三者が読むものなので、投稿者が過去の投稿を
-		// 非表示・フォロワー限定にしている場合は、その対象を含めない。
-		// （どちらの設定も古い投稿を隠すものなので、新しい順に取得してから除外すれば足りる）
-		const notes = (await this.notesRepository.find({
+		const notes = await this.notesRepository.find({
 			where: {
 				userId: user.id,
 				renoteId: IsNull(),
@@ -60,10 +56,6 @@ export class FeedService {
 			},
 			order: { id: -1 },
 			take: 20,
-		})).filter(note => {
-			const createdAt = this.idService.parse(note.id).date;
-			return !shouldHideNoteByTime(user.makeNotesHiddenBefore, createdAt)
-				&& !shouldHideNoteByTime(user.makeNotesFollowersOnlyBefore, createdAt);
 		});
 
 		const feed = new Feed({

@@ -20,25 +20,25 @@ import { bindThis } from '@/decorators.js';
 import { RoleService } from '@/core/RoleService.js';
 import type { Config } from '@/config.js';
 import type { FlashToken } from '@/misc/flash-token.js';
-import { redactSecrets, scrubSecrets } from '@/misc/redact-secrets.js';
 import { ApiError } from './error.js';
-import { ResponseValidator, appendViolationReport } from './response-validation.js';
 import { RateLimiterService } from './RateLimiterService.js';
 import { ApiLoggerService } from './ApiLoggerService.js';
-import { httpErrors } from './http-errors.js';
 import { AuthenticateService, AuthenticationError } from './AuthenticateService.js';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { OnApplicationShutdown } from '@nestjs/common';
 import type { IEndpointMeta, IEndpoint } from './endpoints.js';
+
+const accessDenied = {
+	message: 'Access denied.',
+	code: 'ACCESS_DENIED',
+	id: '56f35758-7dd5-468b-8439-5d6fb8ec9b8e',
+};
 
 @Injectable()
 export class ApiCallService implements OnApplicationShutdown {
 	private logger: Logger;
 	private userIpHistories: Map<MiUser['id'], Set<string>>;
 	private userIpHistoriesClearIntervalId: NodeJS.Timeout;
-
-	// 応答の検証はtest・development環境だけで行う。本番では応答ごとの検証コストをかけない
-	private responseValidator: ResponseValidator | null;
 
 	constructor(
 		@Inject(DI.meta)
@@ -57,8 +57,6 @@ export class ApiCallService implements OnApplicationShutdown {
 	) {
 		this.logger = this.apiLoggerService.logger;
 		this.userIpHistories = new Map<MiUser['id'], Set<string>>();
-		// 応答の検証はtest・development環境だけで行う。本番では応答ごとの検証コストをかけない
-		this.responseValidator = this.config.runtime.development.validateApiResponses ? new ResponseValidator() : null;
 
 		this.userIpHistoriesClearIntervalId = setInterval(() => {
 			this.userIpHistories.clear();
@@ -98,7 +96,11 @@ export class ApiCallService implements OnApplicationShutdown {
 		if (err instanceof AuthenticationError) {
 			const message = 'Authentication failed. Please ensure your token is correct.';
 			reply.header('WWW-Authenticate', `Bearer realm="Engawa", error="invalid_token", error_description="${message}"`);
-			this.send(reply, 401, new ApiError(httpErrors.authenticationFailed));
+			this.send(reply, 401, new ApiError({
+				message: 'Authentication failed. Please ensure your token is correct.',
+				code: 'AUTHENTICATION_FAILED',
+				id: 'b0a7f5f8-dc2f-4171-b91f-de88ad238e14',
+			}));
 		} else {
 			this.send(reply, 500, new ApiError());
 		}
@@ -109,45 +111,40 @@ export class ApiCallService implements OnApplicationShutdown {
 			throw err;
 		} else {
 			const errId = randomUUID();
-
-			// パラメータにはパスワードやトークンが含まれうるので、ログや外部サービスには伏せた状態で渡す
-			const { redacted: ps, secrets } = redactSecrets(data);
-			const message = scrubSecrets(err.message, secrets);
-			const stack = scrubSecrets(err.stack, secrets);
-
-			this.logger.error(`Internal error occurred in ${ep.name}: ${message}`, {
+			this.logger.error(`Internal error occurred in ${ep.name}: ${err.message}`, {
 				ep: ep.name,
-				ps,
+				ps: data,
 				e: {
-					message,
+					message: err.message,
 					code: err.name,
-					stack,
+					stack: err.stack,
 					id: errId,
 				},
 			});
 
 			if (this.config.sentryForBackend) {
-				Sentry.captureMessage(`Internal error occurred in ${ep.name}: ${message}`, {
+				Sentry.captureMessage(`Internal error occurred in ${ep.name}: ${err.message}`, {
 					level: 'error',
 					user: {
 						id: userId,
 					},
 					extra: {
 						ep: ep.name,
-						ps,
+						ps: data,
 						e: {
-							message,
+							message: err.message,
 							code: err.name,
-							stack,
+							stack: err.stack,
 							id: errId,
 						},
 					},
 				});
 			}
 
-			// 内部の例外の内容はクライアントに返さない。追跡用のIDだけを返し、詳細はログで確認する
 			throw new ApiError(null, {
 				e: {
+					message: err.message,
+					code: err.name,
 					id: errId,
 				},
 			});
@@ -169,8 +166,7 @@ export class ApiCallService implements OnApplicationShutdown {
 			? request.headers.authorization.slice(7)
 			: body?.['i'];
 		if (token != null && typeof token !== 'string') {
-			// 以前は本文を送らず、応答が返らなかった
-			this.send(reply, 400, new ApiError(httpErrors.invalidCredentialFormat, { param: 'i', reason: 'must be a string' }));
+			reply.code(400);
 			return;
 		}
 		this.authenticateService.authenticate(token).then(([user, app, flashToken]) => {
@@ -201,7 +197,8 @@ export class ApiCallService implements OnApplicationShutdown {
 			/* Fastify throws if the remote didn't send multipart data. Return 400 below. */
 		});
 		if (multipartData == null) {
-			this.send(reply, 400, new ApiError(httpErrors.invalidRequest));
+			reply.code(400);
+			reply.send();
 			return;
 		}
 
@@ -212,7 +209,8 @@ export class ApiCallService implements OnApplicationShutdown {
 			// ファイルサイズが制限を超えていた場合
 			// なお truncated はストリームを読み切ってからでないと機能しないため、stream.pipeline より後にある必要がある
 			if (multipartData.file.truncated) {
-				this.send(reply, 413, new ApiError(httpErrors.payloadTooLarge));
+				reply.code(413);
+				reply.send();
 				return;
 			}
 
@@ -226,7 +224,8 @@ export class ApiCallService implements OnApplicationShutdown {
 				? request.headers.authorization.slice(7)
 				: fields['i'];
 			if (token != null && typeof token !== 'string') {
-				this.send(reply, 400, new ApiError(httpErrors.invalidCredentialFormat, { param: 'i', reason: 'must be a string' }));
+				reply.code(400);
+				reply.send();
 				return;
 			}
 			await this.authenticateService.authenticate(token).then(async ([user, app, flashToken]) => {
@@ -322,7 +321,7 @@ export class ApiCallService implements OnApplicationShutdown {
 		const isSecure = user != null && token == null && flashToken == null;
 
 		if (ep.meta.secure && !isSecure) {
-			throw new ApiError(httpErrors.accessDenied);
+			throw new ApiError(accessDenied);
 		}
 
 		if (ep.meta.limit) {
@@ -347,32 +346,62 @@ export class ApiCallService implements OnApplicationShutdown {
 				// Rate limit
 				const rateLimit = await this.rateLimiterService.limit(limit as IEndpointMeta['limit'] & { key: NonNullable<string> }, limitActor, factor);
 				if (rateLimit != null) {
-					throw new ApiError(httpErrors.rateLimitExceeded, rateLimit.info);
+					throw new ApiError({
+						message: 'Rate limit exceeded. Please try again later.',
+						code: 'RATE_LIMIT_EXCEEDED',
+						id: 'd5826d14-3982-4d2e-8011-b9e9f02499ef',
+						httpStatusCode: 429,
+					}, rateLimit.info);
 				}
 			}
 		}
 
 		if (ep.meta.requireCredential || ep.meta.requireModerator || ep.meta.requireAdmin) {
 			if (user == null) {
-				throw new ApiError(httpErrors.credentialRequired);
+				throw new ApiError({
+					message: 'Credential required.',
+					code: 'CREDENTIAL_REQUIRED',
+					id: '1384574d-a912-4b81-8601-c7b1c4085df1',
+					httpStatusCode: 401,
+				});
 			} else if (user!.isSuspended) {
-				throw new ApiError(httpErrors.accountSuspended);
+				throw new ApiError({
+					message: 'Your account has been suspended.',
+					code: 'YOUR_ACCOUNT_SUSPENDED',
+					kind: 'permission',
+					id: 'a8c724b3-6e9c-4b46-b1a8-bc3ed6258370',
+				});
 			}
 		}
 
 		if (ep.meta.prohibitMoved) {
 			if (user?.movedToUri) {
-				throw new ApiError(httpErrors.accountMoved);
+				throw new ApiError({
+					message: 'You have moved your account.',
+					code: 'YOUR_ACCOUNT_MOVED',
+					kind: 'permission',
+					id: '56f20ec9-fd06-4fa5-841b-edd6d7d4fa31',
+				});
 			}
 		}
 
 		if ((ep.meta.requireModerator || ep.meta.requireAdmin) && (this.meta.rootUserId !== user!.id)) {
 			const myRoles = await this.roleService.getUserRoles(user!.id);
 			if (ep.meta.requireModerator && !myRoles.some(r => r.isModerator || r.isAdministrator)) {
-				throw new ApiError(httpErrors.notModerator);
+				throw new ApiError({
+					message: 'You are not assigned to a moderator role.',
+					code: 'ROLE_PERMISSION_DENIED',
+					kind: 'permission',
+					id: 'd33d5333-db36-423d-a8f9-1a2b9549da41',
+				});
 			}
 			if (ep.meta.requireAdmin && !myRoles.some(r => r.isAdministrator)) {
-				throw new ApiError(httpErrors.notAdministrator);
+				throw new ApiError({
+					message: 'You are not assigned to an administrator role.',
+					code: 'ROLE_PERMISSION_DENIED',
+					kind: 'permission',
+					id: 'c3d38592-54c0-429d-be96-5636b0431a61',
+				});
 			}
 		}
 
@@ -380,17 +409,31 @@ export class ApiCallService implements OnApplicationShutdown {
 			const myRoles = await this.roleService.getUserRoles(user!.id);
 			const policies = await this.roleService.getUserPolicies(user!.id);
 			if (!policies[ep.meta.requiredRolePolicy] && !myRoles.some(r => r.isAdministrator)) {
-				throw new ApiError(httpErrors.requiredRolePolicy);
+				throw new ApiError({
+					message: 'You are not assigned to a required role.',
+					code: 'ROLE_PERMISSION_DENIED',
+					kind: 'permission',
+					id: '7f86f06f-7e15-4057-8561-f4b6d4ac755a',
+				});
 			}
 		}
 
 		if (token && ((ep.meta.kind && !token.permission.some(p => p === ep.meta.kind))
 			|| (!ep.meta.kind && (ep.meta.requireCredential || ep.meta.requireModerator || ep.meta.requireAdmin)))) {
-			throw new ApiError(httpErrors.permissionDenied);
+			throw new ApiError({
+				message: 'Your app does not have the necessary permissions to use this endpoint.',
+				code: 'PERMISSION_DENIED',
+				kind: 'permission',
+				id: '1370e5b7-d4eb-4566-bb1d-7748ee6a1838',
+			});
 		}
 
 		if (flashToken && ep.meta.kind && !flashToken.permissions.some(p => p === ep.meta.kind)) {
-			throw new ApiError(httpErrors.flashPermissionDenied);
+			throw new ApiError({
+				message: 'Your flash does not have the necessary permissions to use this endpoint.',
+				code: 'PERMISSION_DENIED',
+				id: '11924d17-113a-4ab0-954a-c567ee8a6ce5',
+			});
 		}
 
 		// Cast non JSON input
@@ -401,7 +444,11 @@ export class ApiCallService implements OnApplicationShutdown {
 					try {
 						data[k] = JSON.parse(data[k]);
 					} catch (e) {
-						throw new ApiError(httpErrors.invalidParamCast, {
+						throw new ApiError({
+							message: 'Invalid param.',
+							code: 'INVALID_PARAM',
+							id: '0b5f1631-7c1a-41a6-b399-cce335f34d85',
+						}, {
 							param: k,
 							reason: `cannot cast to ${param.type}`,
 						});
@@ -411,48 +458,14 @@ export class ApiCallService implements OnApplicationShutdown {
 		}
 
 		// API invoking
-		const exec = () => ep.exec(data, user, token, flashToken, file, request.ip, request.headers)
-			.catch((err: Error) => this.#onExecError(ep, data, err, user?.id));
-
-		const res = this.config.sentryForBackend
-			? await Sentry.startSpan({ name: 'API: ' + ep.name }, exec)
-			: await exec();
-
-		if (this.responseValidator != null) this.#reportResponseViolation(ep, res);
-
-		return res;
-	}
-
-	/**
-	 * 応答が`res`スキーマと一致しない場合に記録する。応答そのものは変えない。
-	 */
-	#reportResponseViolation(ep: IEndpoint, res: unknown): void {
-		if (this.responseValidator == null) return;
-
-		try {
-			const found = this.responseValidator.validate(ep, res);
-			if (found == null) return;
-
-			// 警告ログとレポートは、それぞれ別に重複を除く。レポートの書き込みに失敗しても、警告は繰り返さない
-			const toLog = this.responseValidator.dedupe(found, 'log');
-			if (toLog != null) {
-				this.logger.warn(`Response of ${ep.name} violates its contract (${toLog.kind}): ${toLog.errors.map(e => `${e.instancePath || '/'} ${e.message}`).join('; ')}`);
-			}
-
-			const reportPath = this.config.runtime.development.apiResponseValidationReport;
-			if (!reportPath) return;
-
-			const toReport = this.responseValidator.dedupe(found, 'report');
-			if (toReport != null) {
-				appendViolationReport(reportPath, toReport).catch((err: unknown) => {
-					// 記録できなかった違反は、次に起きたときに記録し直す
-					this.responseValidator?.forget(toReport, 'report');
-					this.logger.warn(`Failed to write response violation report: ${err instanceof Error ? err.message : String(err)}`);
-				});
-			}
-		} catch (err) {
-			// 検証の失敗でAPIの応答を止めない
-			this.logger.warn(`Failed to validate response of ${ep.name}: ${err instanceof Error ? err.message : String(err)}`);
+		if (this.config.sentryForBackend) {
+			return await Sentry.startSpan({
+				name: 'API: ' + ep.name,
+			}, () => ep.exec(data, user, token, flashToken, file, request.ip, request.headers)
+				.catch((err: Error) => this.#onExecError(ep, data, err, user?.id)));
+		} else {
+			return await ep.exec(data, user, token, flashToken, file, request.ip, request.headers)
+				.catch((err: Error) => this.#onExecError(ep, data, err, user?.id));
 		}
 	}
 

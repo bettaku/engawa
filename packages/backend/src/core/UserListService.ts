@@ -20,7 +20,6 @@ import { QueueService } from '@/core/QueueService.js';
 import { RedisKVCache } from '@/misc/cache.js';
 import { RoleService } from '@/core/RoleService.js';
 import { SystemAccountService } from '@/core/SystemAccountService.js';
-import { CacheInvalidationService } from '@/core/CacheInvalidationService.js';
 
 @Injectable()
 export class UserListService implements OnApplicationShutdown, OnModuleInit {
@@ -46,7 +45,6 @@ export class UserListService implements OnApplicationShutdown, OnModuleInit {
 		private globalEventService: GlobalEventService,
 		private queueService: QueueService,
 		private systemAccountService: SystemAccountService,
-		private cacheInvalidationService: CacheInvalidationService,
 	) {
 		this.membersCache = new RedisKVCache<Set<string>>(this.redisClient, 'userListMembers', {
 			lifetime: 1000 * 60 * 30, // 30m
@@ -54,7 +52,6 @@ export class UserListService implements OnApplicationShutdown, OnModuleInit {
 			fetcher: (key) => this.userListMembershipsRepository.find({ where: { userListId: key }, select: ['userId'] }).then(xs => new Set(xs.map(x => x.userId))),
 			toRedisConverter: (value) => JSON.stringify(Array.from(value)),
 			fromRedisConverter: (value) => new Set(JSON.parse(value)),
-			invalidation: this.cacheInvalidationService,
 		});
 
 		this.redisForSub.on('message', this.onMessage);
@@ -71,11 +68,20 @@ export class UserListService implements OnApplicationShutdown, OnModuleInit {
 		if (obj.channel === 'internal') {
 			const { type, body } = obj.message as GlobalEvents['internal']['payload'];
 			switch (type) {
-				case 'userListMemberAdded':
+				case 'userListMemberAdded': {
+					const { userListId, memberId } = body;
+					const members = await this.membersCache.get(userListId);
+					if (members) {
+						members.add(memberId);
+					}
+					break;
+				}
 				case 'userListMemberRemoved': {
-					// 以前はメモリ上のSetだけを書き換えていたため、Redisの値が古いまま残り、ほかのプロセスが読み直すと古い値に戻っていた。
-					// 新しい版のプロセスはcacheInvalidatedでも無効化するが、旧版のプロセスが発行したイベントに備えて、ここでも消す
-					await this.membersCache.evict(body.userListId);
+					const { userListId, memberId } = body;
+					const members = await this.membersCache.get(userListId);
+					if (members) {
+						members.delete(memberId);
+					}
 					break;
 				}
 				default:
@@ -101,7 +107,6 @@ export class UserListService implements OnApplicationShutdown, OnModuleInit {
 			withReplies: options.withReplies ?? false,
 		} as MiUserListMembership);
 
-		await this.membersCache.delete(list.id);
 		this.globalEventService.publishInternalEvent('userListMemberAdded', { userListId: list.id, memberId: target.id });
 		this.globalEventService.publishUserListStream(list.id, 'userAdded', await this.userEntityService.pack(target));
 
@@ -119,19 +124,8 @@ export class UserListService implements OnApplicationShutdown, OnModuleInit {
 			userListId: list.id,
 		});
 
-		await this.membersCache.delete(list.id);
 		this.globalEventService.publishInternalEvent('userListMemberRemoved', { userListId: list.id, memberId: target.id });
 		this.globalEventService.publishUserListStream(list.id, 'userRemoved', await this.userEntityService.pack(target));
-	}
-
-	/**
-	 * リストのメンバーを、このサービスを通さずに変えたときに呼ぶ
-	 */
-	@bindThis
-	public async invalidateMembersCache(userListIds: MiUserList['id'][]): Promise<void> {
-		for (const userListId of new Set(userListIds)) {
-			await this.membersCache.delete(userListId);
-		}
 	}
 
 	@bindThis

@@ -4,7 +4,8 @@ import pluginGlsl from 'vite-plugin-glsl';
 import { replacePlugin } from 'rolldown/plugins';
 import { defineConfig } from 'vite';
 import type { UserConfig } from 'vite';
-import { developmentHost } from '../../scripts/config-path.mjs';
+import * as yaml from 'js-yaml';
+import { promises as fsp } from 'fs';
 import { execaSync } from 'execa';
 
 import locales from '../../locales/index.js';
@@ -17,7 +18,8 @@ import type { Options as SearchIndexOptions } from './lib/vite-plugin-create-sea
 import pluginWatchLocales from './lib/vite-plugin-watch-locales.js';
 import { pluginRemoveUnrefI18n } from '../frontend-builder/rollup-plugin-remove-unref-i18n.js';
 
-const host = process.env.NODE_ENV === 'development' ? await developmentHost() : undefined;
+const url = process.env.NODE_ENV === 'development' ? (yaml.load(await fsp.readFile('../../.config/default.yml', 'utf-8')) as any).url : null;
+const host = url ? (new URL(url)).hostname : undefined;
 
 // Get local git commit hash
 function getGitHash(): string {

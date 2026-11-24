@@ -29,7 +29,6 @@ import { MiMeta, MiNote, UserProfilesRepository } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
 import { secureRndstr } from '@/misc/secure-rndstr.js';
 import { DownloadService } from '@/core/DownloadService.js';
-import { QueueService } from '@/core/QueueService.js';
 import { genAidx } from '@/misc/id/aidx.js';
 
 const _filename = fileURLToPath(import.meta.url);
@@ -101,7 +100,6 @@ describe('ActivityPub', () => {
 	let rendererService: ApRendererService;
 	let jsonLdService: JsonLdService;
 	let resolver: MockResolver;
-	let queueService: QueueService;
 
 	const metaInitial = {
 		cacheRemoteFiles: true,
@@ -154,7 +152,6 @@ describe('ActivityPub', () => {
 		rendererService = app.get<ApRendererService>(ApRendererService);
 		imageService = app.get<ApImageService>(ApImageService);
 		jsonLdService = app.get<JsonLdService>(JsonLdService);
-		queueService = app.get<QueueService>(QueueService);
 		resolver = new MockResolver(await app.resolve<LoggerService>(LoggerService));
 
 		// Prevent ApPersonService from fetching instance, as it causes Jest import-after-test error
@@ -197,84 +194,6 @@ describe('ActivityPub', () => {
 			assert.deepStrictEqual(note?.uri, post.id);
 			assert.deepStrictEqual(note.visibility, 'public');
 			assert.deepStrictEqual(note.text, post.content);
-		});
-	});
-
-	describe('Move target (P3-3)', () => {
-		// ユーザーのpackは登録済みの移行先しか参照しないので、受信の側で未登録の移行先を登録するジョブを作る
-		const spies: { mockRestore(): void }[] = [];
-		afterEach(() => {
-			// restoreAllMocksはbeforeAllのspy（FederatedInstanceService.fetch）まで戻すので、ここで作ったものだけ戻す
-			for (const spy of spies.splice(0)) spy.mockRestore();
-		});
-
-		test('未登録の移行先なら、登録するジョブを作る', async () => {
-			const enqueue = vi.spyOn(queueService, 'createResolveRemoteUserJob').mockResolvedValue(undefined as never);
-			spies.push(enqueue);
-			const target = createRandomActor();
-			const actor = { ...createRandomActor(), movedTo: target.id };
-			resolver.register(actor.id, actor);
-
-			await personService.createPerson(actor.id, resolver);
-
-			expect(enqueue).toHaveBeenCalledTimes(1);
-			expect(enqueue).toHaveBeenCalledWith(target.id);
-		});
-
-		test('登録済みの移行先なら、ジョブを作らない', async () => {
-			const enqueue = vi.spyOn(queueService, 'createResolveRemoteUserJob').mockResolvedValue(undefined as never);
-			spies.push(enqueue);
-			const target = createRandomActor();
-			resolver.register(target.id, target);
-			await personService.createPerson(target.id, resolver);
-			const actor = { ...createRandomActor(), movedTo: target.id };
-			resolver.register(actor.id, actor);
-
-			await personService.createPerson(actor.id, resolver);
-
-			expect(enqueue).not.toHaveBeenCalled();
-		});
-
-		function useMockResolverForJob() {
-			// ジョブは自分でResolverを作るので、テストのMockResolverに差し替える
-			const original = personService.createPerson.bind(personService);
-			const create = vi.spyOn(personService, 'createPerson').mockImplementation((uri, _resolver, options) => original(uri, resolver, options));
-			spies.push(create);
-			return create;
-		}
-
-		test('ジョブは、未登録なら解決し、登録済みなら何もしない', async () => {
-			const target = createRandomActor();
-			resolver.register(target.id, target);
-			const create = useMockResolverForJob();
-
-			expect(await personService.processResolveRemoteUser(target.id)).toMatch(/^ok: /);
-			expect(await personService.processResolveRemoteUser(target.id)).toBe('skip: already registered');
-			expect(create).toHaveBeenCalledTimes(1);
-		});
-
-		test('ジョブで登録したユーザーの移行先は、たどらない（連鎖しない）', async () => {
-			const enqueue = vi.spyOn(queueService, 'createResolveRemoteUserJob').mockResolvedValue(undefined as never);
-			spies.push(enqueue);
-			useMockResolverForJob();
-			const next = createRandomActor();
-			const target = { ...createRandomActor(), movedTo: next.id };
-			resolver.register(target.id, target);
-
-			expect(await personService.processResolveRemoteUser(target.id)).toMatch(/^ok: /);
-			expect(enqueue).not.toHaveBeenCalled();
-		});
-
-		test('移行先のURIが不正でも、ユーザーの登録は失敗にしない', async () => {
-			const enqueue = vi.spyOn(queueService, 'createResolveRemoteUserJob').mockResolvedValue(undefined as never);
-			spies.push(enqueue);
-			const actor = { ...createRandomActor(), movedTo: 'not-a-url' };
-			resolver.register(actor.id, actor);
-
-			const user = await personService.createPerson(actor.id, resolver);
-
-			expect(user.uri).toBe(actor.id);
-			expect(enqueue).not.toHaveBeenCalled();
 		});
 	});
 

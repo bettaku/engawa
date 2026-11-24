@@ -17,13 +17,12 @@ export const meta = {
 		nullable: true,
 		properties: {
 			params: {
-				optional: false,
 				type: 'array',
 				items: {
 					type: 'object',
 					properties: {
-						name: { optional: false, type: 'string' },
-						type: { optional: false, type: 'string' },
+						name: { type: 'string' },
+						type: { type: 'string' },
 					},
 				},
 			},

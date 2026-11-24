@@ -988,15 +988,12 @@ async function translate(): Promise<void> {
 		return;
 	}
 
-	try {
-		translation.value = await misskeyApi('notes/translate', {
-			noteId: appearNote.id,
-			targetLang: miLocalStorage.getItem('lang') ?? navigator.language,
-		});
-	} finally {
-		// 翻訳に失敗しても、翻訳中の表示を解除する
-		translating.value = false;
-	}
+	const res = await misskeyApi('notes/translate', {
+		noteId: appearNote.id,
+		targetLang: miLocalStorage.getItem('lang') ?? navigator.language,
+	});
+	translating.value = false;
+	translation.value = res;
 
 	hapticConfirm();
 }

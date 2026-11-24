@@ -459,23 +459,13 @@ export const packedRoleSchema = {
 						anyOf: [{
 							type: 'object',
 							properties: {
-								// ポリシーの値は、真偽値・数値・文字列（chatAvailabilityなど）・文字列の配列（uploadableFileTypesなど）のいずれか
 								value: {
-									anyOf: [
+									oneOf: [
 										{
-											type: 'number',
+											type: 'integer',
 										},
 										{
 											type: 'boolean',
-										},
-										{
-											type: 'string',
-										},
-										{
-											type: 'array',
-											items: {
-												type: 'string',
-											},
 										},
 									],
 								},

@@ -169,7 +169,6 @@ export const packedEmojiDetailedAdminSchema = {
 			optional: false, nullable: false,
 		},
 		roleIdsThatCanBeUsedThisEmojiAsReaction: {
-			optional: false,
 			type: 'array',
 			items: {
 				type: 'object',

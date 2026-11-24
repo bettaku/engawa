@@ -5,19 +5,137 @@
 
 import * as fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname } from 'node:path';
-import cluster from 'node:cluster';
-import { parseConfigSource, configPath, ConfigValidationError, formatDiagnostic } from './config/parse.js';
-import { loadEnvironment, type Runtime } from './config/environment.js';
-import type { ConfigInput, RedisOptionsSource } from './config/types.js';
+import { dirname, resolve } from 'node:path';
+import * as yaml from 'js-yaml';
 import { type FastifyServerOptions } from 'fastify';
 import { resolveViteEntry, type ViteEntry } from './misc/vite-entry.js';
 import type * as Sentry from '@sentry/node';
 import type * as SentryVue from '@sentry/vue';
 import type { RedisOptions } from 'ioredis';
 
-export type { FulltextSearchProvider } from './config/types.js';
-export type { Runtime } from './config/environment.js';
+type RedisOptionsSource = Partial<RedisOptions> & {
+	host: string;
+	port: number;
+	family?: number;
+	pass: string;
+	db?: number;
+	prefix?: string;
+};
+
+/**
+ * 設定ファイルの型
+ */
+type Source = {
+	url?: string;
+	port?: number;
+	socket?: string;
+	trustProxy?: FastifyServerOptions['trustProxy'];
+	chmodSocket?: string;
+	disableHsts?: boolean;
+	db: {
+		host: string;
+		port: number;
+		db?: string;
+		user?: string;
+		pass?: string;
+		disableCache?: boolean;
+		extra?: { [x: string]: string };
+	};
+	dbReplications?: boolean;
+	dbSlaves?: {
+		host: string;
+		port: number;
+		db: string;
+		user: string;
+		pass: string;
+	}[];
+	redis: RedisOptionsSource;
+	redisForPubsub?: RedisOptionsSource;
+	redisForJobQueue?: RedisOptionsSource;
+	redisForTimelines?: RedisOptionsSource;
+	redisForReactions?: RedisOptionsSource;
+	fulltextSearch?: {
+		provider?: FulltextSearchProvider;
+	};
+	meilisearch?: {
+		host: string;
+		port: string;
+		apiKey: string;
+		ssl?: boolean;
+		index: string;
+		scope?: 'local' | 'global' | string[];
+	};
+	elasticsearch?: {
+		host: string;
+		port: number;
+		user: string;
+		pass: string;
+		ssl?: boolean;
+		index: string;
+		rejectUnauthorized?: boolean;
+		scope?: 'local' | 'global' | string[];
+		pingTimeout?: number;
+		requestTimeout?: number;
+	};
+	sentryForBackend?: { options: Partial<Sentry.NodeOptions>; enableNodeProfiling: boolean; };
+	sentryForFrontend?: {
+		options: Partial<SentryVue.BrowserOptions> & { dsn: string };
+		vueIntegration?: SentryVue.VueIntegrationOptions | null;
+		browserTracingIntegration?: Parameters<typeof SentryVue.browserTracingIntegration>[0] | null;
+		replayIntegration?: Parameters<typeof SentryVue.replayIntegration>[0] | null;
+	};
+
+	publishTarballInsteadOfProvideRepositoryUrl?: boolean;
+
+	setupPassword?: string;
+
+	proxy?: string;
+	proxySmtp?: string;
+	proxyBypassHosts?: string[];
+
+	allowedPrivateNetworks?: string[];
+
+	maxFileSize?: number;
+
+	clusterLimit?: number;
+
+	id: string;
+
+	outgoingAddress?: string;
+	outgoingAddressFamily?: 'ipv4' | 'ipv6' | 'dual';
+
+	deliverJobConcurrency?: number;
+	inboxJobConcurrency?: number;
+	relationshipJobConcurrency?: number;
+	deliverJobPerSec?: number;
+	inboxJobPerSec?: number;
+	relationshipJobPerSec?: number;
+	deliverJobMaxAttempts?: number;
+	inboxJobMaxAttempts?: number;
+
+	cloudLogging?: {
+		projectId: string;
+		saKeyPath: string;
+		logName?: string;
+	}
+
+	apFileBaseUrl?: string;
+
+	mediaProxy?: string;
+	videoThumbnailGenerator?: string;
+
+	perChannelMaxNoteCacheCount?: number;
+	perUserNotificationsMaxCount?: number;
+	deactivateAntennaThreshold?: number;
+	pidFile: string;
+
+	logging?: {
+		sql?: {
+			disableQueryTruncation?: boolean,
+			enableQueryParamLogging?: boolean,
+		}
+	}
+};
 
 export type Config = {
 	url: string;
@@ -26,11 +144,47 @@ export type Config = {
 	trustProxy: FastifyServerOptions['trustProxy'];
 	chmodSocket: string | undefined;
 	disableHsts: boolean | undefined;
-	db: ConfigInput['db'] & { db: string; user: string; pass: string };
+	db: {
+		host: string;
+		port: number;
+		db: string;
+		user: string;
+		pass: string;
+		disableCache?: boolean;
+		extra?: { [x: string]: string };
+	};
 	dbReplications: boolean | undefined;
-	dbSlaves: ConfigInput['dbSlaves'];
-	fulltextSearch?: ConfigInput['fulltextSearch'];
-	elasticsearch: ConfigInput['elasticsearch'];
+	dbSlaves: {
+		host: string;
+		port: number;
+		db: string;
+		user: string;
+		pass: string;
+	}[] | undefined;
+	fulltextSearch?: {
+		provider?: FulltextSearchProvider;
+	};
+	meilisearch: {
+		host: string;
+		port: string;
+		apiKey: string;
+		ssl?: boolean;
+		index: string;
+		scope?: 'local' | 'global' | string[];
+		locale?: string[];
+	} | undefined;
+	elasticsearch: {
+		host: string;
+		port: number;
+		user: string;
+		pass: string;
+		ssl?: boolean;
+		index: string;
+		rejectUnauthorized?: boolean;
+		scope?: 'local' | 'global' | string[];
+		pingTimeout?: number;
+		requestTimeout?: number;
+	} | undefined;
 	proxy: string | undefined;
 	proxySmtp: string | undefined;
 	proxyBypassHosts: string[] | undefined;
@@ -48,9 +202,18 @@ export type Config = {
 	relationshipJobPerSec: number | undefined;
 	deliverJobMaxAttempts: number | undefined;
 	inboxJobMaxAttempts: number | undefined;
-	cloudLogging?: ConfigInput['cloudLogging'];
+	cloudLogging?: {
+		projectId: string;
+		saKeyPath: string;
+		logName?: string;
+	}
 	apFileBaseUrl: string | undefined;
-	logging?: ConfigInput['logging'];
+	logging?: {
+		sql?: {
+			disableQueryTruncation?: boolean,
+			enableQueryParamLogging?: boolean,
+		}
+	}
 
 	version: string;
 	basedMisskeyVersion: string;
@@ -77,7 +240,7 @@ export type Config = {
 	redisForJobQueue: RedisOptions & RedisOptionsSource;
 	redisForTimelines: RedisOptions & RedisOptionsSource;
 	redisForReactions: RedisOptions & RedisOptionsSource;
-	sentryForBackend: { options: Partial<Sentry.NodeOptions>; enableNodeProfiling?: boolean; } | undefined;
+	sentryForBackend: { options: Partial<Sentry.NodeOptions>; enableNodeProfiling: boolean; } | undefined;
 	sentryForFrontend: {
 		options: Partial<SentryVue.BrowserOptions> & { dsn: string };
 		vueIntegration?: SentryVue.VueIntegrationOptions | null;
@@ -87,40 +250,29 @@ export type Config = {
 	perChannelMaxNoteCacheCount: number;
 	perUserNotificationsMaxCount: number;
 	deactivateAntennaThreshold: number;
-	pidFile?: string;
-	/** 環境変数で切り替わる振る舞い。設定ファイルでは指定できない */
-	runtime: Runtime;
+	pidFile: string;
 };
+
+export type FulltextSearchProvider = 'sqlLike' | 'sqlPgroonga' | 'meilisearch' | 'elasticsearch';
 
 const _filename = fileURLToPath(import.meta.url);
 const _dirname = dirname(_filename);
 
-export const path = configPath();
-let cached: Config | undefined;
+/**
+ * Path of configuration directory
+ */
+const dir = `${_dirname}/../../../.config`;
+
+/**
+ * Path of configuration file
+ */
+export const path = process.env.CHERRYPICK_CONFIG_YML
+	? resolve(dir, process.env.CHERRYPICK_CONFIG_YML)
+	: process.env.NODE_ENV === 'test'
+		? resolve(dir, 'test.yml')
+		: resolve(dir, 'default.yml');
 
 export function loadConfig(): Config {
-	if (cached) return cached;
-	const environment = loadEnvironment();
-	// 空文字列は未設定（warn）として扱う。それ以外の不正な値は、parseConfigSourceが拒否する
-	const mode = environment.values.CHERRYPICK_CONFIG_VALIDATION ?? 'warn';
-	const { source, diagnostics: configDiagnostics } = parseConfigSource(path, environment.values, mode);
-	const diagnostics = mode === 'off' ? configDiagnostics : [...configDiagnostics, ...environment.diagnostics];
-	if (mode === 'error' && diagnostics.some(d => d.level === 'error')) {
-		throw new ConfigValidationError(diagnostics);
-	}
-	if (cluster.isPrimary && environment.runtime.nodeEnv !== 'test') {
-		for (const diagnostic of diagnostics) console.warn(formatDiagnostic(diagnostic));
-	}
-	cached = { ...deriveConfig(source), runtime: environment.runtime };
-	return cached;
-}
-
-function deriveConfig(config: ConfigInput): Omit<Config, 'runtime'> {
-	// Meilisearchは削除した。黙ってSQLでの検索に切り替えると、検索の挙動が変わったことに気づけないので起動しない
-	if ((config.fulltextSearch?.provider as string | undefined) === 'meilisearch') {
-		throw new Error('fulltextSearch.provider "meilisearch" is no longer supported. Use "sqlPgroonga" or "elasticsearch" instead. See CHANGELOG_engawa.md for migration.');
-	}
-
 	const meta = JSON.parse(fs.readFileSync(`${_dirname}/../../../built/meta.json`, 'utf-8'));
 
 	const frontendManifestExists = fs.existsSync(_dirname + '/../../../built/_frontend_vite_/manifest.json');
@@ -132,7 +284,9 @@ function deriveConfig(config: ConfigInput): Omit<Config, 'runtime'> {
 		JSON.parse(fs.readFileSync(`${_dirname}/../../../built/_frontend_embed_vite_/manifest.json`, 'utf-8'))
 		: { 'src/boot.ts': { file: null } };
 
-	const url = tryCreateUrl(config.url ?? '');
+	const config = yaml.load(fs.readFileSync(path, 'utf-8')) as Source;
+
+	const url = tryCreateUrl(config.url ?? process.env.CHERRYPICK_URL ?? '');
 	const version = meta.version;
 	const basedMisskeyVersion = meta.basedMisskeyVersion;
 	const host = url.host;
@@ -140,9 +294,9 @@ function deriveConfig(config: ConfigInput): Omit<Config, 'runtime'> {
 	const scheme = url.protocol.replace(/:$/, '');
 	const wsScheme = scheme.replace('http', 'ws');
 
-	const dbDb = config.db.db ?? '';
-	const dbUser = config.db.user ?? '';
-	const dbPass = config.db.pass ?? '';
+	const dbDb = config.db.db ?? process.env.DATABASE_DB ?? '';
+	const dbUser = config.db.user ?? process.env.DATABASE_USER ?? '';
+	const dbPass = config.db.pass ?? process.env.DATABASE_PASSWORD ?? '';
 
 	const externalMediaProxy = config.mediaProxy ?
 		config.mediaProxy.endsWith('/') ? config.mediaProxy.substring(0, config.mediaProxy.length - 1) : config.mediaProxy
@@ -157,10 +311,9 @@ function deriveConfig(config: ConfigInput): Omit<Config, 'runtime'> {
 		publishTarballInsteadOfProvideRepositoryUrl: !!config.publishTarballInsteadOfProvideRepositoryUrl,
 		setupPassword: config.setupPassword,
 		url: url.origin,
-		port: config.port ?? NaN,
+		port: config.port ?? parseInt(process.env.PORT ?? '', 10),
 		socket: config.socket,
-		// Fastify also accepts a numeric hop count in lib/request.js.
-		trustProxy: config.trustProxy as FastifyServerOptions['trustProxy'],
+		trustProxy: config.trustProxy,
 		chmodSocket: config.chmodSocket,
 		disableHsts: config.disableHsts,
 		host,
@@ -175,6 +328,7 @@ function deriveConfig(config: ConfigInput): Omit<Config, 'runtime'> {
 		dbReplications: config.dbReplications,
 		dbSlaves: config.dbSlaves,
 		fulltextSearch: config.fulltextSearch,
+		meilisearch: config.meilisearch,
 		elasticsearch: config.elasticsearch,
 		redis,
 		redisForPubsub: config.redisForPubsub ? convertRedisOptions(config.redisForPubsub, host) : redis,
@@ -200,14 +354,13 @@ function deriveConfig(config: ConfigInput): Omit<Config, 'runtime'> {
 		relationshipJobPerSec: config.relationshipJobPerSec,
 		deliverJobMaxAttempts: config.deliverJobMaxAttempts,
 		inboxJobMaxAttempts: config.inboxJobMaxAttempts,
-		cloudLogging: config.cloudLogging,
 		apFileBaseUrl: config.apFileBaseUrl,
 		mediaProxy: externalMediaProxy ?? internalMediaProxy,
 		externalMediaProxyEnabled: externalMediaProxy !== null && externalMediaProxy !== internalMediaProxy,
 		videoThumbnailGenerator: config.videoThumbnailGenerator ?
 			config.videoThumbnailGenerator.endsWith('/') ? config.videoThumbnailGenerator.substring(0, config.videoThumbnailGenerator.length - 1) : config.videoThumbnailGenerator
 			: null,
-		userAgent: `Engawa/${version} (${url.origin})`,
+		userAgent: `Engawa/${version} (${config.url})`,
 		frontendEntry: resolveViteEntry(frontendManifest, 'src/_boot_.ts'),
 		frontendManifestExists: frontendManifestExists,
 		frontendEmbedEntry: resolveViteEntry(frontendEmbedManifest, 'src/boot.ts'),
@@ -223,18 +376,18 @@ function deriveConfig(config: ConfigInput): Omit<Config, 'runtime'> {
 function tryCreateUrl(url: string) {
 	try {
 		return new URL(url);
-	} catch {
-		throw new Error('/url must be a valid URL');
+	} catch (e) {
+		throw new Error(`url="${url}" is not a valid URL.`);
 	}
 }
 
-export function convertRedisOptions(options: RedisOptionsSource & RedisOptions, host: string): RedisOptions & RedisOptionsSource {
+function convertRedisOptions(options: RedisOptionsSource, host: string): RedisOptions & RedisOptionsSource {
 	return {
 		...options,
-		password: options.pass ?? options.password,
+		password: options.pass,
 		prefix: options.prefix ?? host,
 		family: options.family ?? 0,
-		keyPrefix: options.keyPrefix ?? `${options.prefix ?? host}:`,
+		keyPrefix: `${options.prefix ?? host}:`,
 		db: options.db ?? 0,
 	};
 }

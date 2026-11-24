@@ -3,11 +3,9 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { bindThis } from '@/decorators.js';
-import { DI } from '@/di-symbols.js';
-import type { Config } from '@/config.js';
 import FederationChart from './charts/federation.js';
 import NotesChart from './charts/notes.js';
 import UsersChart from './charts/users.js';
@@ -28,9 +26,6 @@ export class ChartManagementService implements OnApplicationShutdown {
 	private saveIntervalId: NodeJS.Timeout;
 
 	constructor(
-		@Inject(DI.config)
-		private config: Config,
-
 		private federationChart: FederationChart,
 		private notesChart: NotesChart,
 		private usersChart: UsersChart,
@@ -73,7 +68,7 @@ export class ChartManagementService implements OnApplicationShutdown {
 	@bindThis
 	public async dispose(): Promise<void> {
 		clearInterval(this.saveIntervalId);
-		if (!this.config.runtime.test.disablePeriodicTasks) {
+		if (process.env.NODE_ENV !== 'test') {
 			for (const chart of this.charts) {
 				await chart.save();
 			}

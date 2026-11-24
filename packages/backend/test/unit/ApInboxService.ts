@@ -20,11 +20,8 @@ import type {
 	ChatRoomsRepository,
 	ChatRoomInvitationsRepository,
 	ChatRoomMembershipsRepository,
-	ChatMessagesRepository,
-	NotesRepository,
 	UsersRepository,
 	UserProfilesRepository,
-	MiMeta,
 	MiUser,
 } from '@/models/_.js';
 import type { MiRemoteUser } from '@/models/User.js';
@@ -49,8 +46,6 @@ describe('ApInboxService (chat federation)', () => {
 	let chatRoomsRepository: ChatRoomsRepository;
 	let chatRoomInvitationsRepository: ChatRoomInvitationsRepository;
 	let chatRoomMembershipsRepository: ChatRoomMembershipsRepository;
-	let chatMessagesRepository: ChatMessagesRepository;
-	let notesRepository: NotesRepository;
 
 	const remoteHost = 'remote.test';
 
@@ -119,8 +114,6 @@ describe('ApInboxService (chat federation)', () => {
 		chatRoomsRepository = app.get(DI.chatRoomsRepository);
 		chatRoomInvitationsRepository = app.get(DI.chatRoomInvitationsRepository);
 		chatRoomMembershipsRepository = app.get(DI.chatRoomMembershipsRepository);
-		chatMessagesRepository = app.get(DI.chatMessagesRepository);
-		notesRepository = app.get(DI.notesRepository);
 
 		// invite() fires a fire-and-forget notification; stub it so tests have no side effects.
 		const notificationService = app.get<NotificationService>(NotificationService);
@@ -286,184 +279,6 @@ describe('ApInboxService (chat federation)', () => {
 			// membership on the genuine local room is untouched
 			const membership = await chatRoomMembershipsRepository.findOneBy({ roomId: room.id, userId: member.id });
 			assert.notStrictEqual(membership, null);
-		});
-	});
-
-	describe('create (chat message)', () => {
-		async function createChatRecipient(): Promise<MiUser> {
-			const user = await createLocalUser();
-			await usersRepository.update(user.id, { chatScope: 'everyone' });
-			return await usersRepository.findOneByOrFail({ id: user.id });
-		}
-
-		function chatCreateActivity(actor: MiRemoteUser, recipient: MiUser, object: Record<string, unknown>) {
-			return {
-				type: 'Create',
-				id: `${actor.uri}/activities/${secureRndstr(16)}`,
-				actor: actor.uri,
-				object: {
-					type: 'Note',
-					_misskey_talk: true,
-					content: 'hello',
-					to: [localUserUri(recipient.id)],
-					...object,
-				},
-			};
-		}
-
-		test('accepts a chat message whose id and attributedTo belong to the actor', async () => {
-			const recipient = await createChatRecipient();
-			const sender = await createRemoteUser();
-			const id = `https://${remoteHost}/chat/messages/${secureRndstr(16)}`;
-
-			await inboxService.performOneActivity(sender, chatCreateActivity(sender, recipient, { id, attributedTo: sender.uri }) as any);
-
-			const message = await chatMessagesRepository.findOneBy({ uri: id });
-			assert.notStrictEqual(message, null);
-			assert.strictEqual(message?.fromUserId, sender.id);
-		});
-
-		test('rejects a chat message whose id is on another host (e.g. a local note URI)', async () => {
-			const recipient = await createChatRecipient();
-			const attacker = await createRemoteUser();
-			const spoofedId = `${config.url}/notes/${idService.gen()}`;
-
-			await inboxService.performOneActivity(attacker, chatCreateActivity(attacker, recipient, { id: spoofedId, attributedTo: attacker.uri }) as any);
-
-			const message = await chatMessagesRepository.findOneBy({ uri: spoofedId });
-			assert.strictEqual(message, null);
-		});
-
-		test('rejects a chat message attributed to someone other than the actor', async () => {
-			const recipient = await createChatRecipient();
-			const attacker = await createRemoteUser();
-			const other = await createRemoteUser();
-			const id = `https://${remoteHost}/chat/messages/${secureRndstr(16)}`;
-
-			await inboxService.performOneActivity(attacker, chatCreateActivity(attacker, recipient, { id, attributedTo: other.uri }) as any);
-
-			const message = await chatMessagesRepository.findOneBy({ uri: id });
-			assert.strictEqual(message, null);
-		});
-	});
-
-	describe('reply delivery', () => {
-		// Creating a reply resolves the replied-to note, which is refused unless federation is enabled.
-		let originalFederation: MiMeta['federation'];
-		beforeAll(() => {
-			const meta = app.get<MiMeta>(DI.meta);
-			originalFederation = meta.federation;
-			meta.federation = 'all';
-		});
-		afterAll(() => {
-			app.get<MiMeta>(DI.meta).federation = originalFederation;
-		});
-
-		test('a public reply to a local note is still created after a chat message tried to claim the note URI', async () => {
-			const author = await createLocalUser();
-			const noteId = idService.gen();
-			await notesRepository.insert({ id: noteId, text: 'target', userId: author.id, userHost: null, visibility: 'public' });
-			const noteUri = `${config.url}/notes/${noteId}`;
-
-			// The attacker sends a chat message to its own local account that carries the note's URI as its id.
-			const attackerLocal = await createLocalUser();
-			await usersRepository.update(attackerLocal.id, { chatScope: 'everyone' });
-			const attacker = await createRemoteUser();
-			await inboxService.performOneActivity(attacker, {
-				type: 'Create',
-				id: `${attacker.uri}/activities/${secureRndstr(16)}`,
-				actor: attacker.uri,
-				object: {
-					type: 'Note',
-					_misskey_talk: true,
-					id: noteUri,
-					attributedTo: attacker.uri,
-					content: 'planted',
-					to: [localUserUri(attackerLocal.id)],
-				},
-			} as any);
-
-			// An unrelated remote user then publicly replies to the note.
-			const replier = await createRemoteUser('other.test');
-			const replyUri = `https://other.test/notes/${secureRndstr(16)}`;
-			await inboxService.performOneActivity(replier, {
-				type: 'Create',
-				id: `${replyUri}/activity`,
-				actor: replier.uri,
-				object: {
-					type: 'Note',
-					id: replyUri,
-					attributedTo: replier.uri,
-					content: 'a reply',
-					inReplyTo: noteUri,
-					to: ['https://www.w3.org/ns/activitystreams#Public'],
-					cc: [author.uri ?? localUserUri(author.id)],
-				},
-			} as any);
-
-			const reply = await notesRepository.findOneBy({ uri: replyUri });
-			assert.notStrictEqual(reply, null);
-			assert.strictEqual(reply?.replyId, noteId);
-		});
-	});
-
-	describe('isReplyToChatMessage', () => {
-		// A chat message carrying another note's URI may already be stored (planted before the
-		// id/attributedTo checks existed). Replies to that note from anyone who is not part of the
-		// conversation must still be handled as notes, not swallowed as chat messages.
-		test('does not treat a reply from a non-participant as a chat reply', async () => {
-			const recipient = await createLocalUser();
-			const attacker = await createRemoteUser();
-			const replier = await createRemoteUser('other.test');
-			const noteUri = `https://other.test/notes/${secureRndstr(16)}`;
-
-			await chatMessagesRepository.insert({
-				id: idService.gen(),
-				fromUserId: attacker.id,
-				toUserId: recipient.id,
-				text: 'planted',
-				uri: noteUri,
-			});
-
-			const reply = { type: 'Note', id: `https://other.test/notes/${secureRndstr(16)}`, inReplyTo: noteUri };
-			assert.strictEqual(await (inboxService as any).isReplyToChatMessage(replier, reply), false);
-		});
-
-		test('treats a reply from a participant of the conversation as a chat reply', async () => {
-			const recipient = await createLocalUser();
-			const sender = await createRemoteUser();
-			const messageUri = `https://${remoteHost}/chat/messages/${secureRndstr(16)}`;
-
-			await chatMessagesRepository.insert({
-				id: idService.gen(),
-				fromUserId: sender.id,
-				toUserId: recipient.id,
-				text: 'hi',
-				uri: messageUri,
-			});
-
-			const reply = { type: 'Note', id: `https://${remoteHost}/notes/${secureRndstr(16)}`, inReplyTo: messageUri };
-			assert.strictEqual(await (inboxService as any).isReplyToChatMessage(sender, reply), true);
-		});
-
-		test('treats a reply from a room member as a chat reply', async () => {
-			const owner = await createLocalUser();
-			const room = await createLocalRoom(owner);
-			const sender = await createRemoteUser();
-			const member = await createRemoteUser('other.test');
-			await chatRoomMembershipsRepository.insert({ id: idService.gen(), roomId: room.id, userId: member.id });
-			const messageUri = `https://${remoteHost}/chat/messages/${secureRndstr(16)}`;
-
-			await chatMessagesRepository.insert({
-				id: idService.gen(),
-				fromUserId: sender.id,
-				toRoomId: room.id,
-				text: 'hi',
-				uri: messageUri,
-			});
-
-			const reply = { type: 'Note', id: `https://other.test/notes/${secureRndstr(16)}`, inReplyTo: messageUri };
-			assert.strictEqual(await (inboxService as any).isReplyToChatMessage(member, reply), true);
 		});
 	});
 });

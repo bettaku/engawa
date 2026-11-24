@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=../packages/backend/config.schema.json
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # CherryPick configuration
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -129,7 +128,7 @@ fulltextSearch:
   #   You need to install pgroonga and configure it as a PostgreSQL extension.
   #   In addition to the above, you need to create a pgroonga index on the text column of the note table.
   #   see: https://pgroonga.github.io/tutorial/
-  # - meilisearch (deprecated; scheduled for removal)
+  # - meilisearch
   #   Use Meilisearch.
   #   You need to install Meilisearch and configure.
   provider: sqlLike
@@ -139,7 +138,6 @@ fulltextSearch:
 # You can set scope to local (default value) or global
 # (include notes from remote).
 
-# Deprecated; scheduled for removal (bettaku/engawa#325).
 #meilisearch:
 #  host: meilisearch
 #  port: 7700
@@ -208,6 +206,9 @@ id: 'aidx'
 # deliverJobMaxAttempts: 12
 # inboxJobMaxAttempts: 8
 
+# IP address family used for outgoing request (ipv4, ipv6 or dual)
+#outgoingAddressFamily: ipv4
+
 # Cloud Logging
 #cloudLogging:
 #  projectId: example-project-id
@@ -244,12 +245,6 @@ proxyBypassHosts:
 
 # Upload or download file size limits (bytes)
 #maxFileSize: 262144000
-
-# Maximum number of notifications kept per user
-#perUserNotificationsMaxCount: 500
-
-# Inactivity threshold for antennas (milliseconds)
-#deactivateAntennaThreshold: 604800000
 
 # Log settings
 # logging:

@@ -10,9 +10,6 @@ import { DI } from '@/di-symbols.js';
 import { secureRndstr } from '@/misc/secure-rndstr.js';
 import { ModerationLogService } from '@/core/ModerationLogService.js';
 import { hashPassword } from '@/misc/password.js';
-import { RoleService } from '@/core/RoleService.js';
-import { ApiError } from '../../error.js';
-import { CacheService } from '@/core/CacheService.js';
 
 export const meta = {
 	tags: ['admin'],
@@ -20,27 +17,6 @@ export const meta = {
 	requireCredential: true,
 	requireModerator: true,
 	kind: 'write:admin:reset-password',
-
-	errors: {
-		noSuchUser: {
-			message: 'No such user.',
-			code: 'NO_SUCH_USER',
-			id: 'fbd7f6a7-6d06-4d91-ac54-b9eb3d08817e',
-		},
-		cannotResetPasswordOfRoot: {
-			message: 'Cannot reset the password of the root user.',
-			code: 'CANNOT_RESET_PASSWORD_OF_ROOT',
-			id: '42e09a2f-bbd7-4509-8442-c811bc3326f3',
-			kind: 'permission',
-		},
-		cannotResetPasswordOfAdmin: {
-			message: 'Only administrators can reset the password of an administrator.',
-			code: 'CANNOT_RESET_PASSWORD_OF_ADMIN',
-			id: '6c2f1c1b-2a0e-4b2a-8d1f-0b7f0f6f2c35',
-			kind: 'permission',
-			httpStatusCode: 403,
-		},
-	},
 
 	res: {
 		type: 'object',
@@ -77,23 +53,16 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private userProfilesRepository: UserProfilesRepository,
 
 		private moderationLogService: ModerationLogService,
-		private roleService: RoleService,
-		private cacheService: CacheService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const user = await this.usersRepository.findOneBy({ id: ps.userId });
 
 			if (user == null) {
-				throw new ApiError(meta.errors.noSuchUser);
+				throw new Error('user not found');
 			}
 
 			if (this.serverSettings.rootUserId === user.id) {
-				throw new ApiError(meta.errors.cannotResetPasswordOfRoot);
-			}
-
-			// 管理者のパスワードは管理者にしか再設定させない（モデレーターが管理者になりすませないようにする）
-			if (await this.roleService.isAdministrator(user) && !(await this.roleService.isAdministrator(me))) {
-				throw new ApiError(meta.errors.cannotResetPasswordOfAdmin);
+				throw new Error('cannot reset password of root');
 			}
 
 			const passwd = secureRndstr(16);
@@ -106,7 +75,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			}, {
 				password: hash,
 			});
-			await this.cacheService.userProfileCache.delete(user.id);
 
 			this.moderationLogService.log(me, 'resetPassword', {
 				userId: user.id,

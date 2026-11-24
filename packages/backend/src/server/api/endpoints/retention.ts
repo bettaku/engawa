@@ -19,16 +19,13 @@ export const meta = {
 			type: 'object',
 			properties: {
 				createdAt: {
-					optional: false,
 					type: 'string',
 					format: 'date-time',
 				},
 				users: {
-					optional: false,
 					type: 'number',
 				},
 				data: {
-					optional: false,
 					type: 'object',
 					additionalProperties: {
 						anyOf: [{

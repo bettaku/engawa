@@ -6,7 +6,6 @@
 import ms from 'ms';
 import { Inject, Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
-import { ApiError } from '@/server/api/error.js';
 import type { DriveFilesRepository, GalleryPostsRepository } from '@/models/_.js';
 import { MiGalleryPost } from '@/models/GalleryPost.js';
 import type { MiDriveFile } from '@/models/DriveFile.js';
@@ -35,11 +34,7 @@ export const meta = {
 	},
 
 	errors: {
-		noSuchFile: {
-			message: 'No valid files are specified.',
-			code: 'NO_SUCH_FILE',
-			id: '3fcba4c1-a11f-4d1a-9d8d-789472a9f491',
-		},
+
 	},
 } as const;
 
@@ -77,7 +72,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			))).filter(x => x != null);
 
 			if (files.length === 0) {
-				throw new ApiError(meta.errors.noSuchFile);
+				throw new Error();
 			}
 
 			const post = await this.galleryPostsRepository.insertOne(new MiGalleryPost({

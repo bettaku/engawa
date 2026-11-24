@@ -10,26 +10,10 @@ import { createHash } from 'node:crypto';
 import { DI } from '@/di-symbols.js';
 import type { MiUserProfile, UserProfilesRepository, UsersRepository } from '@/models/_.js';
 import { bindThis } from '@/decorators.js';
-import type { Config } from '@/config.js';
-import { CacheService } from '@/core/CacheService.js';
-
-/**
- * 二段階認証のコード（TOTP・バックアップコード）が一致しない。
- * DB・Redisの障害などのほかの例外と区別するために使う
- */
-export class TwoFactorAuthenticationError extends Error {
-	constructor() {
-		super('authentication failed');
-		this.name = 'TwoFactorAuthenticationError';
-	}
-}
 
 @Injectable()
 export class UserAuthService {
 	constructor(
-		@Inject(DI.config)
-		private config: Config,
-
 		@Inject(DI.redis)
 		private redisClient: Redis.Redis,
 
@@ -38,7 +22,6 @@ export class UserAuthService {
 
 		@Inject(DI.userProfilesRepository)
 		private userProfilesRepository: UserProfilesRepository,
-		private cacheService: CacheService,
 	) {
 	}
 
@@ -48,10 +31,9 @@ export class UserAuthService {
 			await this.userProfilesRepository.update({ userId: profile.userId }, {
 				twoFactorBackupSecret: profile.twoFactorBackupSecret.filter((secret) => secret !== token),
 			});
-			await this.cacheService.userProfileCache.delete(profile.userId);
 		} else {
 			if (!await this.validateOtp(profile.userId, profile.twoFactorSecret!, token)) {
-				throw new TwoFactorAuthenticationError();
+				throw new Error('authentication failed');
 			}
 		}
 	}
@@ -62,7 +44,7 @@ export class UserAuthService {
 		twoFactorSecret: string,
 		token: string,
 	): Promise<boolean> {
-		if (this.config.runtime.test.skipTotpVerification) {
+		if (process.env.NODE_ENV === 'test' && process.env.MISSKEY_TEST_CHECK_DUPLICATED_TOTP !== '1') {
 			return true;
 		}
 
@@ -87,7 +69,7 @@ export class UserAuthService {
 		});
 
 		if (delta === null) {
-			throw new TwoFactorAuthenticationError();
+			throw new Error('authentication failed');
 		}
 
 		// 4. totp.counter() を用い、同じタイムスタンプから基準ステップを取得

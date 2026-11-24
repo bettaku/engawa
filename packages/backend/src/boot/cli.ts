@@ -9,32 +9,11 @@ import { NestFactory } from '@nestjs/core';
 import { CommandModule } from '@/cli/CommandModule.js';
 import { NestLogger } from '@/NestLogger.js';
 import { CommandService } from '@/cli/CommandService.js';
-import { QueueService } from '@/core/QueueService.js';
-import { NoteOutboxService } from '@/core/NoteOutboxService.js';
-import { COUNTER_NAMES, CounterConsistencyService, type CounterName } from '@/core/CounterConsistencyService.js';
 
 process.title = 'Engawa Cli';
 
 Error.stackTraceLimit = Infinity;
 EventEmitter.defaultMaxListeners = 128;
-
-const command = process.argv[2] ?? 'help';
-
-const isCounterCommand = command === 'check-counters' || command === 'repair-counters';
-
-// カウンタのコマンドは、標準出力にレポート（JSON Lines）だけを出す。起動ログなどは標準エラー出力へ送る
-if (isCounterCommand) {
-	console.log = console.error;
-	console.info = console.error;
-	console.debug = console.error;
-}
-
-/** 標準出力への書き込みが終わるまで待つ（process.exitで書き込みが失われないようにする） */
-function writeStdout(line: string): Promise<void> {
-	return new Promise((resolve, reject) => {
-		process.stdout.write(line + '\n', err => err ? reject(err) : resolve());
-	});
-}
 
 const app = await NestFactory.createApplicationContext(CommandModule, {
 	logger: new NestLogger(),
@@ -42,41 +21,13 @@ const app = await NestFactory.createApplicationContext(CommandModule, {
 
 const commandService = app.get(CommandService);
 
+const command = process.argv[2] ?? 'help';
+
 switch (command) {
 	case 'help': {
 		console.log('Available commands:');
 		console.log('  help - Displays this help message');
 		console.log('  reset-captcha - Resets the captcha');
-		console.log('  check-counters [counter...] - Checks denormalized counters (exits with 1 if any mismatch is found)');
-		console.log('  repair-counters [counter...] - Recounts and repairs denormalized counters');
-		console.log(`    counters: ${COUNTER_NAMES.join(', ')}`);
-		console.log('    note.repliesCount, note.renoteCount and user.notesCount can be repaired while notes are being written.');
-		console.log('    The other counters are not synchronized with ordinary updates, so they may still drift while follows or');
-		console.log('    clips are being written. For a reliable result, stop writes, wait for running jobs to finish, then repair');
-		console.log('    and check again.');
-		console.log('  bake-reactions - Applies buffered reactions to the database (stop the queue processes first)');
-		console.log('  drain-note-outbox - Runs the pending side effects of note creation, update and deletion (before rolling back');
-		console.log('    to a version without note_outbox: stop all server and queue processes first, since queue jobs such as');
-		console.log('    scheduled posts, scheduled deletes and inbox also write notes). Exits with 1 if records remain');
-		console.log('  register-job-schedulers - Registers the repeatable system jobs (for queue processes started with CP_NO_JOB_SCHEDULERS)');
-		break;
-	}
-	case 'check-counters':
-	case 'repair-counters': {
-		const counters = process.argv.slice(3);
-		const unknown = counters.filter(c => !(COUNTER_NAMES as string[]).includes(c));
-		if (unknown.length > 0) {
-			console.error(`Unknown counters: ${unknown.join(', ')}`);
-			console.error(`Available counters: ${COUNTER_NAMES.join(', ')}`);
-			process.exit(1);
-		}
-		const service = app.get(CounterConsistencyService);
-		const targets = counters.length > 0 ? counters as CounterName[] : COUNTER_NAMES;
-		const reports = command === 'repair-counters' ? await service.repair(targets) : await service.check(targets);
-		for (const report of reports) {
-			await writeStdout(JSON.stringify(report));
-		}
-		if (command === 'check-counters' && reports.some(r => r.mismatched > 0)) process.exitCode = 1;
 		break;
 	}
 	case 'ping': {
@@ -88,27 +39,6 @@ switch (command) {
 		console.log('Captcha has been reset.');
 		break;
 	}
-	case 'bake-reactions': {
-		await commandService.bakeReactions();
-		console.log('Buffered reactions have been baked.');
-		break;
-	}
-	case 'drain-note-outbox': {
-		const result = await app.get(NoteOutboxService).drain();
-		console.log(`Processed: ${result.processed}, remaining: ${result.remaining}`);
-		if (result.remaining > 0) {
-			console.log('Some records are being processed by another process or are waiting for a retry. Run this command again later.');
-			process.exitCode = 1;
-		}
-		break;
-	}
-	case 'register-job-schedulers': {
-		const result = await app.get(QueueService).registerJobSchedulers();
-		console.log(`Upserted: ${result.upserted.join(', ')}`);
-		console.log(`Removed: ${result.removed.length > 0 ? result.removed.join(', ') : '(none)'}`);
-		if (result.kept.length > 0) console.log(`Kept unknown schedulers: ${result.kept.join(', ')}`);
-		break;
-	}
 	default: {
 		console.error(`Unrecognized command: ${command}`);
 		console.error('Use "help" to see available commands.');
@@ -116,5 +46,4 @@ switch (command) {
 	}
 }
 
-// exitCodeを設定したコマンドは、その終了コードで終わる
-process.exit(process.exitCode ?? 0);
+process.exit(0);

@@ -11,9 +11,6 @@ import type { Config } from '@/config.js';
 import { DI } from '@/di-symbols.js';
 import type Logger from '@/logger.js';
 import { bindThis } from '@/decorators.js';
-import { FederatedInstanceService } from '@/core/FederatedInstanceService.js';
-import { NotificationService } from '@/core/NotificationService.js';
-import { ChatService } from '@/core/ChatService.js';
 import { CheckModeratorsActivityProcessorService } from '@/queue/processors/CheckModeratorsActivityProcessorService.js';
 import { UserWebhookDeliverProcessorService } from './processors/UserWebhookDeliverProcessorService.js';
 import { SystemWebhookDeliverProcessorService } from './processors/SystemWebhookDeliverProcessorService.js';
@@ -21,7 +18,6 @@ import { EndedPollNotificationProcessorService } from './processors/EndedPollNot
 import { PostScheduledNoteProcessorService } from './processors/PostScheduledNoteProcessorService.js';
 import { DeliverProcessorService } from './processors/DeliverProcessorService.js';
 import { InboxProcessorService } from './processors/InboxProcessorService.js';
-import { SigninNotificationProcessorService } from './processors/SigninNotificationProcessorService.js';
 import { DeleteDriveFilesProcessorService } from './processors/DeleteDriveFilesProcessorService.js';
 import { ExportCustomEmojisProcessorService } from './processors/ExportCustomEmojisProcessorService.js';
 import { ExportNotesProcessorService } from './processors/ExportNotesProcessorService.js';
@@ -43,6 +39,7 @@ import { ExportFavoritesProcessorService } from './processors/ExportFavoritesPro
 import { CleanRemoteFilesProcessorService } from './processors/CleanRemoteFilesProcessorService.js';
 import { DeleteFileProcessorService } from './processors/DeleteFileProcessorService.js';
 import { RelationshipProcessorService } from './processors/RelationshipProcessorService.js';
+import { ReportAbuseProcessorService } from './processors/ReportAbuseProcessorService.js';
 import { TickChartsProcessorService } from './processors/TickChartsProcessorService.js';
 import { ResyncChartsProcessorService } from './processors/ResyncChartsProcessorService.js';
 import { CleanChartsProcessorService } from './processors/CleanChartsProcessorService.js';
@@ -54,10 +51,6 @@ import { CleanRemoteNotesProcessorService } from './processors/CleanRemoteNotesP
 import { ScheduledNoteDeleteProcessorService } from './processors/ScheduledNoteDeleteProcessorService.js';
 import { QueueLoggerService } from './QueueLoggerService.js';
 import { AutoDeleteNotesProcessorService } from './processors/AutoDeleteNotesProcessorService.js';
-import { SyncNoteIndexProcessorService } from './processors/SyncNoteIndexProcessorService.js';
-import { NoteOutboxService } from '@/core/NoteOutboxService.js';
-import { ApPersonService } from '@/core/activitypub/models/ApPersonService.js';
-import { assertSupportedJobDataVersion } from './job-version.js';
 import { QUEUE, baseWorkerOptions } from './const.js';
 
 // ref. https://github.com/misskey-dev/misskey/pull/7635#issue-971097019
@@ -136,6 +129,7 @@ export class QueueProcessorService implements OnApplicationShutdown {
 		private deleteFileProcessorService: DeleteFileProcessorService,
 		private cleanRemoteFilesProcessorService: CleanRemoteFilesProcessorService,
 		private relationshipProcessorService: RelationshipProcessorService,
+		private reportAbuseProcessorService: ReportAbuseProcessorService,
 		private tickChartsProcessorService: TickChartsProcessorService,
 		private resyncChartsProcessorService: ResyncChartsProcessorService,
 		private cleanChartsProcessorService: CleanChartsProcessorService,
@@ -145,15 +139,8 @@ export class QueueProcessorService implements OnApplicationShutdown {
 		private checkModeratorsActivityProcessorService: CheckModeratorsActivityProcessorService,
 		private cleanProcessorService: CleanProcessorService,
 		private autoDeleteNotesProcessorService: AutoDeleteNotesProcessorService,
-		private syncNoteIndexProcessorService: SyncNoteIndexProcessorService,
 		private cleanRemoteNotesProcessorService: CleanRemoteNotesProcessorService,
 		private scheduledNoteDeleteProcessorService: ScheduledNoteDeleteProcessorService,
-		private noteOutboxService: NoteOutboxService,
-		private federatedInstanceService: FederatedInstanceService,
-		private notificationService: NotificationService,
-		private chatService: ChatService,
-		private signinNotificationProcessorService: SigninNotificationProcessorService,
-		private apPersonService: ApPersonService,
 	) {
 		this.logger = this.queueLoggerService.logger;
 
@@ -196,17 +183,12 @@ export class QueueProcessorService implements OnApplicationShutdown {
 					case 'checkModeratorsActivity': return this.checkModeratorsActivityProcessorService.process();
 					case 'clean': return this.cleanProcessorService.process();
 					case 'cleanRemoteNotes': return this.cleanRemoteNotesProcessorService.process(job);
-					case 'autoDeleteNotes': return this.autoDeleteNotesProcessorService.process();
-					case 'reconcileScheduledNoteDeletes': return this.scheduledNoteDeleteProcessorService.reconcile();
-					case 'reconcileScheduledNotePosts': return this.postScheduledNoteProcessorService.reconcile();
-					case 'sweepNoteOutbox': return this.noteOutboxService.sweep();
-					case 'flushInstanceRequestReceived': return this.federatedInstanceService.flushRequestReceived();
+					case 'autoDeleteNotes': return this.autoDeleteNotesProcessorService.process(job);
 					default: throw new Error(`unrecognized job type ${job.name} for system`);
 				}
 			};
 
 			this.systemQueueWorker = new Bull.Worker(QUEUE.SYSTEM, (job) => {
-				assertSupportedJobDataVersion(QUEUE.SYSTEM, job);
 				if (this.config.sentryForBackend) {
 					return Sentry.startSpan({ name: 'Queue: System: ' + job.name }, () => processer(job));
 				} else {
@@ -260,19 +242,12 @@ export class QueueProcessorService implements OnApplicationShutdown {
 					case 'importAntennas': return this.importAntennasProcessorService.process(job);
 					case 'deleteAccount': return this.deleteAccountProcessorService.process(job);
 					case 'truncateAccount': return this.truncateAccountProcessorService.process(job);
-					case 'autoDeleteUserNotes': return this.autoDeleteNotesProcessorService.processUser(job);
-					case 'syncNoteIndex': return this.syncNoteIndexProcessorService.process(job);
-					case 'processNoteOutbox': return this.noteOutboxService.process(job.data.seq);
-					case 'unreadNotification': return this.notificationService.processUnreadNotification(job.data.userId, job.data.streamId);
-					case 'unreadChatMessage': return this.chatService.processUnreadMessage(job.data.messageId);
-					case 'signinNotification': return this.signinNotificationProcessorService.process(job);
-					case 'resolveRemoteUser': return this.apPersonService.processResolveRemoteUser(job.data.uri);
+					case 'reportAbuse': return this.reportAbuseProcessorService.process(job);
 					default: throw new Error(`unrecognized job type ${job.name} for db`);
 				}
 			};
 
 			this.dbQueueWorker = new Bull.Worker(QUEUE.DB, (job) => {
-				assertSupportedJobDataVersion(QUEUE.DB, job);
 				if (this.config.sentryForBackend) {
 					return Sentry.startSpan({ name: 'Queue: DB: ' + job.name }, () => processer(job));
 				} else {
@@ -305,7 +280,6 @@ export class QueueProcessorService implements OnApplicationShutdown {
 		//#region deliver
 		{
 			this.deliverQueueWorker = new Bull.Worker(QUEUE.DELIVER, (job) => {
-				assertSupportedJobDataVersion(QUEUE.DELIVER, job);
 				if (this.config.sentryForBackend) {
 					return Sentry.startSpan({ name: 'Queue: Deliver' }, () => this.deliverProcessorService.process(job));
 				} else {
@@ -346,7 +320,6 @@ export class QueueProcessorService implements OnApplicationShutdown {
 		//#region inbox
 		{
 			this.inboxQueueWorker = new Bull.Worker(QUEUE.INBOX, (job) => {
-				assertSupportedJobDataVersion(QUEUE.INBOX, job);
 				if (this.config.sentryForBackend) {
 					return Sentry.startSpan({ name: 'Queue: Inbox' }, () => this.inboxProcessorService.process(job));
 				} else {
@@ -387,7 +360,6 @@ export class QueueProcessorService implements OnApplicationShutdown {
 		//#region user-webhook deliver
 		{
 			this.userWebhookDeliverQueueWorker = new Bull.Worker(QUEUE.USER_WEBHOOK_DELIVER, (job) => {
-				assertSupportedJobDataVersion(QUEUE.USER_WEBHOOK_DELIVER, job);
 				if (this.config.sentryForBackend) {
 					return Sentry.startSpan({ name: 'Queue: UserWebhookDeliver' }, () => this.userWebhookDeliverProcessorService.process(job));
 				} else {
@@ -409,10 +381,10 @@ export class QueueProcessorService implements OnApplicationShutdown {
 			const logger = this.logger.createSubLogger('user-webhook');
 
 			this.userWebhookDeliverQueueWorker
-				.on('active', (job) => logger.debug(`active ${getJobInfo(job, true)} webhook=${job.data.webhookId}`))
-				.on('completed', (job, result) => logger.debug(`completed(${result}) ${getJobInfo(job, true)} webhook=${job.data.webhookId}`))
+				.on('active', (job) => logger.debug(`active ${getJobInfo(job, true)} to=${job.data.to}`))
+				.on('completed', (job, result) => logger.debug(`completed(${result}) ${getJobInfo(job, true)} to=${job.data.to}`))
 				.on('failed', (job, err) => {
-					logger.error(`failed(${err.name}: ${err.message}) ${getJobInfo(job)} webhook=${job ? job.data.webhookId : '-'}`);
+					logger.error(`failed(${err.name}: ${err.message}) ${getJobInfo(job)} to=${job ? job.data.to : '-'}`);
 					if (config.sentryForBackend) {
 						Sentry.captureMessage(`Queue: UserWebhookDeliver: ${err.name}: ${err.message}`, {
 							level: 'error',
@@ -428,7 +400,6 @@ export class QueueProcessorService implements OnApplicationShutdown {
 		//#region system-webhook deliver
 		{
 			this.systemWebhookDeliverQueueWorker = new Bull.Worker(QUEUE.SYSTEM_WEBHOOK_DELIVER, (job) => {
-				assertSupportedJobDataVersion(QUEUE.SYSTEM_WEBHOOK_DELIVER, job);
 				if (this.config.sentryForBackend) {
 					return Sentry.startSpan({ name: 'Queue: SystemWebhookDeliver' }, () => this.systemWebhookDeliverProcessorService.process(job));
 				} else {
@@ -450,10 +421,10 @@ export class QueueProcessorService implements OnApplicationShutdown {
 			const logger = this.logger.createSubLogger('system-webhook');
 
 			this.systemWebhookDeliverQueueWorker
-				.on('active', (job) => logger.debug(`active ${getJobInfo(job, true)} webhook=${job.data.webhookId}`))
-				.on('completed', (job, result) => logger.debug(`completed(${result}) ${getJobInfo(job, true)} webhook=${job.data.webhookId}`))
+				.on('active', (job) => logger.debug(`active ${getJobInfo(job, true)} to=${job.data.to}`))
+				.on('completed', (job, result) => logger.debug(`completed(${result}) ${getJobInfo(job, true)} to=${job.data.to}`))
 				.on('failed', (job, err) => {
-					logger.error(`failed(${err.name}: ${err.message}) ${getJobInfo(job)} webhook=${job ? job.data.webhookId : '-'}`);
+					logger.error(`failed(${err.name}: ${err.message}) ${getJobInfo(job)} to=${job ? job.data.to : '-'}`);
 					if (config.sentryForBackend) {
 						Sentry.captureMessage(`Queue: SystemWebhookDeliver: ${err.name}: ${err.message}`, {
 							level: 'error',
@@ -479,7 +450,6 @@ export class QueueProcessorService implements OnApplicationShutdown {
 			};
 
 			this.relationshipQueueWorker = new Bull.Worker(QUEUE.RELATIONSHIP, (job) => {
-				assertSupportedJobDataVersion(QUEUE.RELATIONSHIP, job);
 				if (this.config.sentryForBackend) {
 					return Sentry.startSpan({ name: 'Queue: Relationship: ' + job.name }, () => processer(job));
 				} else {
@@ -520,12 +490,12 @@ export class QueueProcessorService implements OnApplicationShutdown {
 				switch (job.name) {
 					case 'deleteFile': return this.deleteFileProcessorService.process(job);
 					case 'cleanRemoteFiles': return this.cleanRemoteFilesProcessorService.process(job);
+					case 'autoDeleteNotes': return this.autoDeleteNotesProcessorService.process(job);
 					default: throw new Error(`unrecognized job type ${job.name} for objectStorage`);
 				}
 			};
 
 			this.objectStorageQueueWorker = new Bull.Worker(QUEUE.OBJECT_STORAGE, (job) => {
-				assertSupportedJobDataVersion(QUEUE.OBJECT_STORAGE, job);
 				if (this.config.sentryForBackend) {
 					return Sentry.startSpan({ name: 'Queue: ObjectStorage: ' + job.name }, () => processer(job));
 				} else {
@@ -559,7 +529,6 @@ export class QueueProcessorService implements OnApplicationShutdown {
 		//#region ended poll notification
 		{
 			this.endedPollNotificationQueueWorker = new Bull.Worker(QUEUE.ENDED_POLL_NOTIFICATION, (job) => {
-				assertSupportedJobDataVersion(QUEUE.ENDED_POLL_NOTIFICATION, job);
 				if (this.config.sentryForBackend) {
 					return Sentry.startSpan({ name: 'Queue: EndedPollNotification' }, () => this.endedPollNotificationProcessorService.process(job));
 				} else {
@@ -574,12 +543,11 @@ export class QueueProcessorService implements OnApplicationShutdown {
 
 		//#region post scheduled note
 		{
-			this.postScheduledNoteQueueWorker = new Bull.Worker(QUEUE.POST_SCHEDULED_NOTE, async (job, token) => {
-				assertSupportedJobDataVersion(QUEUE.POST_SCHEDULED_NOTE, job);
+			this.postScheduledNoteQueueWorker = new Bull.Worker(QUEUE.POST_SCHEDULED_NOTE, async (job) => {
 				if (this.config.sentryForBackend) {
-					return Sentry.startSpan({ name: 'Queue: PostScheduledNote' }, () => this.postScheduledNoteProcessorService.process(job, token));
+					return Sentry.startSpan({ name: 'Queue: PostScheduledNote' }, () => this.postScheduledNoteProcessorService.process(job));
 				} else {
-					return this.postScheduledNoteProcessorService.process(job, token);
+					return this.postScheduledNoteProcessorService.process(job);
 				}
 			}, {
 				...baseWorkerOptions(this.config, QUEUE.POST_SCHEDULED_NOTE, this.redisForJobQueue),
@@ -590,12 +558,11 @@ export class QueueProcessorService implements OnApplicationShutdown {
 
 		//#region scheduled note delete
 		{
-			this.scheduledNoteDeleteQueueWorker = new Bull.Worker(QUEUE.SCHEDULED_NOTE_DELETE, (job, token) => {
-				assertSupportedJobDataVersion(QUEUE.SCHEDULED_NOTE_DELETE, job);
+			this.scheduledNoteDeleteQueueWorker = new Bull.Worker(QUEUE.SCHEDULED_NOTE_DELETE, (job) => {
 				if (this.config.sentryForBackend) {
-					return Sentry.startSpan({ name: 'Queue: ScheduledNoteDelete' }, () => this.scheduledNoteDeleteProcessorService.process(job, token));
+					return Sentry.startSpan({ name: 'Queue: ScheduledNoteDelete' }, () => this.scheduledNoteDeleteProcessorService.process(job));
 				} else {
-					return this.scheduledNoteDeleteProcessorService.process(job, token);
+					return this.scheduledNoteDeleteProcessorService.process(job);
 				}
 			}, {
 				...baseWorkerOptions(this.config, QUEUE.SCHEDULED_NOTE_DELETE, this.redisForJobQueue),

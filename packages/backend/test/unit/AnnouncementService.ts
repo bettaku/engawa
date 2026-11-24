@@ -26,7 +26,6 @@ import { IdService } from '@/core/IdService.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { ModerationLogService } from '@/core/ModerationLogService.js';
 import { secureRndstr } from '@/misc/secure-rndstr.js';
-import { CacheInvalidationService } from '@/core/CacheInvalidationService.js';
 
 describe('AnnouncementService', () => {
 	let app: TestingModule;
@@ -72,9 +71,6 @@ describe('AnnouncementService', () => {
 			],
 		})
 			.useMocker((token) => {
-				if (token === CacheInvalidationService) {
-					return { publish: vi.fn(), subscribe: vi.fn(() => () => {}) };
-				}
 				if (token === GlobalEventService) {
 					return {
 						publishMainStream: vi.fn(),

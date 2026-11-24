@@ -41,13 +41,4 @@ export class AppLockService {
 	public getChartInsertLock(lockKey: string, timeout = 30 * 1000): Promise<() => void> {
 		return this.lock(`chart-insert:${lockKey}`, timeout);
 	}
-
-	/**
-	 * ノート単位の検索索引の更新ロック。
-	 * 期限を過ぎると解除されるので、これだけを古い書き込みを防ぐ根拠にしないこと（SearchServiceの世代の検証と併用する）。
-	 */
-	@bindThis
-	public getSearchIndexLock(noteId: string, timeout = 30 * 1000): Promise<() => void> {
-		return this.lock(`searchIndex:${noteId}`, timeout);
-	}
 }

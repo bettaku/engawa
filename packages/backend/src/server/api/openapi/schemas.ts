@@ -77,17 +77,8 @@ export function getSchemas(includeSelfRef: boolean) {
 							format: 'uuid',
 							description: 'An error ID. This ID is static.',
 						},
-						kind: {
-							type: 'string',
-							enum: ['client', 'server', 'permission'],
-							description: 'Whose fault the error is.',
-						},
-						info: {
-							type: 'object',
-							description: 'Additional information, such as the invalid parameter or the rate limit.',
-						},
 					},
-					required: ['code', 'id', 'message', 'kind'],
+					required: ['code', 'id', 'message'],
 				},
 			},
 			required: ['error'],

@@ -7,7 +7,6 @@ import { Inject, Injectable, Scope } from '@nestjs/common';
 import { IsNull, Not } from 'typeorm';
 import type { MiLocalUser, MiRemoteUser } from '@/models/User.js';
 import type {
-	FollowingsRepository,
 	FollowRequestsRepository,
 	MiMeta,
 	NoteReactionsRepository,
@@ -60,9 +59,6 @@ export class Resolver {
 
 		@Inject(DI.followRequestsRepository)
 		private followRequestsRepository: FollowRequestsRepository,
-
-		@Inject(DI.followingsRepository)
-		private followingsRepository: FollowingsRepository,
 
 		private utilityService: UtilityService,
 		private systemAccountService: SystemAccountService,
@@ -182,16 +178,14 @@ export class Resolver {
 			case 'follows':
 				return this.followRequestsRepository.findOneBy({ id: parsed.id })
 					.then(async followRequest => {
-						// Accepted requests are deleted, but the following keeps the original Follow ID.
-						const follow = followRequest ?? await this.followingsRepository.findOneBy({ requestId: `${this.config.url}/follows/${parsed.id}` });
-						if (follow == null) throw new IdentifiableError('a9d946e5-d276-47f8-95fb-f04230289bb0', 'resolveLocal: invalid follow request ID');
+						if (followRequest == null) throw new IdentifiableError('a9d946e5-d276-47f8-95fb-f04230289bb0', 'resolveLocal: invalid follow request ID');
 						const [follower, followee] = await Promise.all([
 							this.usersRepository.findOneBy({
-								id: follow.followerId,
+								id: followRequest.followerId,
 								host: IsNull(),
 							}),
 							this.usersRepository.findOneBy({
-								id: follow.followeeId,
+								id: followRequest.followeeId,
 								host: Not(IsNull()),
 							}),
 						]);

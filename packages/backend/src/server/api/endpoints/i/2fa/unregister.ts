@@ -11,8 +11,7 @@ import type { UserProfilesRepository } from '@/models/_.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { DI } from '@/di-symbols.js';
 import { ApiError } from '@/server/api/error.js';
-import { TwoFactorAuthenticationError, UserAuthService } from '@/core/UserAuthService.js';
-import { CacheService } from '@/core/CacheService.js';
+import { UserAuthService } from '@/core/UserAuthService.js';
 
 export const meta = {
 	requireCredential: true,
@@ -20,11 +19,6 @@ export const meta = {
 	secure: true,
 
 	errors: {
-		twoFactorAuthenticationFailed: {
-			message: 'Two-factor authentication failed.',
-			code: 'TWO_FACTOR_AUTHENTICATION_FAILED',
-			id: '85a4386a-5ad1-4250-88c1-a60b67742803',
-		},
 		incorrectPassword: {
 			message: 'Incorrect password.',
 			code: 'INCORRECT_PASSWORD',
@@ -51,7 +45,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private userEntityService: UserEntityService,
 		private userAuthService: UserAuthService,
 		private globalEventService: GlobalEventService,
-		private cacheService: CacheService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const token = ps.token;
@@ -59,15 +52,13 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			if (profile.twoFactorEnabled) {
 				if (token == null) {
-					throw new ApiError(meta.errors.twoFactorAuthenticationFailed);
+					throw new Error('authentication failed');
 				}
 
 				try {
 					await this.userAuthService.twoFactorAuthenticate(profile, token);
 				} catch (e) {
-					// コードの不一致だけを認証の失敗にする。DB・Redisの障害はそのまま500にする
-					if (e instanceof TwoFactorAuthenticationError) throw new ApiError(meta.errors.twoFactorAuthenticationFailed);
-					throw e;
+					throw new Error('authentication failed');
 				}
 			}
 
@@ -82,7 +73,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				twoFactorEnabled: false,
 				usePasswordLessLogin: false,
 			});
-			await this.cacheService.userProfileCache.delete(me.id);
 
 			// Publish meUpdated event
 			this.globalEventService.publishMainStream(me.id, 'meUpdated', await this.userEntityService.pack(me.id, me, {

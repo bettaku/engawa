@@ -169,7 +169,7 @@ export class UserFollowingService implements OnModuleInit {
 		if (
 			followee.isLocked ||
 			(followeeProfile.carefulBot && follower.isBot) ||
-			(this.userEntityService.isLocalUser(follower) && this.userEntityService.isRemoteUser(followee) && !this.config.runtime.test.followRemoteImmediately) ||
+			(this.userEntityService.isLocalUser(follower) && this.userEntityService.isRemoteUser(followee) && process.env.FORCE_FOLLOW_REMOTE_USER_FOR_TESTING !== 'true') ||
 			(this.userEntityService.isLocalUser(followee) && this.userEntityService.isRemoteUser(follower) && this.utilityService.isSilencedHost(this.meta.silencedHosts, follower.host))
 		) {
 			let autoAccept = false;
@@ -234,7 +234,6 @@ export class UserFollowingService implements OnModuleInit {
 		},
 		silent = false,
 		withReplies?: boolean,
-		requestId?: string,
 	): Promise<void> {
 		if (follower.id === followee.id) return;
 
@@ -245,7 +244,6 @@ export class UserFollowingService implements OnModuleInit {
 			followerId: follower.id,
 			followeeId: followee.id,
 			withReplies: withReplies,
-			requestId,
 
 			// 非正規化
 			followerHost: follower.host,
@@ -395,11 +393,7 @@ export class UserFollowingService implements OnModuleInit {
 		}
 
 		if (this.userEntityService.isLocalUser(follower) && this.userEntityService.isRemoteUser(followee)) {
-			const undo = this.apRendererService.renderUndo(this.apRendererService.renderFollow(follower as MiPartialLocalUser, followee as MiPartialRemoteUser, following.requestId ?? undefined), follower);
-			// Legacy followings no longer have their original Follow ID. Keep the old
-			// object reference, but use the relationship ID to avoid duplicate Undo IDs.
-			if (following.requestId == null) undo.id = `${this.config.url}/activities/undo-follow/${following.id}`;
-			const content = this.apRendererService.addContext(undo);
+			const content = this.apRendererService.addContext(this.apRendererService.renderUndo(this.apRendererService.renderFollow(follower as MiPartialLocalUser, followee as MiPartialRemoteUser), follower));
 			this.queueService.deliver(follower, content, followee.inbox, false);
 		}
 
@@ -556,19 +550,23 @@ export class UserFollowingService implements OnModuleInit {
 			id: MiUser['id']; host: MiUser['host']; uri: MiUser['host']
 		},
 	): Promise<void> {
-		const request = await this.followRequestsRepository.findOneBy({
-			followeeId: followee.id,
-			followerId: follower.id,
-		});
+		if (this.userEntityService.isRemoteUser(followee)) {
+			const content = this.apRendererService.addContext(this.apRendererService.renderUndo(this.apRendererService.renderFollow(follower as MiPartialLocalUser | MiPartialRemoteUser, followee as MiPartialRemoteUser), follower));
 
-		if (request == null) {
-			throw new IdentifiableError('17447091-ce07-46dd-b331-c1fd4f15b1e7', 'request not found');
+			if (this.userEntityService.isLocalUser(follower)) { // 本来このチェックは不要だけどTSに怒られるので
+				this.queueService.deliver(follower, content, followee.inbox, false);
+			}
 		}
 
-		if (this.userEntityService.isLocalUser(follower) && this.userEntityService.isRemoteUser(followee)) {
-			const requestId = request.requestId ?? `${this.config.url}/follows/${request.id}`;
-			const content = this.apRendererService.addContext(this.apRendererService.renderUndo(this.apRendererService.renderFollow(follower as MiPartialLocalUser, followee as MiPartialRemoteUser, requestId), follower));
-			this.queueService.deliver(follower, content, followee.inbox, false);
+		const requestExist = await this.followRequestsRepository.exists({
+			where: {
+				followeeId: followee.id,
+				followerId: follower.id,
+			},
+		});
+
+		if (!requestExist) {
+			throw new IdentifiableError('17447091-ce07-46dd-b331-c1fd4f15b1e7', 'request not found');
 		}
 
 		await this.followRequestsRepository.delete({
@@ -597,10 +595,7 @@ export class UserFollowingService implements OnModuleInit {
 			throw new IdentifiableError('8884c2dd-5795-4ac9-b27e-6a01d38190f9', 'No follow request.');
 		}
 
-		const requestId = request.requestId ?? (this.userEntityService.isLocalUser(follower) && this.userEntityService.isRemoteUser(followee)
-			? `${this.config.url}/follows/${request.id}`
-			: undefined);
-		await this.insertFollowingDoc(followee, follower, false, request.withReplies, requestId);
+		await this.insertFollowingDoc(followee, follower, false, request.withReplies);
 
 		if (this.userEntityService.isRemoteUser(follower) && this.userEntityService.isLocalUser(followee)) {
 			this.deliverAccept(follower, followee as MiPartialLocalUser, request.requestId ?? undefined);
