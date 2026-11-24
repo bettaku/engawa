@@ -88,10 +88,12 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			antenna.isActive = true;
 			antenna.lastUsedAt = new Date();
-			trackPromise(this.antennasRepository.update(antenna.id, antenna));
-
 			if (needPublishEvent) {
+				// 受信側はイベントを受けてDBから読み直すので、更新を書き込んでから発行する
+				await this.antennasRepository.update(antenna.id, antenna);
 				this.globalEventService.publishInternalEvent('antennaUpdated', toInternalEventRef(antenna));
+			} else {
+				trackPromise(this.antennasRepository.update(antenna.id, antenna));
 			}
 
 			let noteIds = await this.fanoutTimelineService.get(`antennaTimeline:${antenna.id}`, untilId, sinceId);
