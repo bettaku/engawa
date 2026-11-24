@@ -109,7 +109,7 @@ describe('CacheInvalidationService', () => {
 		await userProfilesRepository.update({ userId: alice.id }, { mutedInstances: ['muted.example.com'] });
 		await a.get(CacheService).userProfileCache.delete(alice.id);
 
-		await waitFor(async () => (await cacheB.userProfileCache.fetch(alice.id)).mutedInstances.includes('muted.example.com'));
+		await waitFor(async () => (await cacheB.userProfileCache.fetch(alice.id)).mutedInstances[0] === 'muted.example.com');
 	});
 
 	test('自分が発行した無効化では、メモリ層を消さない', async () => {
