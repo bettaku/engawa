@@ -18,6 +18,7 @@ import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { bindThis } from '@/decorators.js';
 import { QueueService } from '@/core/QueueService.js';
 import { RedisKVCache } from '@/misc/cache.js';
+import { idSetCodec, redisConverters } from '@/misc/cache-codec.js';
 import { RoleService } from '@/core/RoleService.js';
 import { SystemAccountService } from '@/core/SystemAccountService.js';
 import { CacheInvalidationService } from '@/core/CacheInvalidationService.js';
@@ -52,8 +53,7 @@ export class UserListService implements OnApplicationShutdown, OnModuleInit {
 			lifetime: 1000 * 60 * 30, // 30m
 			memoryCacheLifetime: 1000 * 60, // 1m
 			fetcher: (key) => this.userListMembershipsRepository.find({ where: { userListId: key }, select: ['userId'] }).then(xs => new Set(xs.map(x => x.userId))),
-			toRedisConverter: (value) => JSON.stringify(Array.from(value)),
-			fromRedisConverter: (value) => new Set(JSON.parse(value)),
+			...redisConverters(idSetCodec),
 			invalidation: this.cacheInvalidationService,
 		});
 

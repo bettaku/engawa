@@ -8,6 +8,37 @@ import * as Redis from 'ioredis';
 import type { InstancesRepository } from '@/models/_.js';
 import type { MiInstance } from '@/models/Instance.js';
 import { MemoryKVCache, RedisKVCache } from '@/misc/cache.js';
+import { type ColumnKinds, nullableCodec, objectCodec, redisConverters } from '@/misc/cache-codec.js';
+
+/** `federatedInstance`のキャッシュに保存する列（P2-1）。すべての列を保存する */
+const INSTANCE_CACHE_COLUMNS: ColumnKinds<MiInstance> = {
+	id: 'value',
+	firstRetrievedAt: 'date',
+	host: 'value',
+	usersCount: 'value',
+	notesCount: 'value',
+	followingCount: 'value',
+	followersCount: 'value',
+	latestRequestReceivedAt: 'date',
+	isNotResponding: 'value',
+	notRespondingSince: 'date',
+	suspensionState: 'value',
+	quarantineLimited: 'value',
+	softwareName: 'value',
+	softwareVersion: 'value',
+	openRegistrations: 'value',
+	name: 'value',
+	description: 'value',
+	maintainerName: 'value',
+	maintainerEmail: 'value',
+	iconUrl: 'value',
+	faviconUrl: 'value',
+	themeColor: 'value',
+	infoUpdatedAt: 'date',
+	moderationNote: 'value',
+};
+
+const instanceCacheCodec = nullableCodec(objectCodec<MiInstance>(INSTANCE_CACHE_COLUMNS));
 import { IdService } from '@/core/IdService.js';
 import { DI } from '@/di-symbols.js';
 import { UtilityService } from '@/core/UtilityService.js';
@@ -39,18 +70,7 @@ export class FederatedInstanceService implements OnApplicationShutdown {
 			lifetime: 1000 * 60 * 30, // 30m
 			memoryCacheLifetime: 1000 * 60 * 3, // 3m
 			fetcher: (key) => this.instancesRepository.findOneBy({ host: key }),
-			toRedisConverter: (value) => JSON.stringify(value),
-			fromRedisConverter: (value) => {
-				const parsed = JSON.parse(value);
-				if (parsed == null) return null;
-				return {
-					...parsed,
-					firstRetrievedAt: new Date(parsed.firstRetrievedAt),
-					latestRequestReceivedAt: parsed.latestRequestReceivedAt ? new Date(parsed.latestRequestReceivedAt) : null,
-					infoUpdatedAt: parsed.infoUpdatedAt ? new Date(parsed.infoUpdatedAt) : null,
-					notRespondingSince: parsed.notRespondingSince ? new Date(parsed.notRespondingSince) : null,
-				};
-			},
+			...redisConverters(instanceCacheCodec),
 			invalidation: this.cacheInvalidationService,
 		});
 	}

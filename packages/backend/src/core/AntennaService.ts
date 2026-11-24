@@ -8,7 +8,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import * as Redis from 'ioredis';
 import { In } from 'typeorm';
 import { FanoutTimelineService } from '@/core/FanoutTimelineService.js';
-import { isInternalEventRef, type GlobalEvents } from '@/core/GlobalEventService.js';
+import { isInternalEventRef, type GlobalEvents, toInternalEventRef } from '@/core/GlobalEventService.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { UtilityService } from '@/core/UtilityService.js';
 import { bindThis } from '@/decorators.js';
@@ -261,7 +261,7 @@ export class AntennaService implements OnApplicationShutdown {
 
 		// announce update to event
 		for (const newAntenna of await this.antennasRepository.findBy({ id: In(antennaIds) })) {
-			this.globalEventService.publishInternalEvent('antennaUpdated', newAntenna);
+			this.globalEventService.publishInternalEvent('antennaUpdated', toInternalEventRef(newAntenna));
 		}
 	}
 

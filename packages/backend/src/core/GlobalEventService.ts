@@ -205,8 +205,9 @@ type UndefinedAsNullAll<T> = {
 /**
  * 内部イベントの新しい本文（P2-3）。エンティティを載せず、受信側がDBから読み直す。
  *
- * 第1リリースでは受信側だけが新本文を処理できるようにし、発行側は旧本文（エンティティ全体）のままにする。
- * 第2リリースで発行側を新本文に切り替える。一覧は docs/rust-migration/internal-events.md を参照。
+ * 第1リリースで受信側が新本文を処理できるようにし、第2リリースで発行側を新本文に切り替えた。
+ * 受信側は、第1リリースへの切り戻しや入れ替えの途中に備えて、旧本文（エンティティ全体）も引き続き処理する。
+ * 一覧は docs/rust-migration/internal-events.md を参照。
  */
 export const INTERNAL_EVENT_REF_VERSION = 2;
 
@@ -226,7 +227,7 @@ export function isInternalEventRef<T>(body: T): body is Extract<T, { v: typeof I
 	return typeof body === 'object' && body != null && (body as { v?: unknown }).v === INTERNAL_EVENT_REF_VERSION;
 }
 
-/** 新本文を作る（第2リリースで発行側が使う） */
+/** 新本文を作る */
 export function toInternalEventRef<T extends { id: string }>(entity: T): InternalEventRef<T> {
 	return { v: INTERNAL_EVENT_REF_VERSION, id: entity.id };
 }
@@ -283,6 +284,15 @@ export interface InternalEventTypes {
 	 */
 	cacheInvalidated: { cache: string; key: string | null; origin: string; };
 }
+
+/**
+ * 発行側が書く本文。新本文を持つイベントは新本文だけを発行する（旧本文は受信側の互換のためだけに型に残している）。
+ */
+export type PublishedInternalEventTypes = {
+	[K in keyof InternalEventTypes]: [Extract<InternalEventTypes[K], { v: typeof INTERNAL_EVENT_REF_VERSION }>] extends [never]
+		? InternalEventTypes[K]
+		: Extract<InternalEventTypes[K], { v: typeof INTERNAL_EVENT_REF_VERSION }>;
+};
 
 type EventTypesToEventPayload<T> = EventUnionFromDictionary<UndefinedAsNullAll<SerializedAll<T>>>;
 
@@ -374,7 +384,7 @@ export class GlobalEventService {
 	}
 
 	@bindThis
-	public publishInternalEvent<K extends keyof InternalEventTypes>(type: K, value?: InternalEventTypes[K]): void {
+	public publishInternalEvent<K extends keyof PublishedInternalEventTypes>(type: K, value?: PublishedInternalEventTypes[K]): void {
 		this.publish('internal', type, typeof value === 'undefined' ? null : value);
 	}
 

@@ -8,7 +8,7 @@ import * as Redis from 'ioredis';
 import { IsNull, Not } from 'typeorm';
 import type { AvatarDecorationsRepository, InstancesRepository, UsersRepository, MiAvatarDecoration, MiUser } from '@/models/_.js';
 import { IdService } from '@/core/IdService.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
+import { GlobalEventService, toInternalEventRef } from '@/core/GlobalEventService.js';
 import { QueryService } from '@/core/QueryService.js';
 import { UtilityService } from '@/core/UtilityService.js';
 import { DI } from '@/di-symbols.js';
@@ -95,7 +95,7 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 			...options,
 		});
 
-		this.globalEventService.publishInternalEvent('avatarDecorationCreated', created);
+		this.globalEventService.publishInternalEvent('avatarDecorationCreated', toInternalEventRef(created));
 
 		if (moderator) {
 			this.moderationLogService.log(moderator, 'createAvatarDecoration', {
@@ -118,7 +118,7 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 		});
 
 		const updated = await this.avatarDecorationsRepository.findOneByOrFail({ id: avatarDecoration.id });
-		this.globalEventService.publishInternalEvent('avatarDecorationUpdated', updated);
+		this.globalEventService.publishInternalEvent('avatarDecorationUpdated', toInternalEventRef(updated));
 
 		if (moderator) {
 			this.moderationLogService.log(moderator, 'updateAvatarDecoration', {
@@ -244,7 +244,7 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 		const avatarDecoration = await this.avatarDecorationsRepository.findOneByOrFail({ id });
 
 		await this.avatarDecorationsRepository.delete({ id: avatarDecoration.id });
-		this.globalEventService.publishInternalEvent('avatarDecorationDeleted', avatarDecoration);
+		this.globalEventService.publishInternalEvent('avatarDecorationDeleted', toInternalEventRef(avatarDecoration));
 
 		if (moderator) {
 			this.moderationLogService.log(moderator, 'deleteAvatarDecoration', {

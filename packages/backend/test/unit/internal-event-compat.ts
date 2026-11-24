@@ -28,6 +28,7 @@ import {
 	toInternalEventRef,
 	toMetaUpdatedEventRef,
 	toRoleAssignmentEventRef,
+	type InternalEventTypes,
 } from '@/core/GlobalEventService.js';
 import { IdService } from '@/core/IdService.js';
 import { RoleService } from '@/core/RoleService.js';
@@ -47,7 +48,15 @@ async function waitFor(condition: () => Promise<boolean> | boolean, timeout = 50
 	}
 }
 
-describe('内部イベントの新本文（P2-3 第1リリース）', () => {
+/**
+ * 旧本文（エンティティ全体）を発行する。第2リリースから発行側は新本文だけを書くので、`publishInternalEvent`の型は旧本文を受け付けない。
+ * 第1リリースのプロセスが残っている間や切り戻しのときに届く旧本文を、受信側が処理できることを確かめるために使う。
+ */
+function publishLegacyInternalEvent<K extends keyof InternalEventTypes>(globalEventService: GlobalEventService, type: K, value: InternalEventTypes[K]): void {
+	(globalEventService.publishInternalEvent as (type: K, value: InternalEventTypes[K]) => void)(type, value);
+}
+
+describe('内部イベントの新本文（P2-3）', () => {
 	let app: TestingModule;
 	let globalEventService: GlobalEventService;
 	let idService: IdService;
@@ -147,10 +156,10 @@ describe('内部イベントの新本文（P2-3 第1リリース）', () => {
 			const roleService = app.get(RoleService);
 			const role = await createRole('old-body');
 			await roleService.getRoles();
-			globalEventService.publishInternalEvent('roleCreated', role);
+			publishLegacyInternalEvent(globalEventService, 'roleCreated', role);
 			await waitFor(async () => (await roleService.getRoles()).some(r => r.id === role.id));
 
-			globalEventService.publishInternalEvent('roleUpdated', { ...role, name: 'old-body-updated' });
+			publishLegacyInternalEvent(globalEventService, 'roleUpdated', { ...role, name: 'old-body-updated' });
 			await waitFor(async () => (await roleService.getRoles()).find(r => r.id === role.id)?.name === 'old-body-updated');
 		});
 

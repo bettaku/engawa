@@ -328,7 +328,11 @@ export class ActivityPubServerService {
 			return;
 		}
 
-		this.queueService.inbox(activity, signature);
+		this.queueService.inbox(activity, signature, {
+			method: request.raw.method ?? request.method,
+			url: request.raw.url ?? request.url,
+			digest: typeof request.headers.digest === 'string' ? request.headers.digest : null,
+		});
 
 		reply.code(202);
 	}

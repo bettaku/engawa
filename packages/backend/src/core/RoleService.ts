@@ -23,7 +23,7 @@ import { bindThis } from '@/decorators.js';
 import { CacheService } from '@/core/CacheService.js';
 import type { RoleCondFormulaValue } from '@/models/Role.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { isInternalEventRef, type GlobalEvents } from '@/core/GlobalEventService.js';
+import { isInternalEventRef, type GlobalEvents, toInternalEventRef, toRoleAssignmentEventRef } from '@/core/GlobalEventService.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { IdService } from '@/core/IdService.js';
 import { ModerationLogService } from '@/core/ModerationLogService.js';
@@ -615,7 +615,7 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 			lastUsedAt: new Date(),
 		});
 
-		this.globalEventService.publishInternalEvent('userRoleAssigned', created);
+		this.globalEventService.publishInternalEvent('userRoleAssigned', toRoleAssignmentEventRef(created));
 
 		const user = await this.usersRepository.findOneByOrFail({ id: userId });
 
@@ -658,7 +658,7 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 			lastUsedAt: now,
 		});
 
-		this.globalEventService.publishInternalEvent('userRoleUnassigned', existing);
+		this.globalEventService.publishInternalEvent('userRoleUnassigned', toRoleAssignmentEventRef(existing));
 
 		if (moderator) {
 			const [user, role] = await Promise.all([
@@ -714,7 +714,7 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 			policies: values.policies,
 		});
 
-		this.globalEventService.publishInternalEvent('roleCreated', created);
+		this.globalEventService.publishInternalEvent('roleCreated', toInternalEventRef(created));
 
 		if (moderator) {
 			this.moderationLogService.log(moderator, 'createRole', {
@@ -735,7 +735,7 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 		});
 
 		const updated = await this.rolesRepository.findOneByOrFail({ id: role.id });
-		this.globalEventService.publishInternalEvent('roleUpdated', updated);
+		this.globalEventService.publishInternalEvent('roleUpdated', toInternalEventRef(updated));
 
 		if (moderator) {
 			this.moderationLogService.log(moderator, 'updateRole', {
@@ -749,7 +749,7 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 	@bindThis
 	public async delete(role: MiRole, moderator?: MiUser): Promise<void> {
 		await this.rolesRepository.delete({ id: role.id });
-		this.globalEventService.publishInternalEvent('roleDeleted', role);
+		this.globalEventService.publishInternalEvent('roleDeleted', toInternalEventRef(role));
 
 		if (moderator) {
 			this.moderationLogService.log(moderator, 'deleteRole', {
