@@ -20,6 +20,7 @@ import { IdService } from '@/core/IdService.js';
 import type { MiUser } from '@/models/User.js';
 import { IdentifiableError } from '@/misc/identifiable-error.js';
 import { ModerationLogService } from '@/core/ModerationLogService.js';
+import { migrateLegacyPageBlocks } from '@/misc/page-content.js';
 
 export interface PageBody {
 	title: string;
@@ -75,7 +76,7 @@ export class PageService {
 			title: body.title,
 			name: body.name,
 			summary: body.summary,
-			content: body.content,
+			content: migrateLegacyPageBlocks(body.content),
 			variables: body.variables,
 			script: body.script,
 			eyeCatchingImageId: body.eyeCatchingImage ? body.eyeCatchingImage.id : null,
@@ -132,7 +133,7 @@ export class PageService {
 				title: body.title,
 				name: body.name,
 				summary: body.summary === undefined ? page.summary : body.summary,
-				content: body.content,
+				content: body.content != null ? migrateLegacyPageBlocks(body.content) : body.content,
 				variables: body.variables,
 				script: body.script,
 				alignCenter: body.alignCenter,

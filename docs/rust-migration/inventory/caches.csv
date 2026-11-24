@@ -1,0 +1,32 @@
+kind,name,lifetime,memoryCacheLifetime,owner,file,line
+MemoryKVCache,,1000 * 60 * 30,1000 * 60,CacheService,packages/backend/src/core/CacheService.ts,61
+MemoryKVCache,,1000 * 60 * 30,1000 * 60,CacheService,packages/backend/src/core/CacheService.ts,62
+MemoryKVCache,,1000 * 60 * 30,1000 * 60,CacheService,packages/backend/src/core/CacheService.ts,63
+MemoryKVCache,,1000 * 60 * 30,1000 * 60,CacheService,packages/backend/src/core/CacheService.ts,64
+MemoryKVCache,,1000 * 60 * 30,1000 * 60 * 3,CustomEmojiService,packages/backend/src/core/CustomEmojiService.ts,90
+MemoryKVCache,,1000 * 60 * 5,,RoleService,packages/backend/src/core/RoleService.ts,175
+MemoryKVCache,,1000 * 60 * 10,,SystemAccountService,packages/backend/src/core/SystemAccountService.ts,51
+MemoryKVCache,,1000 * 60 * 60 * 12,,ApDbResolverService,packages/backend/src/core/activitypub/ApDbResolverService.ts,65
+MemoryKVCache,,1000 * 60 * 60 * 12,,ApDbResolverService,packages/backend/src/core/activitypub/ApDbResolverService.ts,66
+MemoryKVCache,,opts.memoryCacheLifetime,,RedisKVCache,packages/backend/src/misc/cache.ts,28
+MemoryKVCache,,1000 * 60 * 60 * 24 * 7,,AuthenticateService,packages/backend/src/server/api/AuthenticateService.ts,41
+MemoryKVCache,,1000 * 60 * 5,,OAuth2ProviderService,packages/backend/src/server/oauth/OAuth2ProviderService.ts,262
+MemorySingleCache,,1000 * 60 * 30,,AvatarDecorationService,packages/backend/src/core/AvatarDecorationService.ts,63
+MemorySingleCache,,1000 * 60 * 30,,AvatarDecorationService,packages/backend/src/core/AvatarDecorationService.ts,64
+MemorySingleCache,,1000 * 60 * 10,,RelayService,packages/backend/src/core/RelayService.ts,32
+MemorySingleCache,,1000 * 60 * 60,,RoleService,packages/backend/src/core/RoleService.ts,174
+MemorySingleCache,,opts.memoryCacheLifetime,,RedisSingleCache,packages/backend/src/misc/cache.ts,132
+MemorySingleCache,,1000 * 60 * 60,,DeliverProcessorService,packages/backend/src/queue/processors/DeliverProcessorService.ts,49
+MemorySingleCache,,1000 * 60 * 10,,NodeinfoServerService,packages/backend/src/server/NodeinfoServerService.ts,156
+RedisKVCache,federatedInstance,1000 * 60 * 30,1000 * 60 * 3,FederatedInstanceService,packages/backend/src/core/FederatedInstanceService.ts,30
+RedisKVCache,flashAccessTokens,1000 * 60 * 30,1000 * 60,CacheService,packages/backend/src/core/CacheService.ts,120
+RedisKVCache,renoteMutings,1000 * 60 * 30,1000 * 60,CacheService,packages/backend/src/core/CacheService.ts,98
+RedisKVCache,userBlocked,1000 * 60 * 30,1000 * 60,CacheService,packages/backend/src/core/CacheService.ts,90
+RedisKVCache,userBlocking,1000 * 60 * 30,1000 * 60,CacheService,packages/backend/src/core/CacheService.ts,82
+RedisKVCache,userFollowings,1000 * 60 * 30,1000 * 60,CacheService,packages/backend/src/core/CacheService.ts,106
+RedisKVCache,userKeypair,1000 * 60 * 60 * 24,1000 * 60 * 60,UserKeypairService,packages/backend/src/core/UserKeypairService.ts,26
+RedisKVCache,userListMembers,1000 * 60 * 30,1000 * 60,UserListService,packages/backend/src/core/UserListService.ts,49
+RedisKVCache,userMutings,1000 * 60 * 30,1000 * 60,CacheService,packages/backend/src/core/CacheService.ts,74
+RedisKVCache,userProfile,1000 * 60 * 30,1000 * 60,CacheService,packages/backend/src/core/CacheService.ts,66
+RedisKVCache,userSwSubscriptions,1000 * 60 * 60 * 1,1000 * 60 * 3,PushNotificationService,packages/backend/src/core/PushNotificationService.ts,66
+RedisSingleCache,localEmojis,1000 * 60 * 30,1000 * 60 * 3,CustomEmojiService,packages/backend/src/core/CustomEmojiService.ts,92

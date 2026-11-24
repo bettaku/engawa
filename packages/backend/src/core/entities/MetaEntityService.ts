@@ -140,7 +140,8 @@ export class MetaEntityService {
 			mediaProxy: this.config.mediaProxy,
 			enableUrlPreview: instance.urlPreviewEnabled,
 			urlPreviewEndpoint: instance.directSummalyProxy ? (instance.urlPreviewSummaryProxyUrl || `${this.config.url}/url` ) : `${this.config.url}/url`,
-			noteSearchableScope: (this.config.meilisearch == null || this.config.meilisearch.scope !== 'local') ? 'global' : 'local',
+			// Elasticsearchは既定でローカルのノートだけを索引に入れる。SQLでの検索はすべてのノートが対象になる
+			noteSearchableScope: (this.config.fulltextSearch?.provider === 'elasticsearch' && (this.config.elasticsearch?.scope ?? 'local') === 'local') ? 'local' : 'global',
 			maxFileSize: this.config.maxFileSize,
 			statusUrl: instance.statusUrl,
 			federation: this.meta.federation,
@@ -159,14 +160,15 @@ export class MetaEntityService {
 
 		const packed = await this.pack(instance);
 
-		const proxyAccount = await this.systemAccountService.fetch('proxy');
+		// packの中では作成しない（P3-3）。まだ作られていなければnullを返す
+		const proxyAccount = await this.systemAccountService.fetchIfExists('proxy');
 
 		const packDetailed: Packed<'MetaDetailed'> = {
 			...packed,
 			cacheRemoteFiles: instance.cacheRemoteFiles,
 			cacheRemoteSensitiveFiles: instance.cacheRemoteSensitiveFiles,
 			requireSetup: this.meta.rootUserId == null,
-			proxyAccountName: proxyAccount.username,
+			proxyAccountName: proxyAccount?.username ?? null,
 			features: {
 				localTimeline: instance.policies.ltlAvailable,
 				globalTimeline: instance.policies.gtlAvailable,

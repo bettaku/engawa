@@ -4,7 +4,7 @@
  */
 
 import { URL } from 'node:url';
-import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import httpSignature from '@peertube/http-signature';
 import * as Bull from 'bullmq';
 import type Logger from '@/logger.js';
@@ -25,22 +25,15 @@ import { JsonLdError, JsonLdService } from '@/core/activitypub/JsonLdService.js'
 import { ApInboxService } from '@/core/activitypub/ApInboxService.js';
 import { bindThis } from '@/decorators.js';
 import { IdentifiableError } from '@/misc/identifiable-error.js';
-import { CollapsedQueue } from '@/misc/collapsed-queue.js';
-import { MiNote } from '@/models/Note.js';
 import { MiMeta } from '@/models/Meta.js';
 import { DI } from '@/di-symbols.js';
 import { QueueLoggerService } from '../QueueLoggerService.js';
+import { toParsedSignature } from '../inbox-job-data.js';
 import type { InboxJobData } from '../types.js';
 
-type UpdateInstanceJob = {
-	latestRequestReceivedAt: Date,
-	shouldUnsuspend: boolean,
-};
-
 @Injectable()
-export class InboxProcessorService implements OnApplicationShutdown {
+export class InboxProcessorService {
 	private logger: Logger;
-	private updateInstanceQueue: CollapsedQueue<MiNote['id'], UpdateInstanceJob>;
 
 	constructor(
 		@Inject(DI.meta)
@@ -59,12 +52,11 @@ export class InboxProcessorService implements OnApplicationShutdown {
 		private queueLoggerService: QueueLoggerService,
 	) {
 		this.logger = this.queueLoggerService.logger.createSubLogger('inbox');
-		this.updateInstanceQueue = new CollapsedQueue(process.env.NODE_ENV !== 'test' ? 60 * 1000 * 5 : 0, this.collapseUpdateInstanceJobs, this.performUpdateInstance);
 	}
 
 	@bindThis
 	public async process(job: Bull.Job<InboxJobData>): Promise<string> {
-		const signature = job.data.signature;	// HTTP-signature
+		const signature = toParsedSignature(job.data);	// HTTP-signature（v1はそのまま、v2は組み立て直す）
 		let activity = job.data.activity;
 
 		//#region Log
@@ -219,9 +211,9 @@ export class InboxProcessorService implements OnApplicationShutdown {
 
 			if (i == null) return;
 
-			this.updateInstanceQueue.enqueue(i.id, {
-				latestRequestReceivedAt: new Date(),
-				shouldUnsuspend: i.suspensionState === 'autoSuspendedForNotResponding',
+			// 最終受信時刻と自動停止の解除はRedisに集約し、定期ジョブがDBへ書く（P3-2）
+			await this.federatedInstanceService.recordRequestReceived(i).catch(err => {
+				this.logger.warn(`failed to record request received from ${i.host}`, { e: err });
 			});
 
 			if (this.meta.enableChartsForFederatedInstances) {
@@ -246,6 +238,9 @@ export class InboxProcessorService implements OnApplicationShutdown {
 				if (e.id === '85ab9bd7-3a41-4530-959d-f07073900109') {
 					return 'actor has been suspended';
 				}
+				if (e.id === 'a093350c-a7cf-4293-8dbd-497fb1426e74') { // specified visibility pure renote
+					return 'skip: pure renote with specified visibility is not supported';
+				}
 				if (e.id === 'd450b8a9-48e4-4dab-ae36-f4db763fda7c') { // invalid Note
 					return e.message;
 				}
@@ -253,37 +248,5 @@ export class InboxProcessorService implements OnApplicationShutdown {
 			throw e;
 		}
 		return 'ok';
-	}
-
-	@bindThis
-	public collapseUpdateInstanceJobs(oldJob: UpdateInstanceJob, newJob: UpdateInstanceJob) {
-		const latestRequestReceivedAt = oldJob.latestRequestReceivedAt < newJob.latestRequestReceivedAt
-			? newJob.latestRequestReceivedAt
-			: oldJob.latestRequestReceivedAt;
-		const shouldUnsuspend = oldJob.shouldUnsuspend || newJob.shouldUnsuspend;
-		return {
-			latestRequestReceivedAt,
-			shouldUnsuspend,
-		};
-	}
-
-	@bindThis
-	public async performUpdateInstance(id: string, job: UpdateInstanceJob) {
-		await this.federatedInstanceService.update(id, {
-			latestRequestReceivedAt: new Date(),
-			isNotResponding: false,
-			// もしサーバーが死んでるために配信が止まっていた場合には自動的に復活させてあげる
-			suspensionState: job.shouldUnsuspend ? 'none' : undefined,
-		});
-	}
-
-	@bindThis
-	public async dispose(): Promise<void> {
-		await this.updateInstanceQueue.performAllNow();
-	}
-
-	@bindThis
-	async onApplicationShutdown(signal?: string) {
-		await this.dispose();
 	}
 }

@@ -4,10 +4,12 @@
  */
 
 import { URL } from 'node:url';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { query as urlQuery } from '@/misc/prelude/url.js';
 import { HttpRequestService } from '@/core/HttpRequestService.js';
 import { bindThis } from '@/decorators.js';
+import { DI } from '@/di-symbols.js';
+import type { Config } from '@/config.js';
 
 export type ILink = {
 	href: string;
@@ -25,6 +27,9 @@ const mRegex = /^([^@]+)@(.*)/;
 @Injectable()
 export class WebfingerService {
 	constructor(
+		@Inject(DI.config)
+		private config: Config,
+
 		private httpRequestService: HttpRequestService,
 	) {
 	}
@@ -46,7 +51,7 @@ export class WebfingerService {
 		const m = query.match(mRegex);
 		if (m) {
 			const hostname = m[2];
-			const useHttp = process.env.CHERRYPICK_WEBFINGER_USE_HTTP && process.env.CHERRYPICK_WEBFINGER_USE_HTTP.toLowerCase() === 'true';
+			const useHttp = this.config.runtime.test.webfingerUseHttp;
 			return `http${useHttp ? '' : 's'}://${hostname}/.well-known/webfinger?${urlQuery({ resource: `acct:${query}` })}`;
 		}
 

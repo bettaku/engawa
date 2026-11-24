@@ -41,3 +41,9 @@ jobs:
       run: pnpm build && pnpm --filter backend generate-api-json
     - name: Validation
       run: npx @redocly/cli lint --extends=minimal ./packages/backend/built/api.json
+    # コミットしたapi.jsonが、エンドポイントの定義と一致しているか（P2-6）
+    - name: Check committed api.json
+      run: |
+        # 直前のステップでビルド済みなので、ビルドを省いて生成する（手元では pnpm --filter backend update-api-json）
+        (cd packages/backend && node ./scripts/generate_api_json.js --no-build --committed)
+        git diff --exit-code -- packages/backend/api.json

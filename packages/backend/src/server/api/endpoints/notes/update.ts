@@ -28,6 +28,18 @@ export const meta = {
 		minInterval: ms('1sec'),
 	},
 
+	res: {
+		type: 'object',
+		optional: false, nullable: false,
+		properties: {
+			updatedNote: {
+				type: 'object',
+				optional: false, nullable: false,
+				ref: 'Note',
+			},
+		},
+	},
+
 	errors: {
 		noSuchNote: {
 			message: 'No such note.',
@@ -217,8 +229,12 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 
 			const updatedNote = await this.noteUpdateService.update(me, data, note, false);
 
+			if (updatedNote == null) {
+				throw new ApiError(meta.errors.noSuchNote);
+			}
+
 			return {
-				updatedNote: await this.noteEntityService.pack(updatedNote!, me),
+				updatedNote: await this.noteEntityService.pack(updatedNote, me),
 			};
 		});
 	}

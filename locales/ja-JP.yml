@@ -1812,6 +1812,7 @@ _cherrypick:
   useShiftEnterToSendDescription: "オプションを有効にすると、行替えはEnterキーでできます。チャットを送信するときはオプションの影響を受けません。"
   alsoUseCtrlEnterToSend: "Ctrl（Cmd）+ Enterキーでも送信する"
   alsoUseCtrlEnterToSendDescription: "Shift + Enterキーに加えて、Ctrl（Cmd）+ Enterキーでも送信できるようにします。"
+  cannotRenoteWithSpecifiedVisibility: "公開範囲が「指名」のままではリノートできません。公開範囲を変えてからリノートするか、引用してください。"
   postFormVisibilityHotkey: "ショートカットキーで公開範囲を切り替える"
   postFormVisibilityHotkeyDescription: "ノートを作成する際、Ctrl(control) + Shiftキーを押すと公開範囲を切り替えることができます。ローカルのみショートカットキーは、Ctrl(commandまたはcontrol) + Alt(option)キーです。"
   showRenoteConfirmPopup: "Renoteするときに確認ポップアップを表示"

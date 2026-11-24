@@ -14,11 +14,13 @@ import { DI } from '@/di-symbols.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { bindThis } from '@/decorators.js';
 import endpoints from './endpoints.js';
+import { errorBody, errorForStatus, httpErrors, normalizeErrorPayload } from './http-errors.js';
 import { ApiCallService } from './ApiCallService.js';
+import { ApiLoggerService } from './ApiLoggerService.js';
 import { SignupApiService } from './SignupApiService.js';
 import { SigninApiService } from './SigninApiService.js';
 import { SigninWithPasskeyApiService } from './SigninWithPasskeyApiService.js';
-import type { FastifyInstance, FastifyPluginOptions } from 'fastify';
+import type { FastifyError, FastifyInstance, FastifyPluginOptions, FastifyReply } from 'fastify';
 
 @Injectable()
 export class ApiServerService {
@@ -39,6 +41,7 @@ export class ApiServerService {
 		private signupApiService: SignupApiService,
 		private signinApiService: SigninApiService,
 		private signinWithPasskeyApiService: SigninWithPasskeyApiService,
+		private apiLoggerService: ApiLoggerService,
 	) {
 		//this.createServer = this.createServer.bind(this);
 	}
@@ -78,7 +81,7 @@ export class ApiServerService {
 				}>('/' + endpoint.name, async (request, reply) => {
 					if (request.method === 'GET' && !endpoint.meta.allowGet) {
 						reply.code(405);
-						reply.send();
+						reply.send(errorBody(httpErrors.methodNotAllowed));
 						return;
 					}
 
@@ -94,7 +97,7 @@ export class ApiServerService {
 				}>('/' + endpoint.name, { bodyLimit: 1024 * 1024 }, async (request, reply) => {
 					if (request.method === 'GET' && !endpoint.meta.allowGet) {
 						reply.code(405);
-						reply.send();
+						reply.send(errorBody(httpErrors.methodNotAllowed));
 						return;
 					}
 
@@ -183,24 +186,41 @@ export class ApiServerService {
 				reply.send();
 			} else {
 				reply.code(405);
-				reply.send();
+				reply.send(errorBody(httpErrors.methodNotAllowed));
 			}
 		});
 
-		// Make sure any unknown path under /api returns HTTP 404 Not Found,
-		// because otherwise ClientServerService will return the base client HTML
-		// page with HTTP 200.
-		fastify.get('/*', (request, reply) => {
+		// /api以下の非2xxの応答は、すべて { error: { message, code, id, kind } } の形にする（P2-6）。
+		// 未知のパスは、どのメソッドでも404にする。GETはルートのClientServerServiceの`/*`が先に一致して
+		// HTMLを200で返してしまうので、/api以下にも`/*`を置く
+		const unknownEndpoint = (request: unknown, reply: FastifyReply) => {
 			reply.code(404);
-			// Mock ApiCallService.send's error handling
-			reply.send({
-				error: {
-					message: 'Unknown API endpoint.',
-					code: 'UNKNOWN_API_ENDPOINT',
-					id: '2ca3b769-540a-4f08-9dd5-b5a825b6d0f1',
-					kind: 'client',
-				},
-			});
+			reply.send(errorBody(httpErrors.unknownEndpoint));
+		};
+		fastify.all('/*', unknownEndpoint);
+		fastify.setNotFoundHandler(unknownEndpoint);
+
+		// 本文の解析の失敗（JSONの構文、サイズ超過、Content-Type）など、エンドポイントの外で起きたエラー
+		fastify.setErrorHandler<FastifyError>((error, request, reply) => {
+			const status = typeof error.statusCode === 'number' && error.statusCode >= 400 && error.statusCode < 500 ? error.statusCode : 500;
+			if (status === 500) {
+				this.apiLoggerService.logger.error(`Unhandled error in ${request.method} ${request.routeOptions.url ?? request.url}: ${error.message}`, {
+					code: error.code,
+					stack: error.stack,
+				});
+			}
+			reply.code(status);
+			reply.send(errorBody(status === 400 && error.code?.startsWith('FST_ERR_CTP_') ? httpErrors.invalidRequest : errorForStatus(status)));
+		});
+
+		// 共通の形でない非2xxの応答を直す。本文がないもの（サインアップなど）、プラグインの文字列（@fastify/corsなど）には
+		// ステータスに応じたエラーを付け、errorの項目が欠けているものは補う（idはそのまま）
+		fastify.addHook('onSend', async (request, reply, payload) => {
+			if (reply.statusCode < 400) return payload;
+			const body = normalizeErrorPayload(payload, reply.statusCode);
+			if (body === payload) return payload;
+			reply.header('Content-Type', 'application/json; charset=utf-8');
+			return body;
 		});
 
 		done();

@@ -1,0 +1,109 @@
+client,command,firstArg,method,file,line
+redisForSub,on,"'message', this.onMessage);",AbuseReportNotificationService.constructor,packages/backend/src/core/AbuseReportNotificationService.ts,48
+redisForSub,off,"'message', this.onMessage);",AbuseReportNotificationService.dispose,packages/backend/src/core/AbuseReportNotificationService.ts,425
+redisForSub,on,"'message', this.onRedisMessage);",AntennaService.constructor,packages/backend/src/core/AntennaService.ts,54
+redisForTimelines,pipeline,);,AntennaService.addNoteToAntennas,packages/backend/src/core/AntennaService.ts,91
+redisForSub,off,"'message', this.onRedisMessage);",AntennaService.dispose,packages/backend/src/core/AntennaService.ts,257
+redisForSub,on,"'message', this.onMessage);",AvatarDecorationService.constructor,packages/backend/src/core/AvatarDecorationService.ts,66
+redisForSub,off,"'message', this.onMessage);",AvatarDecorationService.dispose,packages/backend/src/core/AvatarDecorationService.ts,375
+redisForSub,on,"'message', this.onMessage);",CacheService.constructor,packages/backend/src/core/CacheService.ts,127
+redisForSub,off,"'message', this.onMessage);",CacheService.dispose,packages/backend/src/core/CacheService.ts,191
+redisClient,pipeline,);,ChatService.createMessageToUser,packages/backend/src/core/ChatService.ts,223
+redisClient,get,`newUserChatMessageExists:${toUser.id}:${fromUser.id}`);,ChatService.createMessageToUser,packages/backend/src/core/ChatService.ts,242
+redisClient,pipeline,);,ChatService.createMessageToRoom,packages/backend/src/core/ChatService.ts,315
+redisClient,pipeline,);,ChatService.createMessageToRoom,packages/backend/src/core/ChatService.ts,326
+redisClient,pipeline,);,ChatService.readUserChatMessage,packages/backend/src/core/ChatService.ts,382
+redisClient,pipeline,);,ChatService.readRoomChatMessage,packages/backend/src/core/ChatService.ts,393
+redisClient,pipeline,);,ChatService.readAllChatMessages,packages/backend/src/core/ChatService.ts,403
+redisClient,pipeline,);,ChatService.getUserReadStateMap,packages/backend/src/core/ChatService.ts,579
+redisClient,pipeline,);,ChatService.getRoomReadStateMap,packages/backend/src/core/ChatService.ts,600
+redisClient,scard,`newChatMessagesExists:${userId}`);,ChatService.hasUnreadMessages,packages/backend/src/core/ChatService.ts,619
+redisClient,pipeline,);,ChatService.deleteRoom,packages/backend/src/core/ChatService.ts,684
+redisClient,pipeline,);,ChatService.leaveRoom,packages/backend/src/core/ChatService.ts,970
+redisClient,get,`latestReadNotification:${userId}`);,UserEntityService.getNotificationsInfo,packages/backend/src/core/entities/UserEntityService.ts,346
+redisClient,xlen,`notificationTimeline:${userId}`);,UserEntityService.getNotificationsInfo,packages/backend/src/core/entities/UserEntityService.ts,349
+redisClient,xrevrange,,UserEntityService.getNotificationsInfo,packages/backend/src/core/entities/UserEntityService.ts,351
+redisForTimelines,lindex,"'list:' + tl, -1).then(lastId => {",FanoutTimelineService.push,packages/backend/src/core/FanoutTimelineService.ts,67
+redisForTimelines,lpush,"'list:' + tl, id);",FanoutTimelineService.push,packages/backend/src/core/FanoutTimelineService.ts,69
+redisForTimelines,lrange,"'list:' + name, 0, -1)",FanoutTimelineService.get,packages/backend/src/core/FanoutTimelineService.ts,80
+redisForTimelines,lrange,"'list:' + name, 0, -1)",FanoutTimelineService.get,packages/backend/src/core/FanoutTimelineService.ts,83
+redisForTimelines,lrange,"'list:' + name, 0, -1)",FanoutTimelineService.get,packages/backend/src/core/FanoutTimelineService.ts,86
+redisForTimelines,lrange,"'list:' + name, 0, -1)",FanoutTimelineService.get,packages/backend/src/core/FanoutTimelineService.ts,89
+redisForTimelines,pipeline,);,FanoutTimelineService.getMulti,packages/backend/src/core/FanoutTimelineService.ts,96
+redisForTimelines,del,'list:' + name);,FanoutTimelineService.purge,packages/backend/src/core/FanoutTimelineService.ts,117
+redisClient,multi,);,FeaturedService.updateRankingOf,packages/backend/src/core/FeaturedService.ts,36
+redisClient,pipeline,);,FeaturedService.getRankingOf,packages/backend/src/core/FeaturedService.ts,53
+redisClient,pipeline,);,FeaturedService.removeFromRanking,packages/backend/src/core/FeaturedService.ts,85
+redisClient,del,`fetchInstanceMetadata:mutex:${host}`);,FetchInstanceMetadataService.tryLock,packages/backend/src/core/FetchInstanceMetadataService.ts,58
+redisClient,set,,FetchInstanceMetadataService.tryLock,packages/backend/src/core/FetchInstanceMetadataService.ts,60
+redisClient,del,`fetchInstanceMetadata:mutex:v2:${host}`);,FetchInstanceMetadataService.unlock,packages/backend/src/core/FetchInstanceMetadataService.ts,70
+redisForPub,publish,"this.config.host, JSON.stringify({",GlobalEventService.publish,packages/backend/src/core/GlobalEventService.ts,324
+redisClient,sismember,"`hashtagUsers:${hashtag}`, userId);",HashtagService.updateHashtagsRanking,packages/backend/src/core/HashtagService.ts,173
+redisClient,pipeline,);,HashtagService.updateHashtagsRanking,packages/backend/src/core/HashtagService.ts,178
+redisClient,pipeline,);,HashtagService.getChart,packages/backend/src/core/HashtagService.ts,203
+redisClient,pipeline,);,HashtagService.getCharts,packages/backend/src/core/HashtagService.ts,223
+redisForSub,on,"'message', this.onMessage);",MetaService.constructor,packages/backend/src/core/MetaService.ts,43
+redisForSub,off,"'message', this.onMessage);",MetaService.dispose,packages/backend/src/core/MetaService.ts,155
+redisForTimelines,pipeline,);,NoteCreateService.pushToTl,packages/backend/src/core/NoteCreateService.ts,1014
+redisClient,get,`latestReadNotification:${userId}`);,NotificationService.readAllNotification,packages/backend/src/core/NotificationService.ts,54
+redisClient,xrevrange,,NotificationService.readAllNotification,packages/backend/src/core/NotificationService.ts,56
+redisClient,set,"`latestReadNotification:${userId}`, latestNotificationId);",NotificationService.readAllNotification,packages/backend/src/core/NotificationService.ts,65
+redisClient,xadd,,NotificationService.#createNotificationInternal,packages/backend/src/core/NotificationService.ts,165
+redisClient,get,`latestReadNotification:${notifieeId}`);,NotificationService.#createNotificationInternal,packages/backend/src/core/NotificationService.ts,191
+redisClient,del,"`notificationTimeline:${userId}`),",NotificationService.flushAllNotifications,packages/backend/src/core/NotificationService.ts,236
+redisClient,del,"`latestReadNotification:${userId}`),",NotificationService.flushAllNotifications,packages/backend/src/core/NotificationService.ts,237
+redisClient,xrange,,NotificationService.#getNotifications,packages/backend/src/core/NotificationService.ts,243
+redisClient,xdel,"`notificationTimeline:${userId}`, targetResId);",NotificationService.deleteNotification,packages/backend/src/core/NotificationService.ts,257
+redisClient,xrange,"streamKey, '-', '+');",NotificationService.deleteUserGroupInvitation,packages/backend/src/core/NotificationService.ts,265
+redisClient,xdel,"streamKey, entryId);",NotificationService.deleteUserGroupInvitation,packages/backend/src/core/NotificationService.ts,274
+redisClient,xrange,,NotificationService.getNotifications,packages/backend/src/core/NotificationService.ts,321
+redisClient,xrevrange,,NotificationService.getNotifications,packages/backend/src/core/NotificationService.ts,327
+redisForSub,on,"'message', this.onMessage);",ReactionsBufferingService.constructor,packages/backend/src/core/ReactionsBufferingService.ts,35
+redisForReactions,pipeline,);,ReactionsBufferingService.create,packages/backend/src/core/ReactionsBufferingService.ts,60
+redisForReactions,pipeline,);,ReactionsBufferingService.delete,packages/backend/src/core/ReactionsBufferingService.ts,72
+redisForReactions,pipeline,);,ReactionsBufferingService.get,packages/backend/src/core/ReactionsBufferingService.ts,84
+redisForReactions,pipeline,);,ReactionsBufferingService.getMany,packages/backend/src/core/ReactionsBufferingService.ts,115
+redisForReactions,scan,,ReactionsBufferingService.bake,packages/backend/src/core/ReactionsBufferingService.ts,151
+redisForReactions,pipeline,);,ReactionsBufferingService.bake,packages/backend/src/core/ReactionsBufferingService.ts,165
+redisForSub,off,"'message', this.onMessage);",ReactionsBufferingService.dispose,packages/backend/src/core/ReactionsBufferingService.ts,204
+redisForSub,on,"'message', this.onMessage);",RoleService.constructor,packages/backend/src/core/RoleService.ts,177
+redisForTimelines,pipeline,);,RoleService.addNoteToRoleTimeline,packages/backend/src/core/RoleService.ts,665
+redisForSub,off,"'message', this.onMessage);",RoleService.dispose,packages/backend/src/core/RoleService.ts,746
+redisForSub,on,"'message', this.onMessage);",SystemAccountService.constructor,packages/backend/src/core/SystemAccountService.ts,53
+redisForSub,off,"'message', this.onMessage);",SystemAccountService.dispose,packages/backend/src/core/SystemAccountService.ts,207
+redisForSub,on,"'message', this.onMessage);",SystemWebhookService.constructor,packages/backend/src/core/SystemWebhookService.ts,67
+redisForSub,off,"'message', this.onMessage);",SystemWebhookService.dispose,packages/backend/src/core/SystemWebhookService.ts,253
+redisClient,set,"usedTokenRedisKey, normalizedToken, 'EX', ttl, 'NX');",UserAuthService.validateOtp,packages/backend/src/core/UserAuthService.ts,86
+redisForSub,on,"'message', this.onMessage);",UserListService.constructor,packages/backend/src/core/UserListService.ts,57
+redisForSub,off,"'message', this.onMessage);",UserListService.dispose,packages/backend/src/core/UserListService.ts,151
+redisForSub,on,"'message', this.onMessage);",UserWebhookService.constructor,packages/backend/src/core/UserWebhookService.ts,40
+redisForSub,off,"'message', this.onMessage);",UserWebhookService.dispose,packages/backend/src/core/UserWebhookService.ts,150
+redisClient,setex,"`webauthn:challenge:${userId}`, 90, registrationOptions.challenge);",WebAuthnService.initiateRegistration,packages/backend/src/core/WebAuthnService.ts,79
+redisClient,get,`webauthn:challenge:${userId}`);,WebAuthnService.verifyRegistration,packages/backend/src/core/WebAuthnService.ts,96
+redisClient,del,`webauthn:challenge:${userId}`);,WebAuthnService.verifyRegistration,packages/backend/src/core/WebAuthnService.ts,102
+redisClient,setex,"`webauthn:challenge:${userId}`, 90, authenticationOptions.challenge);",WebAuthnService.initiateAuthentication,packages/backend/src/core/WebAuthnService.ts,161
+redisClient,setex,"`webauthn:challenge:${context}`, 90, authenticationOptions.challenge);",WebAuthnService.initiateSignInWithPasskeyAuthentication,packages/backend/src/core/WebAuthnService.ts,179
+redisClient,getdel,`webauthn:challenge:${context}`);,WebAuthnService.verifySignInWithPasskeyAuthentication,packages/backend/src/core/WebAuthnService.ts,191
+redisClient,getdel,`webauthn:challenge:${userId}`);,WebAuthnService.verifyAuthentication,packages/backend/src/core/WebAuthnService.ts,246
+redisClient,disconnect,"),",GlobalModule.dispose,packages/backend/src/GlobalModule.ts,234
+redisForPub,disconnect,"),",GlobalModule.dispose,packages/backend/src/GlobalModule.ts,235
+redisForSub,disconnect,"),",GlobalModule.dispose,packages/backend/src/GlobalModule.ts,236
+redisForTimelines,disconnect,"),",GlobalModule.dispose,packages/backend/src/GlobalModule.ts,237
+redisForReactions,disconnect,"),",GlobalModule.dispose,packages/backend/src/GlobalModule.ts,238
+redisForJobQueue,disconnect,"),",GlobalModule.dispose,packages/backend/src/GlobalModule.ts,239
+redisClient,set,,RedisKVCache.set,packages/backend/src/misc/cache.ts,38
+redisClient,set,,RedisKVCache.set,packages/backend/src/misc/cache.ts,43
+redisClient,get,`kvcache:${this.name}:${key}`);,RedisKVCache.get,packages/backend/src/misc/cache.ts,56
+redisClient,del,`kvcache:${this.name}:${key}`);,RedisKVCache.delete,packages/backend/src/misc/cache.ts,70
+redisClient,set,,RedisSingleCache.set,packages/backend/src/misc/cache.ts,142
+redisClient,set,,RedisSingleCache.set,packages/backend/src/misc/cache.ts,147
+redisClient,get,`singlecache:${this.name}`);,RedisSingleCache.get,packages/backend/src/misc/cache.ts,160
+redisClient,del,`singlecache:${this.name}`);,RedisSingleCache.delete,packages/backend/src/misc/cache.ts,174
+redisClient,info,'Server');,EP:admin/server-info.constructor,packages/backend/src/server/api/endpoints/admin/server-info.ts,119
+redisClient,flushdb,);,EP:reset-db.constructor,packages/backend/src/server/api/endpoints/reset-db.ts,53
+redisForSub,on,"'message', (_: string, data: string) => {",StreamingApiServerService.attach,packages/backend/src/server/api/StreamingApiServerService.ts,104
+redis,ping,"),",HealthServerService.createServer,packages/backend/src/server/HealthServerService.ts,45
+redisForPub,ping,"),",HealthServerService.createServer,packages/backend/src/server/HealthServerService.ts,46
+redisForSub,ping,"),",HealthServerService.createServer,packages/backend/src/server/HealthServerService.ts,47
+redisForTimelines,ping,"),",HealthServerService.createServer,packages/backend/src/server/HealthServerService.ts,48
+redisForReactions,ping,"),",HealthServerService.createServer,packages/backend/src/server/HealthServerService.ts,49

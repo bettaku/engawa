@@ -12,6 +12,7 @@ sidebar:
 
 - [systemdでインストールする（Ubuntu / Debian）](/engawa/install/systemd-ubuntu/): Ubuntu 24.04・Debian 12を想定した、サーバー構築の全手順。
 - [systemdでインストールする（RHEL系）](/engawa/install/systemd-rhel/): AlmaLinux・Rocky Linux・RHELを想定した、サーバー構築の全手順。
+- [Dockerでインストールする](/engawa/install/docker/): Docker Composeと公開済みのコンテナイメージを使う手順。サーバー上でのビルドは不要です。
 
 ## 設定
 

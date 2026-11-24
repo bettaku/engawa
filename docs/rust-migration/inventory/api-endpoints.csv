@@ -1,0 +1,447 @@
+endpoint,group,origin,auth,kind,secure,rolePolicy,allowGet,cacheSec,requireFile,prohibitMoved,rateLimit,hasResSchema,errorCount,effect,writes,queues,events,externals,redisWrites,hubs,testFileCount,testFiles,file
+admin/abuse-report-resolver/create,admin,cherrypick,admin,arr-create,yes,,,,,,,yes,3,write,abuse_report_resolver.insertOne,,,,,,0,,packages/backend/src/server/api/endpoints/admin/abuse-report-resolver/create.ts
+admin/abuse-report-resolver/delete,admin,cherrypick,admin,arr-delete,yes,,,,,,,,1,write,abuse_report_resolver.delete,,,,,,0,,packages/backend/src/server/api/endpoints/admin/abuse-report-resolver/delete.ts
+admin/abuse-report-resolver/list,admin,cherrypick,admin,arr-list,yes,,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/admin/abuse-report-resolver/list.ts
+admin/abuse-report-resolver/update,admin,cherrypick,admin,arr-update,yes,,,,,,,,4,write,abuse_report_resolver.update,,,,,,0,,packages/backend/src/server/api/endpoints/admin/abuse-report-resolver/update.ts
+admin/abuse-report/notification-recipient/create,admin,misskey,moderator,write:admin:abuse-report:notification-recipient,yes,,,,,,,yes,3,write,AbuseReportNotificationRecipient.insert; moderation_log.insert,,,,,pack,1,e2e/synalio/abuse-report.ts,packages/backend/src/server/api/endpoints/admin/abuse-report/notification-recipient/create.ts
+admin/abuse-report/notification-recipient/delete,admin,misskey,moderator,write:admin:abuse-report:notification-recipient,yes,,,,,,,,0,write,AbuseReportNotificationRecipient.delete; moderation_log.insert,,,,,,0,,packages/backend/src/server/api/endpoints/admin/abuse-report/notification-recipient/delete.ts
+admin/abuse-report/notification-recipient/list,admin,misskey,moderator,read:admin:abuse-report:notification-recipient,yes,,,,,,,yes,0,write,AbuseReportNotificationRecipient.delete,,,,,pack,0,,packages/backend/src/server/api/endpoints/admin/abuse-report/notification-recipient/list.ts
+admin/abuse-report/notification-recipient/show,admin,misskey,moderator,read:admin:abuse-report:notification-recipient,yes,,,,,,,yes,1,write,AbuseReportNotificationRecipient.delete,,,,,pack,0,,packages/backend/src/server/api/endpoints/admin/abuse-report/notification-recipient/show.ts
+admin/abuse-report/notification-recipient/update,admin,misskey,moderator,write:admin:abuse-report:notification-recipient,yes,,,,,,,yes,3,write,AbuseReportNotificationRecipient.update; moderation_log.insert,,,,,pack,0,,packages/backend/src/server/api/endpoints/admin/abuse-report/notification-recipient/update.ts
+admin/abuse-user-reports,admin,misskey,moderator,read:admin:abuse-user-reports,,,,,,,,yes,0,read,,,,,,pack,1,e2e/synalio/abuse-report.ts,packages/backend/src/server/api/endpoints/admin/abuse-user-reports.ts
+admin/accounts/create,admin,misskey,none,,,,,,,,,yes,2,write,meta.save; meta.update,systemWebhookDeliver,InternalEvent:metaUpdated,,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/admin/accounts/create.ts
+admin/accounts/delete,admin,misskey,admin,write:admin:account,,,,,,,,,0,write,moderation_log.insert; user.update,createDeleteAccountJob; deliver,InternalEvent:userChangeDeletedState,,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/admin/accounts/delete.ts
+admin/accounts/find-by-email,admin,misskey,admin,read:admin:account,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/admin/accounts/find-by-email.ts
+admin/ad/create,admin,misskey,moderator,write:admin:ad,,,,,,,,yes,0,write,ad.insertOne; moderation_log.insert,,,,,,0,,packages/backend/src/server/api/endpoints/admin/ad/create.ts
+admin/ad/delete,admin,misskey,moderator,write:admin:ad,,,,,,,,,1,write,ad.delete; moderation_log.insert,,,,,,0,,packages/backend/src/server/api/endpoints/admin/ad/delete.ts
+admin/ad/list,admin,misskey,moderator,read:admin:ad,,,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/admin/ad/list.ts
+admin/ad/update,admin,misskey,moderator,write:admin:ad,,,,,,,,,1,write,ad.update; moderation_log.insert,,,,,,0,,packages/backend/src/server/api/endpoints/admin/ad/update.ts
+admin/announcements/create,admin,misskey,moderator,write:admin:announcements,,,,,,,,yes,0,write,announcement.insertOne; moderation_log.insert,,BroadcastStream:announcementCreated; MainStream:announcementCreated,,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/admin/announcements/create.ts
+admin/announcements/delete,admin,misskey,moderator,write:admin:announcements,,,,,,,,,1,write,announcement.delete; moderation_log.insert,,,,,,0,,packages/backend/src/server/api/endpoints/admin/announcements/delete.ts
+admin/announcements/list,admin,misskey,moderator,read:admin:announcements,,,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/admin/announcements/list.ts
+admin/announcements/update,admin,misskey,moderator,write:admin:announcements,,,,,,,,,1,write,announcement.update; moderation_log.insert,,,,,,0,,packages/backend/src/server/api/endpoints/admin/announcements/update.ts
+admin/avatar-decorations/copy,admin,cherrypick,user,write:admin:avatar-decorations,,canManageAvatarDecorations,,,,,,yes,2,write,avatar_decoration.insertOne; avatar_decoration.update; drive_file.delete; drive_file.insertOne; drive_file.update; moderation_log.insert,createDeleteObjectStorageFileJob,DriveStream:fileCreated; DriveStream:fileDeleted; InternalEvent:avatarDecorationCreated; InternalEvent:avatarDecorationUpdated; MainStream:driveFileCreated,fetch; ffmpeg; http; http-download; image; local-storage; s3,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/admin/avatar-decorations/copy.ts
+admin/avatar-decorations/create,admin,misskey,user,write:admin:avatar-decorations,,canManageAvatarDecorations,,,,,,yes,0,write,avatar_decoration.insertOne; moderation_log.insert,,InternalEvent:avatarDecorationCreated,,redisForPub.publish,,0,,packages/backend/src/server/api/endpoints/admin/avatar-decorations/create.ts
+admin/avatar-decorations/delete,admin,misskey,user,write:admin:avatar-decorations,,canManageAvatarDecorations,,,,,,,0,write,avatar_decoration.delete; moderation_log.insert,,InternalEvent:avatarDecorationDeleted,,redisForPub.publish,,0,,packages/backend/src/server/api/endpoints/admin/avatar-decorations/delete.ts
+admin/avatar-decorations/list,admin,misskey,user,read:admin:avatar-decorations,,canManageAvatarDecorations,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/admin/avatar-decorations/list.ts
+admin/avatar-decorations/list-remote,admin,cherrypick,user,read:admin:avatar-decorations,,canManageAvatarDecorations,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/admin/avatar-decorations/list-remote.ts
+admin/avatar-decorations/update,admin,misskey,user,write:admin:avatar-decorations,,canManageAvatarDecorations,,,,,,,0,write,avatar_decoration.update; moderation_log.insert,,InternalEvent:avatarDecorationUpdated,,redisForPub.publish,,0,,packages/backend/src/server/api/endpoints/admin/avatar-decorations/update.ts
+admin/captcha/current,admin,misskey,admin,read:admin:meta,,,,,,,,yes,0,read,,,,captcha-http,,lazyInit,0,,packages/backend/src/server/api/endpoints/admin/captcha/current.ts
+admin/captcha/save,admin,misskey,admin,write:admin:meta,,,,,,,,,6,write,meta.save; meta.update,,InternalEvent:metaUpdated,captcha-http; fetch; http,redisForPub.publish,,0,,packages/backend/src/server/api/endpoints/admin/captcha/save.ts
+admin/delete-account,admin,misskey,admin,write:admin:delete-account,,,,,,,,,0,write,moderation_log.insert; user.update,createDeleteAccountJob; deliver,InternalEvent:userChangeDeletedState,,redisForPub.publish,pack,2,e2e/antennas.ts; e2e/users.ts,packages/backend/src/server/api/endpoints/admin/delete-account.ts
+admin/delete-all-files-of-a-user,admin,misskey,admin,write:admin:delete-all-files-of-a-user,,,,,,,,,0,write,drive_file.delete; drive_file.update; moderation_log.insert,createDeleteObjectStorageFileJob,DriveStream:fileDeleted,local-storage,redisForPub.publish,,0,,packages/backend/src/server/api/endpoints/admin/delete-all-files-of-a-user.ts
+admin/drive/clean-remote-files,admin,misskey,moderator,write:admin:drive,,,,,,,,,0,write,,createCleanRemoteFilesJob,,,,,0,,packages/backend/src/server/api/endpoints/admin/drive/clean-remote-files.ts
+admin/drive/cleanup,admin,misskey,moderator,write:admin:drive,,,,,,,,,0,write,drive_file.delete; drive_file.update; moderation_log.insert,createDeleteObjectStorageFileJob,DriveStream:fileDeleted,local-storage,redisForPub.publish,,0,,packages/backend/src/server/api/endpoints/admin/drive/cleanup.ts
+admin/drive/files,admin,misskey,moderator,read:admin:drive,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/admin/drive/files.ts
+admin/drive/show-file,admin,misskey,moderator,read:admin:drive,,,,,,,,yes,1,read,,,,,,,0,,packages/backend/src/server/api/endpoints/admin/drive/show-file.ts
+admin/emoji/add,admin,misskey,user,write:admin:emoji,,canManageCustomEmojis,,,,,,yes,3,write,drive_file.delete; drive_file.insertOne; drive_file.update; emoji.insertOne; moderation_log.insert,createDeleteObjectStorageFileJob,BroadcastStream:emojiAdded; DriveStream:fileCreated; DriveStream:fileDeleted; MainStream:driveFileCreated,ffmpeg; http; http-download; image; local-storage; s3,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/admin/emoji/add.ts
+admin/emoji/add-aliases-bulk,admin,misskey,user,write:admin:emoji,,canManageCustomEmojis,,,,,,,0,write,emoji.update,,BroadcastStream:emojiUpdated,,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/admin/emoji/add-aliases-bulk.ts
+admin/emoji/copy,admin,misskey,user,write:admin:emoji,,canManageCustomEmojis,,,,,,yes,2,write,drive_file.delete; drive_file.insertOne; drive_file.update; emoji.insertOne; moderation_log.insert,createDeleteObjectStorageFileJob,BroadcastStream:emojiAdded; DriveStream:fileCreated; DriveStream:fileDeleted; MainStream:driveFileCreated,ffmpeg; http; http-download; image; local-storage; s3,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/admin/emoji/copy.ts
+admin/emoji/delete,admin,misskey,user,write:admin:emoji,,canManageCustomEmojis,,,,,,,1,write,emoji.delete; moderation_log.insert,,BroadcastStream:emojiDeleted,,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/admin/emoji/delete.ts
+admin/emoji/delete-bulk,admin,misskey,user,write:admin:emoji,,canManageCustomEmojis,,,,,,,0,write,emoji.delete; moderation_log.insert,,BroadcastStream:emojiDeleted,,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/admin/emoji/delete-bulk.ts
+admin/emoji/import-zip,admin,misskey,user,,yes,canManageCustomEmojis,,,,,,,0,write,,createImportCustomEmojisJob,,,,,0,,packages/backend/src/server/api/endpoints/admin/emoji/import-zip.ts
+admin/emoji/list,admin,misskey,user,read:admin:emoji,,canManageCustomEmojis,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/admin/emoji/list.ts
+admin/emoji/list-remote,admin,misskey,user,read:admin:emoji,,canManageCustomEmojis,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/admin/emoji/list-remote.ts
+admin/emoji/remove-aliases-bulk,admin,misskey,user,write:admin:emoji,,canManageCustomEmojis,,,,,,,0,write,emoji.update,,BroadcastStream:emojiUpdated,,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/admin/emoji/remove-aliases-bulk.ts
+admin/emoji/set-aliases-bulk,admin,misskey,user,write:admin:emoji,,canManageCustomEmojis,,,,,,,0,write,emoji.update,,BroadcastStream:emojiUpdated,,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/admin/emoji/set-aliases-bulk.ts
+admin/emoji/set-category-bulk,admin,misskey,user,write:admin:emoji,,canManageCustomEmojis,,,,,,,0,write,emoji.update,,BroadcastStream:emojiUpdated,,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/admin/emoji/set-category-bulk.ts
+admin/emoji/set-license-bulk,admin,misskey,user,write:admin:emoji,,canManageCustomEmojis,,,,,,,0,write,emoji.update,,BroadcastStream:emojiUpdated,,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/admin/emoji/set-license-bulk.ts
+admin/emoji/steal,admin,cherrypick,user,write:admin:emoji,,canManageCustomEmojis,,,,,,yes,3,write,drive_file.delete; drive_file.insertOne; drive_file.update; emoji.insertOne; moderation_log.insert,createDeleteObjectStorageFileJob,BroadcastStream:emojiAdded; DriveStream:fileCreated; DriveStream:fileDeleted; MainStream:driveFileCreated,ffmpeg; http; http-download; image; local-storage; s3,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/admin/emoji/steal.ts
+admin/emoji/update,admin,misskey,user,write:admin:emoji,,canManageCustomEmojis,,,,,,,3,write,drive_file.delete; drive_file.insertOne; drive_file.update; emoji.update; moderation_log.insert,createDeleteObjectStorageFileJob,BroadcastStream:emojiAdded; BroadcastStream:emojiDeleted; BroadcastStream:emojiUpdated; DriveStream:fileCreated; DriveStream:fileDeleted; MainStream:driveFileCreated,ffmpeg; http; http-download; image; local-storage; s3,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/admin/emoji/update.ts
+admin/federation/delete-all-files,admin,misskey,moderator,write:admin:federation,,,,,,,,,0,write,drive_file.delete; drive_file.update; moderation_log.insert,createDeleteObjectStorageFileJob,DriveStream:fileDeleted,local-storage,redisForPub.publish,,0,,packages/backend/src/server/api/endpoints/admin/federation/delete-all-files.ts
+admin/federation/refresh-remote-instance-metadata,admin,misskey,moderator,write:admin:federation,,,,,,,,,0,write,instance.insertOne; instance.update,,,fetch; http,redisClient.del; redisClient.set,,0,,packages/backend/src/server/api/endpoints/admin/federation/refresh-remote-instance-metadata.ts
+admin/federation/remove-all-following,admin,misskey,moderator,write:admin:federation,,,,,,,,,0,write,,createUnfollowJob,,,,,0,,packages/backend/src/server/api/endpoints/admin/federation/remove-all-following.ts
+admin/federation/update-instance,admin,misskey,moderator,write:admin:federation,,,,,,,,,0,write,instance.update; moderation_log.insert,,,,,,0,,packages/backend/src/server/api/endpoints/admin/federation/update-instance.ts
+admin/forward-abuse-user-report,admin,misskey,moderator,write:admin:resolve-abuse-user-report,,,,,,,,,1,write,abuse_user_report.update; moderation_log.insert,deliver,,,,lazyInit; pack,0,,packages/backend/src/server/api/endpoints/admin/forward-abuse-user-report.ts
+admin/get-index-stats,admin,misskey,admin,read:admin:index-stats,,,,,,,,yes,0,write,(raw SQL).query,,,,,,1,e2e/api.ts,packages/backend/src/server/api/endpoints/admin/get-index-stats.ts
+admin/get-table-stats,admin,misskey,admin,read:admin:table-stats,,,,,,,,yes,0,write,(raw SQL).query,,,,,,0,,packages/backend/src/server/api/endpoints/admin/get-table-stats.ts
+admin/get-user-ips,admin,misskey,moderator,read:admin:user-ips,,,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/admin/get-user-ips.ts
+admin/index/full,admin,engawa,moderator,write:index:full,,,,,,,,,0,write(kindのみ),,,,,,,0,,packages/backend/src/server/api/endpoints/admin/index/full.ts
+admin/index/reindex,admin,engawa,moderator,write:index:full,,,,,,,,,0,write(kindのみ),,,,,,,0,,packages/backend/src/server/api/endpoints/admin/index/reindex.ts
+admin/invite/create,admin,misskey,moderator,write:admin:invite-codes,,,,,,,,yes,1,write,moderation_log.insert; registration_ticket.insertOne,,,,,pack,0,,packages/backend/src/server/api/endpoints/admin/invite/create.ts
+admin/invite/list,admin,misskey,moderator,read:admin:invite-codes,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/admin/invite/list.ts
+admin/invite/revoke,admin,cherrypick,moderator,write:admin:invite-codes,,,,,,,,,0,write,registration_ticket.delete,,,,,,0,,packages/backend/src/server/api/endpoints/admin/invite/revoke.ts
+admin/meta,admin,misskey,admin,read:admin:meta,,,,,,,,yes,0,read,,,,,,lazyInit,0,,packages/backend/src/server/api/endpoints/admin/meta.ts
+admin/promo/create,admin,misskey,moderator,write:admin:promo,,,,,,,,,2,write,promo_note.insert,,,,,,0,,packages/backend/src/server/api/endpoints/admin/promo/create.ts
+admin/queue/clear,admin,misskey,moderator,write:admin:queue,,,,,,,,,0,write,moderation_log.insert,queueClear,,,,,0,,packages/backend/src/server/api/endpoints/admin/queue/clear.ts
+admin/queue/deliver-delayed,admin,misskey,moderator,read:admin:queue,,,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/admin/queue/deliver-delayed.ts
+admin/queue/inbox-delayed,admin,misskey,moderator,read:admin:queue,,,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/admin/queue/inbox-delayed.ts
+admin/queue/jobs,admin,misskey,moderator,read:admin:queue,,,,,,,,yes,0,write,,queueGetJobs,,,,,0,,packages/backend/src/server/api/endpoints/admin/queue/jobs.ts
+admin/queue/promote-jobs,admin,misskey,moderator,write:admin:queue,,,,,,,,,0,write,moderation_log.insert,queuePromoteJobs,,,,,0,,packages/backend/src/server/api/endpoints/admin/queue/promote-jobs.ts
+admin/queue/queue-stats,admin,misskey,moderator,read:admin:queue,,,,,,,,yes,0,write,,queueGetQueue,,,,,0,,packages/backend/src/server/api/endpoints/admin/queue/queue-stats.ts
+admin/queue/queues,admin,misskey,moderator,read:admin:queue,,,,,,,,yes,0,write,,queueGetQueues,,,,,0,,packages/backend/src/server/api/endpoints/admin/queue/queues.ts
+admin/queue/remove-job,admin,misskey,moderator,write:admin:queue,,,,,,,,,0,write,,queueRemoveJob,,,,,0,,packages/backend/src/server/api/endpoints/admin/queue/remove-job.ts
+admin/queue/retry-job,admin,misskey,moderator,write:admin:queue,,,,,,,,,0,write,,queueRetryJob,,,,,0,,packages/backend/src/server/api/endpoints/admin/queue/retry-job.ts
+admin/queue/show-job,admin,misskey,moderator,read:admin:queue,,,,,,,,yes,0,write,,queueGetJob,,,,,0,,packages/backend/src/server/api/endpoints/admin/queue/show-job.ts
+admin/queue/show-job-logs,admin,misskey,moderator,read:admin:queue,,,,,,,,yes,0,write,,queueGetJobLogs,,,,,0,,packages/backend/src/server/api/endpoints/admin/queue/show-job-logs.ts
+admin/queue/stats,admin,misskey,moderator,read:admin:emoji,,,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/admin/queue/stats.ts
+admin/relays/add,admin,misskey,moderator,write:admin:relays,,,,,,,,yes,1,write,relay.insertOne,deliver,,,,lazyInit; pack,0,,packages/backend/src/server/api/endpoints/admin/relays/add.ts
+admin/relays/list,admin,misskey,moderator,read:admin:relays,,,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/admin/relays/list.ts
+admin/relays/remove,admin,misskey,moderator,write:admin:relays,,,,,,,,,0,write,relay.delete,deliver,,,,lazyInit; pack,0,,packages/backend/src/server/api/endpoints/admin/relays/remove.ts
+admin/reset-password,admin,misskey,moderator,write:admin:reset-password,,,,,,,,yes,0,write,moderation_log.insert; user_profile.update,,,,,,0,,packages/backend/src/server/api/endpoints/admin/reset-password.ts
+admin/resolve-abuse-user-report,admin,misskey,moderator,write:admin:resolve-abuse-user-report,,,,,,,,,1,write,AbuseReportNotificationRecipient.delete; abuse_user_report.update; moderation_log.insert,systemWebhookDeliver,,,,pack,1,e2e/synalio/abuse-report.ts,packages/backend/src/server/api/endpoints/admin/resolve-abuse-user-report.ts
+admin/roles/assign,admin,misskey,moderator,write:admin:roles,,,,,,,,,3,write,moderation_log.insert; role.update; role_assignment.delete; role_assignment.insertOne,,InternalEvent:userRoleAssigned,,redisForPub.publish,notify,3,e2e/antennas.ts; e2e/note.ts; e2e/users.ts,packages/backend/src/server/api/endpoints/admin/roles/assign.ts
+admin/roles/create,admin,misskey,admin,write:admin:roles,,,,,,,,yes,0,write,moderation_log.insert; role.insertOne,,InternalEvent:roleCreated,,redisForPub.publish,pack,1,e2e/note.ts,packages/backend/src/server/api/endpoints/admin/roles/create.ts
+admin/roles/delete,admin,misskey,admin,write:admin:roles,,,,,,,,,1,write,moderation_log.insert; role.delete,,InternalEvent:roleDeleted,,redisForPub.publish,,1,e2e/note.ts,packages/backend/src/server/api/endpoints/admin/roles/delete.ts
+admin/roles/list,admin,misskey,moderator,read:admin:roles,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/admin/roles/list.ts
+admin/roles/show,admin,misskey,moderator,read:admin:roles,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/admin/roles/show.ts
+admin/roles/unassign,admin,misskey,moderator,write:admin:roles,,,,,,,,,4,write,moderation_log.insert; role.update; role_assignment.delete,,InternalEvent:userRoleUnassigned,,redisForPub.publish,,1,e2e/note.ts,packages/backend/src/server/api/endpoints/admin/roles/unassign.ts
+admin/roles/update,admin,misskey,admin,write:admin:roles,,,,,,,,,1,write,moderation_log.insert; role.update,,InternalEvent:roleUpdated,,redisForPub.publish,,0,,packages/backend/src/server/api/endpoints/admin/roles/update.ts
+admin/roles/update-default-policies,admin,misskey,admin,write:admin:roles,,,,,,,,,0,write,meta.save; meta.update; moderation_log.insert,,InternalEvent:metaUpdated; InternalEvent:policiesUpdated,,redisForPub.publish,lazyInit,0,,packages/backend/src/server/api/endpoints/admin/roles/update-default-policies.ts
+admin/roles/users,admin,misskey,moderator,read:admin:roles,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/admin/roles/users.ts
+admin/send-email,admin,misskey,moderator,write:admin:send-email,,,,,,,,,0,write(kindのみ),,,,email,,,0,,packages/backend/src/server/api/endpoints/admin/send-email.ts
+admin/server-info,admin,misskey,moderator,read:admin:server-info,,,,,,,,yes,0,write,(raw SQL).query,,,,,,0,,packages/backend/src/server/api/endpoints/admin/server-info.ts
+admin/set-user-sensitive,admin,engawa,moderator,write:admin:suspend-user,,,,,,,,,0,write,moderation_log.insert; user.update; user_profile.update,,,,,,0,,packages/backend/src/server/api/endpoints/admin/set-user-sensitive.ts
+admin/show-moderation-logs,admin,misskey,admin,read:admin:show-moderation-log,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/admin/show-moderation-logs.ts
+admin/show-user,admin,misskey,moderator,read:admin:show-user,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/admin/show-user.ts
+admin/show-users,admin,misskey,moderator,read:admin:show-user,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/admin/show-users.ts
+admin/suspend-user,admin,misskey,moderator,write:admin:suspend-user,,,,,,,,,0,write,follow_request.delete; moderation_log.insert; user.update,createUnfollowJob; deliver,InternalEvent:userChangeSuspendedState,,redisForPub.publish,pack,3,e2e/antennas.ts; e2e/timelines.ts; e2e/users.ts,packages/backend/src/server/api/endpoints/admin/suspend-user.ts
+admin/system-webhook/create,admin,misskey,moderator,write:admin:system-webhook,yes,,,,,,,yes,0,write,moderation_log.insert; system_webhook.insert,,InternalEvent:systemWebhookCreated,,redisForPub.publish,pack,2,e2e/synalio/abuse-report.ts; e2e/synalio/user-create.ts,packages/backend/src/server/api/endpoints/admin/system-webhook/create.ts
+admin/system-webhook/delete,admin,misskey,moderator,write:admin:system-webhook,yes,,,,,,,,0,write,moderation_log.insert; system_webhook.delete,,InternalEvent:systemWebhookDeleted,,redisForPub.publish,,2,e2e/synalio/abuse-report.ts; e2e/synalio/user-create.ts,packages/backend/src/server/api/endpoints/admin/system-webhook/delete.ts
+admin/system-webhook/list,admin,misskey,moderator,write:admin:system-webhook,yes,,,,,,,yes,0,write(kindのみ),,,,,,pack,2,e2e/synalio/abuse-report.ts; e2e/synalio/user-create.ts,packages/backend/src/server/api/endpoints/admin/system-webhook/list.ts
+admin/system-webhook/show,admin,misskey,moderator,write:admin:system-webhook,yes,,,,,,,yes,1,write(kindのみ),,,,,,pack,0,,packages/backend/src/server/api/endpoints/admin/system-webhook/show.ts
+admin/system-webhook/test,admin,misskey,moderator,read:admin:system-webhook,yes,,,,,,max=60 duration=900000,,1,write,,systemWebhookDeliver,,,,,0,,packages/backend/src/server/api/endpoints/admin/system-webhook/test.ts
+admin/system-webhook/update,admin,misskey,moderator,write:admin:system-webhook,yes,,,,,,,yes,0,write,moderation_log.insert; system_webhook.update,,InternalEvent:systemWebhookUpdated,,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/admin/system-webhook/update.ts
+admin/unset-user-avatar,admin,misskey,moderator,write:admin:unset-user-avatar,,,,,,,,,0,write,moderation_log.insert; user.update,,,,,,0,,packages/backend/src/server/api/endpoints/admin/unset-user-avatar.ts
+admin/unset-user-banner,admin,misskey,moderator,write:admin:unset-user-banner,,,,,,,,,0,write,moderation_log.insert; user.update,,,,,,0,,packages/backend/src/server/api/endpoints/admin/unset-user-banner.ts
+admin/unset-user-sensitive,admin,engawa,moderator,write:admin:suspend-user,,,,,,,,,0,write,moderation_log.insert; user.update; user_profile.update,,,,,,0,,packages/backend/src/server/api/endpoints/admin/unset-user-sensitive.ts
+admin/unsuspend-user,admin,misskey,moderator,write:admin:unsuspend-user,,,,,,,,,0,write,moderation_log.insert; user.update,deliver,InternalEvent:userChangeSuspendedState,,redisForPub.publish,pack,1,e2e/timelines.ts,packages/backend/src/server/api/endpoints/admin/unsuspend-user.ts
+admin/update-abuse-user-report,admin,misskey,moderator,write:admin:resolve-abuse-user-report,,,,,,,,,1,write,abuse_user_report.update; moderation_log.insert,,,,,,0,,packages/backend/src/server/api/endpoints/admin/update-abuse-user-report.ts
+admin/update-meta,admin,misskey,admin,write:admin:meta,,,,,,,,,0,write,meta.save; meta.update; moderation_log.insert,,InternalEvent:metaUpdated,,redisForPub.publish,lazyInit,7,e2e/endpoints.ts; e2e/fetch-resource.ts; e2e/ff-visibility.ts; e2e/note.ts; e2e/timelines.ts,packages/backend/src/server/api/endpoints/admin/update-meta.ts
+admin/update-proxy-account,admin,misskey,moderator,write:admin:account,,,,,,,,yes,0,write,moderation_log.insert; user.update; user_profile.update,,,,,lazyInit; pack,0,,packages/backend/src/server/api/endpoints/admin/update-proxy-account.ts
+admin/update-user-note,admin,misskey,moderator,write:admin:user-note,,,,,,,,,0,write,moderation_log.insert; user_profile.update,,,,,,0,,packages/backend/src/server/api/endpoints/admin/update-user-note.ts
+announcements,announcements,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/announcements.ts
+announcements/show,announcements,misskey,none,,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/announcements/show.ts
+antennas/create,antennas,misskey,user,write:account,,,,,,yes,,yes,4,write,antenna.insertOne,,InternalEvent:antennaCreated,,redisForPub.publish,pack,2,e2e/antennas.ts; e2e/move.ts,packages/backend/src/server/api/endpoints/antennas/create.ts
+antennas/delete,antennas,misskey,user,write:account,,,,,,,,,1,write,antenna.delete,,InternalEvent:antennaDeleted,,redisForPub.publish,,1,e2e/antennas.ts,packages/backend/src/server/api/endpoints/antennas/delete.ts
+antennas/list,antennas,misskey,user,read:account,,,,,,,,yes,0,read,,,,,,pack,1,e2e/antennas.ts,packages/backend/src/server/api/endpoints/antennas/list.ts
+antennas/notes,antennas,misskey,user,read:account,,,,,,,,yes,1,write,antenna.update,,InternalEvent:antennaUpdated,,redisForPub.publish,pack,1,e2e/antennas.ts,packages/backend/src/server/api/endpoints/antennas/notes.ts
+antennas/show,antennas,misskey,user,read:account,,,,,,,,yes,1,read,,,,,,pack,1,e2e/antennas.ts,packages/backend/src/server/api/endpoints/antennas/show.ts
+antennas/update,antennas,misskey,user,write:account,,,,,,yes,,yes,4,write,antenna.update,,InternalEvent:antennaUpdated,,redisForPub.publish,pack,2,e2e/antennas.ts; e2e/move.ts,packages/backend/src/server/api/endpoints/antennas/update.ts
+ap/get,ap,misskey,admin,read:federation,,,,,,,max=30 duration=3600000,yes,0,read,,,,,,apResolve,0,,packages/backend/src/server/api/endpoints/ap/get.ts
+ap/show,ap,misskey,user,read:account,,,,,,,max=30 duration=3600000,yes,5,read,,,,,,apResolve; pack,0,,packages/backend/src/server/api/endpoints/ap/show.ts
+app/create,app,misskey,none,,,,,,,,,yes,0,write,app.insertOne,,,,,pack,0,,packages/backend/src/server/api/endpoints/app/create.ts
+app/show,app,misskey,none,,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/app/show.ts
+auth/accept,auth,misskey,user,,yes,,,,,,,,1,write,access_token.insert; auth_session.update,,,,,,0,,packages/backend/src/server/api/endpoints/auth/accept.ts
+auth/session/generate,auth,misskey,none,,,,,,,,,yes,1,write,auth_session.insertOne,,,,,,0,,packages/backend/src/server/api/endpoints/auth/session/generate.ts
+auth/session/show,auth,misskey,none,,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/auth/session/show.ts
+auth/session/userkey,auth,misskey,none,,,,,,,,,yes,3,write,auth_session.delete,,,,,pack,0,,packages/backend/src/server/api/endpoints/auth/session/userkey.ts
+blocking/create,blocking,misskey,user,write:blocks,,,,,,,max=20 duration=3600000,yes,3,write,blocking.insert; follow_request.delete; following.delete; instance.decrement; instance.insertOne; muting.insert; user.decrement; user.update; user_list_membership.delete,deliver; userWebhookDeliver,InternalEvent:blockingCreated; InternalEvent:unfollow; MainStream:meUpdated; MainStream:unfollow,,redisForPub.publish,pack,4,e2e/antennas.ts; e2e/block.ts; e2e/move.ts; e2e/users.ts,packages/backend/src/server/api/endpoints/blocking/create.ts
+blocking/delete,blocking,misskey,user,write:blocks,,,,,,,max=100 duration=3600000,yes,3,write,blocking.delete,deliver,InternalEvent:blockingDeleted,,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/blocking/delete.ts
+blocking/list,blocking,misskey,user,read:blocks,,,,,,,,yes,0,read,,,,,,pack,1,e2e/move.ts,packages/backend/src/server/api/endpoints/blocking/list.ts
+charts/active-users,charts,misskey,none,,,,yes,3600,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/charts/active-users.ts
+charts/ap-request,charts,misskey,none,,,,yes,3600,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/charts/ap-request.ts
+charts/drive,charts,misskey,none,,,,yes,3600,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/charts/drive.ts
+charts/federation,charts,misskey,none,,,,yes,3600,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/charts/federation.ts
+charts/instance,charts,misskey,none,,,,yes,3600,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/charts/instance.ts
+charts/notes,charts,misskey,none,,,,yes,3600,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/charts/notes.ts
+charts/user/drive,charts,misskey,none,,,,yes,3600,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/charts/user/drive.ts
+charts/user/following,charts,misskey,none,,,,yes,3600,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/charts/user/following.ts
+charts/user/notes,charts,misskey,none,,,,yes,3600,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/charts/user/notes.ts
+charts/user/pv,charts,misskey,none,,,,yes,3600,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/charts/user/pv.ts
+charts/user/reactions,charts,misskey,none,,,,yes,3600,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/charts/user/reactions.ts
+charts/users,charts,misskey,none,,,,yes,3600,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/charts/users.ts
+chat/history,chat,misskey,user,read:chat,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/chat/history.ts
+chat/messages/create-to-room,chat,misskey,user,write:chat,,,,,,yes,max=500 duration=3600000,yes,3,write,chat_message.insertOne; sw_subscription.delete,deliver,ChatRoomStream:message; MainStream:newChatMessage,webpush,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/chat/messages/create-to-room.ts
+chat/messages/create-to-user,chat,misskey,user,write:chat,,,,,,yes,max=500 duration=3600000,yes,5,write,chat_approval.insertOne; chat_message.insertOne; sw_subscription.delete,deliver,ChatUserStream:message; MainStream:newChatMessage,webpush,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/chat/messages/create-to-user.ts
+chat/messages/delete,chat,misskey,user,write:chat,,,,,,,,,1,write,chat_message.delete,deliver,ChatRoomStream:deleted; ChatUserStream:deleted,,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/chat/messages/delete.ts
+chat/messages/react,chat,misskey,user,write:chat,,,,,,,,,1,write,chat_message.update,,ChatRoomStream:react; ChatUserStream:react,,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/chat/messages/react.ts
+chat/messages/room-timeline,chat,misskey,user,read:chat,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/chat/messages/room-timeline.ts
+chat/messages/search,chat,misskey,user,read:chat,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/chat/messages/search.ts
+chat/messages/show,chat,misskey,user,read:chat,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/chat/messages/show.ts
+chat/messages/unreact,chat,misskey,user,write:chat,,,,,,,,,1,write,chat_message.update,,ChatRoomStream:unreact; ChatUserStream:unreact,,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/chat/messages/unreact.ts
+chat/messages/user-timeline,chat,misskey,user,read:chat,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/chat/messages/user-timeline.ts
+chat/read-all,chat,misskey,user,write:chat,,,,,,,,,0,write(kindのみ),,,,,,,0,,packages/backend/src/server/api/endpoints/chat/read-all.ts
+chat/rooms/create,chat,misskey,user,write:chat,,,,,,yes,max=10 duration=86400000,yes,0,write,chat_room.insertOne,,,,,pack,0,,packages/backend/src/server/api/endpoints/chat/rooms/create.ts
+chat/rooms/delete,chat,misskey,user,write:chat,,,,,,,,,1,write,chat_room.delete; moderation_log.insert,,,,,,0,,packages/backend/src/server/api/endpoints/chat/rooms/delete.ts
+chat/rooms/invitations/cancel,chat,cherrypick,user,write:chat,,,,,,,,,1,write,chat_room_invitation.delete,deliver,,,,pack,0,,packages/backend/src/server/api/endpoints/chat/rooms/invitations/cancel.ts
+chat/rooms/invitations/create,chat,misskey,user,write:chat,,,,,,yes,max=50 duration=86400000,yes,1,write,chat_room_invitation.insertOne,deliver,,,,notify; pack,0,,packages/backend/src/server/api/endpoints/chat/rooms/invitations/create.ts
+chat/rooms/invitations/ignore,chat,misskey,user,write:chat,,,,,,,,,1,write,chat_room_invitation.update,,,,,,0,,packages/backend/src/server/api/endpoints/chat/rooms/invitations/ignore.ts
+chat/rooms/invitations/inbox,chat,misskey,user,read:chat,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/chat/rooms/invitations/inbox.ts
+chat/rooms/invitations/outbox,chat,misskey,user,read:chat,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/chat/rooms/invitations/outbox.ts
+chat/rooms/invitations/reject,chat,cherrypick,user,write:chat,,,,,,,,,1,write,chat_room_invitation.delete,deliver,,,,pack,0,,packages/backend/src/server/api/endpoints/chat/rooms/invitations/reject.ts
+chat/rooms/join,chat,misskey,user,write:chat,,,,,,,,,1,write,chat_room_invitation.delete; chat_room_membership.insertOne,deliver,,,,pack,0,,packages/backend/src/server/api/endpoints/chat/rooms/join.ts
+chat/rooms/joining,chat,misskey,user,read:chat,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/chat/rooms/joining.ts
+chat/rooms/leave,chat,misskey,user,write:chat,,,,,,,,,1,write,chat_room_membership.delete,deliver,,,,pack,0,,packages/backend/src/server/api/endpoints/chat/rooms/leave.ts
+chat/rooms/members,chat,misskey,user,write:chat,,,,,,,,yes,1,write(kindのみ),,,,,,pack,0,,packages/backend/src/server/api/endpoints/chat/rooms/members.ts
+chat/rooms/mute,chat,misskey,user,write:chat,,,,,,,,,1,write,chat_room_membership.update,,,,,,0,,packages/backend/src/server/api/endpoints/chat/rooms/mute.ts
+chat/rooms/owned,chat,misskey,user,read:chat,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/chat/rooms/owned.ts
+chat/rooms/show,chat,misskey,user,read:chat,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/chat/rooms/show.ts
+chat/rooms/update,chat,misskey,user,write:chat,,,,,,,,yes,1,write,chat_room.update,,,,,pack,0,,packages/backend/src/server/api/endpoints/chat/rooms/update.ts
+clips/add-note,clips,misskey,user,write:account,,,,,,yes,max=20 duration=3600000,,4,write,clip.update; clip_note.insert; note.increment,,,,,,3,e2e/clips.ts; e2e/exports.ts; e2e/move.ts,packages/backend/src/server/api/endpoints/clips/add-note.ts
+clips/create,clips,misskey,user,write:account,,,,,,yes,,yes,1,write,clip.insertOne,,,,,pack,3,e2e/clips.ts; e2e/exports.ts; e2e/move.ts,packages/backend/src/server/api/endpoints/clips/create.ts
+clips/delete,clips,misskey,user,write:account,,,,,,,,,1,write,clip.delete,,,,,,2,e2e/clips.ts; e2e/exports.ts,packages/backend/src/server/api/endpoints/clips/delete.ts
+clips/favorite,clips,misskey,user,write:clip-favorite,,,,,,yes,,,2,write,clip_favorite.insert,,,,,,2,e2e/clips.ts; e2e/move.ts,packages/backend/src/server/api/endpoints/clips/favorite.ts
+clips/list,clips,misskey,user,read:account,,,,,,,,yes,0,read,,,,,,pack,2,e2e/clips.ts; e2e/exports.ts,packages/backend/src/server/api/endpoints/clips/list.ts
+clips/my-favorites,clips,misskey,user,read:clip-favorite,,,,,,,,yes,0,read,,,,,,pack,1,e2e/clips.ts,packages/backend/src/server/api/endpoints/clips/my-favorites.ts
+clips/notes,clips,misskey,none,read:account,,,,,,,,yes,1,read,,,,,,pack,1,e2e/clips.ts,packages/backend/src/server/api/endpoints/clips/notes.ts
+clips/remove-note,clips,misskey,user,write:account,,,,,,yes,,,2,write,clip_note.delete; note.decrement,,,,,,2,e2e/clips.ts; e2e/move.ts,packages/backend/src/server/api/endpoints/clips/remove-note.ts
+clips/show,clips,misskey,none,read:account,,,,,,,,yes,1,read,,,,,,pack,1,e2e/clips.ts,packages/backend/src/server/api/endpoints/clips/show.ts
+clips/unfavorite,clips,misskey,user,write:clip-favorite,,,,,,yes,,,2,write,clip_favorite.delete,,,,,,2,e2e/clips.ts; e2e/move.ts,packages/backend/src/server/api/endpoints/clips/unfavorite.ts
+clips/update,clips,misskey,user,write:account,,,,,,yes,,yes,1,write,clip.update,,,,,pack,2,e2e/clips.ts; e2e/move.ts,packages/backend/src/server/api/endpoints/clips/update.ts
+drive,drive,misskey,user,read:drive,,,,,,,,yes,0,read,,,,,,pack,2,e2e/endpoints.ts; unit/server/api/drive/files/create.ts,packages/backend/src/server/api/endpoints/drive.ts
+drive/files,drive,misskey,user,read:drive,,,,,,,,yes,0,read,,,,,,pack,2,e2e/exports.ts; unit/server/api/drive/files/create.ts,packages/backend/src/server/api/endpoints/drive/files.ts
+drive/files/attached-chat-messages,drive,misskey,user,read:drive,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/drive/files/attached-chat-messages.ts
+drive/files/attached-notes,drive,misskey,user,read:drive,,,,,,,,yes,1,read,,,,,,pack,1,e2e/drive.ts,packages/backend/src/server/api/endpoints/drive/files/attached-notes.ts
+drive/files/check-existence,drive,misskey,user,read:drive,,,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/drive/files/check-existence.ts
+drive/files/create,drive,misskey,user,write:drive,,,,,yes,yes,max=120 duration=3600000,yes,5,write,drive_file.delete; drive_file.insertOne; drive_file.update; moderation_log.insert,createDeleteObjectStorageFileJob,DriveStream:fileCreated; DriveStream:fileDeleted; MainStream:driveFileCreated,ffmpeg; http; image; local-storage; s3,redisForPub.publish,pack,2,e2e/endpoints.ts; unit/server/api/drive/files/create.ts,packages/backend/src/server/api/endpoints/drive/files/create.ts
+drive/files/delete,drive,misskey,user,write:drive,,,,,,,,,2,write,drive_file.delete; drive_file.update; moderation_log.insert,createDeleteObjectStorageFileJob,DriveStream:fileDeleted,local-storage,redisForPub.publish,,1,e2e/exports.ts,packages/backend/src/server/api/endpoints/drive/files/delete.ts
+drive/files/find,drive,misskey,user,read:drive,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/drive/files/find.ts
+drive/files/find-by-hash,drive,misskey,user,read:drive,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/drive/files/find-by-hash.ts
+drive/files/move-bulk,drive,misskey,user,write:drive,,,,,,,,,0,write,drive_file.update,,,,,,0,,packages/backend/src/server/api/endpoints/drive/files/move-bulk.ts
+drive/files/show,drive,misskey,user,read:drive,,,,,,,,yes,2,read,,,,,,pack,1,e2e/exports.ts,packages/backend/src/server/api/endpoints/drive/files/show.ts
+drive/files/update,drive,misskey,user,write:drive,,,,,,,,yes,5,write,drive_file.update; moderation_log.insert,,DriveStream:fileUpdated,,redisForPub.publish,pack,2,e2e/endpoints.ts; e2e/note.ts,packages/backend/src/server/api/endpoints/drive/files/update.ts
+drive/files/upload-from-url,drive,misskey,user,write:drive,,,,,,yes,max=60 duration=3600000,,0,write,drive_file.delete; drive_file.insertOne; drive_file.update; moderation_log.insert,createDeleteObjectStorageFileJob,DriveStream:fileCreated; DriveStream:fileDeleted; MainStream:driveFileCreated; MainStream:urlUploadFinished,ffmpeg; http; http-download; image; local-storage; s3,redisForPub.publish,pack,2,e2e/drive.ts; e2e/move.ts,packages/backend/src/server/api/endpoints/drive/files/upload-from-url.ts
+drive/folders,drive,misskey,user,read:drive,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/drive/folders.ts
+drive/folders/create,drive,misskey,user,write:drive,,,,,,,max=10 duration=3600000,yes,1,write,drive_folder.insertOne,,DriveStream:folderCreated,,redisForPub.publish,pack,1,e2e/endpoints.ts,packages/backend/src/server/api/endpoints/drive/folders/create.ts
+drive/folders/delete,drive,misskey,user,write:drive,,,,,,,,,2,write,drive_folder.delete,,DriveStream:folderDeleted,,redisForPub.publish,,0,,packages/backend/src/server/api/endpoints/drive/folders/delete.ts
+drive/folders/find,drive,misskey,user,read:drive,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/drive/folders/find.ts
+drive/folders/show,drive,misskey,user,read:drive,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/drive/folders/show.ts
+drive/folders/update,drive,misskey,user,write:drive,,,,,,,,yes,3,write,drive_folder.update,,DriveStream:folderUpdated,,redisForPub.publish,pack,1,e2e/endpoints.ts,packages/backend/src/server/api/endpoints/drive/folders/update.ts
+drive/stream,drive,misskey,user,read:drive,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/drive/stream.ts
+email-address/available,email-address,misskey,none,,,,,,,,,yes,0,read,,,,email; fetch; http,,,0,,packages/backend/src/server/api/endpoints/email-address/available.ts
+emoji,emoji,misskey,none,,,,yes,3600,,,,yes,0,read,,,,,,pack,1,unit/vite-entry.ts,packages/backend/src/server/api/endpoints/emoji.ts
+emojis,emojis,misskey,none,,,,yes,3600,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/emojis.ts
+endpoint,endpoint,misskey,none,,,,,,,,,yes,0,read,,,,,,,3,unit/auto-delete-settings.ts; unit/events-search.ts; unit/fetch-rss.ts,packages/backend/src/server/api/endpoints/endpoint.ts
+endpoints,endpoints,misskey,none,,,,,,,,,yes,0,read,,,,,,,3,unit/auto-delete-settings.ts; unit/events-search.ts; unit/fetch-rss.ts,packages/backend/src/server/api/endpoints/endpoints.ts
+export-custom-emojis,export-custom-emojis,misskey,user,,yes,,,,,,max=1 duration=3600000,,0,write,,createExportCustomEmojisJob,,,,,0,,packages/backend/src/server/api/endpoints/export-custom-emojis.ts
+federation/followers,federation,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/federation/followers.ts
+federation/following,federation,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/federation/following.ts
+federation/instances,federation,misskey,none,,,,yes,3600,,,,yes,0,read,,,,,,lazyInit; pack,0,,packages/backend/src/server/api/endpoints/federation/instances.ts
+federation/remote-software,federation,cherrypick,none,,,,yes,3600,,,,yes,0,read,,,,,,lazyInit,0,,packages/backend/src/server/api/endpoints/federation/remote-software.ts
+federation/show-instance,federation,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/federation/show-instance.ts
+federation/stats,federation,misskey,none,,,,yes,3600,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/federation/stats.ts
+federation/update-remote-user,federation,misskey,none,,,,,,,,,,0,read,,,,,,apResolve,0,,packages/backend/src/server/api/endpoints/federation/update-remote-user.ts
+federation/users,federation,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/federation/users.ts
+fetch-external-resources,fetch-external-resources,misskey,user,,yes,,,,,,max=50 duration=3600000,yes,2,read,,,,fetch; http,,,0,,packages/backend/src/server/api/endpoints/fetch-external-resources.ts
+fetch-rss,fetch-rss,misskey,none,,,,yes,180,,,max=120 duration=60000,yes,2,read,,,,fetch; http,,,1,unit/fetch-rss.ts,packages/backend/src/server/api/endpoints/fetch-rss.ts
+flash/create,flash,misskey,user,write:flash,,,,,,yes,max=10 duration=3600000,yes,0,write,flash.insertOne,,,,,pack,1,e2e/move.ts,packages/backend/src/server/api/endpoints/flash/create.ts
+flash/delete,flash,misskey,user,write:flash,,,,,,,,,2,write,flash.delete; moderation_log.insert,,,,,,0,,packages/backend/src/server/api/endpoints/flash/delete.ts
+flash/featured,flash,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/flash/featured.ts
+flash/gen-token,flash,cherrypick,user,,yes,,,,,yes,max=30 duration=3600000,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/flash/gen-token.ts
+flash/like,flash,misskey,user,write:flash-likes,,,,,,yes,,,3,write,flash.increment; flash_like.insert,,,,,,1,e2e/move.ts,packages/backend/src/server/api/endpoints/flash/like.ts
+flash/my,flash,misskey,user,read:flash,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/flash/my.ts
+flash/my-likes,flash,misskey,user,read:flash-likes,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/flash/my-likes.ts
+flash/search,flash,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/flash/search.ts
+flash/show,flash,misskey,none,,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/flash/show.ts
+flash/unlike,flash,misskey,user,write:flash-likes,,,,,,yes,,,2,write,flash.decrement; flash_like.delete,,,,,,1,e2e/move.ts,packages/backend/src/server/api/endpoints/flash/unlike.ts
+flash/update,flash,misskey,user,write:flash,,,,,,yes,max=300 duration=3600000,,2,write,flash.update,,,,,,1,e2e/move.ts,packages/backend/src/server/api/endpoints/flash/update.ts
+following/create,following,misskey,user,write:following,,,,,,yes,max=100 duration=3600000,yes,5,write,blocking.delete; follow_request.delete; follow_request.insertOne; following.insert; instance.increment; instance.insertOne; user.increment,deliver; userWebhookDeliver,InternalEvent:blockingDeleted; InternalEvent:follow; MainStream:follow; MainStream:followed; MainStream:meUpdated; MainStream:receiveFollowRequest,,redisForPub.publish,apResolve; notify; pack,12,e2e/antennas.ts; e2e/api-visibility.ts; e2e/block.ts; e2e/endpoints.ts; e2e/exports.ts,packages/backend/src/server/api/endpoints/following/create.ts
+following/delete,following,misskey,user,write:following,,,,,,,max=100 duration=3600000,yes,3,write,following.delete; instance.decrement; instance.insertOne; user.decrement; user.update,deliver; userWebhookDeliver,InternalEvent:unfollow; MainStream:unfollow,,redisForPub.publish,pack,4,e2e/endpoints.ts; e2e/move.ts; e2e/mute.ts; e2e/note.ts,packages/backend/src/server/api/endpoints/following/delete.ts
+following/invalidate,following,misskey,user,write:following,,,,,,,max=100 duration=3600000,yes,3,write,following.delete; instance.decrement; instance.insertOne; user.decrement; user.update,deliver; userWebhookDeliver,InternalEvent:unfollow; MainStream:unfollow,,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/following/invalidate.ts
+following/requests/accept,following,misskey,user,write:following,,,,,,,,,2,write,follow_request.delete; following.insert; instance.increment; instance.insertOne; user.increment,deliver; userWebhookDeliver,InternalEvent:follow; MainStream:follow; MainStream:followed; MainStream:meUpdated,,redisForPub.publish,notify; pack,1,e2e/move.ts,packages/backend/src/server/api/endpoints/following/requests/accept.ts
+following/requests/cancel,following,misskey,user,write:following,,,,,,,,yes,2,write,follow_request.delete,deliver,MainStream:meUpdated,,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/following/requests/cancel.ts
+following/requests/list,following,misskey,user,read:following,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/following/requests/list.ts
+following/requests/reject,following,misskey,user,write:following,,,,,,,,,1,write,follow_request.delete,deliver; userWebhookDeliver,MainStream:unfollow; Unfollow,,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/following/requests/reject.ts
+following/requests/sent,following,misskey,user,read:following,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/following/requests/sent.ts
+following/update,following,misskey,user,write:following,,,,,,,max=100 duration=3600000,yes,3,write,following.update,,,,,pack,1,e2e/timelines.ts,packages/backend/src/server/api/endpoints/following/update.ts
+following/update-all,following,misskey,user,write:following,,,,,,,max=10 duration=3600000,,0,write,following.update,,,,,,0,,packages/backend/src/server/api/endpoints/following/update-all.ts
+gallery/featured,gallery,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/gallery/featured.ts
+gallery/popular,gallery,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/gallery/popular.ts
+gallery/posts,gallery,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/gallery/posts.ts
+gallery/posts/create,gallery,misskey,user,write:gallery,,,,,,yes,max=20 duration=3600000,yes,0,write,gallery_post.insertOne,,,,,pack,1,e2e/move.ts,packages/backend/src/server/api/endpoints/gallery/posts/create.ts
+gallery/posts/delete,gallery,misskey,user,write:gallery,,,,,,,,,2,write,gallery_post.delete; moderation_log.insert,,,,,,0,,packages/backend/src/server/api/endpoints/gallery/posts/delete.ts
+gallery/posts/like,gallery,misskey,user,write:gallery-likes,,,,,,yes,,,3,write,gallery_like.insert; gallery_post.increment,,,,,,1,e2e/move.ts,packages/backend/src/server/api/endpoints/gallery/posts/like.ts
+gallery/posts/show,gallery,misskey,none,,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/gallery/posts/show.ts
+gallery/posts/unlike,gallery,misskey,user,write:gallery-likes,,,,,,yes,,,2,write,gallery_like.delete; gallery_post.decrement,,,,,,1,e2e/move.ts,packages/backend/src/server/api/endpoints/gallery/posts/unlike.ts
+gallery/posts/update,gallery,misskey,user,write:gallery,,,,,,yes,max=300 duration=3600000,yes,0,write,gallery_post.update,,,,,pack,1,e2e/move.ts,packages/backend/src/server/api/endpoints/gallery/posts/update.ts
+get-avatar-decorations,get-avatar-decorations,misskey,none,,,,yes,3600,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/get-avatar-decorations.ts
+get-online-users-count,get-online-users-count,misskey,none,,,,yes,60,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/get-online-users-count.ts
+hashtags/list,hashtags,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/hashtags/list.ts
+hashtags/search,hashtags,misskey,none,,,,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/hashtags/search.ts
+hashtags/show,hashtags,misskey,none,,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/hashtags/show.ts
+hashtags/trend,hashtags,misskey,none,,,,yes,60,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/hashtags/trend.ts
+hashtags/users,hashtags,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,1,e2e/users.ts,packages/backend/src/server/api/endpoints/hashtags/users.ts
+i,i,misskey,user,read:account,,,,,,,,yes,1,write,user_profile.update,,,,,pack,3,e2e/2fa.ts; e2e/users.ts; unit/server/api/drive/files/create.ts,packages/backend/src/server/api/endpoints/i.ts
+i/2fa/done,i,misskey,user,,yes,,,,,,,yes,0,write,user_profile.update,,MainStream:meUpdated,,redisForPub.publish,pack,1,e2e/2fa.ts,packages/backend/src/server/api/endpoints/i/2fa/done.ts
+i/2fa/key-done,i,misskey,user,,yes,,,,,,,yes,2,write,user_profile.update; user_security_key.insert,,MainStream:meUpdated,,redisClient.del; redisClient.set; redisForPub.publish,pack,1,e2e/2fa.ts,packages/backend/src/server/api/endpoints/i/2fa/key-done.ts
+i/2fa/password-less,i,misskey,user,,yes,,,,,,,,1,write,user_profile.update,,MainStream:meUpdated,,redisForPub.publish,pack,1,e2e/2fa.ts,packages/backend/src/server/api/endpoints/i/2fa/password-less.ts
+i/2fa/register,i,misskey,user,,yes,,,,,,,yes,1,write,user_profile.update,,,,redisClient.set,,1,e2e/2fa.ts,packages/backend/src/server/api/endpoints/i/2fa/register.ts
+i/2fa/register-key,i,misskey,user,,yes,,,,,,,yes,3,write,user_profile.update,,,,redisClient.set; redisClient.setex,,1,e2e/2fa.ts,packages/backend/src/server/api/endpoints/i/2fa/register-key.ts
+i/2fa/remove-key,i,misskey,user,,yes,,,,,,,,1,write,user_profile.update; user_security_key.delete,,MainStream:meUpdated,,redisClient.set; redisForPub.publish,pack,1,e2e/2fa.ts,packages/backend/src/server/api/endpoints/i/2fa/remove-key.ts
+i/2fa/unregister,i,misskey,user,,yes,,,,,,,,1,write,user_profile.update,,MainStream:meUpdated,,redisClient.set; redisForPub.publish,pack,1,e2e/2fa.ts,packages/backend/src/server/api/endpoints/i/2fa/unregister.ts
+i/2fa/update-key,i,misskey,user,,yes,,,,,,,,2,write,user_security_key.update,,MainStream:meUpdated,,redisForPub.publish,pack,1,e2e/2fa.ts,packages/backend/src/server/api/endpoints/i/2fa/update-key.ts
+i/apps,i,misskey,user,,yes,,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/i/apps.ts
+i/authorized-apps,i,misskey,user,,yes,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/i/authorized-apps.ts
+i/auto-delete-settings,i,cherrypick,user,read:account,,,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/i/auto-delete-settings.ts
+i/change-password,i,misskey,user,,yes,,,,,,,,0,write,user_profile.update,,,,redisClient.set,,0,,packages/backend/src/server/api/endpoints/i/change-password.ts
+i/claim-achievement,i,misskey,user,write:account,,,,,,yes,,,0,write,user_profile.update,,,,,notify,1,e2e/move.ts,packages/backend/src/server/api/endpoints/i/claim-achievement.ts
+i/delete-account,i,misskey,user,,yes,,,,,,,,0,write,moderation_log.insert; user.update; user_profile.update,createDeleteAccountJob; deliver,InternalEvent:userChangeDeletedState,,redisClient.set; redisForPub.publish,pack,2,e2e/antennas.ts; e2e/users.ts,packages/backend/src/server/api/endpoints/i/delete-account.ts
+i/export-antennas,i,misskey,user,,yes,,,,,,max=1 duration=3600000,,0,write,,createExportAntennasJob,,,,,0,,packages/backend/src/server/api/endpoints/i/export-antennas.ts
+i/export-blocking,i,misskey,user,,yes,,,,,,max=1 duration=3600000,,0,write,,createExportBlockingJob,,,,,0,,packages/backend/src/server/api/endpoints/i/export-blocking.ts
+i/export-clips,i,misskey,user,,yes,,,,,,max=1 duration=86400000,,0,write,,createExportClipsJob,,,,,1,e2e/exports.ts,packages/backend/src/server/api/endpoints/i/export-clips.ts
+i/export-favorites,i,misskey,user,,yes,,,,,,max=1 duration=86400000,,0,write,,createExportFavoritesJob,,,,,0,,packages/backend/src/server/api/endpoints/i/export-favorites.ts
+i/export-following,i,misskey,user,,yes,,,,,,max=1 duration=3600000,,0,write,,createExportFollowingJob,,,,,0,,packages/backend/src/server/api/endpoints/i/export-following.ts
+i/export-mute,i,misskey,user,,yes,,,,,,max=1 duration=3600000,,0,write,,createExportMuteJob,,,,,0,,packages/backend/src/server/api/endpoints/i/export-mute.ts
+i/export-notes,i,misskey,user,,yes,,,,,,max=1 duration=86400000,,0,write,,createExportNotesJob,,,,,0,,packages/backend/src/server/api/endpoints/i/export-notes.ts
+i/export-user-lists,i,misskey,user,,yes,,,,,,max=1 duration=60000,,0,write,,createExportUserListsJob,,,,,0,,packages/backend/src/server/api/endpoints/i/export-user-lists.ts
+i/favorites,i,misskey,user,read:favorites,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/i/favorites.ts
+i/gallery/likes,i,misskey,user,read:gallery-likes,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/i/gallery/likes.ts
+i/gallery/posts,i,misskey,user,read:gallery,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/i/gallery/posts.ts
+i/import-antennas,i,misskey,user,,yes,canImportAntennas,,,,yes,max=1 duration=3600000,,4,write,,createImportAntennasJob,,http; http-download,,,0,,packages/backend/src/server/api/endpoints/i/import-antennas.ts
+i/import-blocking,i,misskey,user,,yes,canImportBlocking,,,,yes,max=1 duration=3600000,,4,write,,createImportBlockingJob,,,,apResolve; pack,1,e2e/move.ts,packages/backend/src/server/api/endpoints/i/import-blocking.ts
+i/import-following,i,misskey,user,,yes,canImportFollowing,,,,yes,max=1 duration=3600000,,4,write,,createImportFollowingJob,,,,apResolve; pack,1,e2e/move.ts,packages/backend/src/server/api/endpoints/i/import-following.ts
+i/import-muting,i,misskey,user,,yes,canImportMuting,,,,yes,max=1 duration=3600000,,4,write,,createImportMutingJob,,,,apResolve; pack,1,e2e/move.ts,packages/backend/src/server/api/endpoints/i/import-muting.ts
+i/import-user-lists,i,misskey,user,,yes,canImportUserLists,,,,yes,max=1 duration=3600000,,4,write,,createImportUserListsJob,,,,apResolve; pack,1,e2e/move.ts,packages/backend/src/server/api/endpoints/i/import-user-lists.ts
+i/move,i,misskey,user,,yes,,,,,yes,max=5 duration=86400000,yes,5,write,antenna.update; instance.decrement; instance.insertOne; moderation_log.insert; muting.insert; role.update; role_assignment.delete; role_assignment.insertOne; user.decrement; user.update; user_list_membership.insert,createBlockJob; createDelayedUnfollowJob; createFollowJob; deliver,InternalEvent:antennaUpdated; InternalEvent:localUserUpdated; InternalEvent:userRoleAssigned; MainStream:meUpdated,,redisForPub.publish,apResolve; lazyInit; notify; pack,1,e2e/move.ts,packages/backend/src/server/api/endpoints/i/move.ts
+i/notifications,i,misskey,user,read:notifications,,,,,,,max=30 duration=30000,yes,0,read,,,,,,notify; pack,2,e2e/mute.ts; e2e/thread-mute.ts,packages/backend/src/server/api/endpoints/i/notifications.ts
+i/notifications-grouped,i,misskey,user,read:notifications,,,,,,,max=30 duration=30000,yes,0,read,,,,,,notify; pack,1,e2e/mute.ts,packages/backend/src/server/api/endpoints/i/notifications-grouped.ts
+i/page-likes,i,misskey,user,read:page-likes,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/i/page-likes.ts
+i/pages,i,misskey,user,read:pages,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/i/pages.ts
+i/pin,i,misskey,user,write:account,,,,,,yes,,yes,3,write,user_note_pining.insert,deliver,,,,pack,2,e2e/move.ts; e2e/users.ts,packages/backend/src/server/api/endpoints/i/pin.ts
+i/read-announcement,i,misskey,user,write:account,,,,,,,,,0,write,announcement.update; announcement_read.insert,,MainStream:readAllAnnouncements,,redisForPub.publish,,0,,packages/backend/src/server/api/endpoints/i/read-announcement.ts
+i/regenerate-token,i,misskey,user,,yes,,,,,,,,0,write,user.update,,InternalEvent:userTokenRegenerated; MainStream:myTokenRegenerated,,redisForPub.publish,,0,,packages/backend/src/server/api/endpoints/i/regenerate-token.ts
+i/registry/get,i,misskey,user,read:account,,,,,,,,yes,1,read,,,,,,,0,,packages/backend/src/server/api/endpoints/i/registry/get.ts
+i/registry/get-all,i,misskey,user,read:account,,,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/i/registry/get-all.ts
+i/registry/get-detail,i,misskey,user,read:account,,,,,,,,yes,1,read,,,,,,,0,,packages/backend/src/server/api/endpoints/i/registry/get-detail.ts
+i/registry/keys,i,misskey,user,read:account,,,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/i/registry/keys.ts
+i/registry/keys-with-type,i,misskey,user,read:account,,,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/i/registry/keys-with-type.ts
+i/registry/remove,i,misskey,user,write:account,,,,,,,,,1,write,registry_item.delete,,,,,,0,,packages/backend/src/server/api/endpoints/i/registry/remove.ts
+i/registry/scopes-with-domain,i,misskey,user,,yes,,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/i/registry/scopes-with-domain.ts
+i/registry/set,i,misskey,user,write:account,,,,,,,,,0,write,registry_item.insert; registry_item.update,,MainStream:registryUpdated,,redisForPub.publish,,0,,packages/backend/src/server/api/endpoints/i/registry/set.ts
+i/revoke-token,i,misskey,user,,yes,,,,,,,,0,write,access_token.delete,,,,,,0,,packages/backend/src/server/api/endpoints/i/revoke-token.ts
+i/signin-history,i,misskey,user,,yes,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/i/signin-history.ts
+i/truncate-account,i,cherrypick,user,,yes,,,,,,,,0,write,user_profile.update,createTruncateAccountJob,,,redisClient.set,,0,,packages/backend/src/server/api/endpoints/i/truncate-account.ts
+i/unpin,i,misskey,user,write:account,,,,,,,,yes,1,write,user_note_pining.delete,deliver,,,,pack,1,e2e/users.ts,packages/backend/src/server/api/endpoints/i/unpin.ts
+i/update,i,misskey,user,write:account,,,,,,,max=20 duration=3600000,yes,12,write,follow_request.delete; following.insert; hashtag.insert; hashtag.update; instance.increment; instance.insertOne; user.increment; user.update; user_profile.update,deliver; userWebhookDeliver,InternalEvent:follow; InternalEvent:localUserUpdated; MainStream:follow; MainStream:followed; MainStream:meUpdated; ToFollowers,fetch; http,redisForPub.publish,apResolve; notify; pack,7,e2e/antennas.ts; e2e/endpoints.ts; e2e/ff-visibility.ts; e2e/move.ts; e2e/mute.ts,packages/backend/src/server/api/endpoints/i/update.ts
+i/update-auto-delete-settings,i,cherrypick,user,write:account,,,,,,,,,1,write,user.update,,,,,,0,,packages/backend/src/server/api/endpoints/i/update-auto-delete-settings.ts
+i/update-email,i,misskey,user,,yes,,,,,,max=3 duration=3600000,yes,3,write,user_profile.update,,MainStream:meUpdated,email; fetch; http,redisClient.set; redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/i/update-email.ts
+i/user-group-invites,i,cherrypick,user,read:user-groups,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/i/user-group-invites.ts
+i/webhooks/create,i,misskey,user,write:account,,,,,,,,yes,1,write,webhook.insertOne,,InternalEvent:webhookCreated,,redisForPub.publish,,0,,packages/backend/src/server/api/endpoints/i/webhooks/create.ts
+i/webhooks/delete,i,misskey,user,write:account,,,,,,,,,1,write,webhook.delete,,InternalEvent:webhookDeleted,,redisForPub.publish,,0,,packages/backend/src/server/api/endpoints/i/webhooks/delete.ts
+i/webhooks/list,i,misskey,user,read:account,,,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/i/webhooks/list.ts
+i/webhooks/show,i,misskey,user,read:account,,,,,,,,yes,1,read,,,,,,,0,,packages/backend/src/server/api/endpoints/i/webhooks/show.ts
+i/webhooks/test,i,misskey,user,read:account,yes,,,,,,max=60 duration=900000,,1,write,,userWebhookDeliver,,,,,0,,packages/backend/src/server/api/endpoints/i/webhooks/test.ts
+i/webhooks/update,i,misskey,user,write:account,,,,,,,,,1,write,webhook.update,,InternalEvent:webhookUpdated,,redisForPub.publish,,0,,packages/backend/src/server/api/endpoints/i/webhooks/update.ts
+invite/create,invite,misskey,user,write:invite-codes,,canInvite,,,,,,yes,1,write,registration_ticket.insertOne,,,,,pack,0,,packages/backend/src/server/api/endpoints/invite/create.ts
+invite/delete,invite,misskey,user,write:invite-codes,,canInvite,,,,,,,3,write,registration_ticket.delete,,,,,,0,,packages/backend/src/server/api/endpoints/invite/delete.ts
+invite/limit,invite,misskey,user,read:invite-codes,,canInvite,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/invite/limit.ts
+invite/list,invite,misskey,user,read:invite-codes,,canInvite,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/invite/list.ts
+meta,meta,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/meta.ts
+miauth/gen-token,miauth,misskey,user,,yes,,,,,,,yes,0,write,access_token.insert,,,,,notify,0,,packages/backend/src/server/api/endpoints/miauth/gen-token.ts
+mute/create,mute,misskey,user,write:mutes,,,,,,yes,max=20 duration=3600000,,3,write,muting.insert,,,,,,6,e2e/antennas.ts; e2e/move.ts; e2e/mute.ts; e2e/streaming.ts; e2e/timelines.ts,packages/backend/src/server/api/endpoints/mute/create.ts
+mute/delete,mute,misskey,user,write:mutes,,,,,,,,,3,write,muting.delete,,,,,,1,e2e/mute.ts,packages/backend/src/server/api/endpoints/mute/delete.ts
+mute/list,mute,misskey,user,read:mutes,,,,,,,,yes,0,read,,,,,,pack,1,e2e/move.ts,packages/backend/src/server/api/endpoints/mute/list.ts
+my/apps,my,misskey,user,read:account,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/my/apps.ts
+notes,notes,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,2,e2e/fetch-resource.ts; e2e/note.ts,packages/backend/src/server/api/endpoints/notes.ts
+notes/bubble-timeline,notes,cherrypick,none,,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/notes/bubble-timeline.ts
+notes/children,notes,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/notes/children.ts
+notes/clips,notes,misskey,none,,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/notes/clips.ts
+notes/conversation,notes,misskey,none,,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/notes/conversation.ts
+notes/create,notes,misskey,user,write:notes,,,,,,yes,max=300 duration=3600000,yes,16,write,event.insert; following.update; hashtag.insert; hashtag.update; instance.insertOne; note.increment; note.insert; note.update; poll.insert; user.update,deliver; endedPollNotificationQueue.add; scheduledNoteDeleteQueue.add; userWebhookDeliver,AntennaStream:note; MainStream:mention; MainStream:renote; MainStream:reply; NotesStream; RoleTimelineStream:note,,redisForPub.publish; redisForTimelines.lpush,apResolve; notify; pack,7,e2e/api.ts; e2e/block.ts; e2e/move.ts; e2e/note.ts; e2e/oauth.ts,packages/backend/src/server/api/endpoints/notes/create.ts
+notes/delete,notes,misskey,user,write:notes,,,,,,,max=300 duration=3600000 minInterval=1000,,2,write,instance.decrement; instance.insertOne; moderation_log.insert; note.decrement; note.delete,deliver,NoteStream:deleted,,redisForPub.publish,pack,1,e2e/note.ts,packages/backend/src/server/api/endpoints/notes/delete.ts
+notes/drafts/count,notes,misskey,user,read:account,,,,,,yes,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/notes/drafts/count.ts
+notes/drafts/create,notes,misskey,user,write:account,,,,,,yes,max=300 duration=3600000,yes,19,write,note_draft.insertOne,postScheduledNoteQueue.add,,,,pack,0,,packages/backend/src/server/api/endpoints/notes/drafts/create.ts
+notes/drafts/delete,notes,misskey,user,write:account,,,,,,yes,,,2,write,note_draft.delete,,,,,,0,,packages/backend/src/server/api/endpoints/notes/drafts/delete.ts
+notes/drafts/list,notes,misskey,user,read:account,,,,,,yes,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/notes/drafts/list.ts
+notes/drafts/update,notes,misskey,user,write:account,,,,,,yes,max=300 duration=3600000,yes,24,write,note_draft.update,postScheduledNoteQueue.add,,,,pack,0,,packages/backend/src/server/api/endpoints/notes/drafts/update.ts
+notes/events/search,notes,cherrypick,none,,,,,,,,max=60 duration=60000,yes,2,read,,,,,,pack,1,unit/events-search.ts,packages/backend/src/server/api/endpoints/notes/events/search.ts
+notes/favorites/create,notes,misskey,user,write:favorites,,,,,,yes,max=20 duration=3600000,,2,write,note_favorite.insert; user_profile.update,,,,,notify,1,e2e/move.ts,packages/backend/src/server/api/endpoints/notes/favorites/create.ts
+notes/favorites/delete,notes,misskey,user,write:favorites,,,,,,,,,2,write,note_favorite.delete,,,,,,0,,packages/backend/src/server/api/endpoints/notes/favorites/delete.ts
+notes/featured,notes,misskey,none,,,,yes,3600,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/notes/featured.ts
+notes/global-timeline,notes,misskey,none,,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/notes/global-timeline.ts
+notes/history,notes,cherrypick,none,,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/notes/history.ts
+notes/hybrid-timeline,notes,misskey,user,read:account,,,,,,,,yes,2,read,,,,,,pack,1,e2e/timelines.ts,packages/backend/src/server/api/endpoints/notes/hybrid-timeline.ts
+notes/local-timeline,notes,misskey,none,,,,,,,,,yes,2,read,,,,,,pack,4,e2e/block.ts; e2e/mute.ts; e2e/renote-mute.ts; e2e/timelines.ts,packages/backend/src/server/api/endpoints/notes/local-timeline.ts
+notes/mentions,notes,misskey,user,read:account,,,,,,,,yes,0,read,,,,,,pack,3,e2e/api-visibility.ts; e2e/mute.ts; e2e/thread-mute.ts,packages/backend/src/server/api/endpoints/notes/mentions.ts
+notes/polls/recommendation,notes,misskey,user,read:account,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/notes/polls/recommendation.ts
+notes/polls/translate,notes,cherrypick,user,read:account,,,,,,,,yes,2,read,,,,fetch; http,,,0,,packages/backend/src/server/api/endpoints/notes/polls/translate.ts
+notes/polls/vote,notes,misskey,user,write:votes,,,,,,yes,,,6,write,poll_vote.insertOne,deliver,NoteStream:pollVoted,,redisForPub.publish,pack,2,e2e/move.ts; e2e/note.ts,packages/backend/src/server/api/endpoints/notes/polls/vote.ts
+notes/reactions,notes,misskey,none,,,,yes,60,,,,yes,1,read,,,,,,pack,1,e2e/endpoints.ts,packages/backend/src/server/api/endpoints/notes/reactions.ts
+notes/reactions/create,notes,misskey,user,write:reactions,,,,,,yes,,,4,write,note.update; note_reaction.delete; note_reaction.insert,,NoteStream:reacted; NoteStream:unreacted,,redisForPub.publish,notify; pack,3,e2e/block.ts; e2e/endpoints.ts; e2e/move.ts,packages/backend/src/server/api/endpoints/notes/reactions/create.ts
+notes/reactions/delete,notes,misskey,user,write:reactions,,,,,,,max=60 duration=3600000 minInterval=3000,,2,write,note.update; note_reaction.delete,,NoteStream:unreacted,,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/notes/reactions/delete.ts
+notes/renotes,notes,misskey,none,,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/notes/renotes.ts
+notes/replies,notes,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,2,e2e/api-visibility.ts; e2e/endpoints.ts,packages/backend/src/server/api/endpoints/notes/replies.ts
+notes/search,notes,misskey,none,,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/notes/search.ts
+notes/search-by-tag,notes,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/notes/search-by-tag.ts
+notes/show,notes,misskey,none,,,,,,,,,yes,3,read,,,,,,pack,3,e2e/api-visibility.ts; e2e/endpoints.ts; e2e/users.ts,packages/backend/src/server/api/endpoints/notes/show.ts
+notes/show-partial-bulk,notes,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/notes/show-partial-bulk.ts
+notes/state,notes,misskey,user,read:account,,,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/notes/state.ts
+notes/thread-muting/create,notes,misskey,user,write:account,,,,,,,max=10 duration=3600000,,1,write,note_thread_muting.insert,,,,,,1,e2e/thread-mute.ts,packages/backend/src/server/api/endpoints/notes/thread-muting/create.ts
+notes/thread-muting/delete,notes,misskey,user,write:account,,,,,,,,,1,write,note_thread_muting.delete,,,,,,0,,packages/backend/src/server/api/endpoints/notes/thread-muting/delete.ts
+notes/timeline,notes,misskey,user,read:account,,,,,,,,yes,0,read,,,,,,pack,3,e2e/api-visibility.ts; e2e/endpoints.ts; e2e/timelines.ts,packages/backend/src/server/api/endpoints/notes/timeline.ts
+notes/translate,notes,misskey,user,read:account,,,,,,,,yes,5,read,,,,fetch; http,,pack,1,e2e/note.ts,packages/backend/src/server/api/endpoints/notes/translate.ts
+notes/unrenote,notes,misskey,user,write:notes,,,,,,,max=300 duration=3600000 minInterval=1000,,1,write,instance.decrement; instance.insertOne; moderation_log.insert; note.decrement; note.delete,deliver,NoteStream:deleted,,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/notes/unrenote.ts
+notes/update,notes,cherrypick,user,write:notes,,canEditNote,,,,,max=5 duration=300000 minInterval=1000,,5,write,NoteHistory.insert; event.delete; event.insert; note.update; poll.delete; poll.insert,deliver; scheduledNoteDeleteQueue.add; scheduledNoteDeleteQueue.remove,NoteStream:updated,,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/notes/update.ts
+notes/user-list-timeline,notes,misskey,user,read:account,,,,,,,,yes,1,read,,,,,,pack,1,e2e/timelines.ts,packages/backend/src/server/api/endpoints/notes/user-list-timeline.ts
+notifications/create,notifications,misskey,user,write:notifications,,,,,,,max=10 duration=60000,,0,write(kindのみ),,,,,,notify,0,,packages/backend/src/server/api/endpoints/notifications/create.ts
+notifications/flush,notifications,misskey,user,write:notifications,,,,,,,,,0,write(kindのみ),,,,,,notify,0,,packages/backend/src/server/api/endpoints/notifications/flush.ts
+notifications/mark-all-as-read,notifications,misskey,user,write:notifications,,,,,,,,,0,write(kindのみ),,,,,,notify,1,e2e/mute.ts,packages/backend/src/server/api/endpoints/notifications/mark-all-as-read.ts
+notifications/test-notification,notifications,misskey,user,write:notifications,,,,,,,max=10 duration=60000,,0,write(kindのみ),,,,,,notify,0,,packages/backend/src/server/api/endpoints/notifications/test-notification.ts
+page-push,page-push,misskey,user,,yes,,,,,,,,1,write(Redisのみ),,,MainStream:pageEvent,,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/page-push.ts
+pages/create,pages,misskey,user,write:pages,,,,,,yes,max=10 duration=3600000,yes,2,write,note.increment; page.insertOne,,,,,pack,1,e2e/move.ts,packages/backend/src/server/api/endpoints/pages/create.ts
+pages/delete,pages,misskey,user,write:pages,,,,,,,,,2,write,moderation_log.insert; note.decrement; page.delete,,,,,,0,,packages/backend/src/server/api/endpoints/pages/delete.ts
+pages/featured,pages,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/pages/featured.ts
+pages/like,pages,misskey,user,write:page-likes,,,,,,yes,,,3,write,page.increment; page_like.insert,,,,,,1,e2e/move.ts,packages/backend/src/server/api/endpoints/pages/like.ts
+pages/show,pages,misskey,none,,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/pages/show.ts
+pages/unlike,pages,misskey,user,write:page-likes,,,,,,yes,,,2,write,page.decrement; page_like.delete,,,,,,1,e2e/move.ts,packages/backend/src/server/api/endpoints/pages/unlike.ts
+pages/update,pages,misskey,user,write:pages,,,,,,yes,max=300 duration=3600000,,4,write,note.decrement; note.increment; page.update,,,,,,1,e2e/move.ts,packages/backend/src/server/api/endpoints/pages/update.ts
+ping,ping,misskey,none,,,,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/ping.ts
+pinned-users,pinned-users,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,1,e2e/users.ts,packages/backend/src/server/api/endpoints/pinned-users.ts
+promo/read,promo,misskey,user,write:account,,,,,,,,,1,write,promo_read.insert,,,,,,0,,packages/backend/src/server/api/endpoints/promo/read.ts
+renote-mute/create,renote-mute,misskey,user,write:mutes,,,,,,yes,max=20 duration=3600000,,3,write,renote_muting.insert,,,,,,3,e2e/move.ts; e2e/renote-mute.ts; e2e/users.ts,packages/backend/src/server/api/endpoints/renote-mute/create.ts
+renote-mute/delete,renote-mute,misskey,user,write:mutes,,,,,,,,,3,write,renote_muting.delete,,,,,,0,,packages/backend/src/server/api/endpoints/renote-mute/delete.ts
+renote-mute/list,renote-mute,misskey,user,read:mutes,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/renote-mute/list.ts
+request-reset-password,request-reset-password,misskey,none,,,,,,,,max=3 duration=3600000,,0,write,password_reset_request.insert,,,email,,,0,,packages/backend/src/server/api/endpoints/request-reset-password.ts
+reset-db,reset-db,misskey,none,,,,,,,,,,0,write(Redisのみ),,,InternalEvent:metaUpdated,,redisClient.flushdb; redisForPub.publish,lazyInit,0,,packages/backend/src/server/api/endpoints/reset-db.ts
+reset-password,reset-password,misskey,none,,,,,,,,,,0,write,password_reset_request.delete; user_profile.update,,,,,,0,,packages/backend/src/server/api/endpoints/reset-password.ts
+retention,retention,misskey,none,,,,yes,3600,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/retention.ts
+roles/list,roles,misskey,user,read:account,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/roles/list.ts
+roles/notes,roles,misskey,user,read:account,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/roles/notes.ts
+roles/show,roles,misskey,none,,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/roles/show.ts
+roles/users,roles,misskey,none,,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/roles/users.ts
+server-info,server-info,misskey,none,,,,yes,60,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/server-info.ts
+stats,stats,misskey,none,,,,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/stats.ts
+sw/register,sw,misskey,user,,yes,,,,,,,yes,0,write,sw_subscription.insert,,,webpush,,,0,,packages/backend/src/server/api/endpoints/sw/register.ts
+sw/show-registration,sw,misskey,user,,yes,,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/sw/show-registration.ts
+sw/unregister,sw,misskey,none,,,,,,,,,,0,write,sw_subscription.delete,,,webpush,,,0,,packages/backend/src/server/api/endpoints/sw/unregister.ts
+sw/update-registration,sw,misskey,user,,yes,,,,,,,yes,1,write,sw_subscription.update,,,webpush,,,0,,packages/backend/src/server/api/endpoints/sw/update-registration.ts
+test,test,misskey,none,,,,,,,,,yes,0,read,,,,,,,40,e2e/2fa.ts; e2e/antennas.ts; e2e/api-visibility.ts; e2e/api.ts; e2e/block.ts,packages/backend/src/server/api/endpoints/test.ts
+username/available,username,misskey,none,,,,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/username/available.ts
+users,users,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,3,e2e/antennas.ts; e2e/move.ts; e2e/users.ts,packages/backend/src/server/api/endpoints/users.ts
+users/achievements,users,misskey,none,,,,,,,,,yes,0,read,,,,,,,0,,packages/backend/src/server/api/endpoints/users/achievements.ts
+users/clips,users,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,1,e2e/clips.ts,packages/backend/src/server/api/endpoints/users/clips.ts
+users/featured-notes,users,misskey,none,,,,yes,3600,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/users/featured-notes.ts
+users/flashs,users,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/users/flashs.ts
+users/followers,users,misskey,none,,,,,,,,,yes,2,read,,,,,,pack,2,e2e/ff-visibility.ts; e2e/move.ts,packages/backend/src/server/api/endpoints/users/followers.ts
+users/following,users,misskey,none,,,,,,,,,yes,3,read,,,,,,pack,2,e2e/ff-visibility.ts; e2e/move.ts,packages/backend/src/server/api/endpoints/users/following.ts
+users/gallery/posts,users,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/users/gallery/posts.ts
+users/get-frequently-replied-users,users,misskey,none,,,,,,,,,yes,1,read,,,,,,pack,1,e2e/users.ts,packages/backend/src/server/api/endpoints/users/get-frequently-replied-users.ts
+users/groups/create,users,cherrypick,user,write:user-groups,,,,,,,max=10 duration=3600000,yes,0,write,user_group.insertOne; user_group_joining.insert,,,,,pack,0,,packages/backend/src/server/api/endpoints/users/groups/create.ts
+users/groups/delete,users,cherrypick,user,write:user-groups,,,,,,,,,1,write,user_group.delete,,,,,,0,,packages/backend/src/server/api/endpoints/users/groups/delete.ts
+users/groups/invitations/accept,users,cherrypick,user,write:user-groups,,,,,,,,,1,write,user_group_invitation.delete; user_group_joining.insert,,,,,notify,0,,packages/backend/src/server/api/endpoints/users/groups/invitations/accept.ts
+users/groups/invitations/reject,users,cherrypick,user,write:user-groups,,,,,,,,,1,write,user_group_invitation.delete,,,,,notify,0,,packages/backend/src/server/api/endpoints/users/groups/invitations/reject.ts
+users/groups/invite,users,cherrypick,user,write:user-groups,,,,,,,,,4,write,user_group_invitation.insertOne,,,,,notify,0,,packages/backend/src/server/api/endpoints/users/groups/invite.ts
+users/groups/joined,users,cherrypick,user,read:user-groups,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/users/groups/joined.ts
+users/groups/leave,users,cherrypick,user,write:user-groups,,,,,,,,,2,write,user_group_joining.delete,,,,,,0,,packages/backend/src/server/api/endpoints/users/groups/leave.ts
+users/groups/owned,users,cherrypick,user,read:user-groups,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/users/groups/owned.ts
+users/groups/pull,users,cherrypick,user,write:user-groups,,,,,,,,,3,write,user_group_joining.delete,,,,,,0,,packages/backend/src/server/api/endpoints/users/groups/pull.ts
+users/groups/show,users,cherrypick,user,read:user-groups,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/users/groups/show.ts
+users/groups/transfer,users,cherrypick,user,write:user-groups,,,,,,,,yes,3,write,user_group.update,,,,,pack,0,,packages/backend/src/server/api/endpoints/users/groups/transfer.ts
+users/groups/update,users,cherrypick,user,write:user-groups,,,,,,,,yes,1,write,user_group.update,,,,,pack,0,,packages/backend/src/server/api/endpoints/users/groups/update.ts
+users/lists/create,users,misskey,user,write:account,,,,,,yes,,yes,1,write,user_list.insertOne,,,,,pack,3,e2e/move.ts; e2e/streaming.ts; e2e/timelines.ts,packages/backend/src/server/api/endpoints/users/lists/create.ts
+users/lists/create-from-public,users,misskey,user,write:account,,,,,,yes,,yes,6,write,user_list.insertOne; user_list_membership.insert,createFollowJob,InternalEvent:userListMemberAdded; UserListStream:userAdded,,redisForPub.publish,lazyInit; pack,0,,packages/backend/src/server/api/endpoints/users/lists/create-from-public.ts
+users/lists/delete,users,misskey,user,write:account,,,,,,,,,1,write,user_list.delete,,,,,,0,,packages/backend/src/server/api/endpoints/users/lists/delete.ts
+users/lists/favorite,users,misskey,user,write:account,,,,,,,,,2,write,user_list_favorite.insert,,,,,,0,,packages/backend/src/server/api/endpoints/users/lists/favorite.ts
+users/lists/get-memberships,users,misskey,none,read:account,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/users/lists/get-memberships.ts
+users/lists/list,users,misskey,none,read:account,,,,,,,,yes,3,read,,,,,,pack,1,e2e/move.ts,packages/backend/src/server/api/endpoints/users/lists/list.ts
+users/lists/pull,users,misskey,user,write:account,,,,,,yes,,,2,write,user_list_membership.delete,,InternalEvent:userListMemberRemoved; UserListStream:userRemoved,,redisForPub.publish,pack,1,e2e/move.ts,packages/backend/src/server/api/endpoints/users/lists/pull.ts
+users/lists/push,users,misskey,user,write:account,,,,,,yes,max=30 duration=3600000,,5,write,user_list_membership.insert,createFollowJob,InternalEvent:userListMemberAdded; UserListStream:userAdded,,redisForPub.publish,lazyInit; pack,4,e2e/antennas.ts; e2e/move.ts; e2e/streaming.ts; e2e/timelines.ts,packages/backend/src/server/api/endpoints/users/lists/push.ts
+users/lists/show,users,misskey,none,read:account,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/users/lists/show.ts
+users/lists/unfavorite,users,misskey,user,write:account,,,,,,,,,2,write,user_list_favorite.delete,,,,,,0,,packages/backend/src/server/api/endpoints/users/lists/unfavorite.ts
+users/lists/update,users,misskey,user,write:account,,,,,,,,yes,1,write,user_list.update,,,,,pack,0,,packages/backend/src/server/api/endpoints/users/lists/update.ts
+users/lists/update-membership,users,misskey,user,write:account,,,,,,yes,,,2,write,user_list_membership.update,,,,,,1,e2e/timelines.ts,packages/backend/src/server/api/endpoints/users/lists/update-membership.ts
+users/notes,users,misskey,none,,,,,,,,,yes,3,read,,,,,,pack,3,e2e/timelines.ts; e2e/user-notes.ts; e2e/users.ts,packages/backend/src/server/api/endpoints/users/notes.ts
+users/pages,users,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/users/pages.ts
+users/reactions,users,misskey,none,,,,,,,,,yes,2,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/users/reactions.ts
+users/recommendation,users,misskey,user,read:account,,,,,,,,yes,0,read,,,,,,pack,1,e2e/users.ts,packages/backend/src/server/api/endpoints/users/recommendation.ts
+users/relation,users,misskey,user,read:account,,,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/users/relation.ts
+users/report-abuse,users,misskey,user,write:report-abuse,,,,,,,,,3,write,AbuseReportNotificationRecipient.delete; abuse_user_report.insertOne,systemWebhookDeliver,AdminStream:newAbuseUserReport,email,redisForPub.publish,pack,1,e2e/synalio/abuse-report.ts,packages/backend/src/server/api/endpoints/users/report-abuse.ts
+users/search,users,misskey,none,,,canSearchUsers,,,,,,yes,0,read,,,,,,pack,1,e2e/users.ts,packages/backend/src/server/api/endpoints/users/search.ts
+users/search-by-username-and-host,users,misskey,none,,,,,,,,,yes,0,read,,,,,,pack,1,e2e/users.ts,packages/backend/src/server/api/endpoints/users/search-by-username-and-host.ts
+users/show,users,misskey,none,,,,,,,,,yes,2,read,,,,,,apResolve; pack,2,e2e/endpoints.ts; e2e/users.ts,packages/backend/src/server/api/endpoints/users/show.ts
+users/stats,users,cherrypick,none,,,,,,,,,yes,1,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/users/stats.ts
+users/translate,users,cherrypick,user,read:account,,,,,,,,yes,3,read,,,,fetch; http,,,0,,packages/backend/src/server/api/endpoints/users/translate.ts
+users/update-memo,users,misskey,user,write:account,,,,,,,,,1,write,user_memo.delete; user_memo.insert; user_memo.update,,,,,,2,e2e/endpoints.ts; e2e/users.ts,packages/backend/src/server/api/endpoints/users/update-memo.ts
+v2/admin/emoji/list,v2,misskey,user,read:admin:emoji,,canManageCustomEmojis,,,,,,yes,0,read,,,,,,pack,0,,packages/backend/src/server/api/endpoints/v2/admin/emoji/list.ts
+verify-email,verify-email,misskey,none,,,,,,,,,,1,write,user_profile.update,,MainStream:meUpdated,,redisForPub.publish,pack,0,,packages/backend/src/server/api/endpoints/verify-email.ts

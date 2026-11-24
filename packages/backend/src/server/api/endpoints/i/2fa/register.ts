@@ -12,7 +12,8 @@ import { Endpoint } from '@/server/api/endpoint-base.js';
 import { DI } from '@/di-symbols.js';
 import type { Config } from '@/config.js';
 import { ApiError } from '@/server/api/error.js';
-import { UserAuthService } from '@/core/UserAuthService.js';
+import { TwoFactorAuthenticationError, UserAuthService } from '@/core/UserAuthService.js';
+import { CacheService } from '@/core/CacheService.js';
 
 export const meta = {
 	requireCredential: true,
@@ -20,6 +21,11 @@ export const meta = {
 	secure: true,
 
 	errors: {
+		twoFactorAuthenticationFailed: {
+			message: 'Two-factor authentication failed.',
+			code: 'TWO_FACTOR_AUTHENTICATION_FAILED',
+			id: 'd032ba81-84ec-45d4-a1cf-a1a8377a5c2a',
+		},
 		incorrectPassword: {
 			message: 'Incorrect password.',
 			code: 'INCORRECT_PASSWORD',
@@ -32,11 +38,11 @@ export const meta = {
 		nullable: false,
 		optional: false,
 		properties: {
-			qr: { type: 'string' },
-			url: { type: 'string' },
-			secret: { type: 'string' },
-			label: { type: 'string' },
-			issuer: { type: 'string' },
+			qr: { optional: false, type: 'string' },
+			url: { optional: false, type: 'string' },
+			secret: { optional: false, type: 'string' },
+			label: { optional: false, type: 'string' },
+			issuer: { optional: false, type: 'string' },
 		},
 	},
 } as const;
@@ -60,6 +66,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private userProfilesRepository: UserProfilesRepository,
 
 		private userAuthService: UserAuthService,
+		private cacheService: CacheService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const token = ps.token;
@@ -67,13 +74,15 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			if (profile.twoFactorEnabled) {
 				if (token == null) {
-					throw new Error('authentication failed');
+					throw new ApiError(meta.errors.twoFactorAuthenticationFailed);
 				}
 
 				try {
 					await this.userAuthService.twoFactorAuthenticate(profile, token);
 				} catch (e) {
-					throw new Error('authentication failed');
+					// コードの不一致だけを認証の失敗にする。DB・Redisの障害はそのまま500にする
+					if (e instanceof TwoFactorAuthenticationError) throw new ApiError(meta.errors.twoFactorAuthenticationFailed);
+					throw e;
 				}
 			}
 
@@ -88,6 +97,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			await this.userProfilesRepository.update(me.id, {
 				twoFactorTempSecret: secret.base32,
 			});
+			await this.cacheService.userProfileCache.delete(me.id);
 
 			// Get the data URL of the authenticator URL
 			const totp = new OTPAuth.TOTP({

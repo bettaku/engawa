@@ -7,7 +7,6 @@ import process from 'node:process';
 import { Global, Inject, Module } from '@nestjs/common';
 import * as Redis from 'ioredis';
 import { DataSource } from 'typeorm';
-import { MeiliSearch } from 'meilisearch';
 import { Client as ElasticSearch } from '@elastic/elasticsearch';
 import { Logging } from '@google-cloud/logging';
 import { MiMeta } from '@/models/Meta.js';
@@ -16,12 +15,13 @@ import { Config, loadConfig } from './config.js';
 import { createPostgresDataSource } from './postgres.js';
 import { RepositoryModule } from './models/RepositoryModule.js';
 import { allSettled } from './misc/promise-tracker.js';
-import { GlobalEvents } from './core/GlobalEventService.js';
+import { GlobalEvents, isInternalEventRef } from './core/GlobalEventService.js';
 import type { Provider, OnApplicationShutdown } from '@nestjs/common';
+import { onRedisReconnected } from '@/misc/redis-reconnected.js';
 
 const $config: Provider = {
 	provide: DI.config,
-	useValue: loadConfig(),
+	useFactory: loadConfig,
 };
 
 const $db: Provider = {
@@ -33,25 +33,6 @@ const $db: Provider = {
 		} catch (e) {
 			console.log(e);
 			throw e;
-		}
-	},
-	inject: [DI.config],
-};
-
-const $meilisearch: Provider = {
-	provide: DI.meilisearch,
-	useFactory: (config: Config) => {
-		if (config.fulltextSearch?.provider === 'meilisearch') {
-			if (!config.meilisearch) {
-				throw new Error('MeiliSearch is enabled but no configuration is provided');
-			}
-
-			return new MeiliSearch({
-				host: `${config.meilisearch.ssl ? 'https' : 'http'}://${config.meilisearch.host}:${config.meilisearch.port}`,
-				apiKey: config.meilisearch.apiKey,
-			});
-		} else {
-			return null;
 		}
 	},
 	inject: [DI.config],
@@ -170,6 +151,24 @@ const $meta: Provider = {
 			}
 		});
 
+		// metaを書き換えるたびに進める。DBから読み直している間にほかの更新が始まったら、読み直した値（古いかもしれない）は使わない
+		let generation = 0;
+
+		function assign(values: object): void {
+			generation++;
+			for (const key in values) {
+				(meta as any)[key] = (values as any)[key];
+			}
+			meta.rootUser = null; // joinなカラムは通常取ってこないので
+		}
+
+		async function reload(): Promise<void> {
+			const started = ++generation;
+			const latest = await db.getRepository(MiMeta).findOne({ where: {}, order: { id: 'DESC' } });
+			if (latest == null || started !== generation) return;
+			assign(latest);
+		}
+
 		async function onMessage(_: string, data: string): Promise<void> {
 			const obj = JSON.parse(data);
 
@@ -177,10 +176,15 @@ const $meta: Provider = {
 				const { type, body } = obj.message as GlobalEvents['internal']['payload'];
 				switch (type) {
 					case 'metaUpdated': {
-						for (const key in body.after) {
-							(meta as any)[key] = (body.after as any)[key];
+						if (isInternalEventRef(body)) {
+							// 新本文は値を持たないので、DBから読み直す
+							// イベントの処理なので、失敗しても例外を投げない（処理されないrejectionにしない）
+							await reload().catch(err => {
+								console.error('Failed to reload meta', err);
+							});
+						} else {
+							assign(body.after);
 						}
-						meta.rootUser = null; // joinなカラムは通常取ってこないので
 						break;
 					}
 					default:
@@ -190,6 +194,13 @@ const $meta: Provider = {
 		}
 
 		redisForSub.on('message', onMessage);
+
+		// Pub/Subが切れている間のmetaUpdatedを受け取れていないので、つなぎ直したときにDBから読み直す
+		onRedisReconnected(redisForSub, () => {
+			reload().catch(err => {
+				console.error('Failed to reload meta after Redis reconnection', err);
+			});
+		});
 
 		return meta;
 	},
@@ -211,8 +222,8 @@ const $redisForJobQueue: Provider = {
 @Global()
 @Module({
 	imports: [RepositoryModule],
-	providers: [$config, $db, $meta, $meilisearch, $elasticsearch, $cloudLogging, $redis, $redisForPub, $redisForSub, $redisForTimelines, $redisForReactions, $redisForJobQueue],
-	exports: [$config, $db, $meta, $meilisearch, $elasticsearch, $cloudLogging, $redis, $redisForPub, $redisForSub, $redisForTimelines, $redisForReactions, $redisForJobQueue, RepositoryModule],
+	providers: [$config, $db, $meta, $elasticsearch, $cloudLogging, $redis, $redisForPub, $redisForSub, $redisForTimelines, $redisForReactions, $redisForJobQueue],
+	exports: [$config, $db, $meta, $elasticsearch, $cloudLogging, $redis, $redisForPub, $redisForSub, $redisForTimelines, $redisForReactions, $redisForJobQueue, RepositoryModule],
 })
 export class GlobalModule implements OnApplicationShutdown {
 	constructor(

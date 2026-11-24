@@ -10,7 +10,7 @@ import type { UserProfilesRepository } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
 import { WebAuthnService } from '@/core/WebAuthnService.js';
 import { ApiError } from '@/server/api/error.js';
-import { UserAuthService } from '@/core/UserAuthService.js';
+import { TwoFactorAuthenticationError, UserAuthService } from '@/core/UserAuthService.js';
 
 export const meta = {
 	requireCredential: true,
@@ -18,6 +18,11 @@ export const meta = {
 	secure: true,
 
 	errors: {
+		twoFactorAuthenticationFailed: {
+			message: 'Two-factor authentication failed.',
+			code: 'TWO_FACTOR_AUTHENTICATION_FAILED',
+			id: '21f272ca-aee2-4ac8-88ba-e2bccbd5fb68',
+		},
 		userNotFound: {
 			message: 'User not found.',
 			code: 'USER_NOT_FOUND',
@@ -44,6 +49,7 @@ export const meta = {
 		properties: {
 			rp: {
 				type: 'object',
+				optional: false,
 				properties: {
 					id: {
 						type: 'string',
@@ -53,55 +59,71 @@ export const meta = {
 			},
 			user: {
 				type: 'object',
+				optional: false,
 				properties: {
 					id: {
 						type: 'string',
+						optional: false,
 					},
 					name: {
 						type: 'string',
+						optional: false,
 					},
 					displayName: {
 						type: 'string',
+						optional: false,
 					},
 				},
 			},
 			challenge: {
 				type: 'string',
+				optional: false,
 			},
 			pubKeyCredParams: {
 				type: 'array',
+				optional: false,
 				items: {
 					type: 'object',
+					optional: false,
 					properties: {
 						type: {
 							type: 'string',
+							optional: false,
 						},
 						alg: {
 							type: 'number',
+							optional: false,
 						},
 					},
 				},
 			},
 			timeout: {
 				type: 'number',
+				optional: true,
 				nullable: true,
 			},
 			excludeCredentials: {
 				type: 'array',
+				optional: true,
 				nullable: true,
 				items: {
 					type: 'object',
+					optional: false,
 					properties: {
 						id: {
 							type: 'string',
+							optional: false,
 						},
 						type: {
 							type: 'string',
+							optional: false,
 						},
 						transports: {
 							type: 'array',
+							optional: true,
 							items: {
 								type: 'string',
+								optional: false,
 								enum: [
 									'ble',
 									'cable',
@@ -118,10 +140,12 @@ export const meta = {
 			},
 			authenticatorSelection: {
 				type: 'object',
+				optional: true,
 				nullable: true,
 				properties: {
 					authenticatorAttachment: {
 						type: 'string',
+						optional: true,
 						enum: [
 							'cross-platform',
 							'platform',
@@ -129,9 +153,11 @@ export const meta = {
 					},
 					requireResidentKey: {
 						type: 'boolean',
+						optional: true,
 					},
 					userVerification: {
 						type: 'string',
+						optional: true,
 						enum: [
 							'discouraged',
 							'preferred',
@@ -142,6 +168,7 @@ export const meta = {
 			},
 			attestation: {
 				type: 'string',
+				optional: true,
 				nullable: true,
 				enum: [
 					'direct',
@@ -153,18 +180,22 @@ export const meta = {
 			},
 			extensions: {
 				type: 'object',
+				optional: true,
 				nullable: true,
 				properties: {
 					appid: {
 						type: 'string',
+						optional: true,
 						nullable: true,
 					},
 					credProps: {
 						type: 'boolean',
+						optional: true,
 						nullable: true,
 					},
 					hmacCreateSecret: {
 						type: 'boolean',
+						optional: true,
 						nullable: true,
 					},
 				},
@@ -206,13 +237,15 @@ export default class extends Endpoint<typeof meta, typeof paramDef> {
 
 			if (profile.twoFactorEnabled) {
 				if (token == null) {
-					throw new Error('authentication failed');
+					throw new ApiError(meta.errors.twoFactorAuthenticationFailed);
 				}
 
 				try {
 					await this.userAuthService.twoFactorAuthenticate(profile, token);
 				} catch (e) {
-					throw new Error('authentication failed');
+					// コードの不一致だけを認証の失敗にする。DB・Redisの障害はそのまま500にする
+					if (e instanceof TwoFactorAuthenticationError) throw new ApiError(meta.errors.twoFactorAuthenticationFailed);
+					throw e;
 				}
 			}
 

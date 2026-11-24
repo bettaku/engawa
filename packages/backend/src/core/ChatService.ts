@@ -236,19 +236,6 @@ export class ChatService {
 			this.globalEventService.publishChatUserStream(toUser.id, fromUser.id, 'message', packedMessage);
 		}
 
-		// 3秒経っても既読にならなかったらイベント発行
-		if (this.userEntityService.isLocalUser(toUser)) {
-			setTimeout(async () => {
-				const marker = await this.redisClient.get(`newUserChatMessageExists:${toUser.id}:${fromUser.id}`);
-
-				if (marker == null) return; // 既読
-
-				const packedMessageForTo = await this.chatEntityService.packMessageDetailed(inserted, toUser);
-				this.globalEventService.publishMainStream(toUser.id, 'newChatMessage', packedMessageForTo);
-				this.pushNotificationService.pushNotification(toUser.id, 'newChatMessage', packedMessageForTo);
-			}, 3000);
-		}
-
 		// Federation: Send to remote user if applicable
 		if (this.userEntityService.isLocalUser(fromUser) && this.userEntityService.isRemoteUser(toUser)) {
 			const fullFromUser = await this.usersRepository.findOneByOrFail({ id: fromUser.id });
@@ -262,7 +249,77 @@ export class ChatService {
 			this.queueService.deliver(fullFromUser, this.apRendererService.addContext(activity), toUser.inbox, false);
 		}
 
+		// 3秒経っても既読にならなかったらイベント発行（プロセスの停止で失われないよう、ジョブにする。P3-2）
+		// 登録の失敗で保存済みのメッセージの配送が止まらないよう、配送の後に登録する
+		if (this.userEntityService.isLocalUser(toUser)) {
+			await this.queueService.createUnreadChatMessageJob(inserted.id, 3000);
+		}
+
 		return packedMessage;
+	}
+
+	/**
+	 * メッセージを送ってから一定時間たっても既読になっていない受信者に、イベントとPush通知を送る（`unreadChatMessage`ジョブ）。
+	 *
+	 * メッセージと受信者は、処理の時点のDBから読み直す。メッセージが削除されていれば送らない。
+	 * 既読かどうかは、送信時に立てた未読の印（`newUserChatMessageExists`・`newRoomChatMessageExists`）で判断する。
+	 */
+	@bindThis
+	public async processUnreadMessage(messageId: MiChatMessage['id']): Promise<string> {
+		const message = await this.chatMessagesRepository.findOneBy({ id: messageId });
+		if (message == null) return 'skip: message not found';
+
+		if (message.toUserId != null) {
+			const marker = await this.redisClient.get(`newUserChatMessageExists:${message.toUserId}:${message.fromUserId}`);
+			if (marker == null) return 'skip: already read'; // 既読
+
+			const toUser = await this.usersRepository.findOneBy({ id: message.toUserId });
+			if (toUser == null) return 'skip: recipient not found';
+
+			const packedMessageForTo = await this.chatEntityService.packMessageDetailed(message, toUser);
+			this.globalEventService.publishMainStream(toUser.id, 'newChatMessage', packedMessageForTo);
+			await this.pushNotificationService.pushNotification(toUser.id, 'newChatMessage', packedMessageForTo);
+			return 'ok';
+		}
+
+		if (message.toRoomId != null) {
+			const room = await this.chatRoomsRepository.findOneBy({ id: message.toRoomId });
+			if (room == null) return 'skip: room not found';
+
+			const memberships = (await this.chatRoomMembershipsRepository.findBy({ roomId: room.id })).map(m => ({
+				userId: m.userId,
+				isMuted: m.isMuted,
+			})).concat({ // ownerはmembershipレコードを作らないため
+				userId: room.ownerId,
+				isMuted: false,
+			});
+			const recipients = memberships.filter(member => member.userId !== message.fromUserId && !member.isMuted);
+			if (recipients.length === 0) return 'skip: no recipients';
+
+			const redisPipeline = this.redisClient.pipeline();
+			for (const recipient of recipients) {
+				redisPipeline.get(`newRoomChatMessageExists:${recipient.userId}:${room.id}`);
+			}
+			const markers = await redisPipeline.exec();
+			if (markers == null) throw new Error('redis error');
+
+			if (markers.every(marker => marker[1] == null)) return 'skip: already read';
+
+			const packedMessageForTo = await this.chatEntityService.packMessageDetailed(message);
+
+			const pushes: Promise<void>[] = [];
+			for (let i = 0; i < recipients.length; i++) {
+				const marker = markers[i][1];
+				if (marker == null) continue;
+
+				this.globalEventService.publishMainStream(recipients[i].userId, 'newChatMessage', packedMessageForTo);
+				pushes.push(this.pushNotificationService.pushNotification(recipients[i].userId, 'newChatMessage', packedMessageForTo));
+			}
+			await Promise.all(pushes);
+			return 'ok';
+		}
+
+		return 'skip: no recipient';
 	}
 
 	@bindThis
@@ -321,28 +378,6 @@ export class ChatService {
 		}
 		redisPipeline.exec();
 
-		// 3秒経っても既読にならなかったらイベント発行
-		setTimeout(async () => {
-			const redisPipeline = this.redisClient.pipeline();
-			for (const membership of membershipsOtherThanMe) {
-				redisPipeline.get(`newRoomChatMessageExists:${membership.userId}:${toRoom.id}`);
-			}
-			const markers = await redisPipeline.exec();
-			if (markers == null) throw new Error('redis error');
-
-			if (markers.every(marker => marker[1] == null)) return;
-
-			const packedMessageForTo = await this.chatEntityService.packMessageDetailed(inserted);
-
-			for (let i = 0; i < membershipsOtherThanMe.length; i++) {
-				const marker = markers[i][1];
-				if (marker == null) continue;
-
-				this.globalEventService.publishMainStream(membershipsOtherThanMe[i].userId, 'newChatMessage', packedMessageForTo);
-				this.pushNotificationService.pushNotification(membershipsOtherThanMe[i].userId, 'newChatMessage', packedMessageForTo);
-			}
-		}, 3000);
-
 		// Federation: Send to remote members if applicable
 		if (this.userEntityService.isLocalUser(fromUser)) {
 			// Get all members (including owner)
@@ -369,6 +404,12 @@ export class ChatService {
 					this.queueService.deliver(fullFromUser, contextedActivity, remoteMember.inbox, false);
 				}
 			}
+		}
+
+		// 3秒経っても既読にならなかったらイベント発行（プロセスの停止で失われないよう、ジョブにする。P3-2）
+		// 登録の失敗で保存済みのメッセージの配送が止まらないよう、配送の後に登録する
+		if (membershipsOtherThanMe.some(membership => !membership.isMuted)) {
+			await this.queueService.createUnreadChatMessageJob(inserted.id, 3000);
 		}
 
 		return packedMessage;
@@ -1165,9 +1206,10 @@ export class ChatService {
 
 		await this.chatMessagesRepository.createQueryBuilder().update()
 			.set({
-				reactions: () => `array_append("reactions", '${userId}/${reaction}')`,
+				reactions: () => 'array_append("reactions", :reaction)',
 			})
 			.where('id = :id', { id: message.id })
+			.setParameter('reaction', `${userId}/${reaction}`)
 			.execute();
 
 		if (room) {
@@ -1209,9 +1251,10 @@ export class ChatService {
 
 		await this.chatMessagesRepository.createQueryBuilder().update()
 			.set({
-				reactions: () => `array_remove("reactions", '${userId}/${reaction}')`,
+				reactions: () => 'array_remove("reactions", :reaction)',
 			})
 			.where('id = :id', { id: message.id })
+			.setParameter('reaction', `${userId}/${reaction}`)
 			.execute();
 
 		// TODO: 実際に削除が行われたときのみイベントを発行する

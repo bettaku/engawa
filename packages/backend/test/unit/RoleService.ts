@@ -32,6 +32,7 @@ import { secureRndstr } from '@/misc/secure-rndstr.js';
 import { NotificationService } from '@/core/NotificationService.js';
 import { RoleCondFormulaValue } from '@/models/Role.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
+import { CacheInvalidationService } from '@/core/CacheInvalidationService.js';
 
 describe('RoleService', () => {
 	let app: TestingModule;
@@ -128,6 +129,9 @@ describe('RoleService', () => {
 			],
 		})
 			.useMocker((token) => {
+				if (token === CacheInvalidationService) {
+					return { publish: vi.fn(), subscribe: vi.fn(() => () => {}) };
+				}
 				if (token === MetaService) {
 					return { fetch: vi.fn() };
 				}
@@ -153,12 +157,12 @@ describe('RoleService', () => {
 	afterEach(async () => {
 		clock.uninstall();
 
-		await Promise.all([
-			app.get(DI.metasRepository).createQueryBuilder().delete().execute(),
-			usersRepository.createQueryBuilder().delete().execute(),
-			rolesRepository.createQueryBuilder().delete().execute(),
-			roleAssignmentsRepository.createQueryBuilder().delete().execute(),
-		]);
+		// role・userの削除はrole_assignmentへカスケードするので、並行に消すとデッドロックすることがある。
+		// 参照する側から順に消す
+		await roleAssignmentsRepository.createQueryBuilder().delete().execute();
+		await rolesRepository.createQueryBuilder().delete().execute();
+		await usersRepository.createQueryBuilder().delete().execute();
+		await app.get(DI.metasRepository).createQueryBuilder().delete().execute();
 
 		await app.close();
 	});

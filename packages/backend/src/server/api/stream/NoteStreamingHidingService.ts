@@ -11,6 +11,11 @@ import { isRenotePacked, isQuotePacked } from '@/misc/is-renote.js';
 import type { Packed } from '@/misc/json-schema.js';
 import type { MiUser } from '@/models/User.js';
 
+type NodePath = ('renote' | 'reply')[];
+
+/** 展開されたノートを辿る深さの上限 */
+const MAX_DEPTH = 8;
+
 /** Streamにおいて、ノートを隠す（hideNote）を適用するためのService */
 @Injectable()
 export class NoteStreamingHidingService {
@@ -18,14 +23,22 @@ export class NoteStreamingHidingService {
 		private noteEntityService: NoteEntityService,
 	) {}
 
-	private collectRenoteChain(note: Packed<'Note'>): Packed<'Note'>[] {
-		const renoteChain: Packed<'Note'>[] = [];
+	/**
+	 * ノートと、その中に展開されている返信先・リノート元をすべて辿る。
+	 * 返信とリノートが交互に入れ子になっていても、展開されているノードは漏れなく対象にする。
+	 */
+	private collectNodes(note: Packed<'Note'>): { node: Packed<'Note'>; path: NodePath; }[] {
+		const nodes: { node: Packed<'Note'>; path: NodePath; }[] = [];
 
-		for (let current: Packed<'Note'> | null | undefined = note; current != null; current = current.renote) {
-			renoteChain.push(current);
-		}
+		const walk = (node: Packed<'Note'>, path: NodePath) => {
+			nodes.push({ node, path });
+			if (path.length >= MAX_DEPTH) return;
+			if (node.renote != null) walk(node.renote, [...path, 'renote']);
+			if (node.reply != null) walk(node.reply, [...path, 'reply']);
+		};
+		walk(note, []);
 
-		return renoteChain;
+		return nodes;
 	}
 
 	/**
@@ -41,27 +54,38 @@ export class NoteStreamingHidingService {
 	 */
 	@bindThis
 	public async filter(note: Packed<'Note'>, meId: MiUser['id'] | null): Promise<Packed<'Note'> | null> {
-		const renoteChain = this.collectRenoteChain(note);
-		const shouldHide = await Promise.all(renoteChain.map(n => this.noteEntityService.shouldHideNote(n, meId)));
+		const nodes = this.collectNodes(note);
+		const shouldHide = await Promise.all(nodes.map(n => this.noteEntityService.shouldHideNote(n.node, meId)));
 
 		if (!shouldHide.some(h => h)) {
 			// 隠す必要がない場合は元のノートをそのまま返す
 			return note;
 		}
 
-		if (renoteChain.some(n => isRenotePacked(n) && !isQuotePacked(n))) {
-			// 純粋リノートの場合は配信をスキップする
+		// リノートだけを辿った連鎖の中に隠すべきノートがあり、かつ純粋リノートが含まれる場合は配信をスキップする
+		const renoteChain = nodes.filter(n => n.path.every(p => p === 'renote'));
+		if (renoteChain.some(n => shouldHide[nodes.indexOf(n)]) && renoteChain.some(n => isRenotePacked(n.node) && !isQuotePacked(n.node))) {
 			return null;
 		}
 
 		const clonedNote = deepClone(note);
-		let currentCloned = clonedNote;
 
-		for (let i = 0; i < renoteChain.length; i++) {
-			if (shouldHide[i]) {
-				this.noteEntityService.hideNote(currentCloned);
+		for (let i = 0; i < nodes.length; i++) {
+			let target: Packed<'Note'> | null | undefined = clonedNote;
+			for (const key of nodes[i].path) {
+				target = target?.[key];
 			}
-			currentCloned = currentCloned.renote!;
+			if (target == null) continue;
+
+			if (shouldHide[i]) {
+				this.noteEntityService.hideNote(target);
+			}
+
+			// 辿る深さの上限に達したノードの先は検査していないので、配信しない
+			if (nodes[i].path.length >= MAX_DEPTH) {
+				target.renote = undefined;
+				target.reply = undefined;
+			}
 		}
 
 		return clonedNote;

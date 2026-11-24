@@ -1,9 +1,9 @@
 ---
 title: Backend environment variables
 description: What the backend reads from the environment, the defaults, and how it relates to the config file
-lastUpdated: 2026-09-20
+lastUpdated: 2026-11-22
 sidebar:
-  order: 5
+  order: 6
 ---
 
 This page lists the environment variables the backend reads directly. Variables interpreted by dependencies or by Node.js itself, and those used only by the test runner or the frontend build, are out of scope.
@@ -42,6 +42,16 @@ The second one is an easy mistake to make. An empty string counts as unset. If y
 
 This variable is also used by the migrations and by the asset build. Pass it to every command that should use the same config.
 
+### Checking the configuration
+
+After building the backend, run `pnpm check:config [path]` from the repository root. The check validates the YAML and the values supplied through the environment without connecting to PostgreSQL or Redis. Omit the path to check the same file the server loads. Use `--json` for machine-readable diagnostics. Exit codes are 0 for a valid configuration, 1 for errors and 2 for warnings only. With `--strict`, warnings also return 1.
+
+At startup, `CHERRYPICK_CONFIG_VALIDATION` defaults to `warn`, which reports problems and continues with the existing conversion rules. Use `error` to stop on invalid types, missing settings and out-of-range values. Unknown and deprecated keys still produce warnings. Use `off` to skip startup validation.
+
+The variables on this page are validated the same way. An invalid value for a variable with a fixed format (`NODE_ENV`, `VITE_PORT`, the variables enabled only by `1`, and so on) is an error. Passing `0` or `false` to a `CP_*` flag is a warning, because it still enables the flag. Unknown variables starting with `CP_` or `CHERRYPICK_` are warnings. The list of variables and their formats is in `$defs.environment` of the configuration JSON schema (`packages/backend/config.schema.json`).
+
+The Docker health check reads a line beginning with `port:` from `.config/default.yml`. If you override the path or port using the environment or use flow-style YAML, adjust the container health check accordingly.
+
 ### What NODE_ENV changes
 
 `pnpm start` does not set `NODE_ENV=production` for you. The repository's Dockerfile does, but when you start the process directly you have to set it yourself.
@@ -71,7 +81,7 @@ To use the environment variable, omit the corresponding YAML key or set it to `n
 | `DATABASE_USER` | `db.user` | Empty string | PostgreSQL user name |
 | `DATABASE_PASSWORD` | `db.pass` | Empty string | PostgreSQL password |
 
-`PORT` is read with a base-10 `parseInt`, so give it an integer such as `3000`. When you use a UNIX socket, the YAML `socket` key is used instead.
+Set `PORT` to an integer from 1 to 65535 using decimal digits, for example `3000`. When you use a UNIX socket, the YAML `socket` key is used instead.
 
 For the database, the `db` object itself still has to exist in the YAML. `DATABASE_HOST`, `DATABASE_PORT` and `DATABASE_URL` are not interpreted by this config loader; set the target with `db.host` and `db.port` in the YAML. The fallback does not apply to `dbSlaves` either.
 
@@ -88,6 +98,7 @@ These flags switch the role of the process and the log output. All of them are o
 | `CP_WITH_LOG_TIME` | Adds timestamps to the backend logger's output |
 | `CP_QUIET` | Suppresses logger output and the boot logo |
 | `CP_NO_DAEMONS` | The value is stored but currently never read (see below) |
+| `CP_NO_JOB_SCHEDULERS` | Does not register the repeatable jobs when a job queue process starts (see below) |
 
 :::caution[0 and false also enable them]
 These flags are considered enabled for **any non-empty string**. Not just `1` or `true`, but `0` and `false` as well. To disable one, unset the variable or set it to an empty string.
@@ -98,6 +109,16 @@ Normally the main process runs the web server and the workers run the job queue.
 Do not combine `CP_ONLY_SERVER` and `CP_ONLY_QUEUE`. With both enabled, only the web server starts, yet the "boot finished" log announces a queue-only process. What runs and what is printed disagree, so set only one of them.
 
 `CP_NO_DAEMONS` is currently never read. Enabling it does not stop the daemons.
+
+### Registering repeatable jobs
+
+The repeatable jobs (chart aggregation, checking expired mutings and so on) are registered when a job queue process starts. A web-server-only process (`CP_ONLY_SERVER`) does not register them. Registration re-registers every job in the definition and removes jobs that earlier versions used and this one no longer does. Repeatable jobs with unknown names are left alone.
+
+A process with `CP_NO_JOB_SCHEDULERS` enabled does not register them. Use it to limit registration to particular processes, for example while processes of different versions run side by side. If you enable it on every job queue process, register the jobs with this command:
+
+```sh
+pnpm --filter backend cli register-job-schedulers
+```
 
 Under `NODE_ENV=test`, the equivalents of `CP_DISABLE_CLUSTERING`, `CP_QUIET` and `CP_NO_DAEMONS` are forced on, and emptying the matching variables does not turn them off.
 
@@ -128,6 +149,8 @@ Whether the backend proxies at all is not decided by `NODE_ENV`. It depends on w
 
 These variables only say where to connect. The backend does not start a Vite server itself.
 
+Set `API_RES_VALIDATION_REPORT` to a file path to append API responses that violate their schema to that file. It is used only when `NODE_ENV` is `test` or `development`.
+
 ## Testing and local verification
 
 You would not set these in normal production use. Unlike the `CP_*` flags, each one has its own enabling value.
@@ -144,4 +167,6 @@ A few details:
 - `CHERRYPICK_WEBFINGER_USE_HTTP`: URL-form lookups keep their original protocol. This is not limited to any `NODE_ENV`.
 - `FORCE_FOLLOW_REMOTE_USER_FOR_TESTING`: Other reasons to hold a request, such as a locked account, still apply. This is not limited to any `NODE_ENV`.
 - `MISSKEY_TEST_CHECK_DUPLICATED_TOTP` and `CHERRYPICK_TEST_CHECK_IP_RANGE`: Both only matter under `NODE_ENV=test`. Outside tests, the verification and the check always run regardless of these variables. The latter does not make HTTP request handling production-like in general.
+
+These variables are read once at startup. Changing them afterwards has no effect. The backend e2e tests switch the same settings (`config.runtime.test`) through the test server's `/runtime` endpoint.
 

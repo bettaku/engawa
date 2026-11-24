@@ -341,6 +341,7 @@ export const packedNotificationSchema = {
 				enum: ['achievementEarned'],
 			},
 			achievement: {
+				optional: false,
 				ref: 'AchievementName',
 			},
 		},

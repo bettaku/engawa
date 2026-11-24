@@ -27,8 +27,8 @@ export const meta = {
 		type: 'object',
 		optional: true, nullable: false,
 		properties: {
-			sourceLang: { type: 'string' },
-			text: { type: 'string' },
+			sourceLang: { optional: false, type: 'string' },
+			text: { optional: false, type: 'string' },
 		},
 	},
 
@@ -41,7 +41,7 @@ export const meta = {
 		noSuchDescription: {
 			message: 'No such description.',
 			code: 'NO_SUCH_DESCRIPTION',
-			id: 'bea9b03f-36e0-49c5-a4db-627a029f8971',
+			id: '0560985b-c594-4ec9-87cc-9263d83c63ee',
 		},
 		noTranslateService: {
 			message: 'Translate service is not available.',
@@ -93,7 +93,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			];
 
 			if (this.serverSettings.translatorType == null || !translatorServices.includes(this.serverSettings.translatorType)) {
-				return Promise.resolve(204); // Promise.resolveで204をラップする
+				throw new ApiError(meta.errors.noTranslateService);
 			}
 
 			let targetLang = ps.targetLang;
@@ -111,16 +111,16 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 				translationResult = await this.translateGoogleTranslateNoApi(target.description, targetLang);
 			} else if (this.serverSettings.translatorType === 'ctav3') {
-				if (this.serverSettings.ctav3SaKey == null) return Promise.resolve(204);
-				else if (this.serverSettings.ctav3ProjectId == null) return Promise.resolve(204);
-				else if (this.serverSettings.ctav3Location == null) return Promise.resolve(204);
+				if (this.serverSettings.ctav3SaKey == null || this.serverSettings.ctav3ProjectId == null || this.serverSettings.ctav3Location == null) {
+					throw new ApiError(meta.errors.unavailable);
+				}
 				translationResult = await this.apiCloudTranslationAdvanced(target.description, targetLang, this.serverSettings.ctav3SaKey, this.serverSettings.ctav3ProjectId, this.serverSettings.ctav3Location, this.serverSettings.ctav3Model, this.serverSettings.ctav3Glossary, this.serverSettings.translatorType);
 			} else if (this.serverSettings.translatorType === 'Libretranslate') {
 				const endPoint = this.serverSettings.libreTranslateEndPoint;
-				if (endPoint === null) throw new Error('libreTranslateEndPoint is null');
+				if (endPoint === null) throw new ApiError(meta.errors.unavailable);
 				translationResult = await this.translateLibretranslate(target.description, targetLang, endPoint, this.serverSettings.libreTranslateApiKey);
 			} else {
-				throw new Error('Unsupported translator type');
+				throw new ApiError(meta.errors.noTranslateService);
 			}
 
 			return Promise.resolve({

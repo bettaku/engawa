@@ -11,6 +11,7 @@ import { RedisKVCache } from '@/misc/cache.js';
 import type { MiUserKeypair } from '@/models/UserKeypair.js';
 import { DI } from '@/di-symbols.js';
 import { bindThis } from '@/decorators.js';
+import { CacheInvalidationService } from '@/core/CacheInvalidationService.js';
 
 @Injectable()
 export class UserKeypairService implements OnApplicationShutdown {
@@ -22,6 +23,7 @@ export class UserKeypairService implements OnApplicationShutdown {
 
 		@Inject(DI.userKeypairsRepository)
 		private userKeypairsRepository: UserKeypairsRepository,
+		private cacheInvalidationService: CacheInvalidationService,
 	) {
 		this.cache = new RedisKVCache<MiUserKeypair>(this.redisClient, 'userKeypair', {
 			lifetime: 1000 * 60 * 60 * 24, // 24h
@@ -29,6 +31,7 @@ export class UserKeypairService implements OnApplicationShutdown {
 			fetcher: (key) => this.userKeypairsRepository.findOneByOrFail({ userId: key }),
 			toRedisConverter: (value) => JSON.stringify(value),
 			fromRedisConverter: (value) => JSON.parse(value),
+			invalidation: this.cacheInvalidationService,
 		});
 	}
 

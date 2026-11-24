@@ -148,7 +148,10 @@ export default class Connection {
 
 	@bindThis
 	private onReadNotification(payload: JsonValue | undefined) {
-		this.notificationService.readAllNotification(this.user!.id);
+		if (this.user == null) return;
+		// アクセストークンでの接続は、HTTPの notifications/mark-all-as-read と同じ権限を要求する
+		if (this.token && !this.token.permission.includes('write:notifications')) return;
+		this.notificationService.readAllNotification(this.user.id);
 	}
 
 	/**

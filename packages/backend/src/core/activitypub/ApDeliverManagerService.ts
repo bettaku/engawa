@@ -236,6 +236,29 @@ export class ApDeliverManagerService {
 		await manager.execute();
 	}
 
+	/**
+	 * Deliver activity to followers (optional) and users with a single enqueue (addBulk).
+	 * 一部の宛先だけが登録された状態で再試行して、重ねて登録することを避けるため、1回の登録にまとめる
+	 * @param actor
+	 * @param activity Activity
+	 * @param targets Target users
+	 * @param followers Whether to deliver to followers
+	 */
+	@bindThis
+	public async deliverToFollowersAndUsers(actor: { id: MiLocalUser['id']; host: null; }, activity: IActivity, targets: MiRemoteUser[], followers = true): Promise<void> {
+		const manager = new DeliverManager(
+			this.userEntityService,
+			this.followingsRepository,
+			this.queueService,
+			actor,
+			activity,
+			this.logger,
+		);
+		if (followers) manager.addFollowersRecipe();
+		for (const to of targets) manager.addDirectRecipe(to);
+		await manager.execute();
+	}
+
 	@bindThis
 	public createDeliverManager(actor: { id: MiUser['id']; host: null; }, activity: IActivity | null): DeliverManager {
 		return new DeliverManager(

@@ -1,0 +1,561 @@
+{
+	"generatedFrom": "05518ad068",
+	"misskeyRef": "2025.10.2",
+	"cherrypickRef": "upstream/develop",
+	"endpoints": {
+		"total": 446,
+		"byOrigin": {
+			"cherrypick": 35,
+			"misskey": 407,
+			"engawa": 4
+		},
+		"byAuth": {
+			"admin": 20,
+			"moderator": 71,
+			"none": 103,
+			"user": 252
+		},
+		"byEffect": {
+			"write": 234,
+			"read": 199,
+			"write(kindのみ)": 11,
+			"write(Redisのみ)": 2
+		},
+		"allowGet": 26,
+		"noResSchema": 165,
+		"noTests": 318,
+		"anonymousPureRead": [
+			"announcements",
+			"announcements/show",
+			"app/show",
+			"auth/session/show",
+			"charts/active-users",
+			"charts/ap-request",
+			"charts/drive",
+			"charts/federation",
+			"charts/instance",
+			"charts/notes",
+			"charts/user/drive",
+			"charts/user/following",
+			"charts/user/notes",
+			"charts/user/pv",
+			"charts/user/reactions",
+			"charts/users",
+			"clips/notes",
+			"clips/show",
+			"email-address/available",
+			"emoji",
+			"emojis",
+			"endpoint",
+			"endpoints",
+			"federation/followers",
+			"federation/following",
+			"federation/instances",
+			"federation/remote-software",
+			"federation/show-instance",
+			"federation/stats",
+			"federation/update-remote-user",
+			"federation/users",
+			"fetch-rss",
+			"flash/featured",
+			"flash/search",
+			"flash/show",
+			"gallery/featured",
+			"gallery/popular",
+			"gallery/posts",
+			"gallery/posts/show",
+			"get-avatar-decorations",
+			"get-online-users-count",
+			"hashtags/list",
+			"hashtags/search",
+			"hashtags/show",
+			"hashtags/trend",
+			"hashtags/users",
+			"meta",
+			"notes",
+			"notes/bubble-timeline",
+			"notes/children",
+			"notes/clips",
+			"notes/conversation",
+			"notes/events/search",
+			"notes/featured",
+			"notes/global-timeline",
+			"notes/history",
+			"notes/local-timeline",
+			"notes/reactions",
+			"notes/renotes",
+			"notes/replies",
+			"notes/search",
+			"notes/search-by-tag",
+			"notes/show",
+			"notes/show-partial-bulk",
+			"pages/featured",
+			"pages/show",
+			"ping",
+			"pinned-users",
+			"retention",
+			"roles/show",
+			"roles/users",
+			"server-info",
+			"stats",
+			"test",
+			"username/available",
+			"users",
+			"users/achievements",
+			"users/clips",
+			"users/featured-notes",
+			"users/flashs",
+			"users/followers",
+			"users/following",
+			"users/gallery/posts",
+			"users/get-frequently-replied-users",
+			"users/lists/get-memberships",
+			"users/lists/list",
+			"users/lists/show",
+			"users/notes",
+			"users/pages",
+			"users/reactions",
+			"users/search",
+			"users/search-by-username-and-host",
+			"users/show",
+			"users/stats"
+		],
+		"byGroup": {
+			"admin": 111,
+			"i": 61,
+			"users": 45,
+			"notes": 41,
+			"chat": 27,
+			"drive": 20,
+			"charts": 12,
+			"clips": 11,
+			"flash": 11,
+			"following": 10,
+			"gallery": 9,
+			"federation": 8,
+			"pages": 7,
+			"antennas": 6,
+			"hashtags": 5,
+			"auth": 4,
+			"invite": 4,
+			"notifications": 4,
+			"roles": 4,
+			"sw": 4,
+			"blocking": 3,
+			"mute": 3,
+			"renote-mute": 3,
+			"announcements": 2,
+			"ap": 2,
+			"app": 2,
+			"email-address": 1,
+			"emoji": 1,
+			"emojis": 1,
+			"endpoint": 1,
+			"endpoints": 1,
+			"export-custom-emojis": 1,
+			"fetch-external-resources": 1,
+			"fetch-rss": 1,
+			"get-avatar-decorations": 1,
+			"get-online-users-count": 1,
+			"meta": 1,
+			"miauth": 1,
+			"my": 1,
+			"page-push": 1,
+			"ping": 1,
+			"pinned-users": 1,
+			"promo": 1,
+			"request-reset-password": 1,
+			"reset-db": 1,
+			"reset-password": 1,
+			"retention": 1,
+			"server-info": 1,
+			"stats": 1,
+			"test": 1,
+			"username": 1,
+			"v2": 1,
+			"verify-email": 1
+		},
+		"groupEffect": {
+			"admin": {
+				"write": 86,
+				"read": 25
+			},
+			"announcements": {
+				"read": 2
+			},
+			"antennas": {
+				"write": 4,
+				"read": 2
+			},
+			"ap": {
+				"read": 2
+			},
+			"app": {
+				"write": 1,
+				"read": 1
+			},
+			"auth": {
+				"write": 3,
+				"read": 1
+			},
+			"blocking": {
+				"write": 2,
+				"read": 1
+			},
+			"charts": {
+				"read": 12
+			},
+			"chat": {
+				"read": 10,
+				"write": 17
+			},
+			"clips": {
+				"write": 7,
+				"read": 4
+			},
+			"drive": {
+				"read": 12,
+				"write": 8
+			},
+			"email-address": {
+				"read": 1
+			},
+			"emoji": {
+				"read": 1
+			},
+			"emojis": {
+				"read": 1
+			},
+			"endpoint": {
+				"read": 1
+			},
+			"endpoints": {
+				"read": 1
+			},
+			"export-custom-emojis": {
+				"write": 1
+			},
+			"federation": {
+				"read": 8
+			},
+			"fetch-external-resources": {
+				"read": 1
+			},
+			"fetch-rss": {
+				"read": 1
+			},
+			"flash": {
+				"write": 5,
+				"read": 6
+			},
+			"following": {
+				"write": 8,
+				"read": 2
+			},
+			"gallery": {
+				"read": 4,
+				"write": 5
+			},
+			"get-avatar-decorations": {
+				"read": 1
+			},
+			"get-online-users-count": {
+				"read": 1
+			},
+			"hashtags": {
+				"read": 5
+			},
+			"i": {
+				"write": 41,
+				"read": 20
+			},
+			"invite": {
+				"write": 2,
+				"read": 2
+			},
+			"meta": {
+				"read": 1
+			},
+			"miauth": {
+				"write": 1
+			},
+			"mute": {
+				"write": 2,
+				"read": 1
+			},
+			"my": {
+				"read": 1
+			},
+			"notes": {
+				"read": 27,
+				"write": 14
+			},
+			"notifications": {
+				"write": 4
+			},
+			"page-push": {
+				"write": 1
+			},
+			"pages": {
+				"write": 5,
+				"read": 2
+			},
+			"ping": {
+				"read": 1
+			},
+			"pinned-users": {
+				"read": 1
+			},
+			"promo": {
+				"write": 1
+			},
+			"renote-mute": {
+				"write": 2,
+				"read": 1
+			},
+			"request-reset-password": {
+				"write": 1
+			},
+			"reset-db": {
+				"write": 1
+			},
+			"reset-password": {
+				"write": 1
+			},
+			"retention": {
+				"read": 1
+			},
+			"roles": {
+				"read": 4
+			},
+			"server-info": {
+				"read": 1
+			},
+			"stats": {
+				"read": 1
+			},
+			"sw": {
+				"write": 3,
+				"read": 1
+			},
+			"test": {
+				"read": 1
+			},
+			"username": {
+				"read": 1
+			},
+			"users": {
+				"read": 25,
+				"write": 20
+			},
+			"v2": {
+				"read": 1
+			},
+			"verify-email": {
+				"write": 1
+			}
+		},
+		"groupOrigin": {
+			"admin": {
+				"cherrypick": 8,
+				"misskey": 99,
+				"engawa": 4
+			},
+			"announcements": {
+				"misskey": 2
+			},
+			"antennas": {
+				"misskey": 6
+			},
+			"ap": {
+				"misskey": 2
+			},
+			"app": {
+				"misskey": 2
+			},
+			"auth": {
+				"misskey": 4
+			},
+			"blocking": {
+				"misskey": 3
+			},
+			"charts": {
+				"misskey": 12
+			},
+			"chat": {
+				"misskey": 25,
+				"cherrypick": 2
+			},
+			"clips": {
+				"misskey": 11
+			},
+			"drive": {
+				"misskey": 20
+			},
+			"email-address": {
+				"misskey": 1
+			},
+			"emoji": {
+				"misskey": 1
+			},
+			"emojis": {
+				"misskey": 1
+			},
+			"endpoint": {
+				"misskey": 1
+			},
+			"endpoints": {
+				"misskey": 1
+			},
+			"export-custom-emojis": {
+				"misskey": 1
+			},
+			"federation": {
+				"misskey": 7,
+				"cherrypick": 1
+			},
+			"fetch-external-resources": {
+				"misskey": 1
+			},
+			"fetch-rss": {
+				"misskey": 1
+			},
+			"flash": {
+				"misskey": 10,
+				"cherrypick": 1
+			},
+			"following": {
+				"misskey": 10
+			},
+			"gallery": {
+				"misskey": 9
+			},
+			"get-avatar-decorations": {
+				"misskey": 1
+			},
+			"get-online-users-count": {
+				"misskey": 1
+			},
+			"hashtags": {
+				"misskey": 5
+			},
+			"i": {
+				"misskey": 57,
+				"cherrypick": 4
+			},
+			"invite": {
+				"misskey": 4
+			},
+			"meta": {
+				"misskey": 1
+			},
+			"miauth": {
+				"misskey": 1
+			},
+			"mute": {
+				"misskey": 3
+			},
+			"my": {
+				"misskey": 1
+			},
+			"notes": {
+				"misskey": 36,
+				"cherrypick": 5
+			},
+			"notifications": {
+				"misskey": 4
+			},
+			"page-push": {
+				"misskey": 1
+			},
+			"pages": {
+				"misskey": 7
+			},
+			"ping": {
+				"misskey": 1
+			},
+			"pinned-users": {
+				"misskey": 1
+			},
+			"promo": {
+				"misskey": 1
+			},
+			"renote-mute": {
+				"misskey": 3
+			},
+			"request-reset-password": {
+				"misskey": 1
+			},
+			"reset-db": {
+				"misskey": 1
+			},
+			"reset-password": {
+				"misskey": 1
+			},
+			"retention": {
+				"misskey": 1
+			},
+			"roles": {
+				"misskey": 4
+			},
+			"server-info": {
+				"misskey": 1
+			},
+			"stats": {
+				"misskey": 1
+			},
+			"sw": {
+				"misskey": 4
+			},
+			"test": {
+				"misskey": 1
+			},
+			"username": {
+				"misskey": 1
+			},
+			"users": {
+				"misskey": 31,
+				"cherrypick": 14
+			},
+			"v2": {
+				"misskey": 1
+			},
+			"verify-email": {
+				"misskey": 1
+			}
+		}
+	},
+	"httpRoutes": 91,
+	"channels": 16,
+	"jobs": {
+		"total": 45,
+		"queues": 11,
+		"scheduled": 11
+	},
+	"writeSites": 365,
+	"tables": {
+		"entities": 75,
+		"written": 78,
+		"neverWrittenBySites": [
+			"abuse_report_notification_recipient"
+		]
+	},
+	"configKeys": 368,
+	"envVars": 20,
+	"redisCommandSites": 108,
+	"caches": {
+		"MemoryKVCache": 12,
+		"MemorySingleCache": 7,
+		"RedisKVCache": 11,
+		"RedisSingleCache": 1
+	},
+	"internalEvents": 33,
+	"timers": {
+		"setImmediate": 6,
+		"setInterval": 9,
+		"setTimeout": 8,
+		"CollapsedQueue": 2
+	},
+	"classes": 798,
+	"methods": 1943
+}

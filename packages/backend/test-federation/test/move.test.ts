@@ -1,5 +1,5 @@
 import assert, { strictEqual } from 'node:assert';
-import { createAccount, type LoginUser, sleep } from './utils.js';
+import { createAccount, type LoginUser, sleep, waitFor } from './utils.js';
 
 describe('Move', () => {
 	test('Minimum move', async () => {
@@ -33,7 +33,10 @@ describe('Move', () => {
 		});
 
 		test('Check from follower', async () => {
-			const following = await carol.client.request('users/following', { userId: carol.id });
+			const following = await waitFor(
+				async () => await carol.client.request('users/following', { userId: carol.id }),
+				following => following.length === 2,
+			);
 			strictEqual(following.length, 2);
 			const followees = following.map(({ followee }) => followee);
 			assert(followees.every(followee => followee != null));
@@ -42,7 +45,10 @@ describe('Move', () => {
 		});
 
 		test('Check from followee', async () => {
-			const followers = await bob.client.request('users/followers', { userId: bob.id });
+			const followers = await waitFor(
+				async () => await bob.client.request('users/followers', { userId: bob.id }),
+				followers => followers.length === 1,
+			);
 			strictEqual(followers.length, 1);
 			const follower = followers[0].follower;
 			assert(follower != null);

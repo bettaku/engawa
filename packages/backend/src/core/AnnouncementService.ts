@@ -184,11 +184,12 @@ export class AnnouncementService {
 	@bindThis
 	public async getAnnouncement(announcementId: MiAnnouncement['id'], me: MiUser | null): Promise<Packed<'Announcement'>> {
 		const announcement = await this.announcementsRepository.findOneByOrFail({ id: announcementId });
-		if (me) {
-			if (announcement.userId && announcement.userId !== me.id) {
-				throw new EntityNotFoundError(this.announcementsRepository.metadata.target, { id: announcementId });
-			}
+		// 個人宛てのお知らせは、宛先の本人にしか返さない（未ログインも含めて存在しない場合と同じ扱いにする）
+		if (announcement.userId && announcement.userId !== me?.id) {
+			throw new EntityNotFoundError(this.announcementsRepository.metadata.target, { id: announcementId });
+		}
 
+		if (me) {
 			const read = await this.announcementReadsRepository.findOneBy({
 				announcementId: announcement.id,
 				userId: me.id,

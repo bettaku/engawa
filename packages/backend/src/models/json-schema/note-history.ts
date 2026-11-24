@@ -44,15 +44,18 @@ export const packedNoteHistorySchema = {
 			optional: true, nullable: true,
 			properties: {
 				choices: {
+					optional: false,
 					type: 'array',
 					items: {
 						type: 'string',
 					},
 				},
 				multiple: {
+					optional: false,
 					type: 'boolean',
 				},
 				expiresAt: {
+					optional: false,
 					type: 'string',
 					format: 'date-time',
 					nullable: true,
@@ -64,18 +67,22 @@ export const packedNoteHistorySchema = {
 			optional: true, nullable: true,
 			properties: {
 				title: {
+					optional: false,
 					type: 'string',
 				},
 				start: {
+					optional: false,
 					type: 'string',
 					format: 'date-time',
 				},
 				end: {
+					optional: false,
 					type: 'string',
 					format: 'date-time',
 					nullable: true,
 				},
 				metadata: {
+					optional: false,
 					type: 'object',
 				},
 			},

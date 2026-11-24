@@ -28,6 +28,17 @@ async function main() {
 	const spec = genOpenapiSpec(config, true);
 
 	writeFileSync('./built/api.json', JSON.stringify(spec), 'utf-8');
+
+	// コミットする api.json（P2-6、§8-2）。APIの契約の変更をレビューで見えるようにする。
+	// 設定と版に依存しない値にして、どの環境で生成しても同じ内容にする
+	if (process.argv.includes('--committed')) {
+		const committed = {
+			...spec,
+			info: { ...spec.info, version: 'unversioned' },
+			servers: [{ url: 'https://example.com/api' }],
+		};
+		writeFileSync('./api.json', JSON.stringify(committed, null, '\t') + '\n', 'utf-8');
+	}
 }
 
 main().catch(e => {

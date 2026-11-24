@@ -19,10 +19,12 @@ export const meta = {
 		type: 'object',
 		properties: {
 			autoDeleteNotesAfterDays: {
+				optional: false,
 				type: 'number',
 				nullable: true,
 			},
 			autoDeleteKeepFavorites: {
+				optional: false,
 				type: 'boolean',
 			},
 		},

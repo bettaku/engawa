@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+import { signinErrorBody } from './signin-errors.js';
 import { Inject, Injectable } from '@nestjs/common';
 import * as OTPAuth from 'otpauth';
 import { IsNull } from 'typeorm';
@@ -29,6 +30,7 @@ import { RateLimiterService } from './RateLimiterService.js';
 import { SigninService } from './SigninService.js';
 import type { AuthenticationResponseJSON } from '@simplewebauthn/server';
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { CacheService } from '@/core/CacheService.js';
 
 @Injectable()
 export class SigninApiService {
@@ -57,6 +59,7 @@ export class SigninApiService {
 		private userAuthService: UserAuthService,
 		private webAuthnService: WebAuthnService,
 		private captchaService: CaptchaService,
+		private cacheService: CacheService,
 	) {
 	}
 
@@ -87,7 +90,7 @@ export class SigninApiService {
 
 		function error(status: number, error: { id: string }) {
 			reply.code(status);
-			return { error };
+			return signinErrorBody(error.id);
 		}
 
 		// not more than 1 attempt per second and not more than 10 attempts per hour
@@ -160,6 +163,7 @@ export class SigninApiService {
 		if (same && isOldAlgorithm(profile.password!)) {
 			profile.password = await hashPassword(password);
 			await this.userProfilesRepository.save(profile);
+			await this.cacheService.userProfileCache.delete(profile.userId);
 		}
 
 		const fail = async (status?: number, failure?: { id: string; }) => {
@@ -176,7 +180,7 @@ export class SigninApiService {
 		};
 
 		if (!profile.twoFactorEnabled) {
-			if (process.env.NODE_ENV !== 'test') {
+			if (!this.config.runtime.test.skipCaptcha) {
 				if (this.meta.enableHcaptcha && this.meta.hcaptchaSecretKey) {
 					await this.captchaService.verifyHcaptcha(this.meta.hcaptchaSecretKey, body['hcaptcha-response']).catch(err => {
 						throw new FastifyReplyError(400, err);
@@ -213,7 +217,7 @@ export class SigninApiService {
 					const newHash = await hashPassword(password);
 					this.userProfilesRepository.update(user.id, {
 						password: newHash,
-					});
+					}).then(() => this.cacheService.userProfileCache.delete(user.id));
 				}
 				return this.signinService.signin(request, reply, user);
 			} else {
@@ -235,7 +239,7 @@ export class SigninApiService {
 					const newHash = await hashPassword(password);
 					this.userProfilesRepository.update(user.id, {
 						password: newHash,
-					});
+					}).then(() => this.cacheService.userProfileCache.delete(user.id));
 				}
 				await this.userAuthService.twoFactorAuthenticate(profile, token);
 			} catch (e) {

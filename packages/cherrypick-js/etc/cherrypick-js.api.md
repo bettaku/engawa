@@ -1846,8 +1846,10 @@ declare namespace entities {
         I2faRegisterKeyRequest,
         I2faRegisterKeyResponse,
         I2faRemoveKeyRequest,
+        I2faRemoveKeyResponse,
         I2faUnregisterRequest,
         I2faUpdateKeyRequest,
+        I2faUpdateKeyResponse,
         IAppsRequest,
         IAppsResponse,
         IAuthorizedAppsRequest,
@@ -1999,6 +2001,7 @@ declare namespace entities {
         NotesTranslateResponse,
         NotesUnrenoteRequest,
         NotesUpdateRequest,
+        NotesUpdateResponse,
         NotesUserListTimelineRequest,
         NotesUserListTimelineResponse,
         NotificationsCreateRequest,
@@ -2500,10 +2503,16 @@ type I2faRegisterResponse = operations['i___2fa___register']['responses']['200']
 type I2faRemoveKeyRequest = operations['i___2fa___remove-key']['requestBody']['content']['application/json'];
 
 // @public (undocumented)
+type I2faRemoveKeyResponse = operations['i___2fa___remove-key']['responses']['200']['content']['application/json'];
+
+// @public (undocumented)
 type I2faUnregisterRequest = operations['i___2fa___unregister']['requestBody']['content']['application/json'];
 
 // @public (undocumented)
 type I2faUpdateKeyRequest = operations['i___2fa___update-key']['requestBody']['content']['application/json'];
+
+// @public (undocumented)
+type I2faUpdateKeyResponse = operations['i___2fa___update-key']['responses']['200']['content']['application/json'];
 
 // @public (undocumented)
 type IAppsRequest = operations['i___apps']['requestBody']['content']['application/json'];
@@ -3906,6 +3915,9 @@ type NotesUnrenoteRequest = operations['notes___unrenote']['requestBody']['conte
 type NotesUpdateRequest = operations['notes___update']['requestBody']['content']['application/json'];
 
 // @public (undocumented)
+type NotesUpdateResponse = operations['notes___update']['responses']['200']['content']['application/json'];
+
+// @public (undocumented)
 type NotesUserListTimelineRequest = operations['notes___user-list-timeline']['requestBody']['content']['application/json'];
 
 // @public (undocumented)
@@ -4034,7 +4046,7 @@ type QueueStats = {
 type QueueStatsLog = QueueStats[];
 
 // @public (undocumented)
-export const queueTypes: readonly ["system", "endedPollNotification", "postScheduledNote", "deliver", "inbox", "db", "relationship", "objectStorage", "userWebhookDeliver", "systemWebhookDeliver"];
+export const queueTypes: readonly ["system", "endedPollNotification", "postScheduledNote", "deliver", "inbox", "db", "relationship", "objectStorage", "userWebhookDeliver", "systemWebhookDeliver", "scheduledNoteDelete"];
 
 // @public (undocumented)
 type RenoteMuteCreateRequest = operations['renote-mute___create']['requestBody']['content']['application/json'];
