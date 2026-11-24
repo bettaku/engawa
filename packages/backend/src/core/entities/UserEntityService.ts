@@ -42,7 +42,7 @@ import type {
 } from '@/models/_.js';
 import { bindThis } from '@/decorators.js';
 import { RoleService } from '@/core/RoleService.js';
-import { ApPersonService } from '@/core/activitypub/models/ApPersonService.js';
+import type { CacheService } from '@/core/CacheService.js';
 import { FederatedInstanceService } from '@/core/FederatedInstanceService.js';
 import { IdService } from '@/core/IdService.js';
 import type { AnnouncementService } from '@/core/AnnouncementService.js';
@@ -85,7 +85,7 @@ export type UserRelation = {
 
 @Injectable()
 export class UserEntityService implements OnModuleInit {
-	private apPersonService: ApPersonService;
+	private cacheService: CacheService;
 	private noteEntityService: NoteEntityService;
 	private pageEntityService: PageEntityService;
 	private customEmojiService: CustomEmojiService;
@@ -144,7 +144,7 @@ export class UserEntityService implements OnModuleInit {
 	}
 
 	onModuleInit() {
-		this.apPersonService = this.moduleRef.get('ApPersonService');
+		this.cacheService = this.moduleRef.get('CacheService');
 		this.noteEntityService = this.moduleRef.get('NoteEntityService');
 		this.pageEntityService = this.moduleRef.get('PageEntityService');
 		this.customEmojiService = this.moduleRef.get('CustomEmojiService');
@@ -405,6 +405,22 @@ export class UserEntityService implements OnModuleInit {
 		return `${this.config.url}/users/${userId}`;
 	}
 
+	/**
+	 * URIのユーザーを、このサーバーに登録済みのものから探す（P3-3）。
+	 * packはDBを読むだけにするため、リモートへの問い合わせ・登録はしない。未登録の移行先は、受信の側で`resolveRemoteUser`ジョブが登録する。
+	 */
+	@bindThis
+	private async findUserIdByUri(uri: string): Promise<MiUser['id'] | null> {
+		const cached = this.cacheService.uriPersonCache.get(uri);
+		if (cached) return cached.id;
+
+		const user = uri.startsWith(`${this.config.url}/`)
+			? await this.usersRepository.findOneBy({ id: uri.split('/').pop() })
+			: await this.usersRepository.findOneBy({ uri });
+		if (user) this.cacheService.uriPersonCache.set(uri, user);
+		return user?.id ?? null;
+	}
+
 	public async pack<S extends 'MeDetailed' | 'UserDetailedNotMe' | 'UserDetailed' | 'UserLite' = 'UserLite'>(
 		src: MiUser['id'] | MiUser,
 		me?: { id: MiUser['id']; } | null | undefined,
@@ -539,9 +555,9 @@ export class UserEntityService implements OnModuleInit {
 			...(isDetailed ? {
 				url: profile!.url,
 				uri: user.uri,
-				movedTo: user.movedToUri ? this.apPersonService.resolvePerson(user.movedToUri).then(user => user.id).catch(() => null) : null,
+				movedTo: user.movedToUri ? this.findUserIdByUri(user.movedToUri).catch(() => null) : null,
 				alsoKnownAs: user.alsoKnownAs
-					? Promise.all(user.alsoKnownAs.map(uri => this.apPersonService.fetchPerson(uri).then(user => user?.id).catch(() => null)))
+					? Promise.all(user.alsoKnownAs.map(uri => this.findUserIdByUri(uri).catch(() => null)))
 						.then(xs => xs.length === 0 ? null : xs.filter(x => x != null))
 					: null,
 				createdAt: this.idService.parse(user.id).date.toISOString(),
@@ -631,6 +647,8 @@ export class UserEntityService implements OnModuleInit {
 				achievements: profile!.achievements,
 				loggedInDays: profile!.loggedInDates.length,
 				policies: this.roleService.getUserPolicies(user.id),
+				autoDeleteNotesAfterDays: user.autoDeleteNotesAfterDays,
+				autoDeleteKeepFavorites: user.autoDeleteKeepFavorites,
 			} : {}),
 
 			...(opts.includeSecrets ? {
@@ -706,24 +724,28 @@ export class UserEntityService implements OnModuleInit {
 
 				if (_userIds.length > 0) {
 					userRelations = await this.getRelations(meId, _userIds);
-					pinNotes = await this.userNotePiningsRepository.createQueryBuilder('pin')
-						.where('pin.userId IN (:...userIds)', { userIds: _userIds })
-						.innerJoinAndSelect('pin.note', 'note')
-						.getMany()
-						.then(pinsNotes => {
-							const map = new Map<MiUser['id'], MiUserNotePining[]>();
-							for (const note of pinsNotes) {
-								const notes = map.get(note.userId) ?? [];
-								notes.push(note);
-								map.set(note.userId, notes);
-							}
-							for (const [, notes] of map.entries()) {
-								// pack側ではDESCで取得しているので、それに合わせて降順に並び替えておく
-								notes.sort((a, b) => b.id.localeCompare(a.id));
-							}
-							return map;
-						});
 				}
+			}
+
+			// packと同じく、未ログインでもピン留めしたノートを返す（P3-3）
+			if (_userIds.length > 0) {
+				pinNotes = await this.userNotePiningsRepository.createQueryBuilder('pin')
+					.where('pin.userId IN (:...userIds)', { userIds: _userIds })
+					.innerJoinAndSelect('pin.note', 'note')
+					.getMany()
+					.then(pinsNotes => {
+						const map = new Map<MiUser['id'], MiUserNotePining[]>();
+						for (const note of pinsNotes) {
+							const notes = map.get(note.userId) ?? [];
+							notes.push(note);
+							map.set(note.userId, notes);
+						}
+						for (const [, notes] of map.entries()) {
+							// pack側ではDESCで取得しているので、それに合わせて降順に並び替えておく
+							notes.sort((a, b) => b.id.localeCompare(a.id));
+						}
+						return map;
+					});
 			}
 		}
 

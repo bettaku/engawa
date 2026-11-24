@@ -13,10 +13,12 @@ import chalkTemplate from 'chalk-template';
 import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import Logger from '@/logger.js';
+import { ConfigValidationError } from '@/config/parse.js';
 import { loadConfig } from '@/config.js';
 import type { Config } from '@/config.js';
 import { showMachineInfo } from '@/misc/show-machine-info.js';
 import { envOption } from '@/env.js';
+import { loadEnvironment } from '@/config/environment.js';
 import { jobQueue, server } from './common.js';
 
 const _filename = fileURLToPath(import.meta.url);
@@ -137,7 +139,7 @@ export async function masterMain() {
 }
 
 function showEnvironment(): void {
-	const env = process.env.NODE_ENV;
+	const env = loadEnvironment().values.NODE_ENV;
 	const logger = bootLogger.createSubLogger('env');
 	logger.info(typeof env === 'undefined' ? 'NODE_ENV is not set' : `NODE_ENV: ${env}`);
 
@@ -160,8 +162,8 @@ function loadConfigBoot(): Config {
 	try {
 		config = loadConfig();
 	} catch (exception) {
-		if (typeof exception === 'string') {
-			configLogger.error(exception);
+		if (exception instanceof ConfigValidationError || typeof exception === 'string') {
+			configLogger.error(String(exception));
 			process.exit(1);
 		} else if ((exception as any).code === 'ENOENT') {
 			configLogger.error('Configuration file not found', null, true);

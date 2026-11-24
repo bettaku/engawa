@@ -4,6 +4,7 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
+import { Brackets } from 'typeorm';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import type { ClipFavoritesRepository } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
@@ -45,7 +46,13 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		super(meta, paramDef, async (ps, me) => {
 			const query = this.clipFavoritesRepository.createQueryBuilder('favorite')
 				.andWhere('favorite.userId = :meId', { meId: me.id })
-				.leftJoinAndSelect('favorite.clip', 'clip');
+				.innerJoinAndSelect('favorite.clip', 'clip')
+				// お気に入りに登録した後で非公開になったクリップは返さない
+				.andWhere(new Brackets(qb => {
+					qb
+						.where('clip.isPublic = TRUE')
+						.orWhere('clip.userId = :meId', { meId: me.id });
+				}));
 
 			const favorites = await query
 				.getMany();

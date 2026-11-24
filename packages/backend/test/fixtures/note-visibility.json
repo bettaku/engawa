@@ -1,0 +1,37 @@
+{
+	"$comment": "ノートの公開範囲の判定表（pre-rust-tech-debt.md P2-7）。説明は docs/rust-migration/note-visibility.md。test/unit/note-visibility.ts が全系統をこの表で試験する",
+	"version": 1,
+	"visibilities": ["public", "home", "followers", "specified", "private"],
+	"relations": {
+		"anonymous": "ログインしていない",
+		"author": "投稿者本人",
+		"follower": "投稿者をフォローしている",
+		"stranger": "ログインしているが、ほかのどの関係にも当たらない",
+		"recipient": "ノートのvisibleUserIdsに含まれる（指名の相手）。visibleUserIdsはspecifiedのノートだけが持つ",
+		"mentioned": "ノートのmentionsに含まれるが、visibleUserIdsには含まれない",
+		"replyTarget": "ノートが、この閲覧者のノートへの返信である（replyUserId）"
+	},
+	"$values": "true: 見られる / false: 見られない / \"undecided\": 仕様が決まっていない（判断はpre-rust-tech-debt.md §8-4）/ null: その組み合わせは起きない",
+	"visibility": {
+		"public": { "anonymous": true, "author": true, "follower": true, "stranger": true, "recipient": null, "mentioned": true, "replyTarget": true },
+		"home": { "anonymous": true, "author": true, "follower": true, "stranger": true, "recipient": null, "mentioned": true, "replyTarget": true },
+		"followers": { "anonymous": false, "author": true, "follower": true, "stranger": false, "recipient": null, "mentioned": true, "replyTarget": true },
+		"specified": { "anonymous": false, "author": true, "follower": false, "stranger": false, "recipient": true, "mentioned": false, "replyTarget": false },
+		"private": { "anonymous": false, "author": true, "follower": false, "stranger": false, "recipient": null, "mentioned": "undecided", "replyTarget": false }
+	},
+	"authorFlags": {
+		"$comment": "投稿者の設定による制限。公開範囲の判定（visibility）で見られる場合にだけ、さらに絞り込む。投稿者本人は常に見られる",
+		"requireSigninToViewContents": {
+			"description": "ログインしていない閲覧者には見せない",
+			"rule": "anonymousはfalse。ほかの関係は公開範囲の判定のまま"
+		},
+		"makeNotesHiddenBefore": {
+			"description": "指定した時点より前（または指定した経過時間より古い）ノートを、投稿者以外に見せない",
+			"rule": "該当するノートは、author以外はfalse"
+		},
+		"makeNotesFollowersOnlyBefore": {
+			"description": "指定した時点より前（または指定した経過時間より古い）のpublic・homeのノートを、followersとして扱う",
+			"rule": "該当するpublic・homeのノートは、followersの行で判定する"
+		}
+	}
+}

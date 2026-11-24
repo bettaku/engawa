@@ -10,6 +10,7 @@ import { DI } from '@/di-symbols.js';
 import { bindThis } from '@/decorators.js';
 import { NotificationService } from '@/core/NotificationService.js';
 import { ACHIEVEMENT_TYPES } from '@/models/UserProfile.js';
+import { CacheService } from '@/core/CacheService.js';
 
 @Injectable()
 export class AchievementService {
@@ -18,6 +19,7 @@ export class AchievementService {
 		private userProfilesRepository: UserProfilesRepository,
 
 		private notificationService: NotificationService,
+		private cacheService: CacheService,
 	) {
 	}
 
@@ -40,6 +42,7 @@ export class AchievementService {
 				unlockedAt: date,
 			}],
 		});
+		await this.cacheService.userProfileCache.delete(userId);
 
 		this.notificationService.createNotification(userId, 'achievementEarned', {
 			achievement: type,

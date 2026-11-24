@@ -1,0 +1,101 @@
+{
+	"$comment": "APIの入力規則（P2-6）。現行の挙動をそのまま固定したもの。別の実装の受入試験にも使う。auth: none（トークンなし）・user（Authorizationヘッダー）・invalid（存在しないトークン）。expect.error.info は部分一致。expect.length は応答のパスにある配列の長さ",
+	"cases": [
+		{
+			"rule": "useDefaults",
+			"name": "省略した引数には既定値が入る（charts/notesのlimitは30）",
+			"request": { "method": "GET", "endpoint": "charts/notes", "query": { "span": "day" }, "auth": "none" },
+			"expect": { "status": 200, "length": { "path": "local.total", "value": 30 } }
+		},
+		{
+			"rule": "unknown-params",
+			"name": "定義にない引数は無視して受け付ける",
+			"request": { "method": "POST", "endpoint": "charts/notes", "body": { "span": "day", "limit": 2, "noSuchParam": true }, "auth": "none" },
+			"expect": { "status": 200, "length": { "path": "local.total", "value": 2 } }
+		},
+		{
+			"rule": "get-cast",
+			"name": "GETでは整数の引数を文字列から変換する",
+			"request": { "method": "GET", "endpoint": "charts/notes", "query": { "span": "day", "limit": "5" }, "auth": "none" },
+			"expect": { "status": 200, "length": { "path": "local.total", "value": 5 } }
+		},
+		{
+			"rule": "get-cast",
+			"name": "GETで変換できない値はINVALID_PARAM（変換のid、infoは引数名）",
+			"request": { "method": "GET", "endpoint": "charts/notes", "query": { "span": "day", "limit": "abc" }, "auth": "none" },
+			"expect": { "status": 400, "error": { "code": "INVALID_PARAM", "id": "0b5f1631-7c1a-41a6-b399-cce335f34d85", "info": { "param": "limit", "reason": "cannot cast to integer" } } }
+		},
+		{
+			"rule": "get-cast",
+			"name": "GETで変換した後にスキーマで検証する（5.5は整数でない）",
+			"request": { "method": "GET", "endpoint": "charts/notes", "query": { "span": "day", "limit": "5.5" }, "auth": "none" },
+			"expect": { "status": 400, "error": { "code": "INVALID_PARAM", "id": "3d81ceae-475f-4600-b2a8-2bc116157532", "info": { "param": "#/properties/limit/type", "reason": "must be integer" } } }
+		},
+		{
+			"rule": "get-cast",
+			"name": "GETでは真偽値の引数も変換する",
+			"request": { "method": "GET", "endpoint": "federation/instances", "query": { "blocked": "maybe" }, "auth": "none" },
+			"expect": { "status": 400, "error": { "code": "INVALID_PARAM", "id": "0b5f1631-7c1a-41a6-b399-cce335f34d85", "info": { "param": "blocked", "reason": "cannot cast to boolean" } } }
+		},
+		{
+			"rule": "no-coercion",
+			"name": "JSONの本文では型を変換しない（文字列の数値はINVALID_PARAM）",
+			"request": { "method": "POST", "endpoint": "charts/notes", "body": { "span": "day", "limit": "5" }, "auth": "none" },
+			"expect": { "status": 400, "error": { "code": "INVALID_PARAM", "id": "3d81ceae-475f-4600-b2a8-2bc116157532", "info": { "param": "#/properties/limit/type", "reason": "must be integer" } } }
+		},
+		{
+			"rule": "info",
+			"name": "必須の引数がないとき、infoのparamは#/required",
+			"request": { "method": "POST", "endpoint": "charts/notes", "body": {}, "auth": "none" },
+			"expect": { "status": 400, "error": { "code": "INVALID_PARAM", "id": "3d81ceae-475f-4600-b2a8-2bc116157532", "info": { "param": "#/required", "reason": "must have required property 'span'" } } }
+		},
+		{
+			"rule": "info",
+			"name": "列挙にない値",
+			"request": { "method": "POST", "endpoint": "charts/notes", "body": { "span": "week" }, "auth": "none" },
+			"expect": { "status": 400, "error": { "code": "INVALID_PARAM", "info": { "param": "#/properties/span/enum", "reason": "must be equal to one of the allowed values" } } }
+		},
+		{
+			"rule": "info",
+			"name": "最初の違反だけを返す（定義の順で、spanがlimitより先）",
+			"request": { "method": "POST", "endpoint": "charts/notes", "body": { "span": "week", "limit": "x" }, "auth": "none" },
+			"expect": { "status": 400, "error": { "code": "INVALID_PARAM", "info": { "param": "#/properties/span/enum" } } }
+		},
+		{
+			"rule": "info",
+			"name": "IDの形式（misskey:id）",
+			"request": { "method": "POST", "endpoint": "notes/show", "body": { "noteId": "a-b" }, "auth": "none" },
+			"expect": { "status": 400, "error": { "code": "INVALID_PARAM", "info": { "param": "#/properties/noteId/format", "reason": "must match format \"misskey:id\"" } } }
+		},
+		{
+			"rule": "order",
+			"name": "トークンの検証は引数の検証より先（不正なトークンは401）",
+			"request": { "method": "POST", "endpoint": "charts/notes", "body": {}, "auth": "invalid" },
+			"expect": { "status": 401, "error": { "code": "AUTHENTICATION_FAILED" } }
+		},
+		{
+			"rule": "order",
+			"name": "ログインの要求は引数の検証より先",
+			"request": { "method": "POST", "endpoint": "notes/create", "body": { "visibility": "no-such-visibility" }, "auth": "none" },
+			"expect": { "status": 401, "error": { "code": "CREDENTIAL_REQUIRED" } }
+		},
+		{
+			"rule": "order",
+			"name": "secureの確認はログインの要求より先",
+			"request": { "method": "POST", "endpoint": "i/change-password", "body": {}, "auth": "none" },
+			"expect": { "status": 400, "error": { "code": "ACCESS_DENIED" } }
+		},
+		{
+			"rule": "order",
+			"name": "Authorizationヘッダーは本文のiより優先する",
+			"request": { "method": "POST", "endpoint": "i", "body": { "i": "no-such-token" }, "auth": "user" },
+			"expect": { "status": 200 }
+		},
+		{
+			"rule": "multipart-cast",
+			"name": "multipartでも真偽値の引数を文字列から変換する",
+			"request": { "method": "MULTIPART", "endpoint": "drive/files/create", "fields": { "isSensitive": "maybe" }, "auth": "user" },
+			"expect": { "status": 400, "error": { "code": "INVALID_PARAM", "id": "0b5f1631-7c1a-41a6-b399-cce335f34d85", "info": { "param": "isSensitive", "reason": "cannot cast to boolean" } } }
+		}
+	]
+}

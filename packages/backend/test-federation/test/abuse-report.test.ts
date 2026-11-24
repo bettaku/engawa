@@ -43,7 +43,9 @@ describe('Abuse report', () => {
 				async () => await aModerator.client.request('admin/forward-abuse-user-report', { reportId: report.id }),
 				(err: any) => {
 					strictEqual(err.code, 'INTERNAL_ERROR');
-					strictEqual(err.info.e.message, 'The report has already been forwarded.');
+					// NOTE: 内部エラーの詳細はクライアントに返らず、追跡用のIDだけが返る
+					strictEqual(typeof err.info.e.id, 'string');
+					strictEqual(err.info.e.message, undefined);
 					return true;
 				},
 			);

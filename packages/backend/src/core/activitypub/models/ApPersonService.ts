@@ -32,12 +32,14 @@ import type { HashtagService } from '@/core/HashtagService.js';
 import { MiUserNotePining } from '@/models/UserNotePining.js';
 import { StatusError } from '@/misc/status-error.js';
 import type { UtilityService } from '@/core/UtilityService.js';
+import { QueueService } from '@/core/QueueService.js';
 import type { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { bindThis } from '@/decorators.js';
 import { RoleService } from '@/core/RoleService.js';
 import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
 import type { AccountMoveService } from '@/core/AccountMoveService.js';
 import { checkHttps } from '@/misc/check-https.js';
+import { HttpRequestService } from '@/core/HttpRequestService.js';
 import { AvatarDecorationService } from '@/core/AvatarDecorationService.js';
 import { getApId, getApType, getOneApHrefNullable, isActor, isCollection, isCollectionOrOrderedCollection, isPropertyValue } from '../type.js';
 import { extractApHashtags } from './tag.js';
@@ -106,6 +108,8 @@ export class ApPersonService implements OnModuleInit {
 		private roleService: RoleService,
 
 		private avatarDecorationService: AvatarDecorationService,
+		private httpRequestService: HttpRequestService,
+		private queueService: QueueService,
 	) {
 	}
 
@@ -308,8 +312,30 @@ export class ApPersonService implements OnModuleInit {
 	/**
 	 * Personを作成します。
 	 */
+	/**
+	 * リモートアクターのコレクション（followers / following / outbox）の件数を取得する。
+	 * URLはリモートから渡された値なので、プライベートアドレスへの接続の遮断・応答サイズの上限・タイムアウトを備えた
+	 * 共通のHTTPクライアントを必ず通す（リダイレクト先にも同じ制限が掛かる）。
+	 */
 	@bindThis
-	public async createPerson(uri: string, resolver?: Resolver): Promise<MiRemoteUser> {
+	private async fetchCollectionTotalItems(url: string): Promise<number | undefined> {
+		try {
+			if (!checkHttps(url, this.config.runtime.production.requireHttps)) return undefined;
+
+			const data = await this.httpRequestService.getJson<{ totalItems?: unknown }>(url, 'application/activity+json, application/json');
+			const totalItems = data?.totalItems;
+			return typeof totalItems === 'number' && Number.isSafeInteger(totalItems) && totalItems >= 0 ? totalItems : undefined;
+		} catch {
+			return undefined;
+		}
+	}
+
+	@bindThis
+	/**
+	 * @param options.resolveMoveTarget 移行先が未登録なら登録するジョブを作るか（既定はtrue）。
+	 *   `resolveRemoteUser`ジョブから登録する場合はfalseにして、移行先の移行先…と連鎖して取得しないようにする（P3-3）
+	 */
+	public async createPerson(uri: string, resolver?: Resolver, options: { resolveMoveTarget?: boolean } = {}): Promise<MiRemoteUser> {
 		if (typeof uri !== 'string') throw new Error('uri is not string');
 
 		const host = this.utilityService.punyHost(uri);
@@ -356,53 +382,26 @@ export class ApPersonService implements OnModuleInit {
 			throw new Error('Refusing to create person without id');
 		}
 
-		if (url && !checkHttps(url)) {
+		if (url && !checkHttps(url, this.config.runtime.production.requireHttps)) {
 			throw new Error('unexpected schema of person url: ' + url);
 		}
 
 		let followersCount: number | undefined;
 
 		if (typeof person.followers === 'string') {
-			try {
-				const data = await fetch(person.followers, {
-					headers: { Accept: 'application/json' },
-				});
-				const jsonData = JSON.parse(await data.text());
-
-				followersCount = jsonData.totalItems;
-			} catch {
-				followersCount = undefined;
-			}
+			followersCount = await this.fetchCollectionTotalItems(person.followers);
 		}
 
 		let followingCount: number | undefined;
 
 		if (typeof person.following === 'string') {
-			try {
-				const data = await fetch(person.following, {
-					headers: { Accept: 'application/json' },
-				});
-				const jsonData = JSON.parse(await data.text());
-
-				followingCount = jsonData.totalItems;
-			} catch (e) {
-				followingCount = undefined;
-			}
+			followingCount = await this.fetchCollectionTotalItems(person.following);
 		}
 
 		let notesCount: number | undefined;
 
 		if (typeof person.outbox === 'string') {
-			try {
-				const data = await fetch(person.outbox, {
-					headers: { Accept: 'application/json' },
-				});
-				const jsonData = JSON.parse(await data.text());
-
-				notesCount = jsonData.totalItems;
-			} catch (e) {
-				notesCount = undefined;
-			}
+			notesCount = await this.fetchCollectionTotalItems(person.outbox);
 		}
 
 		// Create user
@@ -557,6 +556,8 @@ export class ApPersonService implements OnModuleInit {
 
 		await this.updateFeatured(user.id, resolver).catch(err => this.logger.error(err));
 
+		if (options.resolveMoveTarget !== false) await this.requestResolveMoveTarget(user);
+
 		return user;
 	}
 
@@ -629,7 +630,7 @@ export class ApPersonService implements OnModuleInit {
 		}
 
 		if (url != null) {
-			if (!checkHttps(url)) {
+			if (!checkHttps(url, this.config.runtime.production.requireHttps)) {
 				throw new Error('unexpected schema of person url: ' + url);
 			}
 
@@ -641,46 +642,19 @@ export class ApPersonService implements OnModuleInit {
 		let followersCount: number | undefined;
 
 		if (typeof person.followers === 'string') {
-			try {
-				const data = await fetch(person.followers, {
-					headers: { Accept: 'application/json' },
-				});
-				const jsonData = JSON.parse(await data.text());
-
-				followersCount = jsonData.totalItems;
-			} catch {
-				followersCount = undefined;
-			}
+			followersCount = await this.fetchCollectionTotalItems(person.followers);
 		}
 
 		let followingCount: number | undefined;
 
 		if (typeof person.following === 'string') {
-			try {
-				const data = await fetch(person.following, {
-					headers: { Accept: 'application/json' },
-				});
-				const jsonData = JSON.parse(await data.text());
-
-				followingCount = jsonData.totalItems;
-			} catch {
-				followingCount = undefined;
-			}
+			followingCount = await this.fetchCollectionTotalItems(person.following);
 		}
 
 		let notesCount: number | undefined;
 
 		if (typeof person.outbox === 'string') {
-			try {
-				const data = await fetch(person.outbox, {
-					headers: { Accept: 'application/json' },
-				});
-				const jsonData = JSON.parse(await data.text());
-
-				notesCount = jsonData.totalItems;
-			} catch (e) {
-				notesCount = undefined;
-			}
+			notesCount = await this.fetchCollectionTotalItems(person.outbox);
 		}
 
 		const updates = {
@@ -782,6 +756,7 @@ export class ApPersonService implements OnModuleInit {
 			birthday: bday?.[0] ?? null,
 			location: person['vcard:Address'] ?? null,
 		});
+		await this.cacheService.userProfileCache.delete(exist.id);
 
 		this.globalEventService.publishInternalEvent('remoteUserUpdated', { id: exist.id });
 
@@ -819,7 +794,41 @@ export class ApPersonService implements OnModuleInit {
 				});
 		}
 
+		// 移行処理をしない場合も、移行先が未登録なら登録しておく（ユーザーのpackは登録済みのものしか参照しない）
+		await this.requestResolveMoveTarget(updated);
+
 		return 'skip';
+	}
+
+	/**
+	 * アカウントの移行先が未登録なら、取得して登録するジョブを作る（P3-3）。
+	 * 以前はユーザーのpack（`movedTo`）の中で取得していた。packはDBを読むだけにしたので、受信の側で登録する。
+	 * 失敗してもユーザーの登録・更新は失敗にしない。
+	 */
+	@bindThis
+	private async requestResolveMoveTarget(user: Pick<MiRemoteUser, 'movedToUri' | 'uri'>): Promise<void> {
+		const target = user.movedToUri;
+		if (target == null || target === user.uri) return;
+		try {
+			// 不正なURIでは例外になるので、try内で判定する（リモートの値なので、登録・更新を失敗にしない）
+			if (this.utilityService.isUriLocal(target)) return;
+			if (await this.fetchPerson(target) != null) return;
+			await this.queueService.createResolveRemoteUserJob(target);
+		} catch (err) {
+			this.logger.warn(`Failed to request resolving the move target ${target}`, { stack: err });
+		}
+	}
+
+	/**
+	 * `resolveRemoteUser`ジョブの処理（P3-3）。登録済みなら何もしない。
+	 */
+	@bindThis
+	public async processResolveRemoteUser(uri: string): Promise<string> {
+		if (this.utilityService.isUriLocal(uri)) return 'skip: local uri';
+		if (await this.fetchPerson(uri) != null) return 'skip: already registered';
+		// 登録したユーザーの移行先はたどらない（移行先が連鎖していても、1回の受信で取得するのは1段だけにする）
+		const user = await this.createPerson(uri, await this.apResolverService.createResolver(), { resolveMoveTarget: false });
+		return `ok: ${user.id}`;
 	}
 
 	/**

@@ -712,8 +712,7 @@ export const packedMeDetailedOnlySchema = {
 					id: {
 						type: 'string',
 						nullable: false, optional: false,
-						format: 'id',
-						example: 'xxxxxxxxxx',
+						// WebAuthnの資格情報ID（base64url）であり、内部IDの形式ではない
 					},
 					name: {
 						type: 'string',
@@ -771,8 +770,9 @@ export const packedMeDetailedSchema = {
 	],
 } as const;
 
+// MeDetailedはUserDetailedNotMeの全プロパティを含み、両方に一致する値があるため、oneOfではなくanyOfにする
 export const packedUserDetailedSchema = {
-	oneOf: [
+	anyOf: [
 		{
 			type: 'object',
 			ref: 'UserDetailedNotMe',
@@ -784,8 +784,9 @@ export const packedUserDetailedSchema = {
 	],
 } as const;
 
+// UserDetailedの値はUserLiteにも一致するため、oneOfではなくanyOfにする
 export const packedUserSchema = {
-	oneOf: [
+	anyOf: [
 		{
 			type: 'object',
 			ref: 'UserLite',

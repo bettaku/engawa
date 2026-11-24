@@ -32,9 +32,3 @@ export function parseBigInt16(str: string): bigint {
 	// so we process 13 chars at once
 	return parseBigIntChunked(str, 16, 13, 16n ** 13n);
 }
-
-export function parseBigInt32(str: string): bigint {
-	// log_32(Number.MAX_SAFE_INTEGER) => 10.6
-	// so we process 10 chars at once
-	return parseBigIntChunked(str, 32, 10, 32n ** 10n);
-}

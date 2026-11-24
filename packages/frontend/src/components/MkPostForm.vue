@@ -1652,9 +1652,9 @@ onMounted(() => {
 					expiredAfter: null,
 				};
 			}
-			if (init.deletedAt) {
+			if (init.deleteAt) {
 				scheduledNoteDelete.value = {
-					deleteAt: init.deletedAt ? (new Date(init.deletedAt)).getTime() : null,
+					deleteAt: (new Date(init.deleteAt)).getTime(),
 					deleteAfter: null,
 				};
 			}
@@ -1681,9 +1681,9 @@ onMounted(() => {
 			reactionAcceptance.value = init.reactionAcceptance;
 			disableRightClick.value = init.disableRightClick != null;
 			saveToDraft.value = false;
-			if (init.deletedAt) {
+			if (init.deleteAt) {
 				scheduledNoteDelete.value = {
-					deleteAt: init.deletedAt ? (new Date(init.deletedAt)).getTime() : null,
+					deleteAt: (new Date(init.deleteAt)).getTime(),
 					deleteAfter: null,
 				};
 			}

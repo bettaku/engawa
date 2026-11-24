@@ -20,36 +20,41 @@ export const meta = {
 		type: 'object',
 		properties: {
 			provider: {
+				optional: false,
 				type: 'string',
 				enum: supportedCaptchaProviders,
 			},
 			hcaptcha: {
+				optional: false,
 				type: 'object',
 				properties: {
-					siteKey: { type: 'string', nullable: true },
-					secretKey: { type: 'string', nullable: true },
+					siteKey: { optional: false, type: 'string', nullable: true },
+					secretKey: { optional: false, type: 'string', nullable: true },
 				},
 			},
 			mcaptcha: {
+				optional: false,
 				type: 'object',
 				properties: {
-					siteKey: { type: 'string', nullable: true },
-					secretKey: { type: 'string', nullable: true },
-					instanceUrl: { type: 'string', nullable: true },
+					siteKey: { optional: false, type: 'string', nullable: true },
+					secretKey: { optional: false, type: 'string', nullable: true },
+					instanceUrl: { optional: false, type: 'string', nullable: true },
 				},
 			},
 			recaptcha: {
+				optional: false,
 				type: 'object',
 				properties: {
-					siteKey: { type: 'string', nullable: true },
-					secretKey: { type: 'string', nullable: true },
+					siteKey: { optional: false, type: 'string', nullable: true },
+					secretKey: { optional: false, type: 'string', nullable: true },
 				},
 			},
 			turnstile: {
+				optional: false,
 				type: 'object',
 				properties: {
-					siteKey: { type: 'string', nullable: true },
-					secretKey: { type: 'string', nullable: true },
+					siteKey: { optional: false, type: 'string', nullable: true },
+					secretKey: { optional: false, type: 'string', nullable: true },
 				},
 			},
 		},

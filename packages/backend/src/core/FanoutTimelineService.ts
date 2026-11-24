@@ -54,7 +54,11 @@ export class FanoutTimelineService {
 	}
 
 	@bindThis
-	public push(tl: FanoutTimelineName, id: string, maxlen: number, pipeline: Redis.ChainableCommander) {
+	/**
+	 * @param pending 古いノートの追加はパイプラインの外で行う。その完了を待ちたい呼び出し元（outboxの副作用など）は、
+	 *   配列を渡すと、追加の完了（失敗を含む）を表すPromiseがここに入る
+	 */
+	public push(tl: FanoutTimelineName, id: string, maxlen: number, pipeline: Redis.ChainableCommander, pending?: Promise<unknown>[]) {
 		// リモートから遅れて届いた(もしくは後から追加された)投稿日時が古い投稿が追加されるとページネーション時に問題を引き起こすため、
 		// 3分以内に投稿されたものでない場合、Redisにある最古のIDより新しい場合のみ追加する
 		if (this.idService.parse(id).date.getTime() > Date.now() - 1000 * 60 * 3) {
@@ -64,13 +68,16 @@ export class FanoutTimelineService {
 			}
 		} else {
 			// 末尾のIDを取得
-			this.redisForTimelines.lindex('list:' + tl, -1).then(lastId => {
+			const added = this.redisForTimelines.lindex('list:' + tl, -1).then(async lastId => {
 				if (lastId == null || (this.idService.parse(id).date.getTime() > this.idService.parse(lastId).date.getTime())) {
-					this.redisForTimelines.lpush('list:' + tl, id);
-				} else {
-					Promise.resolve();
+					await this.redisForTimelines.lpush('list:' + tl, id);
 				}
 			});
+			if (pending != null) {
+				pending.push(added);
+			} else {
+				added.catch(() => { /* 従来どおり、待たない呼び出し元では失敗を無視する */ });
+			}
 		}
 	}
 

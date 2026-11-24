@@ -1,6 +1,6 @@
 {
 	"name": "cherrypick",
-	"version": "1.0.0",
+	"version": "2.0.0-alpha.0",
 	"basedCherryPickVersion": "4.17.0",
 	"basedMisskeyVersion": "2025.10.2",
 	"codename": "nasubi",
@@ -20,6 +20,7 @@
 	],
 	"private": true,
 	"scripts": {
+		"check:config": "node packages/backend/built/boot/config-check.js",
 		"build-pre": "node ./scripts/build-pre.js",
 		"build-assets": "node ./scripts/build-assets.mjs",
 		"build": "pnpm build-pre && pnpm -r build && pnpm build-assets",
@@ -55,7 +56,7 @@
 		"esbuild": "0.25.10",
 		"execa": "9.6.0",
 		"fast-glob": "3.3.3",
-		"glob": "13.0.6",
+		"glob": "14.0.3",
 		"ignore-walk": "9.0.0",
 		"js-yaml": "4.3.2",
 		"postcss": "8.5.26",

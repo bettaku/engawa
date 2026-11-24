@@ -587,8 +587,9 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				await this.userProfilesRepository.createQueryBuilder('profile').update()
 					.where('userId = :userId', { userId: user.id })
 					.set({
-						verifiedLinks: () => `array_append("verifiedLinks", '${url}')`, // ここでSQLインジェクションされそうなのでとりあえず safeForSql で弾いている
+						verifiedLinks: () => 'array_append("verifiedLinks", :verifiedLink)',
 					})
+					.setParameter('verifiedLink', url)
 					.execute();
 			}
 

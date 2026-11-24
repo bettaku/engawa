@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { Not, In, IsNull } from 'typeorm';
+import { In } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
 import { maximum } from '@/misc/prelude/array.js';
 import type { NotesRepository } from '@/models/_.js';
@@ -11,6 +11,9 @@ import { Endpoint } from '@/server/api/endpoint-base.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { DI } from '@/di-symbols.js';
 import { GetterService } from '@/server/api/GetterService.js';
+import { QueryService } from '@/core/QueryService.js';
+import { IdService } from '@/core/IdService.js';
+import { shouldHideNoteByTime } from '@/misc/should-hide-note-by-time.js';
 import { ApiError } from '../../error.js';
 
 export const meta = {
@@ -66,6 +69,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 		private userEntityService: UserEntityService,
 		private getterService: GetterService,
+		private queryService: QueryService,
+		private idService: IdService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			// Lookup user
@@ -75,16 +80,32 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			});
 
 			// Fetch recent notes
-			const recentNotes = await this.notesRepository.find({
-				where: {
-					userId: user.id,
-					replyId: Not(IsNull()),
-				},
-				order: {
-					id: -1,
-				},
-				take: 1000,
-				select: ['replyId'],
+			// 閲覧者が見られる返信だけを集計する（非公開の返信から、やり取りの相手を推測できないようにする）
+			if (user.requireSigninToViewContents && me == null) {
+				return [];
+			}
+
+			const recentNotesQuery = this.notesRepository.createQueryBuilder('note')
+				.select(['note.id', 'note.replyId', 'note.visibility'])
+				.where('note.userId = :userId', { userId: user.id })
+				.andWhere('note.replyId IS NOT NULL')
+				.orderBy('note.id', 'DESC')
+				.limit(1000);
+
+			this.queryService.generateVisibilityQuery(recentNotesQuery, me);
+
+			const isMe = me != null && me.id === user.id;
+			const isFollower = !isMe && me != null
+				? await this.userEntityService.getRelation(me.id, user.id).then(r => r.isFollowing)
+				: false;
+
+			const recentNotes = (await recentNotesQuery.getMany()).filter(note => {
+				if (isMe) return true;
+				// 投稿者が過去の投稿を非表示・フォロワー限定にしている場合は、その対象を集計から外す
+				const createdAt = this.idService.parse(note.id).date;
+				if (shouldHideNoteByTime(user.makeNotesHiddenBefore, createdAt)) return false;
+				if ((note.visibility === 'public' || note.visibility === 'home') && !isFollower && shouldHideNoteByTime(user.makeNotesFollowersOnlyBefore, createdAt)) return false;
+				return true;
 			});
 
 			// 投稿が少なかったら中断
@@ -93,17 +114,20 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			}
 
 			// TODO ミュートを考慮
-			const replyTargetNotes = await this.notesRepository.find({
-				where: {
-					id: In(recentNotes.map(p => p.replyId)),
-				},
-				select: ['userId'],
-			});
+			// 返信先も、閲覧者が見られるものだけを対象にする
+			const replyTargetNotesQuery = this.notesRepository.createQueryBuilder('note')
+				.select(['note.id', 'note.userId'])
+				.where({ id: In(recentNotes.map(p => p.replyId)) });
+
+			this.queryService.generateVisibilityQuery(replyTargetNotesQuery, me);
+
+			const replyTargetUserIds = new Map((await replyTargetNotesQuery.getMany()).map(x => [x.id, x.userId]));
 
 			const repliedUsers: any = {};
 
 			// Extract replies from recent notes
-			for (const userId of replyTargetNotes.map(x => x.userId.toString())) {
+			for (const userId of recentNotes.map(x => x.replyId != null ? replyTargetUserIds.get(x.replyId) : undefined)) {
+				if (userId == null) continue;
 				if (repliedUsers[userId]) {
 					repliedUsers[userId]++;
 				} else {

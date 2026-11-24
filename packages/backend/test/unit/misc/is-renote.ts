@@ -42,6 +42,7 @@ const base: MiNote = {
 	replyUserHost: null,
 	renoteUserId: null,
 	renoteUserHost: null,
+	renoteCounted: null,
 	updatedAt: null,
 	updatedAtHistory: null,
 	hasEvent: false,

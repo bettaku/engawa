@@ -159,6 +159,10 @@ export class NoteHistoryEntityService implements OnModuleInit {
 				}
 			}
 		}
+		if (packedHistory.visibility === 'private') {
+			// 「自分のみ」だった時点の内容は本人にしか見せない
+			hide = true;
+		}
 		if (packedHistory.visibility === 'followers') {
 			if (meId == null) {
 				hide = true;

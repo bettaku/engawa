@@ -44,6 +44,7 @@ import { ModerationLogService } from './ModerationLogService.js';
 import { NoteCreateService } from './NoteCreateService.js';
 import { NoteUpdateService } from './NoteUpdateService.js';
 import { NoteDeleteService } from './NoteDeleteService.js';
+import { NoteOutboxService } from './NoteOutboxService.js';
 import { NotePiningService } from './NotePiningService.js';
 import { NoteDraftService } from './NoteDraftService.js';
 import { NotificationService } from './NotificationService.js';
@@ -73,6 +74,8 @@ import { UtilityService } from './UtilityService.js';
 import { FileInfoService } from './FileInfoService.js';
 import { SearchService } from './SearchService.js';
 import { ClipService } from './ClipService.js';
+import { CacheInvalidationService } from './CacheInvalidationService.js';
+import { CounterConsistencyService } from './CounterConsistencyService.js';
 import { FeaturedService } from './FeaturedService.js';
 import { FanoutTimelineService } from './FanoutTimelineService.js';
 import { ChatService } from './ChatService.js';
@@ -191,6 +194,7 @@ const $ModerationLogService: Provider = { provide: 'ModerationLogService', useEx
 const $NoteCreateService: Provider = { provide: 'NoteCreateService', useExisting: NoteCreateService };
 const $NoteUpdateService: Provider = { provide: 'NoteUpdateService', useExisting: NoteUpdateService };
 const $NoteDeleteService: Provider = { provide: 'NoteDeleteService', useExisting: NoteDeleteService };
+const $NoteOutboxService: Provider = { provide: 'NoteOutboxService', useExisting: NoteOutboxService };
 const $NotePiningService: Provider = { provide: 'NotePiningService', useExisting: NotePiningService };
 const $NoteDraftService: Provider = { provide: 'NoteDraftService', useExisting: NoteDraftService };
 const $NotificationService: Provider = { provide: 'NotificationService', useExisting: NotificationService };
@@ -225,6 +229,8 @@ const $FileInfoService: Provider = { provide: 'FileInfoService', useExisting: Fi
 const $FlashService: Provider = { provide: 'FlashService', useExisting: FlashService };
 const $SearchService: Provider = { provide: 'SearchService', useExisting: SearchService };
 const $ClipService: Provider = { provide: 'ClipService', useExisting: ClipService };
+const $CacheInvalidationService: Provider = { provide: 'CacheInvalidationService', useExisting: CacheInvalidationService };
+const $CounterConsistencyService: Provider = { provide: 'CounterConsistencyService', useExisting: CounterConsistencyService };
 const $FeaturedService: Provider = { provide: 'FeaturedService', useExisting: FeaturedService };
 const $FanoutTimelineService: Provider = { provide: 'FanoutTimelineService', useExisting: FanoutTimelineService };
 const $FanoutTimelineEndpointService: Provider = { provide: 'FanoutTimelineEndpointService', useExisting: FanoutTimelineEndpointService };
@@ -346,6 +352,7 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		NoteCreateService,
 		NoteUpdateService,
 		NoteDeleteService,
+		NoteOutboxService,
 		NotePiningService,
 		NoteDraftService,
 		NotificationService,
@@ -380,6 +387,8 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		FlashService,
 		SearchService,
 		ClipService,
+		CacheInvalidationService,
+		CounterConsistencyService,
 		FeaturedService,
 		FanoutTimelineService,
 		FanoutTimelineEndpointService,
@@ -499,6 +508,7 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		$NoteCreateService,
 		$NoteUpdateService,
 		$NoteDeleteService,
+		$NoteOutboxService,
 		$NotePiningService,
 		$NoteDraftService,
 		$NotificationService,
@@ -533,6 +543,8 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		$FlashService,
 		$SearchService,
 		$ClipService,
+		$CacheInvalidationService,
+		$CounterConsistencyService,
 		$FeaturedService,
 		$FanoutTimelineService,
 		$FanoutTimelineEndpointService,
@@ -651,6 +663,7 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		NoteCreateService,
 		NoteUpdateService,
 		NoteDeleteService,
+		NoteOutboxService,
 		NotePiningService,
 		NoteDraftService,
 		NotificationService,
@@ -685,6 +698,8 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		FlashService,
 		SearchService,
 		ClipService,
+		CacheInvalidationService,
+		CounterConsistencyService,
 		FeaturedService,
 		FanoutTimelineService,
 		FanoutTimelineEndpointService,
@@ -803,6 +818,7 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		$NoteCreateService,
 		$NoteUpdateService,
 		$NoteDeleteService,
+		$NoteOutboxService,
 		$NotePiningService,
 		$NoteDraftService,
 		$NotificationService,
@@ -836,6 +852,8 @@ const $ApEventService: Provider = { provide: 'ApEventService', useExisting: ApEv
 		$FileInfoService,
 		$SearchService,
 		$ClipService,
+		$CacheInvalidationService,
+		$CounterConsistencyService,
 		$FeaturedService,
 		$FanoutTimelineService,
 		$FanoutTimelineEndpointService,

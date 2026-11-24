@@ -114,12 +114,15 @@ async function translate(): Promise<void> {
 	if (translation.value != null) return;
 	translating.value = true;
 
-	const res = await misskeyApi('notes/polls/translate', {
-		noteId: props.noteId,
-		targetLang: miLocalStorage.getItem('lang') ?? navigator.language,
-	});
-	translating.value = false;
-	translation.value = res;
+	try {
+		translation.value = await misskeyApi('notes/polls/translate', {
+			noteId: props.noteId,
+			targetLang: miLocalStorage.getItem('lang') ?? navigator.language,
+		});
+	} finally {
+		// 翻訳に失敗しても、翻訳中の表示を解除する
+		translating.value = false;
+	}
 }
 
 onMounted(() => {

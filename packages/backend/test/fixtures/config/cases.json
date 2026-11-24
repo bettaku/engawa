@@ -1,0 +1,23 @@
+[
+  {
+    "file": "valid/socket.yml",
+    "env": { "CHERRYPICK_URL": "https://example.test", "DATABASE_DB": "test", "DATABASE_USER": "test", "DATABASE_PASSWORD": "example" },
+    "input": true,
+    "effective": true,
+    "values": { "url": "https://example.test", "id": "aidx", "db": { "db": "test", "user": "test", "pass": "example" } }
+  },
+  {
+    "file": "invalid/port.yml",
+    "env": { "PORT": "65536" },
+    "input": true,
+    "effective": false,
+    "values": { "port": 65536 }
+  },
+  {
+    "file": "invalid/types.yml",
+    "env": {},
+    "input": false,
+    "effective": false,
+    "values": { "id": "unknown" }
+  }
+]

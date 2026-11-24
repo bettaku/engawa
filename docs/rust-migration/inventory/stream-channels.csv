@@ -1,0 +1,17 @@
+channel,class,requireCredential,kind,shouldShare,subscribes,clientMessages,writes,events,hubs,testFileCount,file
+admin,AdminChannel,true,read:admin:stream,true,`adminStream:${this.user!.id}`,,,,,3,packages/backend/src/server/api/stream/channels/admin.ts
+antenna,AntennaChannel,true,read:account,false,`antennaStream:${this.antennaId}`,,,,pack,0,packages/backend/src/server/api/stream/channels/antenna.ts
+bubbleTimeline,BubbleTimelineChannel,false,,false,'notesStream',,,,lazyInit; pack,0,packages/backend/src/server/api/stream/channels/bubble-timeline.ts
+chatRoom,ChatRoomChannel,true,read:chat,false,`chatRoomStream:${this.roomId}`,read,,,,0,packages/backend/src/server/api/stream/channels/chat-room.ts
+chatUser,ChatUserChannel,true,read:chat,false,`chatUserStream:${this.user.id}-${this.otherId}`,read,,,,0,packages/backend/src/server/api/stream/channels/chat-user.ts
+drive,DriveChannel,true,read:account,true,`driveStream:${this.user!.id}`,,,,,2,packages/backend/src/server/api/stream/channels/drive.ts
+globalTimeline,GlobalTimelineChannel,false,,false,'notesStream',,,,pack,1,packages/backend/src/server/api/stream/channels/global-timeline.ts
+hashtag,HashtagChannel,false,,false,'notesStream',,,,pack,2,packages/backend/src/server/api/stream/channels/hashtag.ts
+homeTimeline,HomeTimelineChannel,true,read:account,false,'notesStream',,,,pack,2,packages/backend/src/server/api/stream/channels/home-timeline.ts
+hybridTimeline,HybridTimelineChannel,true,read:account,false,'notesStream',,,,pack,1,packages/backend/src/server/api/stream/channels/hybrid-timeline.ts
+localTimeline,LocalTimelineChannel,false,,false,'notesStream',,,,pack,2,packages/backend/src/server/api/stream/channels/local-timeline.ts
+main,MainChannel,true,read:account,true,`mainStream:${this.user.id}`,mention; notification,,,pack,3,packages/backend/src/server/api/stream/channels/main.ts
+queueStats,QueueStatsChannel,false,,true,,requestLog,,,,0,packages/backend/src/server/api/stream/channels/queue-stats.ts
+roleTimeline,RoleTimelineChannel,false,,false,`roleTimelineStream:${this.roleId}`,,,,pack,0,packages/backend/src/server/api/stream/channels/role-timeline.ts
+serverStats,ServerStatsChannel,false,,true,,requestLog,,,,0,packages/backend/src/server/api/stream/channels/server-stats.ts
+userList,UserListChannel,false,,false,'notesStream'; `userListStream:${this.listId}`,,,,pack,1,packages/backend/src/server/api/stream/channels/user-list.ts

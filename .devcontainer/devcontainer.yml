@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../packages/backend/config.schema.json
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # CherryPick configuration
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -114,6 +115,7 @@ redis:
 #   ┌───────────────────────────┐
 #───┘ MeiliSearch configuration └─────────────────────────────
 
+# Deprecated; scheduled for removal (bettaku/engawa#325).
 #meilisearch:
 #  host: meilisearch
 #  port: 7700
@@ -196,9 +198,6 @@ id: 'aidx'
 # deliverJobMaxAttempts: 12
 # inboxJobMaxAttempts: 8
 
-# IP address family used for outgoing request (ipv4, ipv6 or dual)
-#outgoingAddressFamily: ipv4
-
 # Cloud Logging
 #cloudLogging:
 #  projectId: example-project-id
@@ -232,3 +231,9 @@ allowedPrivateNetworks: [
 
 # Upload or download file size limits (bytes)
 #maxFileSize: 262144000
+
+# Maximum number of notifications kept per user
+#perUserNotificationsMaxCount: 500
+
+# Inactivity threshold for antennas (milliseconds)
+#deactivateAntennaThreshold: 604800000

@@ -1,6 +1,6 @@
 import { strictEqual } from 'assert';
 import * as Misskey from 'cherrypick-js';
-import { createAccount, fetchAdmin, isNoteUpdatedEventFired, isFired, type LoginUser, type Request, resolveRemoteUser, sleep, createRole } from './utils.js';
+import { createAccount, fetchAdmin, isNoteUpdatedEventFired, isFired, type LoginUser, type Request, resolveRemoteUser, sleep, createRole, waitFor } from './utils.js';
 
 const bAdmin = await fetchAdmin('b.test');
 
@@ -63,9 +63,17 @@ describe('Timeline', () => {
 			{}
 		) as Misskey.Endpoints[typeof endpoint]['req'];
 
-		await sleep();
-		const notes = await (bob.client.request as Request)(endpoint, params);
-		const noteInB = notes.filter(({ uri }) => uri === `https://a.test/notes/${note!.id}`).pop();
+		const findNoteInB = (notes: Misskey.entities.Note[]) => notes.filter(({ uri }) => uri === `https://a.test/notes/${note!.id}`).pop();
+		const fetchNotes = async () => await (bob.client.request as Request)(endpoint, params) as Misskey.entities.Note[];
+		let notes: Misskey.entities.Note[];
+		if (expect) {
+			notes = await waitFor(fetchNotes, notes => findNoteInB(notes) != null);
+		} else {
+			// NOTE: 届かないことを確認するので、一定時間待ってから取得する
+			await sleep();
+			notes = await fetchNotes();
+		}
+		const noteInB = findNoteInB(notes);
 		const endpointFired = noteInB != null;
 		strictEqual(endpointFired, expect);
 
@@ -78,9 +86,8 @@ describe('Timeline', () => {
 			);
 			strictEqual(streamingFired, true);
 
-			await sleep();
-			const notes = await (bob.client.request as Request)(endpoint, params);
-			const endpointFired = notes.every(({ uri }) => uri !== `https://a.test/notes/${note!.id}`);
+			const notesAfterDelete = await waitFor(fetchNotes, notes => findNoteInB(notes) == null);
+			const endpointFired = findNoteInB(notesAfterDelete) == null;
 			strictEqual(endpointFired, true);
 		}
 	}

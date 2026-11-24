@@ -25,6 +25,8 @@ import { UserKeypairService } from '@/core/UserKeypairService.js';
 import type { MiFollowing } from '@/models/Following.js';
 import { countIf } from '@/misc/prelude/array.js';
 import type { MiNote } from '@/models/Note.js';
+import { IdService } from '@/core/IdService.js';
+import { shouldHideNoteByTime } from '@/misc/should-hide-note-by-time.js';
 import { QueryService } from '@/core/QueryService.js';
 import { UtilityService } from '@/core/UtilityService.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
@@ -83,6 +85,7 @@ export class ActivityPubServerService {
 		private userKeypairService: UserKeypairService,
 		private queryService: QueryService,
 		private fanoutTimelineEndpointService: FanoutTimelineEndpointService,
+		private idService: IdService,
 	) {
 		//this.createServer = this.createServer.bind(this);
 	}
@@ -95,6 +98,45 @@ export class ActivityPubServerService {
 		} else {
 			reply.type(ACTIVITY_JSON);
 		}
+	}
+
+	/**
+	 * 投稿者の「過去の投稿を非表示・フォロワー限定にする」設定を、ActivityPubでの取得にも適用する。
+	 * 対象外のノートだけを返す。フォロワー限定になったノートは、署名したサーバーにフォロワーがいる場合だけ返す。
+	 */
+	@bindThis
+	private async filterNotesByTimeRestriction<T extends MiNote>(notes: T[], author: MiUser, request: FastifyRequest): Promise<T[]> {
+		if (author.makeNotesHiddenBefore == null && author.makeNotesFollowersOnlyBefore == null) return notes;
+
+		// 署名の検証とフォロー関係の確認は、必要になったときに1回だけ行う
+		let isFollower: Promise<boolean> | null = null;
+		const checkFollower = () => isFollower ??= (async () => {
+			const signer = await this.verifySigner(request).catch(() => null);
+			if (signer == null) return false;
+			// 取得はサーバーのアクターで署名されることが多いので、署名したサーバーにフォロワーがいるかで判定する
+			return await this.followingsRepository.exists({
+				where: { followerHost: signer.host, followeeId: author.id },
+			});
+		})();
+
+		const result: T[] = [];
+		for (const note of notes) {
+			const createdAt = this.idService.parse(note.id).date;
+			if (shouldHideNoteByTime(author.makeNotesHiddenBefore, createdAt)) continue;
+			if (shouldHideNoteByTime(author.makeNotesFollowersOnlyBefore, createdAt) && !(await checkFollower())) continue;
+			result.push(note);
+		}
+		return result;
+	}
+
+	/**
+	 * ローカルのノートを、ActivityPubでこのリクエストに返してよいかを判定する
+	 */
+	@bindThis
+	private async isNoteFetchable(note: MiNote, request: FastifyRequest): Promise<boolean> {
+		const author = await this.usersRepository.findOneBy({ id: note.userId });
+		if (author == null) return false;
+		return (await this.filterNotesByTimeRestriction([note], author, request)).length > 0;
 	}
 
 	/**
@@ -123,6 +165,20 @@ export class ActivityPubServerService {
 			return false;
 		}
 
+		if (await this.verifySigner(request) == null) {
+			return true;
+		}
+
+		reply.header('cache-control', 'private, max-age=0, must-revalidate');
+		return false;
+	}
+
+	/**
+	 * リクエストのHTTP Signatureを検証し、署名したリモートユーザーを返す。
+	 * 署名がない・検証できない・連合が許可されていないホストの場合は null を返す。
+	 */
+	@bindThis
+	private async verifySigner(request: FastifyRequest): Promise<MiRemoteUser | null> {
 		let signature;
 		try {
 			signature = httpSignature.parseRequest(request.raw, {
@@ -130,20 +186,18 @@ export class ActivityPubServerService {
 				authorizationHeaderName: 'signature',
 			});
 		} catch (e) {
-			return true;
+			return null;
 		}
 
 		const keyId = new URL(signature.keyId);
 		const keyHost = this.utilityService.toPuny(keyId.hostname);
 		if (!this.utilityService.isFederationAllowedHost(keyHost)) {
-			reply.code(403);
-			return true;
+			return null;
 		}
 
 		const keyIdLower = signature.keyId.toLowerCase();
 		if (keyIdLower.startsWith('acct:')) {
-			reply.code(401);
-			return true;
+			return null;
 		}
 
 		let authUser: {
@@ -158,33 +212,28 @@ export class ActivityPubServerService {
 				authUser = await this.apDbResolverService.getAuthUserFromApId(getApId(keyId.toString()));
 			} catch (e) {
 				// Resolveできなかったらreject
-				reply.code(403);
-				return true;
+				return null;
 			}
 		}
 
 		// 鍵がなかったらreject
 		if (authUser?.key == null) {
-			reply.code(403);
-			return true;
+			return null;
 		}
 
 		// 凍結されていたらreject
 		if (authUser.user.isSuspended) {
-			reply.code(403);
-			return true;
+			return null;
 		}
 
 		// Bot Protectionが有効かつauthUserがbotならreject
 		if (this.meta.enableBotProtectionForAuthorizedFetch && authUser.user.isBot) {
-			reply.code(403);
-			return true;
+			return null;
 		}
 
 		// 念の為もう一度チェック
 		if (authUser.user.host !== keyHost) {
-			reply.code(403);
-			return true;
+			return null;
 		}
 
 		// 鍵の検証
@@ -192,20 +241,17 @@ export class ActivityPubServerService {
 		if (!validatedHttpSignature) {
 			authUser.key = await this.apDbResolverService.refetchPublicKeyForApId(authUser.user);
 			if (authUser.key == null) {
-				reply.code(403);
-				return true;
+				return null;
 			}
 
 			validatedHttpSignature = httpSignature.verifySignature(signature, authUser.key.keyPem);
 		}
 
 		if (!validatedHttpSignature) {
-			reply.code(403);
-			return true;
+			return null;
 		}
 
-		reply.header('cache-control', 'private, max-age=0, must-revalidate');
-		return false;
+		return authUser.user;
 	}
 
 	@bindThis
@@ -508,7 +554,9 @@ export class ActivityPubServerService {
 			this.notesRepository.findOneByOrFail({ id: pining.noteId }))))
 			.filter(note => !note.localOnly && ['public', 'home'].includes(note.visibility));
 
-		const renderedNotes = await Promise.all(pinnedNotes.map(note => this.apRendererService.renderNote(note)));
+		const fetchableNotes = await this.filterNotesByTimeRestriction(pinnedNotes, user, request);
+
+		const renderedNotes = await Promise.all(fetchableNotes.map(note => this.apRendererService.renderNote(note)));
 
 		const rendered = this.apRendererService.renderOrderedCollection(
 			`${this.config.url}/users/${userId}/collections/featured`,
@@ -608,7 +656,9 @@ export class ActivityPubServerService {
 
 			if (sinceId) notes.reverse();
 
-			const activities = await Promise.all(notes.map(note => this.packActivity(note)));
+			const fetchableNotes = await this.filterNotesByTimeRestriction(notes, user, request);
+
+			const activities = await Promise.all(fetchableNotes.map(note => this.packActivity(note)));
 			const rendered = this.apRendererService.renderOrderedCollectionPage(
 				`${partOf}?${url.query({
 					page: 'true',
@@ -776,6 +826,11 @@ export class ActivityPubServerService {
 				return;
 			}
 
+			if (!(await this.isNoteFetchable(note, request))) {
+				reply.code(404);
+				return;
+			}
+
 			reply.header('Cache-Control', 'private, max-age=0, must-revalidate');
 			this.setResponseType(request, reply);
 			return this.apRendererService.addContext(await this.apRendererService.renderNote(note, false));
@@ -797,7 +852,7 @@ export class ActivityPubServerService {
 				localOnly: false,
 			});
 
-			if (note == null) {
+			if (note == null || !(await this.isNoteFetchable(note, request))) {
 				reply.code(404);
 				return;
 			}
@@ -849,7 +904,15 @@ export class ActivityPubServerService {
 				return;
 			}
 
-			reply.header('Cache-Control', 'public, max-age=180');
+			// 個人間のメッセージなので、受信者のサーバーが署名して取得する場合にだけ返す。
+			// ローカル同士のメッセージや、署名のない・無関係なサーバーからの取得には、存在しない場合と同じ応答を返す。
+			const signer = await this.verifySigner(request).catch(() => null);
+			if (signer == null || !toUsers.some(toUser => toUser.host != null && toUser.host === signer.host)) {
+				reply.code(404);
+				return;
+			}
+
+			reply.header('Cache-Control', 'private, no-store');
 			this.setResponseType(request, reply);
 			return this.apRendererService.addContext(await this.apRendererService.renderChatMessage(message, fromUser, toUsers));
 		});
@@ -1029,25 +1092,29 @@ export class ActivityPubServerService {
 				return reply.send({ error: 'Forbidden' });
 			}
 
-			// This may be used before the follow is completed, so we do not
-			// check if the following exists and only check if the follow request exists.
+			// This may be used before the follow is completed, so we check the
+			// follow request first. Accepted requests are deleted, but the following
+			// keeps the original Follow ID.
 
-			const followRequest = await this.followRequestsRepository.findOneBy({
+			const followId = `${this.config.url}/follows/${request.params.followRequestId}`;
+			const follow = await this.followRequestsRepository.findOneBy({
 				id: request.params.followRequestId,
+			}) ?? await this.followingsRepository.findOneBy({
+				requestId: followId,
 			});
 
-			if (followRequest == null) {
+			if (follow == null) {
 				reply.code(404);
 				return;
 			}
 
 			const [follower, followee] = await Promise.all([
 				this.usersRepository.findOneBy({
-					id: followRequest.followerId,
+					id: follow.followerId,
 					host: IsNull(),
 				}),
 				this.usersRepository.findOneBy({
-					id: followRequest.followeeId,
+					id: follow.followeeId,
 					host: Not(IsNull()),
 				}),
 			]) as [MiLocalUser | MiRemoteUser | null, MiLocalUser | MiRemoteUser | null];
@@ -1059,7 +1126,7 @@ export class ActivityPubServerService {
 
 			reply.header('Cache-Control', 'public, max-age=180');
 			this.setResponseType(request, reply);
-			return (this.apRendererService.addContext(this.apRendererService.renderFollow(follower, followee)));
+			return (this.apRendererService.addContext(this.apRendererService.renderFollow(follower, followee, followId)));
 		});
 
 		done();

@@ -21,6 +21,7 @@ import { appendQuery, query } from '@/misc/prelude/url.js';
 import type { Config } from '@/config.js';
 import { AvatarDecorationEntityService } from '@/core/entities/AvatarDecorationEntityService.js';
 import type { Packed } from '@/misc/json-schema.js';
+import { onRedisReconnected } from '@/misc/redis-reconnected.js';
 
 // TODO:
 // 1. checkDuplicateする => done
@@ -33,6 +34,7 @@ import type { Packed } from '@/misc/json-schema.js';
 // 8. avatar-decorationのjson-schemaを作る => packするためには必要
 @Injectable()
 export class AvatarDecorationService implements OnApplicationShutdown {
+	private readonly offRedisReconnected: () => void;
 	public cache: MemorySingleCache<MiAvatarDecoration[]>;
 	public cacheWithRemote: MemorySingleCache<MiAvatarDecoration[]>;
 
@@ -64,6 +66,7 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 		this.cacheWithRemote = new MemorySingleCache<MiAvatarDecoration[]>(1000 * 60 * 30); // 30min
 
 		this.redisForSub.on('message', this.onMessage);
+		this.offRedisReconnected = onRedisReconnected(this.redisForSub, this.onRedisReconnected);
 	}
 
 	@bindThis
@@ -370,8 +373,18 @@ export class AvatarDecorationService implements OnApplicationShutdown {
 		return this.avatarDecorationsRepository.findOneBy({ name, host: IsNull() }).then((decoration) => decoration != null);
 	}
 
+	/**
+	 * Pub/Subをつなぎ直したとき。切れている間のイベントを受け取れていないので、イベントで更新しているキャッシュを捨てる
+	 */
+	@bindThis
+	private onRedisReconnected(): void {
+		this.cache.delete();
+		this.cacheWithRemote.delete();
+	}
+
 	@bindThis
 	public dispose(): void {
+		this.offRedisReconnected();
 		this.redisForSub.off('message', this.onMessage);
 	}
 

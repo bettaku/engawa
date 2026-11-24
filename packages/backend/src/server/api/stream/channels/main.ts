@@ -11,6 +11,16 @@ import type { JsonObject } from '@/misc/json-value.js';
 import Channel, { type ChannelRequest } from '../channel.js';
 import { REQUEST } from '@nestjs/core';
 
+/** mainStreamのイベントのうち、read:account に加えて必要な権限 */
+const MAIN_EVENT_PERMISSIONS: Record<string, string | undefined> = {
+	notification: 'read:notifications',
+	unreadNotification: 'read:notifications',
+	readAllNotifications: 'read:notifications',
+	notificationFlushed: 'read:notifications',
+	notificationDeleted: 'read:notifications',
+	newChatMessage: 'read:chat',
+};
+
 @Injectable({ scope: Scope.TRANSIENT })
 export class MainChannel extends Channel {
 	public readonly chName = 'main';
@@ -32,6 +42,9 @@ export class MainChannel extends Channel {
 		if (!this.user) return false;
 
 		this.subscriber.on(`mainStream:${this.user.id}`, async data => {
+			// アクセストークンでの接続には、イベントごとに対応する権限を要求する
+			if (!this.hasPermissionForEvent(data.type)) return;
+
 			switch (data.type) {
 				case 'notification': {
 					// Ignore notifications from instances the user has muted
@@ -64,5 +77,19 @@ export class MainChannel extends Channel {
 		});
 
 		return true;
+	}
+
+	/**
+	 * このチャンネルは read:account で接続できるが、流れるイベントには通知やチャットの内容も含まれる。
+	 * アクセストークンでの接続では、追加の権限が必要なイベントをその権限を持つ場合にだけ配信する。
+	 */
+	@bindThis
+	private hasPermissionForEvent(type: string): boolean {
+		const token = this.connection.token;
+		if (token == null) return true; // ネイティブ認証
+
+		const required = MAIN_EVENT_PERMISSIONS[type];
+		if (required == null) return true;
+		return token.permission.includes(required);
 	}
 }

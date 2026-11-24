@@ -9,10 +9,13 @@ import { MiUser, type WebhooksRepository } from '@/models/_.js';
 import { MiWebhook, WebhookEventTypes } from '@/models/Webhook.js';
 import { DI } from '@/di-symbols.js';
 import { bindThis } from '@/decorators.js';
-import { GlobalEvents } from '@/core/GlobalEventService.js';
+import { LoggerService } from '@/core/LoggerService.js';
+import { ReloadableList, replaceById } from '@/misc/reloadable-list.js';
+import { GlobalEvents, isInternalEventRef } from '@/core/GlobalEventService.js';
 import type { Packed } from '@/misc/json-schema.js';
 import { QueueService } from '@/core/QueueService.js';
 import type { OnApplicationShutdown } from '@nestjs/common';
+import { onRedisReconnected } from '@/misc/redis-reconnected.js';
 
 export type UserWebhookPayload<T extends WebhookEventTypes> =
 	T extends 'note' | 'reply' | 'renote' | 'mention' ? {
@@ -27,8 +30,8 @@ export type UserWebhookPayload<T extends WebhookEventTypes> =
 
 @Injectable()
 export class UserWebhookService implements OnApplicationShutdown {
-	private activeWebhooksFetched = false;
-	private activeWebhooks: MiWebhook[] = [];
+	private readonly offRedisReconnected: () => void;
+	private readonly activeWebhooks: ReloadableList<MiWebhook>;
 
 	constructor(
 		@Inject(DI.redisForSub)
@@ -36,20 +39,20 @@ export class UserWebhookService implements OnApplicationShutdown {
 		@Inject(DI.webhooksRepository)
 		private webhooksRepository: WebhooksRepository,
 		private queueService: QueueService,
+		loggerService: LoggerService,
 	) {
+		const logger = loggerService.getLogger('user-webhook');
+		this.activeWebhooks = new ReloadableList(
+			() => this.webhooksRepository.findBy({ active: true }),
+			{ onError: err => logger.error('Failed to load active webhooks', { e: err }) },
+		);
 		this.redisForSub.on('message', this.onMessage);
+		this.offRedisReconnected = onRedisReconnected(this.redisForSub, this.onRedisReconnected);
 	}
 
 	@bindThis
 	public async getActiveWebhooks() {
-		if (!this.activeWebhooksFetched) {
-			this.activeWebhooks = await this.webhooksRepository.findBy({
-				active: true,
-			});
-			this.activeWebhooksFetched = true;
-		}
-
-		return this.activeWebhooks;
+		return await this.activeWebhooks.get();
 	}
 
 	/**
@@ -105,39 +108,31 @@ export class UserWebhookService implements OnApplicationShutdown {
 
 		const { type, body } = obj.message as GlobalEvents['internal']['payload'];
 		switch (type) {
-			case 'webhookCreated': {
-				if (body.active) {
-					this.activeWebhooks.push({ // TODO: このあたりのデシリアライズ処理は各modelファイル内に関数としてexportしたい
-						...body,
-						latestSentAt: body.latestSentAt ? new Date(body.latestSentAt) : null,
-						user: null, // joinなカラムは通常取ってこないので
-					});
-				}
-				break;
-			}
-			case 'webhookUpdated': {
-				if (body.active) {
-					const i = this.activeWebhooks.findIndex(a => a.id === body.id);
-					if (i > -1) {
-						this.activeWebhooks[i] = { // TODO: このあたりのデシリアライズ処理は各modelファイル内に関数としてexportしたい
-							...body,
-							latestSentAt: body.latestSentAt ? new Date(body.latestSentAt) : null,
-							user: null, // joinなカラムは通常取ってこないので
-						};
-					} else {
-						this.activeWebhooks.push({ // TODO: このあたりのデシリアライズ処理は各modelファイル内に関数としてexportしたい
-							...body,
-							latestSentAt: body.latestSentAt ? new Date(body.latestSentAt) : null,
-							user: null, // joinなカラムは通常取ってこないので
-						});
-					}
-				} else {
-					this.activeWebhooks = this.activeWebhooks.filter(a => a.id !== body.id);
-				}
-				break;
-			}
+			case 'webhookCreated':
+			case 'webhookUpdated':
 			case 'webhookDeleted': {
-				this.activeWebhooks = this.activeWebhooks.filter(a => a.id !== body.id);
+				if (!isInternalEventRef(body)) break;
+				// 新本文は値を持たないので、一覧を捨てて次の取得でDBから読み直す。
+				// 1件ずつ読み直すと、読み込み中に届いた後続のイベントや、取得中の一覧との順序が入れ替わる
+				this.activeWebhooks.invalidate();
+				return;
+			}
+			default:
+				break;
+		}
+
+		// 旧本文（エンティティ全体）。読み込み済みの一覧に差分を反映する（読み込み中の一覧は保存しない）
+		if (isInternalEventRef(body)) return;
+		switch (type) {
+			case 'webhookCreated':
+			case 'webhookUpdated':
+			case 'webhookDeleted': {
+				const webhook: MiWebhook | null = type !== 'webhookDeleted' && body.active ? { // TODO: このあたりのデシリアライズ処理は各modelファイル内に関数としてexportしたい
+					...body,
+					latestSentAt: body.latestSentAt ? new Date(body.latestSentAt) : null,
+					user: null, // joinなカラムは通常取ってこないので
+				} : null;
+				this.activeWebhooks.modify(webhooks => replaceById(webhooks, body.id, webhook));
 				break;
 			}
 			default:
@@ -145,8 +140,17 @@ export class UserWebhookService implements OnApplicationShutdown {
 		}
 	}
 
+	/**
+	 * Pub/Subをつなぎ直したとき。切れている間のイベントを受け取れていないので、イベントで更新しているキャッシュを捨てる
+	 */
+	@bindThis
+	private onRedisReconnected(): void {
+		this.activeWebhooks.invalidate();
+	}
+
 	@bindThis
 	public dispose(): void {
+		this.offRedisReconnected();
 		this.redisForSub.off('message', this.onMessage);
 	}
 

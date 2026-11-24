@@ -3,7 +3,10 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-export function checkHttps(url: string): boolean {
+/**
+ * @param requireHttps config.runtime.production.requireHttps（本番以外ではhttpも許す）
+ */
+export function checkHttps(url: string, requireHttps: boolean): boolean {
 	return url.startsWith('https://') ||
-		(url.startsWith('http://') && process.env.NODE_ENV !== 'production');
+		(url.startsWith('http://') && !requireHttps);
 }

@@ -5,12 +5,14 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { Brackets, type FindOptionsWhere } from 'typeorm';
-import type { NoteReactionsRepository } from '@/models/_.js';
+import type { NoteReactionsRepository, NotesRepository } from '@/models/_.js';
 import type { MiNoteReaction } from '@/models/NoteReaction.js';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import { NoteReactionEntityService } from '@/core/entities/NoteReactionEntityService.js';
 import { DI } from '@/di-symbols.js';
 import { QueryService } from '@/core/QueryService.js';
+import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
+import { ApiError } from '../../error.js';
 
 export const meta = {
 	tags: ['notes', 'reactions'],
@@ -59,10 +61,20 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		@Inject(DI.noteReactionsRepository)
 		private noteReactionsRepository: NoteReactionsRepository,
 
+		@Inject(DI.notesRepository)
+		private notesRepository: NotesRepository,
+
 		private noteReactionEntityService: NoteReactionEntityService,
+		private noteEntityService: NoteEntityService,
 		private queryService: QueryService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
+			// 閲覧できないノートのリアクションは返さない（存在しない場合と同じ応答にする）
+			const note = await this.notesRepository.findOneBy({ id: ps.noteId });
+			if (note == null || !(await this.noteEntityService.isCurrentlyVisibleForMe(note, me?.id ?? null))) {
+				throw new ApiError(meta.errors.noSuchNote);
+			}
+
 			const query = this.queryService.makePaginationQuery(this.noteReactionsRepository.createQueryBuilder('reaction'), ps.sinceId, ps.untilId, ps.sinceDate, ps.untilDate)
 				.andWhere('reaction.noteId = :noteId', { noteId: ps.noteId })
 				.leftJoinAndSelect('reaction.user', 'user')
