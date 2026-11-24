@@ -7171,10 +7171,6 @@ export interface Locale extends ILocale {
          */
         "alsoUseCtrlEnterToSendDescription": string;
         /**
-         * 公開範囲が「指名」のままではリノートできません。公開範囲を変えてからリノートするか、引用してください。
-         */
-        "cannotRenoteWithSpecifiedVisibility": string;
-        /**
          * ショートカットキーで公開範囲を切り替える
          */
         "postFormVisibilityHotkey": string;

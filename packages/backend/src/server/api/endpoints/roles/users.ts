@@ -32,12 +32,10 @@ export const meta = {
 			nullable: false,
 			properties: {
 				id: {
-					optional: false,
 					type: 'string',
 					format: 'misskey:id',
 				},
 				user: {
-					optional: false,
 					type: 'object',
 					ref: 'UserDetailed',
 				},

@@ -17,12 +17,6 @@ export const meta = {
 
 	secure: true,
 
-	// 互換性のため、空のオブジェクトをHTTP 200で返す
-	res: {
-		type: 'object',
-		optional: false, nullable: false,
-	},
-
 	errors: {
 		noSuchKey: {
 			message: 'No such key.',

@@ -33,29 +33,26 @@ export const meta = {
 		type: 'object',
 		properties: {
 			id: {
-				optional: false,
 				type: 'string',
 				format: 'misskey:id',
 			},
 			userId: {
-				optional: false,
 				type: 'string',
 				format: 'misskey:id',
 			},
-			name: { optional: false, type: 'string' },
+			name: { type: 'string' },
 			on: {
-				optional: false,
 				type: 'array',
 				items: {
 					type: 'string',
 					enum: webhookEventTypes,
 				},
 			},
-			url: { optional: false, type: 'string' },
-			secret: { optional: false, type: 'string' },
-			active: { optional: false, type: 'boolean' },
-			latestSentAt: { optional: false, type: 'string', format: 'date-time', nullable: true },
-			latestStatus: { optional: false, type: 'integer', nullable: true },
+			url: { type: 'string' },
+			secret: { type: 'string' },
+			active: { type: 'boolean' },
+			latestSentAt: { type: 'string', format: 'date-time', nullable: true },
+			latestStatus: { type: 'integer', nullable: true },
 		},
 	},
 } as const;

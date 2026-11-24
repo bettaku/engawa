@@ -138,7 +138,7 @@ describe('SigninWithPasskeyApiService', () => {
 	});
 	describe('Try Passkey Auth', () => {
 		it('Should Success', async () => {
-			const req = new DummyFastifyRequest({ context: '11111111-1111-4111-8111-111111111111', credential: { dummy: [] } }) as ApiFastifyRequestType;
+			const req = new DummyFastifyRequest({ context: 'auth-context', credential: { dummy: [] } }) as ApiFastifyRequestType;
 			const res = new DummyFastifyReply() as FastifyReply;
 			const res_body = await passkeyApiService.signin(req, res);
 			expect((res_body as any).signinResponse).toBeDefined();
@@ -153,7 +153,7 @@ describe('SigninWithPasskeyApiService', () => {
 		});
 
 		it('Should return 403 When Challenge Verify fail', async () => {
-			const req = new DummyFastifyRequest({ context: '22222222-2222-4222-8222-222222222222', credential: { dummy: [] } }) as ApiFastifyRequestType;
+			const req = new DummyFastifyRequest({ context: 'misskey-1234', credential: { dummy: [] } }) as ApiFastifyRequestType;
 			const res = new DummyFastifyReply() as FastifyReply;
 			vi.spyOn(webAuthnService, 'verifySignInWithPasskeyAuthentication')
 				.mockImplementation(async () => {
@@ -165,7 +165,7 @@ describe('SigninWithPasskeyApiService', () => {
 		});
 
 		it('Should return 403 When The user not Enabled Passwordless login', async () => {
-			const req = new DummyFastifyRequest({ context: '22222222-2222-4222-8222-222222222222', credential: { dummy: [] } }) as ApiFastifyRequestType;
+			const req = new DummyFastifyRequest({ context: 'misskey-1234', credential: { dummy: [] } }) as ApiFastifyRequestType;
 			const res = new DummyFastifyReply() as FastifyReply;
 			const userId = await FakeWebauthnVerify();
 			const data = { userId: userId, usePasswordLessLogin: false };

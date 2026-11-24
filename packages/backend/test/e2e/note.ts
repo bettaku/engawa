@@ -476,7 +476,7 @@ describe('Note', () => {
 				iconUrl: null,
 				displayOrder: 0,
 				target: 'manual',
-				condFormula: { id: 'ebef1684-672d-49b6-ad82-1b3ec3784f85', type: 'isRemote' } as any,
+				condFormula: {},
 				isAdministrator: false,
 				isModerator: false,
 				isPublic: false,
@@ -788,7 +788,7 @@ describe('Note', () => {
 				iconUrl: null,
 				displayOrder: 0,
 				target: 'manual',
-				condFormula: { id: 'ebef1684-672d-49b6-ad82-1b3ec3784f85', type: 'isRemote' } as any,
+				condFormula: {},
 				isAdministrator: false,
 				isModerator: false,
 				isPublic: false,
@@ -842,7 +842,7 @@ describe('Note', () => {
 				iconUrl: null,
 				displayOrder: 0,
 				target: 'manual',
-				condFormula: { id: 'ebef1684-672d-49b6-ad82-1b3ec3784f85', type: 'isRemote' } as any,
+				condFormula: {},
 				isAdministrator: false,
 				isModerator: false,
 				isPublic: false,
@@ -898,7 +898,7 @@ describe('Note', () => {
 				iconUrl: null,
 				displayOrder: 0,
 				target: 'manual',
-				condFormula: { id: 'ebef1684-672d-49b6-ad82-1b3ec3784f85', type: 'isRemote' } as any,
+				condFormula: {},
 				isAdministrator: false,
 				isModerator: false,
 				isPublic: false,
@@ -985,7 +985,7 @@ describe('Note', () => {
 			let cannotTranslateRole: misskey.entities.Role;
 
 			beforeAll(async () => {
-				cannotTranslateRole = await role(root, {}, { canUseTranslator: { priority: 0, useDefault: false, value: false } });
+				cannotTranslateRole = await role(root, {}, { canUseTranslator: false });
 				await api('admin/roles/assign', { roleId: cannotTranslateRole.id, userId: alice.id }, root);
 			});
 

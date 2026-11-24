@@ -10,7 +10,6 @@ import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { DI } from '@/di-symbols.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { ApiError } from '../error.js';
-import { CacheService } from '@/core/CacheService.js';
 
 export const meta = {
 	requireCredential: false,
@@ -42,7 +41,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 		private userEntityService: UserEntityService,
 		private globalEventService: GlobalEventService,
-		private cacheService: CacheService,
 	) {
 		super(meta, paramDef, async (ps) => {
 			const profile = await this.userProfilesRepository.findOneBy({
@@ -57,7 +55,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				emailVerified: true,
 				emailVerifyCode: null,
 			});
-			await this.cacheService.userProfileCache.delete(profile.userId);
 
 			this.globalEventService.publishMainStream(profile.userId, 'meUpdated', await this.userEntityService.pack(profile.userId, { id: profile.userId }, {
 				schema: 'MeDetailed',

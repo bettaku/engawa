@@ -413,15 +413,12 @@ export function getNoteMenu(props: {
 			}
 		} else if ($i?.policies.canUseTranslator && instance.translatorAvailable) {
 			props.translating.value = true;
-			try {
-				props.translation.value = await misskeyApi('notes/translate', {
-					noteId: appearNote.id,
-					targetLang: miLocalStorage.getItem('lang') ?? navigator.language,
-				});
-			} finally {
-				// 翻訳に失敗しても、翻訳中の表示を解除する
-				props.translating.value = false;
-			}
+			const res = await misskeyApi('notes/translate', {
+				noteId: appearNote.id,
+				targetLang: miLocalStorage.getItem('lang') ?? navigator.language,
+			});
+			props.translating.value = false;
+			props.translation.value = res;
 		}
 	}
 
@@ -813,20 +810,6 @@ function smallerVisibility(a: Visibility, b: Visibility): Visibility {
 	return 'public';
 }
 
-/**
- * 公開範囲が「指名」の（引用でない）リノートはサーバーが受け付けないので、送らずに知らせる。
- * 公開範囲を勝手に広げることはしない。
- * @returns リノートしてよければ true
- */
-async function canRenoteWithVisibility(visibility: Visibility): Promise<boolean> {
-	if (visibility !== 'specified') return true;
-	await os.alert({
-		type: 'warning',
-		text: i18n.ts._cherrypick.cannotRenoteWithSpecifiedVisibility,
-	});
-	return false;
-}
-
 export function getQuoteMenu(props: {
 	note: Misskey.entities.Note,
 	mock?: boolean;
@@ -907,7 +890,6 @@ export async function getRenoteMenu(props: {
 			if (!props.mock) {
 				const canceled = await checkRenoted(props);
 				if (canceled) return;
-				if (!await canRenoteWithVisibility(visibility)) return;
 
 				misskeyApi('notes/create', {
 					localOnly,
@@ -1047,7 +1029,6 @@ export async function getRenoteOnly(props: {
 	visibility = smallerVisibility(visibility, configuredVisibility);
 
 	if (!props.mock && prefer.s.renoteVisibilitySelection) {
-		if (!await canRenoteWithVisibility(visibility)) return;
 		misskeyApi('notes/create', {
 			localOnly,
 			visibility,

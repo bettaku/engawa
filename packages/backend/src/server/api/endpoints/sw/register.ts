@@ -9,8 +9,6 @@ import type { MiMeta, SwSubscriptionsRepository } from '@/models/_.js';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import { DI } from '@/di-symbols.js';
 import { PushNotificationService } from '@/core/PushNotificationService.js';
-import { isAllowedPushEndpoint } from '@/misc/is-allowed-push-endpoint.js';
-import { ApiError } from '../../error.js';
 
 export const meta = {
 	tags: ['account'],
@@ -19,14 +17,6 @@ export const meta = {
 	secure: true,
 
 	description: 'Register to receive push notifications.',
-
-	errors: {
-		invalidEndpoint: {
-			message: 'Invalid push endpoint.',
-			code: 'INVALID_ENDPOINT',
-			id: '0c9a1f5e-6f0b-4d0a-9b1e-3a2f7c4d8e61',
-		},
-	},
 
 	res: {
 		type: 'object',
@@ -81,10 +71,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private pushNotificationService: PushNotificationService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
-			if (!isAllowedPushEndpoint(ps.endpoint)) {
-				throw new ApiError(meta.errors.invalidEndpoint);
-			}
-
 			// if already subscribed
 			const exist = await this.swSubscriptionsRepository.findOneBy({
 				userId: me.id,

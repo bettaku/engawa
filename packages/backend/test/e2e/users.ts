@@ -154,8 +154,6 @@ describe('ユーザー', () => {
 			achievements: user.achievements,
 			loggedInDays: user.loggedInDays,
 			policies: user.policies,
-			autoDeleteNotesAfterDays: user.autoDeleteNotesAfterDays,
-			autoDeleteKeepFavorites: user.autoDeleteKeepFavorites,
 			twoFactorEnabled: user.twoFactorEnabled,
 			usePasswordLessLogin: user.usePasswordLessLogin,
 			securityKeys: user.securityKeys,

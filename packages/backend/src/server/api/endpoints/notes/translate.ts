@@ -28,8 +28,8 @@ export const meta = {
 		type: 'object',
 		optional: true, nullable: false,
 		properties: {
-			sourceLang: { optional: false, type: 'string' },
-			text: { optional: false, type: 'string' },
+			sourceLang: { type: 'string' },
+			text: { type: 'string' },
 		},
 	},
 
@@ -93,7 +93,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				throw err;
 			});
 
-			if (!(await this.noteEntityService.isCurrentlyVisibleForMe(note, me.id))) {
+			if (!(await this.noteEntityService.isVisibleForMe(note, me.id))) {
 				throw new ApiError(meta.errors.cannotTranslateInvisibleNote);
 			}
 
@@ -127,16 +127,16 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 				translationResult = await this.translateGoogleTranslateNoApi(note, targetLang);
 			} else if (this.serverSettings.translatorType === 'ctav3') {
-				if (this.serverSettings.ctav3SaKey == null || this.serverSettings.ctav3ProjectId == null || this.serverSettings.ctav3Location == null) {
-					throw new ApiError(meta.errors.unavailable);
-				}
+				if (this.serverSettings.ctav3SaKey == null) return Promise.resolve(204);
+				else if (this.serverSettings.ctav3ProjectId == null) return Promise.resolve(204);
+				else if (this.serverSettings.ctav3Location == null) return Promise.resolve(204);
 				translationResult = await this.apiCloudTranslationAdvanced((note.cw ? note.cw + '\n' : '') + note.text, targetLang, this.serverSettings.ctav3SaKey, this.serverSettings.ctav3ProjectId, this.serverSettings.ctav3Location, this.serverSettings.ctav3Model, this.serverSettings.ctav3Glossary, this.serverSettings.translatorType);
 			} else if (this.serverSettings.translatorType === 'Libretranslate') {
 				const endPoint = this.serverSettings.libreTranslateEndPoint;
-				if (endPoint === null) throw new ApiError(meta.errors.unavailable);
+				if (endPoint === null) throw new Error('libreTranslateEndPoint is null');
 				translationResult = await this.translateLibretranslate((note.cw ? note.cw + '\n' : '') + note.text, targetLang, endPoint, this.serverSettings.libreTranslateApiKey);
 			} else {
-				throw new ApiError(meta.errors.noTranslateService);
+				throw new Error('Unsupported translator type');
 			}
 
 			return Promise.resolve({

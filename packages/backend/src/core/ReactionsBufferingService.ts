@@ -3,115 +3,56 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import * as Redis from 'ioredis';
-import { DataSource } from 'typeorm';
 import { DI } from '@/di-symbols.js';
-import { MiNote } from '@/models/Note.js';
+import type { MiNote } from '@/models/Note.js';
 import { bindThis } from '@/decorators.js';
-import type { MiUser } from '@/models/_.js';
-import type Logger from '@/logger.js';
+import type { MiUser, NotesRepository } from '@/models/_.js';
+import type { Config } from '@/config.js';
 import { PER_NOTE_REACTION_USER_PAIR_CACHE_MAX } from '@/const.js';
-import { LoggerService } from '@/core/LoggerService.js';
+import type { GlobalEvents } from '@/core/GlobalEventService.js';
+import type { OnApplicationShutdown } from '@nestjs/common';
 
 const REDIS_DELTA_PREFIX = 'reactionsBufferDeltas';
 const REDIS_PAIR_PREFIX = 'reactionsBufferPairs';
-const REDIS_PROCESSING_PREFIX = 'reactionsBufferProcessing';
-/** 取り出し済みで、後始末が済んでいないバッチ（`<noteId>:<batchId>`）の集合 */
-const REDIS_PROCESSING_SET = 'reactionsBufferProcessingBatches';
-
-/**
- * 取り出しを実行してよい期限（呼び出しからの時間）。ioredisは再接続のときに応答のなかったコマンドを再送し、
- * `maxRetriesPerRequest: null`では再送までの時間に上限がない。期限を過ぎて実行された取り出しは何もしない。
- */
-const TAKE_OUT_DEADLINE_MS = 1000 * 60 * 60;
-
-/**
- * 取り出しの済んだバッチの印を残す期間。期限（TAKE_OUT_DEADLINE_MS）より長くする。
- * 期限内に同じバッチの取り出しが再送されても、印があれば何もしない。
- */
-const TAKE_OUT_MARKER_TTL_SECONDS = 60 * 60 * 24;
-
-/**
- * KEYS: 差分キー、ペアキー、processingの差分キー、processingのペアキー、バッチの集合、取り出し済みの印
- * ARGV: バッチの集合に登録する値、印の有効期間（秒）、実行してよい期限（UNIXミリ秒）
- *
- * - 期限を過ぎていれば何もせずに0を返す（遅れて届いた再送が、新しい差分を古いバッチで取り出さないように）
- * - 同じバッチで再実行されたとき（期限内の再送）は、取り出し済みのprocessingキーを上書きしないよう、何もせずに1を返す。
- *   印は後始末で消さないので、後始末の後に再送が届いても同じように扱う
- */
-const TAKE_OUT_SCRIPT = `
-local now = redis.call('TIME')
-if tonumber(now[1]) * 1000 + math.floor(tonumber(now[2]) / 1000) > tonumber(ARGV[3]) then
-	return 0
-end
-if redis.call('EXISTS', KEYS[6]) == 1 then
-	return 1
-end
-if redis.call('EXISTS', KEYS[1]) == 0 then
-	return 0
-end
-redis.call('SET', KEYS[6], '1', 'EX', ARGV[2])
-redis.call('RENAME', KEYS[1], KEYS[3])
-if redis.call('EXISTS', KEYS[2]) == 1 then
-	redis.call('RENAME', KEYS[2], KEYS[4])
-end
-redis.call('SADD', KEYS[5], ARGV[1])
-return 1
-`;
-
-export type BufferedBatch = {
-	noteId: MiNote['id'];
-	batchId: string;
-};
-
-function processingKeysOf(batch: BufferedBatch) {
-	const base = `${REDIS_PROCESSING_PREFIX}:${batch.noteId}:${batch.batchId}`;
-	return {
-		deltas: `${base}:deltas`,
-		pairs: `${base}:pairs`,
-		takenMarker: `${base}:taken`,
-	};
-}
-
-function batchMemberOf(batch: BufferedBatch): string {
-	return `${batch.noteId}:${batch.batchId}`;
-}
-
-function parseBatchMember(member: string): BufferedBatch | null {
-	const [noteId, batchId, ...rest] = member.split(':');
-	if (!noteId || !batchId || rest.length > 0) return null;
-	return { noteId, batchId };
-}
-
-function escapeGlob(pattern: string): string {
-	return pattern.replace(/[*?[\]\\]/g, '\\$&');
-}
-
-/**
- * `note.reactions`へリアクションごとの差分を加算するSQL式。
- * 差分は`{ [reaction]: number }`をJSONにしたものをパラメータで渡す。
- * どのリアクションも更新前の値を元に計算し、まとめて合成するので、複数のリアクションを同時に増減しても互いに上書きしない。
- */
-export function addReactionDeltasSql(param: string): string {
-	return `"reactions" || (SELECT COALESCE(jsonb_object_agg("d"."key", COALESCE(("reactions"->>"d"."key")::int, 0) + "d"."value"::int), '{}'::jsonb) FROM jsonb_each_text(CAST(:${param} AS jsonb)) AS "d")`;
-}
 
 @Injectable()
-export class ReactionsBufferingService {
-	private logger: Logger;
-
+export class ReactionsBufferingService implements OnApplicationShutdown {
 	constructor(
+		@Inject(DI.config)
+		private config: Config,
+
+		@Inject(DI.redisForSub)
+		private redisForSub: Redis.Redis,
+
 		@Inject(DI.redisForReactions)
 		private redisForReactions: Redis.Redis, // TODO: 専用のRedisインスタンスにする
 
-		@Inject(DI.db)
-		private db: DataSource,
-
-		loggerService: LoggerService,
+		@Inject(DI.notesRepository)
+		private notesRepository: NotesRepository,
 	) {
-		this.logger = loggerService.getLogger('reactions-buffering');
+		this.redisForSub.on('message', this.onMessage);
+	}
+
+	@bindThis
+	private async onMessage(_: string, data: string) {
+		const obj = JSON.parse(data);
+
+		if (obj.channel === 'internal') {
+			const { type, body } = obj.message as GlobalEvents['internal']['payload'];
+			switch (type) {
+				case 'metaUpdated': {
+					// リアクションバッファリングが有効→無効になったら即bake
+					if (body.before != null && body.before.enableReactionsBuffering && !body.after.enableReactionsBuffering) {
+						this.bake();
+					}
+					break;
+				}
+				default:
+					break;
+			}
+		}
 	}
 
 	@bindThis
@@ -200,147 +141,48 @@ export class ReactionsBufferingService {
 		return map;
 	}
 
-		/**
-	 * バッファした差分をDBへ反映する。
-	 *
-	 * 1. 前回の実行で取り出したまま残ったバッチ（processingキー）を先に処理する
-	 * 2. 差分キーをノートごとにprocessingキーへRENAMEして取り出し、適用し、後始末する
-	 *
-	 * 差分の加算と適用済み台帳への記録を同じトランザクションで行うので、
-	 * どの時点で停止しても、再実行で同じバッチを二度加算することはない。
-	 * bakeを行うのは定期ジョブ（BakeBufferedReactionsProcessorService）と、運用時の単発コマンドだけにする。
-	 */
+	// TODO: scanは重い可能性があるので、別途 bufferedNoteIds を直接Redis上に持っておいてもいいかもしれない
 	@bindThis
 	public async bake(): Promise<void> {
-		let failed = 0;
-
-		const leftovers = await this.redisForReactions.smembers(REDIS_PROCESSING_SET);
-		for (const member of leftovers) {
-			const batch = parseBatchMember(member);
-			if (batch == null) {
-				await this.redisForReactions.srem(REDIS_PROCESSING_SET, member);
-				continue;
-			}
-			try {
-				await this.applyBatch(batch);
-				await this.cleanupBatch(batch);
-			} catch (err) {
-				failed++;
-				this.logger.error(`Failed to bake buffered reactions of ${batch.noteId} (batch ${batch.batchId})`, { err });
-			}
-		}
-
-		for (const noteId of await this.scanBufferedNoteIds()) {
-			try {
-				const batch = await this.takeOut(noteId);
-				if (batch == null) continue;
-				await this.applyBatch(batch);
-				await this.cleanupBatch(batch);
-			} catch (err) {
-				failed++;
-				this.logger.error(`Failed to bake buffered reactions of ${noteId}`, { err });
-			}
-		}
-
-		if (failed > 0) {
-			throw new Error(`Failed to bake buffered reactions of ${failed} batch(es). They will be retried on the next run.`);
-		}
-	}
-
-	@bindThis
-	private async scanBufferedNoteIds(): Promise<MiNote['id'][]> {
-		// SCANのMATCHには接続のkeyPrefixが自動で付かない
-		// https://github.com/redis/ioredis#transparent-key-prefixing
-		const keyPrefix = this.redisForReactions.options.keyPrefix ?? '';
-		const prefix = `${keyPrefix}${REDIS_DELTA_PREFIX}:`;
-		const noteIds = new Set<MiNote['id']>();
+		const bufferedNoteIds = [];
 		let cursor = '0';
 		do {
-			const [next, keys] = await this.redisForReactions.scan(cursor, 'MATCH', `${escapeGlob(prefix)}*`, 'COUNT', 1000);
-			cursor = next;
-			for (const key of keys) {
-				noteIds.add(key.slice(prefix.length));
-			}
+			// https://github.com/redis/ioredis#transparent-key-prefixing
+			const result = await this.redisForReactions.scan(
+				cursor,
+				'MATCH',
+				`${this.config.redis.prefix}:${REDIS_DELTA_PREFIX}:*`,
+				'COUNT',
+				'1000');
+
+			cursor = result[0];
+			bufferedNoteIds.push(...result[1].map(x => x.replace(`${this.config.redis.prefix}:${REDIS_DELTA_PREFIX}:`, '')));
 		} while (cursor !== '0');
-		return [...noteIds];
-	}
 
-	/**
-	 * ノートの差分キーとペアキーを、新しいバッチのprocessingキーへ原子的に移す。
-	 * 移した後に届いたリアクションは、元のキーに新しく溜まる。
-	 * @returns 差分がなければnull
-	 */
-	@bindThis
-	public async takeOut(noteId: MiNote['id'], batchId: string = randomUUID(), deadline: number = Date.now() + TAKE_OUT_DEADLINE_MS): Promise<BufferedBatch | null> {
-		const batch: BufferedBatch = { noteId, batchId };
-		const keys = processingKeysOf(batch);
-		const moved = await this.redisForReactions.eval(
-			TAKE_OUT_SCRIPT,
-			6,
-			`${REDIS_DELTA_PREFIX}:${noteId}`,
-			`${REDIS_PAIR_PREFIX}:${noteId}`,
-			keys.deltas,
-			keys.pairs,
-			REDIS_PROCESSING_SET,
-			keys.takenMarker,
-			batchMemberOf(batch),
-			TAKE_OUT_MARKER_TTL_SECONDS,
-			deadline,
-		);
-		return moved === 1 ? batch : null;
-	}
+		const bufferedMap = await this.getMany(bufferedNoteIds);
 
-	/**
-	 * processingキーの差分をノートへ加算する。適用済みのバッチなら何もしない。
-	 */
-	@bindThis
-	public async applyBatch(batch: BufferedBatch): Promise<void> {
-		const keys = processingKeysOf(batch);
-		const rawDeltas = await this.redisForReactions.hgetall(keys.deltas);
-
-		// processingキーはコミットした後にしか消さないので、キーがなければ適用済み
-		if (Object.keys(rawDeltas).length === 0) return;
-
-		const deltas: Record<string, number> = {};
-		for (const [reaction, count] of Object.entries(rawDeltas)) {
-			deltas[reaction] = parseInt(count, 10);
+		// clear
+		const pipeline = this.redisForReactions.pipeline();
+		for (const noteId of bufferedNoteIds) {
+			pipeline.del(`${REDIS_DELTA_PREFIX}:${noteId}`);
+			pipeline.del(`${REDIS_PAIR_PREFIX}:${noteId}`);
 		}
+		await pipeline.exec();
 
-		await this.db.transaction(async em => {
-			const inserted: unknown[] = await em.query(
-				'INSERT INTO "reaction_bake_ledger" ("batchId", "appliedAt") VALUES ($1, now()) ON CONFLICT ("batchId") DO NOTHING RETURNING "batchId"',
-				[batch.batchId],
-			);
-			if (inserted.length === 0) return;
+		// TODO: SQL一個にまとめたい
+		for (const [noteId, buffered] of bufferedMap) {
+			const sql = Object.entries(buffered.deltas)
+				.map(([reaction, count]) =>
+					`jsonb_set("reactions", '{${reaction}}', (COALESCE("reactions"->>'${reaction}', '0')::int + ${count})::text::jsonb)`)
+				.join(' || ');
 
-			// ペアのキャッシュは、バッファのペア（リアクションした時点のスナップショット）ではなく、
-			// note_reactionから作り直す。スナップショットで置き換えると、バッファを使わない経路で
-			// 変更されたペアを古い値に戻してしまう
-			await em.createQueryBuilder().update(MiNote)
+			this.notesRepository.createQueryBuilder().update()
 				.set({
-					reactions: () => addReactionDeltasSql('reactionDeltas'),
-					reactionAndUserPairCache: () => 'ARRAY(SELECT "nr"."userId" || \'/\' || "nr"."reaction" FROM "note_reaction" "nr" WHERE "nr"."noteId" = :id ORDER BY "nr"."id" DESC LIMIT :pairCacheMax)',
+					reactions: () => sql,
+					reactionAndUserPairCache: buffered.pairs.map(x => x.join('/')),
 				})
-				.setParameters({
-					reactionDeltas: JSON.stringify(deltas),
-					pairCacheMax: PER_NOTE_REACTION_USER_PAIR_CACHE_MAX,
-				})
-				.where('id = :id', { id: batch.noteId })
+				.where('id = :id', { id: noteId })
 				.execute();
-		});
-	}
-
-	@bindThis
-	public async cleanupBatch(batch: BufferedBatch): Promise<void> {
-		const keys = processingKeysOf(batch);
-		// 失敗しても、バッチは集合に残り、次回に台帳で適用済みと判定して後始末だけをやり直す
-		const results = await this.redisForReactions.multi()
-			.del(keys.deltas, keys.pairs)
-			.srem(REDIS_PROCESSING_SET, batchMemberOf(batch))
-			.exec();
-		if (results == null) throw new Error('Transaction was aborted');
-		for (const [err] of results) {
-			if (err) throw err;
 		}
 	}
 
@@ -355,5 +197,15 @@ export class ReactionsBufferingService {
 			}
 		}
 		return reactions;
+	}
+
+	@bindThis
+	public dispose(): void {
+		this.redisForSub.off('message', this.onMessage);
+	}
+
+	@bindThis
+	public onApplicationShutdown(signal?: string | undefined): void {
+		this.dispose();
 	}
 }

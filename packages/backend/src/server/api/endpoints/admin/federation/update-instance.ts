@@ -5,7 +5,6 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
-import { ApiError } from '@/server/api/error.js';
 import type { InstancesRepository } from '@/models/_.js';
 import { UtilityService } from '@/core/UtilityService.js';
 import { DI } from '@/di-symbols.js';
@@ -18,14 +17,6 @@ export const meta = {
 	requireCredential: true,
 	requireModerator: true,
 	kind: 'write:admin:federation',
-
-	errors: {
-		noSuchInstance: {
-			message: 'No such instance.',
-			code: 'NO_SUCH_INSTANCE',
-			id: 'ad3e152b-dba6-4de8-b41d-e3a21d2aced5',
-		},
-	},
 } as const;
 
 export const paramDef = {
@@ -52,7 +43,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			const instance = await this.instancesRepository.findOneBy({ host: this.utilityService.toPuny(ps.host) });
 
 			if (instance == null) {
-				throw new ApiError(meta.errors.noSuchInstance);
+				throw new Error('instance not found');
 			}
 
 			const isSuspendedBefore = instance.suspensionState !== 'none';

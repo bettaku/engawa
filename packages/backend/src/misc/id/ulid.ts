@@ -5,20 +5,11 @@
 
 // Crockford's Base32
 // https://github.com/ulid/spec#encoding
+import { parseBigInt32 } from '@/misc/bigint.js';
 
 const CHARS = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 
 export const ulidRegExp = /^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$/;
-
-function parseBase32BigInt(str: string): bigint {
-	let result = 0n;
-	for (let i = 0; i < str.length; i++) {
-		const digit = CHARS.indexOf(str[i]);
-		if (digit < 0) throw new Error('Invalid ULID');
-		result = result * 32n + BigInt(digit);
-	}
-	return result;
-}
 
 function parseBase32(timestamp: string) {
 	let time = 0;
@@ -32,12 +23,9 @@ export function parseUlid(id: string): { date: Date; } {
 	return { date: new Date(parseBase32(id.slice(0, 10))) };
 }
 
-// 乱数部は Crockford's Base32（I・L・O・Uを除く）なので、parseInt(…, 32) では読めない（W〜Zで失敗する）。
-// 乱数部は80ビットあるが、additional は64ビットに収める（Redis Stream ID の seq が符号なし64ビットのため）。
-// 上位64ビットを取るので、additional の大小は乱数部の大小と矛盾しない（同じ値になることはある）。
 export function parseUlidFull(id: string): { date: number; additional: bigint; } {
 	return {
 		date: parseBase32(id.slice(0, 10)),
-		additional: parseBase32BigInt(id.slice(10, 26)) >> 16n,
+		additional: parseBigInt32(id.slice(10, 26)),
 	};
 }

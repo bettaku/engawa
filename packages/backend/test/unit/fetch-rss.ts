@@ -7,7 +7,6 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import FetchRss, { meta, paramDef } from '@/server/api/endpoints/fetch-rss.js';
 import type { HttpRequestService } from '@/core/HttpRequestService.js';
 import { ApiCallService } from '@/server/api/ApiCallService.js';
-import { loadEnvironment } from '@/config/environment.js';
 
 const xml = '<rss version="2.0"><channel><title>Feed</title><item><title>Article</title><link>https://example.com/article</link></item></channel></rss>';
 const response = () => ({ text: async () => xml });
@@ -27,7 +26,7 @@ describe('bounded anonymous RSS fetching', () => {
 		const endpoint = new FetchRss({ send } as unknown as HttpRequestService);
 		const limit = vi.fn().mockResolvedValue({ code: 'RATE_LIMIT_EXCEEDED', info: { resetMs: Date.now() + 60000 } });
 		const service = new ApiCallService(
-			{ enableIpLogging: false } as never, { runtime: loadEnvironment().runtime } as never, {} as never,
+			{ enableIpLogging: false } as never, {} as never, {} as never,
 			{ authenticate: async () => [null, null, null] } as never,
 			{ limit } as never, {} as never, { logger: {} } as never,
 		);

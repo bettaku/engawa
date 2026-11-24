@@ -40,34 +40,6 @@ export async function sleep(ms = 250): Promise<void> {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-/**
- * 連合の配送や非同期処理の反映を待つ。
- * `fn` の結果が `cond` を満たすまで `interval` ごとに繰り返し、満たした時点の結果を返す。
- * `timeout` までに満たさなかった場合は最後の結果をそのまま返すので、判定は呼び出し側で行うこと。
- *
- * 「届かないこと」を確認したい場合はこの関数を使わず、従来どおり `sleep()` で待つ。
- */
-export async function waitFor<T>(
-	fn: () => Promise<T>,
-	cond: (value: T) => boolean,
-	{ timeout = 5000, interval = 100 }: { timeout?: number; interval?: number } = {},
-): Promise<T> {
-	const deadline = Date.now() + timeout;
-	for (;;) {
-		const value = await fn();
-		if (cond(value) || Date.now() >= deadline) return value;
-		await sleep(interval);
-	}
-}
-
-/** ノートが削除されて `notes/show` が `NO_SUCH_NOTE` を返すようになるまで待つ */
-export async function waitForNoteDeleted(user: LoginUser, noteId: string): Promise<void> {
-	await waitFor(
-		async () => await user.client.request('notes/show', { noteId }).then(() => false, (err: any) => err.code === 'NO_SUCH_NOTE'),
-		deleted => deleted,
-	);
-}
-
 async function signin(
 	host: Host,
 	params: Misskey.entities.SigninFlowRequest,

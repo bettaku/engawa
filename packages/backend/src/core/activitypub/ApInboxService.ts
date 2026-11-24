@@ -34,7 +34,7 @@ import type { MiChatRoom } from '@/models/ChatRoom.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { AbuseReportService } from '@/core/AbuseReportService.js';
 import { IdentifiableError } from '@/misc/identifiable-error.js';
-import { getApHrefNullable, getApId, getApIds, getApType, getOneApId, isAccept, isActor, isAdd, isAnnounce, isBlock, isCollection, isCollectionOrOrderedCollection, isCreate, isDelete, isFlag, isFollow, isInvite, isLike, isMove, isPost, isReject, isRemove, isTombstone, isUndo, isUpdate, validActor, validPost } from './type.js';
+import { getApHrefNullable, getApId, getApIds, getApType, isAccept, isActor, isAdd, isAnnounce, isBlock, isCollection, isCollectionOrOrderedCollection, isCreate, isDelete, isFlag, isFollow, isInvite, isLike, isMove, isPost, isReject, isRemove, isTombstone, isUndo, isUpdate, validActor, validPost } from './type.js';
 import { ApNoteService } from './models/ApNoteService.js';
 import { ApLoggerService } from './ApLoggerService.js';
 import { ApDbResolverService } from './ApDbResolverService.js';
@@ -530,7 +530,31 @@ export class ApInboxService {
 			} else {
 				// Check if this is a reply to a chat message
 				// If so, treat it as a chat message even without `_misskey_talk` flag
-				if (await this.isReplyToChatMessage(actor, object)) {
+				let isReplyToChatMessage = false;
+				if (typeof object === 'object' && object.inReplyTo) {
+					try {
+						const inReplyToUri = getApId(object.inReplyTo);
+						// Check if inReplyTo is our chat message by checking the URI pattern and host
+						const url = new URL(inReplyToUri);
+						if (this.utilityService.isSelfHost(url.hostname) && inReplyToUri.includes('/chat/messages/')) {
+							isReplyToChatMessage = true;
+						} else {
+							// Check if inReplyTo exists in our chat_messages table
+							// This handles cases where the reply is to a previous reply that was saved as a chat message
+							const inReplyToId = inReplyToUri.split('/').pop();
+							if (inReplyToId) {
+								const chatMessage = await this.chatMessagesRepository.findOneBy({ uri: inReplyToUri });
+								if (chatMessage) {
+									isReplyToChatMessage = true;
+								}
+							}
+						}
+					} catch (e) {
+						// Ignore error, treat as normal note
+					}
+				}
+
+				if (isReplyToChatMessage) {
 					await this.createChatMessage(resolver, actor, object, activity);
 				} else {
 					await this.createNote(resolver, actor, object, false, activity);
@@ -539,42 +563,6 @@ export class ApInboxService {
 		} else {
 			return `Unknown type: ${getApType(object)}`;
 		}
-	}
-
-	/**
-	 * `_misskey_talk`のない投稿が、チャットメッセージへの返信かどうか。
-	 *
-	 * リモートのチャットメッセージへの返信とみなすのは、返信者がその会話の当事者のときだけ。
-	 * 当事者でない返信まで拾うと、他人のノートと同じURIのチャットメッセージがDBにあるとき、
-	 * そのノートへの返信がノートとして作られずに失われる。
-	 */
-	@bindThis
-	private async isReplyToChatMessage(actor: MiRemoteUser, object: IObject): Promise<boolean> {
-		if (!object.inReplyTo) return false;
-
-		let inReplyToUri: string;
-		try {
-			inReplyToUri = getApId(object.inReplyTo);
-			// Our own chat message
-			if (this.utilityService.isSelfHost(new URL(inReplyToUri).hostname) && inReplyToUri.includes('/chat/messages/')) {
-				return true;
-			}
-		} catch {
-			return false;
-		}
-
-		// A reply to a previous remote chat message (or a reply to one) saved in our chat_messages table
-		const chatMessage = await this.chatMessagesRepository.findOneBy({ uri: inReplyToUri });
-		if (chatMessage == null) return false;
-
-		if (chatMessage.fromUserId === actor.id || chatMessage.toUserId === actor.id) return true;
-
-		if (chatMessage.toRoomId != null) {
-			const room = await this.chatRoomsRepository.findOneBy({ id: chatMessage.toRoomId });
-			return room != null && await this.chatService.isRoomMember(room, actor.id);
-		}
-
-		return false;
 	}
 
 	@bindThis
@@ -619,22 +607,7 @@ export class ApInboxService {
 		this.logger.info('Receiving chat message from remote');
 
 		if (typeof object !== 'object') return 'skip: object is not an object';
-		if (typeof object.id !== 'string') return 'skip: object has no id';
-
-		// createNoteと同じく、送信者が自分のサーバーの、自分のメッセージしか作れないようにする。
-		// これがないと、他サーバーのノートのURIを持つチャットメッセージを作れてしまう
-		if (this.utilityService.extractDbHost(actor.uri) !== this.utilityService.extractDbHost(object.id)) {
-			return 'skip: host in actor.uri !== object.id';
-		}
-		let attribution: string | null = null;
-		try {
-			attribution = object.attributedTo != null ? getOneApId(object.attributedTo) : null;
-		} catch {
-			// idを持たないattributedToは、送信者と一致しないものとして扱う
-		}
-		if (attribution !== actor.uri) {
-			return 'skip: actor.uri !== object.attributedTo';
-		}
+		if (!object.id) return 'skip: object has no id';
 
 		// Check if this message already exists (by URI)
 		// Note: Cannot use fetchNote because chat messages are not in the notes table

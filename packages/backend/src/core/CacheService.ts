@@ -12,20 +12,17 @@ import { DI } from '@/di-symbols.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { bindThis } from '@/decorators.js';
 import type { GlobalEvents } from '@/core/GlobalEventService.js';
-import type { StoredFlashToken } from '@/misc/flash-token.js';
+import type { FlashToken } from '@/misc/flash-token.js';
 import type { OnApplicationShutdown } from '@nestjs/common';
-import { CacheInvalidationService } from '@/core/CacheInvalidationService.js';
-import { onRedisReconnected } from '@/misc/redis-reconnected.js';
 
 @Injectable()
 export class CacheService implements OnApplicationShutdown {
-	private readonly offRedisReconnected: () => void;
 	public userByIdCache: MemoryKVCache<MiUser>;
 	public localUserByNativeTokenCache: MemoryKVCache<MiLocalUser | null>;
 	public localUserByIdCache: MemoryKVCache<MiLocalUser>;
 	public uriPersonCache: MemoryKVCache<MiUser | null>;
 	public userProfileCache: RedisKVCache<MiUserProfile>;
-	public flashAccessTokensCache: RedisKVCache<StoredFlashToken | null>;
+	public flashAccessTokensCache: RedisKVCache<FlashToken | null>;
 	public userMutingsCache: RedisKVCache<Set<string>>;
 	public userBlockingCache: RedisKVCache<Set<string>>;
 	public userBlockedCache: RedisKVCache<Set<string>>; // NOTE: 「被」Blockキャッシュ
@@ -58,7 +55,6 @@ export class CacheService implements OnApplicationShutdown {
 		private followingsRepository: FollowingsRepository,
 
 		private userEntityService: UserEntityService,
-		private cacheInvalidationService: CacheInvalidationService,
 	) {
 		//this.onMessage = this.onMessage.bind(this);
 
@@ -73,7 +69,6 @@ export class CacheService implements OnApplicationShutdown {
 			fetcher: (key) => this.userProfilesRepository.findOneByOrFail({ userId: key }),
 			toRedisConverter: (value) => JSON.stringify(value),
 			fromRedisConverter: (value) => JSON.parse(value), // TODO: date型の考慮
-			invalidation: this.cacheInvalidationService,
 		});
 
 		this.userMutingsCache = new RedisKVCache<Set<string>>(this.redisClient, 'userMutings', {
@@ -82,7 +77,6 @@ export class CacheService implements OnApplicationShutdown {
 			fetcher: (key) => this.mutingsRepository.find({ where: { muterId: key }, select: ['muteeId'] }).then(xs => new Set(xs.map(x => x.muteeId))),
 			toRedisConverter: (value) => JSON.stringify(Array.from(value)),
 			fromRedisConverter: (value) => new Set(JSON.parse(value)),
-			invalidation: this.cacheInvalidationService,
 		});
 
 		this.userBlockingCache = new RedisKVCache<Set<string>>(this.redisClient, 'userBlocking', {
@@ -91,7 +85,6 @@ export class CacheService implements OnApplicationShutdown {
 			fetcher: (key) => this.blockingsRepository.find({ where: { blockerId: key }, select: ['blockeeId'] }).then(xs => new Set(xs.map(x => x.blockeeId))),
 			toRedisConverter: (value) => JSON.stringify(Array.from(value)),
 			fromRedisConverter: (value) => new Set(JSON.parse(value)),
-			invalidation: this.cacheInvalidationService,
 		});
 
 		this.userBlockedCache = new RedisKVCache<Set<string>>(this.redisClient, 'userBlocked', {
@@ -100,7 +93,6 @@ export class CacheService implements OnApplicationShutdown {
 			fetcher: (key) => this.blockingsRepository.find({ where: { blockeeId: key }, select: ['blockerId'] }).then(xs => new Set(xs.map(x => x.blockerId))),
 			toRedisConverter: (value) => JSON.stringify(Array.from(value)),
 			fromRedisConverter: (value) => new Set(JSON.parse(value)),
-			invalidation: this.cacheInvalidationService,
 		});
 
 		this.renoteMutingsCache = new RedisKVCache<Set<string>>(this.redisClient, 'renoteMutings', {
@@ -109,7 +101,6 @@ export class CacheService implements OnApplicationShutdown {
 			fetcher: (key) => this.renoteMutingsRepository.find({ where: { muterId: key }, select: ['muteeId'] }).then(xs => new Set(xs.map(x => x.muteeId))),
 			toRedisConverter: (value) => JSON.stringify(Array.from(value)),
 			fromRedisConverter: (value) => new Set(JSON.parse(value)),
-			invalidation: this.cacheInvalidationService,
 		});
 
 		this.userFollowingsCache = new RedisKVCache<Record<string, Pick<MiFollowing, 'withReplies'> | undefined>>(this.redisClient, 'userFollowings', {
@@ -124,20 +115,16 @@ export class CacheService implements OnApplicationShutdown {
 			}),
 			toRedisConverter: (value) => JSON.stringify(value),
 			fromRedisConverter: (value) => JSON.parse(value),
-			invalidation: this.cacheInvalidationService,
 		});
 
-		this.flashAccessTokensCache = new RedisKVCache<StoredFlashToken | null>(this.redisClient, 'flashAccessTokens', {
+		this.flashAccessTokensCache = new RedisKVCache<FlashToken | null>(this.redisClient, 'flashAccessTokens', {
 			lifetime: 1000 * 60 * 30, // 30m
 			memoryCacheLifetime: 1000 * 60, // 1m
 			fetcher: async (key) => null,
 			toRedisConverter: (value) => JSON.stringify(value),
 			fromRedisConverter: (value) => JSON.parse(value),
-			// 認証状態でDBから再生成できないので、版を切り替えない（P2-1の対象外。付録A）
-			version: null,
 		});
 		this.redisForSub.on('message', this.onMessage);
-		this.offRedisReconnected = onRedisReconnected(this.redisForSub, this.onRedisReconnected);
 	}
 
 	@bindThis
@@ -185,8 +172,7 @@ export class CacheService implements OnApplicationShutdown {
 					if (follower) follower.followingCount++;
 					const followee = this.userByIdCache.get(body.followeeId);
 					if (followee) followee.followersCount++;
-					// 旧版のプロセスが発行したイベントでは、Redisのキャッシュが消されていないことがあるので、ここでも消す（ほかのプロセスには伝えない）
-					await this.userFollowingsCache.evict(body.followerId);
+					this.userFollowingsCache.delete(body.followerId);
 					break;
 				}
 				default:
@@ -200,20 +186,8 @@ export class CacheService implements OnApplicationShutdown {
 		return this.userByIdCache.fetch(userId, () => this.usersRepository.findOneByOrFail({ id: userId }));
 	}
 
-	/**
-	 * Pub/Subをつなぎ直したとき。切れている間のイベントを受け取れていないので、イベントで更新しているキャッシュを捨てる
-	 */
-	@bindThis
-	private onRedisReconnected(): void {
-		this.userByIdCache.clear();
-		this.localUserByNativeTokenCache.clear();
-		this.localUserByIdCache.clear();
-		this.uriPersonCache.clear();
-	}
-
 	@bindThis
 	public dispose(): void {
-		this.offRedisReconnected();
 		this.redisForSub.off('message', this.onMessage);
 		this.userByIdCache.dispose();
 		this.localUserByNativeTokenCache.dispose();

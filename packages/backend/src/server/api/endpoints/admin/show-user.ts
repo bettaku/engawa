@@ -6,7 +6,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { UsersRepository, SigninsRepository, UserProfilesRepository } from '@/models/_.js';
 import { Endpoint } from '@/server/api/endpoint-base.js';
-import { ApiError } from '@/server/api/error.js';
 import { DI } from '@/di-symbols.js';
 import { RoleService } from '@/core/RoleService.js';
 import { RoleEntityService } from '@/core/entities/RoleEntityService.js';
@@ -195,20 +194,6 @@ export const meta = {
 			},
 		},
 	},
-
-	errors: {
-		noSuchUser: {
-			message: 'No such user.',
-			code: 'NO_SUCH_USER',
-			id: '1e5d8192-a682-4212-a63c-c1ffb1ecab7e',
-		},
-		cannotShowAdministrator: {
-			message: 'Only administrators can show the information of an administrator.',
-			code: 'CANNOT_SHOW_ADMINISTRATOR',
-			id: '618951d3-0f26-4b1d-9e1a-5862a79064b4',
-			kind: 'permission',
-		},
-	},
 } as const;
 
 export const paramDef = {
@@ -242,7 +227,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			]);
 
 			if (user == null || profile == null) {
-				throw new ApiError(meta.errors.noSuchUser);
+				throw new Error('user not found');
 			}
 
 			const isModerator = await this.roleService.isModerator(user);
@@ -250,7 +235,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			const _me = await this.usersRepository.findOneByOrFail({ id: me.id });
 			if (!await this.roleService.isAdministrator(_me) && await this.roleService.isAdministrator(user)) {
-				throw new ApiError(meta.errors.cannotShowAdministrator);
+				throw new Error('cannot show info of admin');
 			}
 
 			const signins = await this.signinsRepository.findBy({ userId: user.id });

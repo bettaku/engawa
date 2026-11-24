@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { isIP } from 'node:net';
 import { In, IsNull } from 'typeorm';
 import { Inject, Injectable } from '@nestjs/common';
 import type { MiMeta, UsersRepository } from '@/models/_.js';
@@ -167,8 +166,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				}
 
 				if (user.host == null) {
-					// 転送ヘッダー由来の値がそのまま入ることがあるので、IPアドレスとして正しいものだけを統計に使う
-					if (me == null && ip != null && isIP(ip) !== 0) {
+					if (me == null && ip != null) {
 						this.perUserPvChart.commitByVisitor(user, ip);
 					} else if (me && me.id !== user.id) {
 						this.perUserPvChart.commitByUser(user, me.id);

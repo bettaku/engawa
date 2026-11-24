@@ -21,50 +21,41 @@ export const meta = {
 		optional: false, nullable: false,
 		properties: {
 			machine: {
-				optional: false,
 				type: 'string',
 				nullable: false,
 			},
 			cpu: {
-				optional: false,
 				type: 'object',
 				nullable: false,
 				properties: {
 					model: {
-						optional: false,
 						type: 'string',
 						nullable: false,
 					},
 					cores: {
-						optional: false,
 						type: 'number',
 						nullable: false,
 					},
 				},
 			},
 			mem: {
-				optional: false,
 				type: 'object',
 				properties: {
 					total: {
-						optional: false,
 						type: 'number',
 						nullable: false,
 					},
 				},
 			},
 			fs: {
-				optional: false,
 				type: 'object',
 				nullable: false,
 				properties: {
 					total: {
-						optional: false,
 						type: 'number',
 						nullable: false,
 					},
 					used: {
-						optional: false,
 						type: 'number',
 						nullable: false,
 					},

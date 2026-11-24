@@ -13,7 +13,7 @@ import type { MiDriveFile } from '@/models/DriveFile.js';
 import type { MiNote } from '@/models/Note.js';
 import { EmailService } from '@/core/EmailService.js';
 import { bindThis } from '@/decorators.js';
-import { NO_NOTE_DELETE_EFFECTS, NoteDeleteService } from '@/core/NoteDeleteService.js';
+import { SearchService } from '@/core/SearchService.js';
 import { PageService } from '@/core/PageService.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
@@ -46,7 +46,7 @@ export class DeleteAccountProcessorService {
 		private pageService: PageService,
 		private emailService: EmailService,
 		private queueLoggerService: QueueLoggerService,
-		private noteDeleteService: NoteDeleteService,
+		private searchService: SearchService,
 		private globalEventService: GlobalEventService,
 	) {
 		this.logger = this.queueLoggerService.logger.createSubLogger('delete-account');
@@ -83,11 +83,11 @@ export class DeleteAccountProcessorService {
 
 				cursor = notes.at(-1)?.id ?? null;
 
-				// アカウントの削除は別途配送するので、ノートごとの配送はしない。
-				// ストリーム・チャート・返信数も、アカウントごと消えるので更新しない（現行の挙動を維持）
-				await this.noteDeleteService.deleteMany(user, notes, {
-					effects: { ...NO_NOTE_DELETE_EFFECTS, unindex: true },
-				});
+				for (const note of notes) {
+					await this.searchService.unindexNote(note);
+				}
+
+				await this.notesRepository.delete(notes.map(note => note.id));
 			}
 
 			this.logger.succ(`All of notes deleted: ${job.data.user.id}`);

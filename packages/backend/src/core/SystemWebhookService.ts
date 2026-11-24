@@ -8,8 +8,7 @@ import * as Redis from 'ioredis';
 import type { MiUser, SystemWebhooksRepository } from '@/models/_.js';
 import { DI } from '@/di-symbols.js';
 import { bindThis } from '@/decorators.js';
-import { ReloadableList, replaceById } from '@/misc/reloadable-list.js';
-import { GlobalEvents, GlobalEventService, isInternalEventRef } from '@/core/GlobalEventService.js';
+import { GlobalEvents, GlobalEventService } from '@/core/GlobalEventService.js';
 import { MiSystemWebhook, type SystemWebhookEventType } from '@/models/SystemWebhook.js';
 import { IdService } from '@/core/IdService.js';
 import { QueueService } from '@/core/QueueService.js';
@@ -20,7 +19,6 @@ import { Packed } from '@/misc/json-schema.js';
 import { AbuseReportResolveType } from '@/models/AbuseUserReport.js';
 import { ModeratorInactivityRemainingTime } from '@/queue/processors/CheckModeratorsActivityProcessorService.js';
 import type { OnApplicationShutdown } from '@nestjs/common';
-import { onRedisReconnected } from '@/misc/redis-reconnected.js';
 
 export type AbuseReportPayload = {
 	id: string;
@@ -53,8 +51,8 @@ export type SystemWebhookPayload<T extends SystemWebhookEventType> =
 
 @Injectable()
 export class SystemWebhookService implements OnApplicationShutdown {
-	private readonly offRedisReconnected: () => void;
-	private readonly activeSystemWebhooks: ReloadableList<MiSystemWebhook>;
+	private activeSystemWebhooksFetched = false;
+	private activeSystemWebhooks: MiSystemWebhook[] = [];
 
 	constructor(
 		@Inject(DI.redisForSub)
@@ -65,20 +63,20 @@ export class SystemWebhookService implements OnApplicationShutdown {
 		private queueService: QueueService,
 		private moderationLogService: ModerationLogService,
 		private globalEventService: GlobalEventService,
-		loggerService: LoggerService,
 	) {
-		const logger = loggerService.getLogger('system-webhook');
-		this.activeSystemWebhooks = new ReloadableList(
-			() => this.systemWebhooksRepository.findBy({ isActive: true }),
-			{ onError: err => logger.error('Failed to load active system webhooks', { e: err }) },
-		);
 		this.redisForSub.on('message', this.onMessage);
-		this.offRedisReconnected = onRedisReconnected(this.redisForSub, this.onRedisReconnected);
 	}
 
 	@bindThis
 	public async fetchActiveSystemWebhooks() {
-		return await this.activeSystemWebhooks.get();
+		if (!this.activeSystemWebhooksFetched) {
+			this.activeSystemWebhooks = await this.systemWebhooksRepository.findBy({
+				isActive: true,
+			});
+			this.activeSystemWebhooksFetched = true;
+		}
+
+		return this.activeSystemWebhooks;
 	}
 
 	/**
@@ -222,45 +220,36 @@ export class SystemWebhookService implements OnApplicationShutdown {
 
 		const { type, body } = obj.message as GlobalEvents['internal']['payload'];
 		switch (type) {
-			case 'systemWebhookCreated':
-			case 'systemWebhookUpdated':
+			case 'systemWebhookCreated': {
+				if (body.isActive) {
+					this.activeSystemWebhooks.push(MiSystemWebhook.deserialize(body));
+				}
+				break;
+			}
+			case 'systemWebhookUpdated': {
+				if (body.isActive) {
+					const i = this.activeSystemWebhooks.findIndex(a => a.id === body.id);
+					if (i > -1) {
+						this.activeSystemWebhooks[i] = MiSystemWebhook.deserialize(body);
+					} else {
+						this.activeSystemWebhooks.push(MiSystemWebhook.deserialize(body));
+					}
+				} else {
+					this.activeSystemWebhooks = this.activeSystemWebhooks.filter(a => a.id !== body.id);
+				}
+				break;
+			}
 			case 'systemWebhookDeleted': {
-				if (!isInternalEventRef(body)) break;
-				// 新本文は値を持たないので、一覧を捨てて次の取得でDBから読み直す。
-				// 1件ずつ読み直すと、読み込み中に届いた後続のイベントや、取得中の一覧との順序が入れ替わる
-				this.activeSystemWebhooks.invalidate();
-				return;
+				this.activeSystemWebhooks = this.activeSystemWebhooks.filter(a => a.id !== body.id);
+				break;
 			}
 			default:
 				break;
 		}
-
-		// 旧本文（エンティティ全体）。読み込み済みの一覧に差分を反映する（読み込み中の一覧は保存しない）
-		if (isInternalEventRef(body)) return;
-		switch (type) {
-			case 'systemWebhookCreated':
-			case 'systemWebhookUpdated':
-			case 'systemWebhookDeleted': {
-				const webhook = type !== 'systemWebhookDeleted' && body.isActive ? MiSystemWebhook.deserialize(body) : null;
-				this.activeSystemWebhooks.modify(webhooks => replaceById(webhooks, body.id, webhook));
-				break;
-			}
-			default:
-				break;
-		}
-	}
-
-	/**
-	 * Pub/Subをつなぎ直したとき。切れている間のイベントを受け取れていないので、イベントで更新しているキャッシュを捨てる
-	 */
-	@bindThis
-	private onRedisReconnected(): void {
-		this.activeSystemWebhooks.invalidate();
 	}
 
 	@bindThis
 	public dispose(): void {
-		this.offRedisReconnected();
 		this.redisForSub.off('message', this.onMessage);
 	}
 

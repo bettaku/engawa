@@ -14,9 +14,8 @@ import type { Config } from '@/config.js';
 import { DI } from '@/di-symbols.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { L_CHARS, secureRndstr } from '@/misc/secure-rndstr.js';
-import { TwoFactorAuthenticationError, UserAuthService } from '@/core/UserAuthService.js';
+import { UserAuthService } from '@/core/UserAuthService.js';
 import { ApiError } from '../../error.js';
-import { CacheService } from '@/core/CacheService.js';
 
 export const meta = {
 	requireCredential: true,
@@ -29,11 +28,6 @@ export const meta = {
 	},
 
 	errors: {
-		twoFactorAuthenticationFailed: {
-			message: 'Two-factor authentication failed.',
-			code: 'TWO_FACTOR_AUTHENTICATION_FAILED',
-			id: '7ce53059-dc72-4c83-960c-89acef4d673e',
-		},
 		incorrectPassword: {
 			message: 'Incorrect password.',
 			code: 'INCORRECT_PASSWORD',
@@ -85,7 +79,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private emailService: EmailService,
 		private userAuthService: UserAuthService,
 		private globalEventService: GlobalEventService,
-		private cacheService: CacheService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const token = ps.token;
@@ -93,15 +86,13 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			if (profile.twoFactorEnabled) {
 				if (token == null) {
-					throw new ApiError(meta.errors.twoFactorAuthenticationFailed);
+					throw new Error('authentication failed');
 				}
 
 				try {
 					await this.userAuthService.twoFactorAuthenticate(profile, token);
 				} catch (e) {
-					// コードの不一致だけを認証の失敗にする。DB・Redisの障害はそのまま500にする
-					if (e instanceof TwoFactorAuthenticationError) throw new ApiError(meta.errors.twoFactorAuthenticationFailed);
-					throw e;
+					throw new Error('authentication failed');
 				}
 			}
 
@@ -124,7 +115,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				emailVerified: false,
 				emailVerifyCode: null,
 			});
-			await this.cacheService.userProfileCache.delete(me.id);
 
 			const iObj = await this.userEntityService.pack(me.id, me, {
 				schema: 'MeDetailed',
@@ -140,7 +130,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				await this.userProfilesRepository.update(me.id, {
 					emailVerifyCode: code,
 				});
-				await this.cacheService.userProfileCache.delete(me.id);
 
 				const link = `${this.config.url}/verify-email/${code}`;
 

@@ -62,6 +62,32 @@ export class PageEntityService {
 		};
 		collectFile(page.content);
 
+		// 後方互換性のため
+		let migrated = false;
+		const migrate = (xs: any[]) => {
+			for (const x of xs) {
+				if (x.type === 'input') {
+					if (x.inputType === 'text') {
+						x.type = 'textInput';
+					}
+					if (x.inputType === 'number') {
+						x.type = 'numberInput';
+						if (x.default) x.default = parseInt(x.default, 10);
+					}
+					migrated = true;
+				}
+				if (x.children) {
+					migrate(x.children);
+				}
+			}
+		};
+		migrate(page.content);
+		if (migrated) {
+			this.pagesRepository.update(page.id, {
+				content: page.content,
+			});
+		}
+
 		return await awaitAll({
 			id: page.id,
 			createdAt: this.idService.parse(page.id).date.toISOString(),

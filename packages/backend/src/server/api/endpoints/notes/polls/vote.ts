@@ -15,7 +15,6 @@ import { ApRendererService } from '@/core/activitypub/ApRendererService.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { DI } from '@/di-symbols.js';
 import { UserBlockingService } from '@/core/UserBlockingService.js';
-import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
 import { ApiError } from '../../../error.js';
 
 export const meta = {
@@ -96,7 +95,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private apRendererService: ApRendererService,
 		private globalEventService: GlobalEventService,
 		private userBlockingService: UserBlockingService,
-		private noteEntityService: NoteEntityService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const createdAt = new Date();
@@ -106,11 +104,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				if (err.id === '9725d0ce-ba28-4dde-95a7-2cbb2c15de24') throw new ApiError(meta.errors.noSuchNote);
 				throw err;
 			});
-
-			// 閲覧できないノートには投票できない（存在しない場合と同じ応答にする）
-			if (!(await this.noteEntityService.isCurrentlyVisibleForMe(note, me.id))) {
-				throw new ApiError(meta.errors.noSuchNote);
-			}
 
 			if (!note.hasPoll) {
 				throw new ApiError(meta.errors.noPoll);
@@ -160,7 +153,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			// Increment votes count
 			const index = ps.choice + 1; // In SQL, array index is 1 based
-			await this.pollsRepository.query('UPDATE poll SET votes[$1::int] = votes[$1::int] + 1 WHERE "noteId" = $2', [index, poll.noteId]);
+			await this.pollsRepository.query(`UPDATE poll SET votes[${index}] = votes[${index}] + 1 WHERE "noteId" = '${poll.noteId}'`);
 
 			this.globalEventService.publishNoteStream(note, 'pollVoted', {
 				choice: ps.choice,

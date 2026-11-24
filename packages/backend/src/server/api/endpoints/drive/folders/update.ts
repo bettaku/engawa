@@ -119,7 +119,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			}
 
 			// Update
-			await this.driveFoldersRepository.update(folder.id, {
+			this.driveFoldersRepository.update(folder.id, {
 				name: folder.name,
 				parentId: folder.parentId,
 			});

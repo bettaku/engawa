@@ -730,15 +730,11 @@ export class ApRendererService {
 
 	@bindThis
 	public renderUpdate(object: string | IObject, user: { id: MiUser['id'] }): IUpdate {
-		// 宛先は中身のオブジェクトに合わせる（限定公開のノートのUpdateを公開宛てにしない）。
-		// 宛先を持たないオブジェクト（Personなど）は従来どおり公開宛てにする。
-		const inner = typeof object === 'string' ? null : object;
 		return {
 			id: `${this.config.url}/users/${user.id}#updates/${new Date().getTime()}`,
 			actor: this.userEntityService.genLocalUserUri(user.id),
 			type: 'Update',
-			to: inner?.to ?? ['https://www.w3.org/ns/activitystreams#Public'],
-			...(inner?.cc != null ? { cc: inner.cc } : {}),
+			to: ['https://www.w3.org/ns/activitystreams#Public'],
 			object,
 			published: new Date().toISOString(),
 		};

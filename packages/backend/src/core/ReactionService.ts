@@ -28,7 +28,7 @@ import { RoleService } from '@/core/RoleService.js';
 import { FeaturedService } from '@/core/FeaturedService.js';
 import { trackPromise } from '@/misc/promise-tracker.js';
 import { isQuote, isRenote } from '@/misc/is-renote.js';
-import { ReactionsBufferingService, addReactionDeltasSql } from '@/core/ReactionsBufferingService.js';
+import { ReactionsBufferingService } from '@/core/ReactionsBufferingService.js';
 import { PER_NOTE_REACTION_USER_PAIR_CACHE_MAX } from '@/const.js';
 
 const FALLBACK = '\u2764';
@@ -197,16 +197,13 @@ export class ReactionService {
 		if (this.meta.enableReactionsBuffering) {
 			await this.reactionsBufferingService.create(note.id, user.id, reaction, note.reactionAndUserPairCache);
 		} else {
+			const sql = `jsonb_set("reactions", '{${reaction}}', (COALESCE("reactions"->>'${reaction}', '0')::int + 1)::text::jsonb)`;
 			await this.notesRepository.createQueryBuilder().update()
 				.set({
-					reactions: () => addReactionDeltasSql('reactionDeltas'),
+					reactions: () => sql,
 					...(note.reactionAndUserPairCache.length < PER_NOTE_REACTION_USER_PAIR_CACHE_MAX ? {
-						reactionAndUserPairCache: () => 'array_append("reactionAndUserPairCache", CAST(:reactionPair AS varchar))',
+						reactionAndUserPairCache: () => `array_append("reactionAndUserPairCache", '${user.id}/${reaction}')`,
 					} : {}),
-				})
-				.setParameters({
-					reactionDeltas: JSON.stringify({ [reaction]: 1 }),
-					reactionPair: `${user.id}/${reaction}`,
 				})
 				.where('id = :id', { id: note.id })
 				.execute();
@@ -305,14 +302,11 @@ export class ReactionService {
 		if (this.meta.enableReactionsBuffering) {
 			await this.reactionsBufferingService.delete(note.id, user.id, exist.reaction);
 		} else {
+			const sql = `jsonb_set("reactions", '{${exist.reaction}}', (COALESCE("reactions"->>'${exist.reaction}', '0')::int - 1)::text::jsonb)`;
 			await this.notesRepository.createQueryBuilder().update()
 				.set({
-					reactions: () => addReactionDeltasSql('reactionDeltas'),
-					reactionAndUserPairCache: () => 'array_remove("reactionAndUserPairCache", CAST(:reactionPair AS varchar))',
-				})
-				.setParameters({
-					reactionDeltas: JSON.stringify({ [exist.reaction]: -1 }),
-					reactionPair: `${user.id}/${exist.reaction}`,
+					reactions: () => sql,
+					reactionAndUserPairCache: () => `array_remove("reactionAndUserPairCache", '${user.id}/${exist.reaction}')`,
 				})
 				.where('id = :id', { id: note.id })
 				.execute();

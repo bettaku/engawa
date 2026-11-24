@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { signinErrorBody } from './signin-errors.js';
 import { randomUUID } from 'crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import { IsNull } from 'typeorm';
@@ -70,7 +69,7 @@ export class SigninWithPasskeyApiService {
 
 		function error(status: number, error: { id: string }) {
 			reply.code(status);
-			return signinErrorBody(error.id);
+			return { error };
 		}
 
 		const fail = async (userId: MiUser['id'], status?: number, failure?: { id: string }) => {
@@ -113,8 +112,7 @@ export class SigninWithPasskeyApiService {
 		}
 
 		const context = body.context;
-		// contextはこのAPIが発行したUUIDだけを受け付ける（他の用途のchallengeに届く値を渡せないようにする）
-		if (!context || typeof context !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(context)) {
+		if (!context || typeof context !== 'string') {
 			// If try Authentication without context
 			return error(400, {
 				id: '1658cc2e-4495-461f-aee4-d403cdf073c1',
@@ -167,7 +165,7 @@ export class SigninWithPasskeyApiService {
 			});
 		}
 
-		const signinResponse = await this.signinService.signin(request, reply, user);
+		const signinResponse = this.signinService.signin(request, reply, user);
 		return {
 			signinResponse: signinResponse,
 		};

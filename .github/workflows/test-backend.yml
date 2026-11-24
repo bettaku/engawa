@@ -69,10 +69,6 @@ jobs:
       run: cp .github/cherrypick/test.yml .config
     - name: Build
       run: pnpm build
-    - name: Check generated config schema
-      run: |
-        pnpm --filter backend generate-config-schema
-        git diff --exit-code -- packages/backend/config.schema.json
     - name: Test
       run: pnpm --filter backend test-and-coverage
     - name: Upload to Codecov
@@ -177,5 +173,3 @@ jobs:
         run: CHERRYPICK_CONFIG_YML=test.yml pnpm --filter backend migrate
       - name: Check no migrations are remaining
         run: CHERRYPICK_CONFIG_YML=test.yml pnpm --filter backend check-migrations
-      - name: Check the schema snapshot
-        run: CHERRYPICK_CONFIG_YML=test.yml PG_DUMP_DOCKER_CONTAINER=${{ job.services.postgres.id }} pnpm --filter backend check:schema

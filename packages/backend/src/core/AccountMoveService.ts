@@ -7,7 +7,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { IsNull, In, MoreThan, Not } from 'typeorm';
 
 import { bindThis } from '@/decorators.js';
-import type { Config } from '@/config.js';
 import { DI } from '@/di-symbols.js';
 import type { MiLocalUser, MiRemoteUser, MiUser } from '@/models/User.js';
 import type { BlockingsRepository, FollowingsRepository, InstancesRepository, MiMeta, MutingsRepository, UserListMembershipsRepository, UsersRepository } from '@/models/_.js';
@@ -27,14 +26,10 @@ import PerUserFollowingChart from '@/core/chart/charts/per-user-following.js';
 import { SystemAccountService } from '@/core/SystemAccountService.js';
 import { RoleService } from '@/core/RoleService.js';
 import { AntennaService } from '@/core/AntennaService.js';
-import { UserListService } from '@/core/UserListService.js';
 
 @Injectable()
 export class AccountMoveService {
 	constructor(
-		@Inject(DI.config)
-		private config: Config,
-
 		@Inject(DI.meta)
 		private meta: MiMeta,
 
@@ -70,7 +65,6 @@ export class AccountMoveService {
 		private systemAccountService: SystemAccountService,
 		private roleService: RoleService,
 		private antennaService: AntennaService,
-		private userListService: UserListService,
 	) {
 	}
 
@@ -115,7 +109,7 @@ export class AccountMoveService {
 		this.queueService.createDelayedUnfollowJob(followings.map(following => ({
 			from: { id: src.id },
 			to: { id: following.followeeId },
-		})), this.config.runtime.test.accountMoveUnfollowDelay);
+		})), process.env.NODE_ENV === 'test' ? 10000 : 1000 * 60 * 60 * 24);
 
 		await this.postMoveProcess(src, dst);
 
@@ -285,7 +279,6 @@ export class AccountMoveService {
 
 		const arrayToInsert = Array.from(newMemberships.entries()).map(entry => ({ ...entry[1], id: entry[0] }));
 		await this.userListMembershipsRepository.insert(arrayToInsert);
-		await this.userListService.invalidateMembersCache(arrayToInsert.map(x => x.userListId));
 
 		// Have the proxy account follow the new account in the same way as UserListService.push
 		if (this.userEntityService.isRemoteUser(dst)) {

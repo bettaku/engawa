@@ -15,7 +15,6 @@ export const packedAchievementSchema = {
 	type: 'object',
 	properties: {
 		name: {
-			optional: false,
 			ref: 'AchievementName',
 		},
 		unlockedAt: {

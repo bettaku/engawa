@@ -24,8 +24,8 @@ export const meta = {
 			optional: false,
 			nullable: false,
 			properties: {
-				ip: { optional: false, type: 'string' },
-				dnsNames: { optional: false, type: 'array', items: { type: 'string' } },
+				ip: { type: 'string' },
+				dnsNames: { type: 'array', items: { type: 'string' } },
 				createdAt: {
 					type: 'string',
 					optional: false,

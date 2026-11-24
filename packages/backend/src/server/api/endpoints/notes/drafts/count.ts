@@ -43,8 +43,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		super(meta, paramDef, async (ps, me) => {
 			const count = await this.noteDraftsRepository.createQueryBuilder('drafts')
 				.where('drafts.userId = :meId', { meId: me.id })
-				// 予約投稿で投稿済み（後処理の待ち）のドラフトは含めない
-				.andWhere('drafts.postedAt IS NULL')
 				.getCount();
 
 			return count;

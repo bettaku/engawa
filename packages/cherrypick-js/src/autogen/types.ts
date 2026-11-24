@@ -4090,13 +4090,6 @@ export type components = {
                  * @description An error ID. This ID is static.
                  */
                 id: string;
-                /**
-                 * @description Whose fault the error is.
-                 * @enum {string}
-                 */
-                kind: 'client' | 'server' | 'permission';
-                /** @description Additional information, such as the invalid parameter or the rate limit. */
-                info?: Record<string, never>;
             };
         };
         UserLite: {
@@ -4438,6 +4431,10 @@ export type components = {
             email?: string | null;
             emailVerified?: boolean | null;
             securityKeysList?: {
+                /**
+                 * Format: id
+                 * @example xxxxxxxxxx
+                 */
                 id: string;
                 name: string;
                 /** Format: date-time */
@@ -5420,7 +5417,7 @@ export type components = {
             canEditMembersByModerator: boolean;
             policies: {
                 [key: string]: {
-                    value?: number | boolean | string | string[];
+                    value?: number | boolean;
                     priority?: number;
                     useDefault?: boolean;
                 };
@@ -5877,17 +5874,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -5949,17 +5937,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6035,17 +6014,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6114,17 +6084,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6195,17 +6156,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6267,17 +6219,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6341,17 +6284,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6416,26 +6350,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6508,17 +6424,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6625,17 +6532,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6694,8 +6592,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6703,8 +6601,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6766,17 +6664,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6840,17 +6729,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6923,17 +6803,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6995,17 +6866,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7078,17 +6940,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7160,17 +7013,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7270,17 +7114,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7342,17 +7177,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7451,17 +7277,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7534,17 +7351,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7612,17 +7420,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7700,17 +7499,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7772,17 +7562,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7871,17 +7652,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7975,17 +7747,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -8051,17 +7814,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -8138,17 +7892,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -8214,17 +7959,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -8286,17 +8022,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -8358,17 +8085,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -8422,17 +8140,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -8486,17 +8195,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -8580,17 +8280,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -8715,17 +8406,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -8798,17 +8480,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -8870,17 +8543,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -8948,17 +8612,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9020,17 +8675,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9091,17 +8737,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9163,17 +8800,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9255,17 +8883,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9352,17 +8971,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9424,17 +9034,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9496,17 +9097,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9569,17 +9161,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9642,17 +9225,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9720,17 +9294,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9804,17 +9369,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9875,17 +9431,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9946,17 +9493,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -10017,17 +9555,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -10090,17 +9619,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -10162,26 +9682,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -10241,17 +9743,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -10313,17 +9806,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -10393,17 +9877,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -10457,17 +9932,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -10521,17 +9987,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -10597,17 +10054,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -10681,17 +10129,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -10745,17 +10184,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -10983,17 +10413,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11056,17 +10477,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11090,7 +10502,7 @@ export interface operations {
             content: {
                 'application/json': {
                     /** @enum {string} */
-                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver' | 'scheduledNoteDelete';
+                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver';
                     /** @enum {string} */
                     state: '*' | 'completed' | 'wait' | 'active' | 'paused' | 'prioritized' | 'delayed' | 'failed';
                 };
@@ -11130,17 +10542,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11200,17 +10603,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11270,17 +10664,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11304,7 +10689,7 @@ export interface operations {
             content: {
                 'application/json': {
                     /** @enum {string} */
-                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver' | 'scheduledNoteDelete';
+                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver';
                     state: ('active' | 'wait' | 'delayed' | 'completed' | 'failed' | 'paused')[];
                     search?: string;
                 };
@@ -11347,17 +10732,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11381,7 +10757,7 @@ export interface operations {
             content: {
                 'application/json': {
                     /** @enum {string} */
-                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver' | 'scheduledNoteDelete';
+                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver';
                 };
             };
         };
@@ -11419,17 +10795,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11453,7 +10820,7 @@ export interface operations {
             content: {
                 'application/json': {
                     /** @enum {string} */
-                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver' | 'scheduledNoteDelete';
+                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver';
                 };
             };
         };
@@ -11466,7 +10833,7 @@ export interface operations {
                 content: {
                     'application/json': {
                         /** @enum {string} */
-                        name: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver' | 'scheduledNoteDelete';
+                        name: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver';
                         qualifiedName: string;
                         counts: {
                             [key: string]: number;
@@ -11526,17 +10893,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11565,7 +10923,7 @@ export interface operations {
                 content: {
                     'application/json': {
                         /** @enum {string} */
-                        name: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver' | 'scheduledNoteDelete';
+                        name: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver';
                         counts: {
                             [key: string]: number;
                         };
@@ -11604,17 +10962,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11638,7 +10987,7 @@ export interface operations {
             content: {
                 'application/json': {
                     /** @enum {string} */
-                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver' | 'scheduledNoteDelete';
+                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver';
                     jobId: string;
                 };
             };
@@ -11677,17 +11026,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11711,7 +11051,7 @@ export interface operations {
             content: {
                 'application/json': {
                     /** @enum {string} */
-                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver' | 'scheduledNoteDelete';
+                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver';
                     jobId: string;
                 };
             };
@@ -11750,17 +11090,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11784,7 +11115,7 @@ export interface operations {
             content: {
                 'application/json': {
                     /** @enum {string} */
-                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver' | 'scheduledNoteDelete';
+                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver';
                     jobId: string;
                 };
             };
@@ -11826,17 +11157,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11860,7 +11182,7 @@ export interface operations {
             content: {
                 'application/json': {
                     /** @enum {string} */
-                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver' | 'scheduledNoteDelete';
+                    queue: 'system' | 'endedPollNotification' | 'postScheduledNote' | 'deliver' | 'inbox' | 'db' | 'relationship' | 'objectStorage' | 'userWebhookDeliver' | 'systemWebhookDeliver';
                     jobId: string;
                 };
             };
@@ -11902,17 +11224,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11974,17 +11287,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12058,17 +11362,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12135,17 +11430,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12206,17 +11492,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12283,17 +11560,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12357,26 +11625,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12441,17 +11691,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12531,17 +11772,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12603,17 +11835,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12670,17 +11893,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12745,17 +11959,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12819,17 +12024,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12907,17 +12103,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12978,17 +12165,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -13069,17 +12247,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -13142,17 +12311,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -13233,17 +12393,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -13305,17 +12456,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -13400,17 +12542,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -13670,17 +12803,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -13766,17 +12890,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -13838,17 +12953,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -13917,17 +13023,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -13989,17 +13086,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -14064,17 +13152,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -14139,26 +13218,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -14226,17 +13287,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -14316,17 +13368,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -14388,17 +13431,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -14460,17 +13494,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -14532,17 +13557,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -14604,17 +13620,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -14677,26 +13684,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -14920,17 +13909,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -14994,17 +13974,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15067,17 +14038,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15141,8 +14103,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15150,8 +14112,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15207,8 +14169,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15216,8 +14178,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15296,17 +14258,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15368,17 +14321,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15435,17 +14379,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15518,17 +14453,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15593,17 +14519,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15684,17 +14601,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15758,17 +14666,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15849,17 +14748,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15926,8 +14816,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15935,8 +14825,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15992,8 +14882,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16001,8 +14891,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16063,17 +14953,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16132,8 +15013,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16141,8 +15022,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16202,8 +15083,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16211,8 +15092,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16271,8 +15152,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16280,8 +15161,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16346,17 +15227,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16430,17 +15302,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16520,17 +15383,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16600,8 +15454,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16609,8 +15463,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16674,8 +15528,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16683,8 +15537,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16757,8 +15611,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16766,8 +15620,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16837,8 +15691,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16846,8 +15700,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16947,8 +15801,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16956,8 +15810,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17040,8 +15894,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17049,8 +15903,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17119,8 +15973,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17128,8 +15982,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17216,8 +16070,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17225,8 +16079,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17298,8 +16152,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17307,8 +16161,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17379,8 +16233,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17388,8 +16242,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17458,8 +16312,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17467,8 +16321,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17539,8 +16393,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17548,8 +16402,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17616,17 +16470,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17694,17 +16539,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17781,17 +16617,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17862,17 +16689,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -17935,17 +16753,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18018,17 +16827,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18098,17 +16898,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18173,17 +16964,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18246,17 +17028,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18329,17 +17102,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18393,17 +17157,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18468,17 +17223,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18549,17 +17295,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18621,17 +17358,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18698,17 +17426,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18779,17 +17498,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18860,17 +17570,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -18943,17 +17644,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -19015,17 +17707,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -19087,17 +17770,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -19168,17 +17842,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -19240,17 +17905,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -19323,17 +17979,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -19396,17 +18043,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -19477,17 +18115,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -19552,17 +18181,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -19629,17 +18249,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -19703,17 +18314,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -19789,17 +18391,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -19861,17 +18454,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -19933,17 +18517,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -20014,17 +18589,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -20081,17 +18647,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -20165,17 +18722,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -20239,17 +18787,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -20314,17 +18853,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -20386,17 +18916,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -20464,17 +18985,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -20534,17 +19046,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -20623,17 +19126,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -20706,17 +19200,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -20789,17 +19274,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -20863,17 +19339,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -20954,17 +19421,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -21035,17 +19493,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -21114,17 +19563,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -21188,17 +19628,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -21261,17 +19692,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -21338,17 +19760,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -21418,17 +19831,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -21502,17 +19906,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -21597,17 +19992,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -21674,17 +20060,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -21755,17 +20132,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -21834,17 +20202,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -21909,17 +20268,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -21987,17 +20337,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22069,17 +20410,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22137,8 +20469,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22146,8 +20478,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22202,8 +20534,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22211,8 +20543,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22262,8 +20594,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22271,8 +20603,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22338,8 +20670,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22347,8 +20679,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22396,8 +20728,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22405,8 +20737,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22460,17 +20792,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22542,8 +20865,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22551,8 +20874,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22615,8 +20938,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22624,8 +20947,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22694,8 +21017,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22703,8 +21026,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22770,8 +21093,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22779,8 +21102,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22841,8 +21164,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22850,8 +21173,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22912,8 +21235,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22921,8 +21244,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22975,8 +21298,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -22984,8 +21307,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -23048,8 +21371,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -23057,8 +21380,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -23126,17 +21449,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -23248,8 +21562,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -23257,8 +21571,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -23277,15 +21591,6 @@ export interface operations {
             };
             /** @description Internal server error */
             500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Error */
-            503: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -23348,17 +21653,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -23429,17 +21725,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -23497,8 +21784,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -23506,8 +21793,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -23573,17 +21860,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -23654,17 +21932,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -23735,17 +22004,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -23821,17 +22081,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -23894,8 +22145,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -23903,8 +22154,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -23960,8 +22211,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -23969,8 +22220,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -24032,17 +22283,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -24110,17 +22352,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -24195,17 +22428,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -24279,17 +22503,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -24363,17 +22578,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -24444,17 +22650,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -24519,17 +22716,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -24605,17 +22793,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -24677,17 +22856,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -24763,17 +22933,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -24841,17 +23002,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -24923,17 +23075,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25000,8 +23143,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25009,8 +23152,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25058,8 +23201,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25067,8 +23210,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25130,8 +23273,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25139,8 +23282,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25208,17 +23351,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25289,17 +23423,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25361,17 +23486,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25427,8 +23543,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25436,8 +23552,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25499,17 +23615,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25579,17 +23686,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25656,8 +23754,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25665,8 +23763,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25716,8 +23814,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25725,8 +23823,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25790,8 +23888,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25799,8 +23897,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25859,8 +23957,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25868,8 +23966,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25924,8 +24022,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25933,8 +24031,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25986,8 +24084,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -25995,8 +24093,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -26065,8 +24163,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -26074,8 +24172,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -26132,17 +24230,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -26208,17 +24297,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -26288,17 +24368,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -26359,17 +24430,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -26440,17 +24502,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -26499,25 +24552,25 @@ export interface operations {
                             type: string;
                             alg: number;
                         }[];
-                        timeout?: number | null;
-                        excludeCredentials?: {
+                        timeout: number | null;
+                        excludeCredentials: {
                             id: string;
                             type: string;
-                            transports?: ('ble' | 'cable' | 'hybrid' | 'internal' | 'nfc' | 'smart-card' | 'usb')[];
+                            transports: ('ble' | 'cable' | 'hybrid' | 'internal' | 'nfc' | 'smart-card' | 'usb')[];
                         }[] | null;
-                        authenticatorSelection?: {
+                        authenticatorSelection: {
                             /** @enum {string} */
-                            authenticatorAttachment?: 'cross-platform' | 'platform';
-                            requireResidentKey?: boolean;
+                            authenticatorAttachment: 'cross-platform' | 'platform';
+                            requireResidentKey: boolean;
                             /** @enum {string} */
-                            userVerification?: 'discouraged' | 'preferred' | 'required';
+                            userVerification: 'discouraged' | 'preferred' | 'required';
                         } | null;
                         /** @enum {string|null} */
-                        attestation?: 'direct' | 'enterprise' | 'indirect' | 'none' | null;
-                        extensions?: {
-                            appid?: string | null;
-                            credProps?: boolean | null;
-                            hmacCreateSecret?: boolean | null;
+                        attestation: 'direct' | 'enterprise' | 'indirect' | 'none' | null;
+                        extensions: {
+                            appid: string | null;
+                            credProps: boolean | null;
+                            hmacCreateSecret: boolean | null;
                         } | null;
                     };
                 };
@@ -26549,17 +24602,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -26589,13 +24633,10 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK (with results) */
-            200: {
+            /** @description OK (without any results) */
+            204: {
                 headers: {
                     [name: string]: unknown;
-                };
-                content: {
-                    'application/json': Record<string, never>;
                 };
             };
             /** @description Client error */
@@ -26625,17 +24666,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -26697,17 +24729,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -26736,13 +24759,10 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK (with results) */
-            200: {
+            /** @description OK (without any results) */
+            204: {
                 headers: {
                     [name: string]: unknown;
-                };
-                content: {
-                    'application/json': Record<string, never>;
                 };
             };
             /** @description Client error */
@@ -26772,17 +24792,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -26858,17 +24869,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -26947,17 +24949,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -27017,17 +25010,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -27090,17 +25074,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -27162,17 +25137,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -27234,17 +25200,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -27298,17 +25255,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -27371,17 +25319,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -27444,17 +25383,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -27517,17 +25447,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -27600,17 +25521,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -27673,17 +25585,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -27746,17 +25649,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -27819,17 +25713,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -27909,17 +25794,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -27994,17 +25870,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -28075,17 +25942,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -28147,17 +26005,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -28228,17 +26077,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -28310,17 +26150,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -28391,17 +26222,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -28472,17 +26294,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -28555,17 +26368,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -28649,17 +26453,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -28743,17 +26538,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -28837,17 +26623,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -28918,17 +26695,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -28993,17 +26761,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -29065,17 +26824,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -29136,17 +26886,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -29213,17 +26954,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -29289,17 +27021,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -29369,17 +27092,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -29445,17 +27159,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -29523,17 +27228,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -29597,17 +27293,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -29667,17 +27354,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -29742,17 +27420,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -29816,17 +27485,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -29897,17 +27557,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -29969,17 +27620,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -30044,17 +27686,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -30339,26 +27972,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unprocessable content */
-            422: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -30429,17 +28044,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -30505,17 +28111,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -30597,17 +28194,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -30688,17 +28276,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -30760,17 +28339,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -30827,17 +28397,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -30902,17 +28463,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -30980,17 +28532,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -31066,17 +28609,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -31133,17 +28667,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -31205,17 +28730,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -31274,17 +28790,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -31355,17 +28862,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -31421,8 +28919,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -31430,8 +28928,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -31501,17 +28999,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -31575,17 +29064,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -31656,17 +29136,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -31737,17 +29208,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -31814,17 +29276,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -31893,8 +29346,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -31902,8 +29355,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -31973,8 +29426,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -31982,8 +29435,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -32047,8 +29500,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -32056,8 +29509,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -32113,8 +29566,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -32122,8 +29575,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -32183,8 +29636,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -32192,8 +29645,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -32308,17 +29761,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -32389,17 +29833,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -32465,17 +29900,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -32587,17 +30013,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -32668,17 +30085,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -32750,17 +30158,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -32866,17 +30265,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -32929,7 +30319,7 @@ export interface operations {
                     filters?: {
                         /** @description the metadata string property to filter on. Can filter on nested properties using an array. such as `["location", "postalCode"]`. */
                         key?: string[];
-                        /** @description The values to match the metadata against (case insensitive partial match). Each item in this array is applied as an OR. Include null to indicate match on missing metadata */
+                        /** @description The values to match the metadata against (case insensitive regex). Each item in this array is applied as an OR. Include null to indicate match on missing metadata */
                         values?: (string | null)[];
                     }[] | null;
                     /**
@@ -32968,8 +30358,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -32977,17 +30367,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Too many requests */
-            429: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -33049,17 +30430,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -33130,17 +30502,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -33198,8 +30561,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -33207,8 +30570,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -33278,8 +30641,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -33287,8 +30650,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -33350,8 +30713,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -33359,8 +30722,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -33449,17 +30812,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -33533,8 +30887,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -33542,8 +30896,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -33617,17 +30971,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -33694,17 +31039,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -33779,17 +31115,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -33852,17 +31179,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -33927,8 +31245,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -33936,8 +31254,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -34000,17 +31318,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -34072,17 +31381,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -34155,8 +31455,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -34164,8 +31464,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -34229,8 +31529,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -34238,8 +31538,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -34321,8 +31621,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -34330,8 +31630,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -34409,8 +31709,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -34418,8 +31718,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -34475,8 +31775,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -34484,8 +31784,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -34548,8 +31848,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -34557,8 +31857,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -34627,17 +31927,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -34699,17 +31990,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -34780,17 +32062,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -34877,17 +32150,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -34962,17 +32226,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -35034,17 +32289,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -35109,15 +32355,10 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK (with results) */
-            200: {
+            /** @description OK (without any results) */
+            204: {
                 headers: {
                     [name: string]: unknown;
-                };
-                content: {
-                    'application/json': {
-                        updatedNote: components['schemas']['Note'];
-                    };
                 };
             };
             /** @description Client error */
@@ -35147,17 +32388,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -35258,17 +32490,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -35331,17 +32554,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -35404,17 +32618,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -35468,17 +32673,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -35532,17 +32728,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -35615,17 +32802,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -35709,17 +32887,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -35790,17 +32959,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -35848,8 +33008,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -35857,8 +33017,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -35920,17 +33080,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -35989,8 +33140,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -35998,8 +33149,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -36061,17 +33212,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -36149,17 +33291,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -36218,8 +33351,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -36227,8 +33360,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -36276,8 +33409,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -36285,8 +33418,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -36348,17 +33481,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -36420,17 +33544,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -36501,17 +33616,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -36582,17 +33688,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -36645,8 +33742,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -36654,8 +33751,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -36709,8 +33806,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -36718,8 +33815,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -36772,8 +33869,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -36781,8 +33878,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -36837,8 +33934,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -36846,8 +33943,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -36904,17 +34001,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -36987,17 +34075,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37053,8 +34132,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37062,8 +34141,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37131,8 +34210,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37140,8 +34219,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37202,8 +34281,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37211,8 +34290,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37268,8 +34347,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37277,8 +34356,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37353,17 +34432,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37437,17 +34507,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37499,8 +34560,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37508,8 +34569,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37578,17 +34639,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37658,8 +34710,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37667,8 +34719,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37725,8 +34777,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37734,8 +34786,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37810,8 +34862,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37819,8 +34871,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37876,8 +34928,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37885,8 +34937,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37950,8 +35002,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -37959,8 +35011,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -38020,8 +35072,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -38029,8 +35081,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -38094,8 +35146,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -38103,8 +35155,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -38173,8 +35225,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -38182,8 +35234,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -38253,8 +35305,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -38262,8 +35314,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -38327,8 +35379,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -38336,8 +35388,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -38398,8 +35450,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -38407,8 +35459,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -38472,17 +35524,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -38553,17 +35596,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -38625,17 +35659,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -38697,17 +35722,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -38771,17 +35787,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -38838,17 +35845,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -38910,17 +35908,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -38977,17 +35966,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -39051,17 +36031,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -39126,17 +36097,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -39203,17 +36165,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -39279,17 +36232,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -39353,17 +36297,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -39429,17 +36364,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -39501,17 +36427,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -39573,17 +36490,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -39667,17 +36575,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -39742,17 +36641,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -39816,17 +36706,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -39890,17 +36771,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -39979,17 +36851,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -40051,17 +36914,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -40128,17 +36982,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -40203,17 +37048,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -40289,8 +37125,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -40298,8 +37134,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -40363,8 +37199,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -40372,8 +37208,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -40437,8 +37273,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -40446,8 +37282,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -40514,17 +37350,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -40610,17 +37437,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -40683,17 +37501,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -40768,17 +37577,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -40840,8 +37640,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -40849,8 +37649,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -40913,8 +37713,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Not found */
-            404: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -40922,17 +37722,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -41010,8 +37801,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -41019,8 +37810,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -41095,17 +37886,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -41169,17 +37951,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -41283,17 +38056,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    'application/json': components['schemas']['Error'];
-                };
-            };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -41345,8 +38109,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Payload too large */
-            413: {
+            /** @description Forbidden error */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -41354,8 +38118,8 @@ export interface operations {
                     'application/json': components['schemas']['Error'];
                 };
             };
-            /** @description Unsupported media type */
-            415: {
+            /** @description I'm Ai */
+            418: {
                 headers: {
                     [name: string]: unknown;
                 };

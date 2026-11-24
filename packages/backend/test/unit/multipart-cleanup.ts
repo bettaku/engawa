@@ -9,7 +9,6 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { ApiCallService } from '@/server/api/ApiCallService.js';
 import { AuthenticationError } from '@/server/api/AuthenticateService.js';
 import { ApiError } from '@/server/api/error.js';
-import { loadEnvironment } from '@/config/environment.js';
 
 const temporary = vi.hoisted(() => ({ paths: [] as string[] }));
 vi.mock('@/misc/create-temp.js', async (importOriginal) => {
@@ -33,7 +32,7 @@ afterEach(() => {
 function fixture() {
 	const authenticate = vi.fn().mockResolvedValue([{ id: 'user' }, null, null]);
 	const service = new ApiCallService(
-		{ enableIpLogging: false } as never, { runtime: loadEnvironment().runtime } as never, {} as never,
+		{ enableIpLogging: false } as never, {} as never, {} as never,
 		{ authenticate } as never, {} as never, {} as never,
 		{ logger: { error: vi.fn() } } as never,
 	);
@@ -66,8 +65,7 @@ describe('multipart temporary file ownership', () => {
 		await f.run();
 		expect(f.authenticate).toHaveBeenCalledWith('app-token');
 		expect(f.reply.send).toHaveBeenCalledWith({ id: 'uploaded' });
-		// cleanupは非同期にunlinkするので、消えるまで待つ
-		await vi.waitFor(() => expect(existsSync(temporary.paths[0])).toBe(false));
+		expect(existsSync(temporary.paths[0])).toBe(false);
 	});
 
 	test('cleans up rejected authentication', async () => {
@@ -76,8 +74,7 @@ describe('multipart temporary file ownership', () => {
 		await f.run();
 		expect(f.reply.code).toHaveBeenCalledWith(401);
 		expect(f.call).not.toHaveBeenCalled();
-		// cleanupは非同期にunlinkするので、消えるまで待つ
-		await vi.waitFor(() => expect(existsSync(temporary.paths[0])).toBe(false));
+		expect(existsSync(temporary.paths[0])).toBe(false);
 	});
 
 	test.each([401, 403, 429, 400, 500])('cleans up an API failure (%i)', async (status) => {
@@ -85,8 +82,7 @@ describe('multipart temporary file ownership', () => {
 		f.call.mockRejectedValue(new ApiError({ message: 'Rejected', code: 'REJECTED', id: 'test', httpStatusCode: status }));
 		await f.run();
 		expect(f.reply.code).toHaveBeenCalledWith(status);
-		// cleanupは非同期にunlinkするので、消えるまで待つ
-		await vi.waitFor(() => expect(existsSync(temporary.paths[0])).toBe(false));
+		expect(existsSync(temporary.paths[0])).toBe(false);
 	});
 
 	test('cleans up malformed credentials before authentication', async () => {
@@ -96,8 +92,7 @@ describe('multipart temporary file ownership', () => {
 		expect(f.reply.code).toHaveBeenCalledWith(400);
 		expect(f.reply.send).toHaveBeenCalled();
 		expect(f.authenticate).not.toHaveBeenCalled();
-		// cleanupは非同期にunlinkするので、消えるまで待つ
-		await vi.waitFor(() => expect(existsSync(temporary.paths[0])).toBe(false));
+		expect(existsSync(temporary.paths[0])).toBe(false);
 	});
 
 	test('cleans up truncated uploads', async () => {
@@ -106,8 +101,7 @@ describe('multipart temporary file ownership', () => {
 		await f.run();
 		expect(f.reply.code).toHaveBeenCalledWith(413);
 		expect(f.authenticate).not.toHaveBeenCalled();
-		// cleanupは非同期にunlinkするので、消えるまで待つ
-		await vi.waitFor(() => expect(existsSync(temporary.paths[0])).toBe(false));
+		expect(existsSync(temporary.paths[0])).toBe(false);
 	});
 
 	test('cleans up a stream that fails after writing data', async () => {
@@ -118,8 +112,7 @@ describe('multipart temporary file ownership', () => {
 		})()), { truncated: false });
 		await expect(f.run()).rejects.toThrow('connection aborted');
 		expect(f.authenticate).not.toHaveBeenCalled();
-		// cleanupは非同期にunlinkするので、消えるまで待つ
-		await vi.waitFor(() => expect(existsSync(temporary.paths[0])).toBe(false));
+		expect(existsSync(temporary.paths[0])).toBe(false);
 	});
 
 	test('tolerates endpoint-owned removal of the same file', async () => {
@@ -128,7 +121,6 @@ describe('multipart temporary file ownership', () => {
 			unlinkSync(temporary.paths[0]);
 		});
 		await f.run();
-		// cleanupは非同期にunlinkするので、消えるまで待つ
-		await vi.waitFor(() => expect(existsSync(temporary.paths[0])).toBe(false));
+		expect(existsSync(temporary.paths[0])).toBe(false);
 	});
 });

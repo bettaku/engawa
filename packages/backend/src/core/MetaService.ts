@@ -10,24 +10,16 @@ import { DI } from '@/di-symbols.js';
 import { MiMeta } from '@/models/Meta.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { bindThis } from '@/decorators.js';
-import type { Config } from '@/config.js';
-import { isInternalEventRef, type GlobalEvents } from '@/core/GlobalEventService.js';
+import type { GlobalEvents } from '@/core/GlobalEventService.js';
 import { FeaturedService } from '@/core/FeaturedService.js';
 import type { OnApplicationShutdown } from '@nestjs/common';
-import { onRedisReconnected } from '@/misc/redis-reconnected.js';
 
 @Injectable()
 export class MetaService implements OnApplicationShutdown {
-	private readonly offRedisReconnected: () => void;
 	private cache: MiMeta | undefined;
-	/** キャッシュを捨てる・置き換えるたびに進める。それより前に始めたDBの読み込みの結果はキャッシュしない */
-	private cacheGeneration = 0;
 	private intervalId: NodeJS.Timeout;
 
 	constructor(
-		@Inject(DI.config)
-		private config: Config,
-
 		@Inject(DI.redisForSub)
 		private redisForSub: Redis.Redis,
 
@@ -39,17 +31,16 @@ export class MetaService implements OnApplicationShutdown {
 	) {
 		//this.onMessage = this.onMessage.bind(this);
 
-		if (!this.config.runtime.test.disablePeriodicTasks) {
+		if (process.env.NODE_ENV !== 'test') {
 			this.intervalId = setInterval(() => {
-				// キャッシュはfetchの中で更新する（読み込み中にイベントで更新されていれば更新しない）
-				this.fetch(true).catch(err => {
-					console.error('Failed to refresh the meta cache', err);
+				this.fetch(true).then(meta => {
+					// fetch内でもセットしてるけど仕様変更の可能性もあるため一応
+					this.cache = meta;
 				});
 			}, 1000 * 60 * 5);
 		}
 
 		this.redisForSub.on('message', this.onMessage);
-		this.offRedisReconnected = onRedisReconnected(this.redisForSub, this.onRedisReconnected);
 	}
 
 	@bindThis
@@ -60,15 +51,10 @@ export class MetaService implements OnApplicationShutdown {
 			const { type, body } = obj.message as GlobalEvents['internal']['payload'];
 			switch (type) {
 				case 'metaUpdated': {
-					if (isInternalEventRef(body)) {
-						// 新本文は値を持たないので、次の取得でDBから読み直す
-						this.setCache(undefined);
-						break;
-					}
-					this.setCache({ // TODO: このあたりのデシリアライズ処理は各modelファイル内に関数としてexportしたい
+					this.cache = { // TODO: このあたりのデシリアライズ処理は各modelファイル内に関数としてexportしたい
 						...(body.after),
 						rootUser: null, // joinなカラムは通常取ってこないので
-					});
+					};
 					break;
 				}
 				default:
@@ -81,11 +67,6 @@ export class MetaService implements OnApplicationShutdown {
 	public async fetch(noCache = false): Promise<MiMeta> {
 		if (!noCache && this.cache) return this.cache;
 
-		const generation = this.cacheGeneration;
-		const cacheIfNotChanged = (meta: MiMeta) => {
-			if (generation === this.cacheGeneration) this.setCache(meta);
-		};
-
 		return await this.db.transaction(async transactionalEntityManager => {
 			// 過去のバグでレコードが複数出来てしまっている可能性があるので新しいIDを優先する
 			const metas = await transactionalEntityManager.find(MiMeta, {
@@ -97,7 +78,7 @@ export class MetaService implements OnApplicationShutdown {
 			const meta = metas[0];
 
 			if (meta) {
-				cacheIfNotChanged(meta);
+				this.cache = meta;
 				return meta;
 			} else {
 				// metaが空のときfetchMetaが同時に呼ばれるとここが同時に呼ばれてしまうことがあるのでフェイルセーフなupsertを使う
@@ -111,7 +92,7 @@ export class MetaService implements OnApplicationShutdown {
 					)
 					.then((x) => transactionalEntityManager.findOneByOrFail(MiMeta, x.identifiers[0]));
 
-				cacheIfNotChanged(saved);
+				this.cache = saved;
 				return saved;
 			}
 		});
@@ -168,23 +149,8 @@ export class MetaService implements OnApplicationShutdown {
 		return updated;
 	}
 
-	/**
-	 * Pub/Subをつなぎ直したとき。切れている間のイベントを受け取れていないので、イベントで更新しているキャッシュを捨てる
-	 */
-	@bindThis
-	private onRedisReconnected(): void {
-		this.setCache(undefined);
-	}
-
-	@bindThis
-	private setCache(meta: MiMeta | undefined): void {
-		this.cacheGeneration++;
-		this.cache = meta;
-	}
-
 	@bindThis
 	public dispose(): void {
-		this.offRedisReconnected();
 		clearInterval(this.intervalId);
 		this.redisForSub.off('message', this.onMessage);
 	}

@@ -58,18 +58,12 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private noteHistoryEntityService: NoteHistoryEntityService,
 		private noteHistoryService: NoteHistorySerivce,
 		private getterService: GetterService,
-		private noteEntityService: NoteEntityService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			const note = await this.getterService.getNote(ps.noteId).catch(err => {
 				if (err.id === '9725d0ce-ba28-4dde-95a7-2cbb2c15de24') throw new ApiError(meta.errors.noSuchNote);
 				throw err;
 			});
-			// いま閲覧できないノートは、過去の内容も返さない（存在しない場合と同じ応答にする）
-			if (!(await this.noteEntityService.isCurrentlyVisibleForMe(note, me?.id ?? null))) {
-				throw new ApiError(meta.errors.noSuchNote);
-			}
-
 			const note_history = await this.noteHistoryService.getHistory(note.id, ps.limit, ps.sinceId, ps.untilId);
 			if (!note_history) {
 				return [];

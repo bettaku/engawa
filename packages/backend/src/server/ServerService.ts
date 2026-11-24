@@ -123,7 +123,7 @@ export class ServerService implements OnApplicationShutdown {
 					return;
 				}
 
-				const effectiveLocation = this.config.runtime.production.requireHttps ? location : location.replace(/^http:\/\//, 'https://');
+				const effectiveLocation = process.env.NODE_ENV === 'production' ? location : location.replace(/^http:\/\//, 'https://');
 				if (effectiveLocation.startsWith(`https://${this.config.host}/`)) {
 					done();
 					return;

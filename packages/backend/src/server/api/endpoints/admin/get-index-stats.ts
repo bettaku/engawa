@@ -19,8 +19,8 @@ export const meta = {
 		items: {
 			type: 'object',
 			properties: {
-				tablename: { optional: false, type: 'string' },
-				indexname: { optional: false, type: 'string' },
+				tablename: { type: 'string' },
+				indexname: { type: 'string' },
 			},
 		},
 	},

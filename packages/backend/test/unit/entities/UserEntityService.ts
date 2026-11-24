@@ -4,9 +4,7 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { vi } from 'vitest';
 import type { MiUser } from '@/models/User.js';
-import type { MiNote } from '@/models/Note.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { GlobalModule } from '@/GlobalModule.js';
 import { CoreModule } from '@/core/CoreModule.js';
@@ -15,8 +13,8 @@ import { genAidx } from '@/misc/id/aidx.js';
 import {
 	BlockingsRepository,
 	FollowingsRepository, FollowRequestsRepository,
-	MiUserProfile, MutingsRepository, NotesRepository, RenoteMutingsRepository,
-	UserMemoRepository, UserNotePiningsRepository,
+	MiUserProfile, MutingsRepository, RenoteMutingsRepository,
+	UserMemoRepository,
 	UserProfilesRepository,
 	UsersRepository,
 } from '@/models/_.js';
@@ -68,10 +66,6 @@ describe('UserEntityService', () => {
 		let blockingRepository: BlockingsRepository;
 		let mutingRepository: MutingsRepository;
 		let renoteMutingsRepository: RenoteMutingsRepository;
-		let notesRepository: NotesRepository;
-		let userNotePiningsRepository: UserNotePiningsRepository;
-		let noteEntityService: NoteEntityService;
-		let apPersonService: ApPersonService;
 
 		async function createUser(userData: Partial<MiUser> = {}, profileData: Partial<MiUserProfile> = {}) {
 			const un = secureRndstr(16);
@@ -201,24 +195,7 @@ describe('UserEntityService', () => {
 			blockingRepository = app.get<BlockingsRepository>(DI.blockingsRepository);
 			mutingRepository = app.get<MutingsRepository>(DI.mutingsRepository);
 			renoteMutingsRepository = app.get<RenoteMutingsRepository>(DI.renoteMutingsRepository);
-			notesRepository = app.get<NotesRepository>(DI.notesRepository);
-			userNotePiningsRepository = app.get<UserNotePiningsRepository>(DI.userNotePiningsRepository);
-			noteEntityService = app.get<NoteEntityService>(NoteEntityService);
-			apPersonService = app.get<ApPersonService>(ApPersonService);
 		});
-
-		async function createNote(user: MiUser, data: Partial<MiNote> = {}) {
-			const id = genAidx(Date.now());
-			await notesRepository.insert({
-				id,
-				text: `note_${id}`,
-				userId: user.id,
-				userHost: user.host,
-				visibility: 'public',
-				...data,
-			});
-			return await notesRepository.findOneByOrFail({ id });
-		}
 
 		afterAll(async () => {
 			await app.close();
@@ -549,87 +526,6 @@ describe('UserEntityService', () => {
 						expect(actual.isRenoteMuted).toBe(true);
 					}
 				}
-			});
-		});
-
-		describe('packは書き込み・外部通信をしない（P3-3）', () => {
-			test('未ログインでも、packManyはpackと同じくピン留めしたノートを返す', async () => {
-				const who = await createUser();
-				const note = await createNote(who);
-				await userNotePiningsRepository.insert({ id: genAidx(Date.now()), userId: who.id, noteId: note.id });
-
-				const single = await service.pack(who, null, { schema: 'UserDetailed' }) as any;
-				const [many] = await service.packMany([who], null, { schema: 'UserDetailed' }) as any[];
-
-				expect(single.pinnedNoteIds).toEqual([note.id]);
-				expect(many.pinnedNoteIds).toEqual(single.pinnedNoteIds);
-				expect(many.pinnedNotes.map((n: { id: string }) => n.id)).toEqual(single.pinnedNotes.map((n: { id: string }) => n.id));
-			});
-
-			test('movedTo・alsoKnownAsは登録済みのユーザーだけを返し、リモートへ問い合わせない', async () => {
-				const resolve = vi.spyOn(apPersonService, 'resolvePerson');
-				const fetch = vi.spyOn(apPersonService, 'fetchPerson');
-				try {
-					const target = await createUser({ host: 'remote.example.com', uri: `https://remote.example.com/users/${secureRndstr(8)}` });
-					const unknownUri = `https://remote.example.com/users/${secureRndstr(8)}`;
-					const moved = await createUser({ movedToUri: target.uri, alsoKnownAs: [target.uri as string, unknownUri] });
-					const movedToUnknown = await createUser({ movedToUri: unknownUri });
-
-					const packed = await service.pack(moved, null, { schema: 'UserDetailed' }) as any;
-					const packedUnknown = await service.pack(movedToUnknown, null, { schema: 'UserDetailed' }) as any;
-
-					expect(packed.movedTo).toBe(target.id);
-					expect(packed.alsoKnownAs).toEqual([target.id]);
-					expect(packedUnknown.movedTo).toBeNull();
-					expect(await usersRepository.existsBy({ uri: unknownUri })).toBe(false);
-					expect(resolve).not.toHaveBeenCalled();
-					expect(fetch).not.toHaveBeenCalled();
-				} finally {
-					resolve.mockRestore();
-					fetch.mockRestore();
-				}
-			});
-
-			test('ローカルユーザーのURIの移行先も、DBから引く', async () => {
-				const target = await createUser();
-				const moved = await createUser({ movedToUri: service.genLocalUserUri(target.id) });
-
-				const packed = await service.pack(moved, null, { schema: 'UserDetailed' }) as any;
-
-				expect(packed.movedTo).toBe(target.id);
-			});
-
-			test('返信のdetailは1段までにする（§8-7）', async () => {
-				const who = await createUser();
-				const root = await createNote(who);
-				const reply1 = await createNote(who, { replyId: root.id, replyUserId: who.id });
-				const reply2 = await createNote(who, { replyId: reply1.id, replyUserId: who.id });
-				const reply3 = await createNote(who, { replyId: reply2.id, replyUserId: who.id });
-
-				const packed = await noteEntityService.pack(reply3.id, who) as any;
-
-				// 直接の返信はdetail（返信先を持つ）、その返信先はdetailではない（返信先を持たない）
-				expect(packed.reply.id).toBe(reply2.id);
-				expect(packed.reply.reply.id).toBe(reply1.id);
-				expect(packed.reply.reply).not.toHaveProperty('reply');
-				expect(packed.reply.reply).not.toHaveProperty('clippedCount');
-			});
-
-			test('detailにしない返信でも、返信先の投稿者はフォロワー限定の返信を見られる', async () => {
-				const me = await createUser();
-				const other = await createUser();
-				const myNote = await createNote(me);
-				const followersReply = await createNote(other, { replyId: myNote.id, replyUserId: me.id, visibility: 'followers' });
-				const reply1 = await createNote(me, { replyId: followersReply.id, replyUserId: other.id });
-				const reply2 = await createNote(me, { replyId: reply1.id, replyUserId: me.id });
-
-				const packed = await noteEntityService.pack(reply2.id, me) as any;
-
-				// 2段目（detailではない）のフォロワー限定の返信は、meのノートへの返信なので隠さない
-				expect(packed.reply.reply.id).toBe(followersReply.id);
-				expect(packed.reply.reply).not.toHaveProperty('reply');
-				expect(packed.reply.reply.isHidden).toBeUndefined();
-				expect(packed.reply.reply.text).toBe(followersReply.text);
 			});
 		});
 	});

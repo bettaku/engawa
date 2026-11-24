@@ -21,7 +21,7 @@ import {
 import pkceChallenge from 'pkce-challenge';
 import { JSDOM } from 'jsdom';
 import Fastify, { type FastifyInstance, type FastifyReply } from 'fastify';
-import { api, port, setRuntimeTestOption, signup } from '../utils.js';
+import { api, port, sendEnvUpdateRequest, signup } from '../utils.js';
 import type * as misskey from 'cherrypick-js';
 
 const host = `http://127.0.0.1:${port}`;
@@ -172,7 +172,7 @@ describe('OAuth', () => {
 	}, 1000 * 60 * 2);
 
 	beforeEach(async () => {
-		await setRuntimeTestOption('skipOAuthClientIpCheck', true);
+		await sendEnvUpdateRequest({ key: 'CHERRYPICK_TEST_CHECK_IP_RANGE', value: '' });
 		sender = (reply): void => {
 			reply.send(`
 				<!DOCTYPE html>
@@ -884,7 +884,7 @@ describe('OAuth', () => {
 		});
 
 		test('Disallow loopback', async () => {
-			await setRuntimeTestOption('skipOAuthClientIpCheck', false);
+			await sendEnvUpdateRequest({ key: 'CHERRYPICK_TEST_CHECK_IP_RANGE', value: '1' });
 
 			const client = new AuthorizationCode(clientConfig);
 			const response = await fetch(client.authorizeURL({

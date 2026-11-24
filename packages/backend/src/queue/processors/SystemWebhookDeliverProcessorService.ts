@@ -4,6 +4,7 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
+import * as Bull from 'bullmq';
 import { DI } from '@/di-symbols.js';
 import type { SystemWebhooksRepository } from '@/models/_.js';
 import type { Config } from '@/config.js';
@@ -12,9 +13,7 @@ import { HttpRequestService } from '@/core/HttpRequestService.js';
 import { StatusError } from '@/misc/status-error.js';
 import { bindThis } from '@/decorators.js';
 import { QueueLoggerService } from '../QueueLoggerService.js';
-import { JobResult, toBullOutcome } from '../job-result.js';
-import type { SystemWebhookDeliverJobData } from '../types.js';
-import type * as Bull from 'bullmq';
+import { SystemWebhookDeliverJobData } from '../types.js';
 
 @Injectable()
 export class SystemWebhookDeliverProcessorService {
@@ -35,60 +34,38 @@ export class SystemWebhookDeliverProcessorService {
 
 	@bindThis
 	public async process(job: Bull.Job<SystemWebhookDeliverJobData>): Promise<string> {
-		return toBullOutcome(await this.deliver(job.data));
-	}
-
-	/**
-	 * 送信先と`secret`を決める。v1はpayloadの値を使う。v2は処理時にDBから読み、
-	 * webhookが削除・無効化されていれば送らない（nullを返す）。
-	 */
-	@bindThis
-	private async resolveTarget(data: SystemWebhookDeliverJobData): Promise<{ url: string; secret: string; } | null> {
-		if (data.v === 2) {
-			const webhook = await this.systemWebhooksRepository.findOneBy({ id: data.webhookId });
-			if (webhook == null || !webhook.isActive) return null;
-			return { url: webhook.url, secret: webhook.secret };
-		}
-		return { url: data.to, secret: data.secret };
-	}
-
-	@bindThis
-	public async deliver(data: SystemWebhookDeliverJobData): Promise<JobResult> {
-		const target = await this.resolveTarget(data);
-		if (target == null) {
-			return JobResult.done(`skip: webhook ${data.webhookId} was deleted or deactivated`);
-		}
-
 		try {
-			this.logger.debug(`delivering ${data.webhookId}`);
+			this.logger.debug(`delivering ${job.data.webhookId}`);
 
-			const res = await this.httpRequestService.send(target.url, {
+			const res = await this.httpRequestService.send(job.data.to, {
 				method: 'POST',
 				headers: {
 					'User-Agent': 'Misskey-Hooks',
 					'X-Misskey-Host': this.config.host,
-					'X-Misskey-Hook-Id': data.webhookId,
-					'X-Misskey-Hook-Secret': target.secret,
+					'X-Misskey-Hook-Id': job.data.webhookId,
+					'X-Misskey-Hook-Secret': job.data.secret,
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
 					server: this.config.url,
-					hookId: data.webhookId,
-					eventId: data.eventId,
-					createdAt: data.createdAt,
-					type: data.type,
-					body: data.content,
+					hookId: job.data.webhookId,
+					eventId: job.data.eventId,
+					createdAt: job.data.createdAt,
+					type: job.data.type,
+					body: job.data.content,
 				}),
 			});
 
-			this.systemWebhooksRepository.update({ id: data.webhookId }, {
+			this.systemWebhooksRepository.update({ id: job.data.webhookId }, {
 				latestSentAt: new Date(),
 				latestStatus: res.status,
 			});
 
-			return JobResult.done('Success');
+			return 'Success';
 		} catch (res) {
-			this.systemWebhooksRepository.update({ id: data.webhookId }, {
+			this.logger.error(res as Error);
+
+			this.systemWebhooksRepository.update({ id: job.data.webhookId }, {
 				latestSentAt: new Date(),
 				latestStatus: res instanceof StatusError ? res.statusCode : 1,
 			});
@@ -96,11 +73,11 @@ export class SystemWebhookDeliverProcessorService {
 			if (res instanceof StatusError) {
 				// 4xx
 				if (!res.isRetryable) {
-					return JobResult.fail(`${res.statusCode} ${res.statusMessage}`);
+					throw new Bull.UnrecoverableError(`${res.statusCode} ${res.statusMessage}`);
 				}
 
 				// 5xx etc.
-				return JobResult.retry(`${res.statusCode} ${res.statusMessage}`);
+				throw new Error(`${res.statusCode} ${res.statusMessage}`);
 			} else {
 				// DNS error, socket error, timeout ...
 				throw res;

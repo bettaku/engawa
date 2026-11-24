@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { execPipeline } from '@/misc/redis-pipeline.js';
 import { Inject, Injectable } from '@nestjs/common';
 import * as Redis from 'ioredis';
 import { In } from 'typeorm';
@@ -23,7 +22,7 @@ import { bindThis } from '@/decorators.js';
 import { CacheService } from '@/core/CacheService.js';
 import type { RoleCondFormulaValue } from '@/models/Role.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
-import { isInternalEventRef, type GlobalEvents } from '@/core/GlobalEventService.js';
+import type { GlobalEvents } from '@/core/GlobalEventService.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { IdService } from '@/core/IdService.js';
 import { ModerationLogService } from '@/core/ModerationLogService.js';
@@ -31,7 +30,6 @@ import type { Packed } from '@/misc/json-schema.js';
 import { FanoutTimelineService } from '@/core/FanoutTimelineService.js';
 import { NotificationService } from '@/core/NotificationService.js';
 import type { OnApplicationShutdown, OnModuleInit } from '@nestjs/common';
-import { onRedisReconnected } from '@/misc/redis-reconnected.js';
 
 // cherrypick-js の rolePolicies と同期すべし
 export type RolePolicies = {
@@ -136,7 +134,6 @@ export const DEFAULT_POLICIES: RolePolicies = {
 
 @Injectable()
 export class RoleService implements OnApplicationShutdown, OnModuleInit {
-	private readonly offRedisReconnected: () => void;
 	private rolesCache: MemorySingleCache<MiRole[]>;
 	private roleAssignmentByUserIdCache: MemoryKVCache<MiRoleAssignment[]>;
 	private notificationService: NotificationService;
@@ -178,7 +175,6 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 		this.roleAssignmentByUserIdCache = new MemoryKVCache<MiRoleAssignment[]>(1000 * 60 * 5); // 5m
 
 		this.redisForSub.on('message', this.onMessage);
-		this.offRedisReconnected = onRedisReconnected(this.redisForSub, this.onRedisReconnected);
 	}
 
 	async onModuleInit() {
@@ -193,11 +189,6 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 			const { type, body } = obj.message as GlobalEvents['internal']['payload'];
 			switch (type) {
 				case 'roleCreated': {
-					if (isInternalEventRef(body)) {
-						// 新本文は値を持たないので、次の取得でDBから読み直す
-						this.rolesCache.delete();
-						break;
-					}
 					const cached = this.rolesCache.get();
 					if (cached) {
 						cached.push({
@@ -209,10 +200,6 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 					break;
 				}
 				case 'roleUpdated': {
-					if (isInternalEventRef(body)) {
-						this.rolesCache.delete();
-						break;
-					}
 					const cached = this.rolesCache.get();
 					if (cached) {
 						const i = cached.findIndex(x => x.id === body.id);
@@ -234,10 +221,6 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 					break;
 				}
 				case 'userRoleAssigned': {
-					if (isInternalEventRef(body)) {
-						this.roleAssignmentByUserIdCache.delete(body.userId);
-						break;
-					}
 					const cached = this.roleAssignmentByUserIdCache.get(body.userId);
 					if (cached) {
 						cached.push({ // TODO: このあたりのデシリアライズ処理は各modelファイル内に関数としてexportしたい
@@ -680,14 +663,13 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 		const roles = await this.getUserRoles(note.userId);
 
 		const redisPipeline = this.redisForTimelines.pipeline();
-		const pending: Promise<unknown>[] = [];
 
 		for (const role of roles) {
-			this.fanoutTimelineService.push(`roleTimeline:${role.id}`, note.id, 1000, redisPipeline, pending);
+			this.fanoutTimelineService.push(`roleTimeline:${role.id}`, note.id, 1000, redisPipeline);
 			this.globalEventService.publishRoleTimelineStream(role.id, 'note', note);
 		}
 
-		await execPipeline(redisPipeline, pending);
+		redisPipeline.exec();
 	}
 
 	@bindThis
@@ -759,18 +741,8 @@ export class RoleService implements OnApplicationShutdown, OnModuleInit {
 		}
 	}
 
-	/**
-	 * Pub/Subをつなぎ直したとき。切れている間のイベントを受け取れていないので、イベントで更新しているキャッシュを捨てる
-	 */
-	@bindThis
-	private onRedisReconnected(): void {
-		this.rolesCache.delete();
-		this.roleAssignmentByUserIdCache.clear();
-	}
-
 	@bindThis
 	public dispose(): void {
-		this.offRedisReconnected();
 		this.redisForSub.off('message', this.onMessage);
 		this.roleAssignmentByUserIdCache.dispose();
 	}

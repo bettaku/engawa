@@ -3,8 +3,6 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { loadEnvironment } from '@/config/environment.js';
-
 const promiseRefs: Set<WeakRef<Promise<unknown>>> = new Set();
 
 /**
@@ -12,7 +10,7 @@ const promiseRefs: Set<WeakRef<Promise<unknown>>> = new Set();
  * and makes sure they are all settled before fully closing down the server.
  */
 export function trackPromise(promise: Promise<unknown>) {
-	if (!loadEnvironment().runtime.test.trackPromises) {
+	if (process.env.NODE_ENV !== 'test') {
 		return;
 	}
 	const ref = new WeakRef(promise);

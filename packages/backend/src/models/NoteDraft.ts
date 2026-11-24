@@ -151,7 +151,6 @@ export class MiNoteDraft {
 
 	// 予約日時
 	// これがあるだけでは実際に予約されているかどうかはわからない
-	@Index('IDX_note_draft_scheduledAt_pending', { where: '"isActuallyScheduled" = true AND "postedAt" IS NULL' })
 	@Column('timestamp with time zone', {
 		nullable: true,
 	})
@@ -205,33 +204,4 @@ export class MiNoteDraft {
 		enumName: 'note_searchableby_enum',
 	})
 	public searchableBy: typeof noteSearchableBy[number];
-
-	/**
-	 * 予約投稿で作成したノートのID。postedAtと同時に設定する。
-	 * ノートはその後に削除されうるので、外部キーにはしない。
-	 */
-	@Column({
-		...id(),
-		nullable: true,
-	})
-	public postedNoteId: MiNote['id'] | null;
-
-	/**
-	 * 予約投稿でノートを作成した時刻。ノートのinsertと同じトランザクションで設定する。
-	 * これが設定されたドラフトからは、ノートを再び作成しない（後処理だけを行う）。
-	 */
-	@Index('IDX_note_draft_postedAt', { where: '"postedAt" IS NOT NULL' })
-	@Column('timestamp with time zone', {
-		nullable: true,
-	})
-	public postedAt: Date | null;
-
-	/**
-	 * 照合ジョブが予約投稿のジョブを登録し直した回数。上限に達したら照合の対象から外す。
-	 * ドラフトを更新すると0に戻す。
-	 */
-	@Column('integer', {
-		default: 0,
-	})
-	public postAttempts: number;
 }

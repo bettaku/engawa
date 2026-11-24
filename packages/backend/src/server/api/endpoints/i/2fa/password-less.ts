@@ -10,7 +10,6 @@ import type { UserProfilesRepository, UserSecurityKeysRepository } from '@/model
 import { GlobalEventService } from '@/core/GlobalEventService.js';
 import { DI } from '@/di-symbols.js';
 import { ApiError } from '../../../error.js';
-import { CacheService } from '@/core/CacheService.js';
 
 export const meta = {
 	requireCredential: true,
@@ -45,7 +44,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 		private userEntityService: UserEntityService,
 		private globalEventService: GlobalEventService,
-		private cacheService: CacheService,
 	) {
 		super(meta, paramDef, async (ps, me) => {
 			if (ps.value === true) {
@@ -65,7 +63,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					await this.userProfilesRepository.update(me.id, {
 						usePasswordLessLogin: false,
 					});
-					await this.cacheService.userProfileCache.delete(me.id);
 
 					throw new ApiError(meta.errors.noKey);
 				}
@@ -74,7 +71,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			await this.userProfilesRepository.update(me.id, {
 				usePasswordLessLogin: ps.value,
 			});
-			await this.cacheService.userProfileCache.delete(me.id);
 
 			// Publish meUpdated event
 			this.globalEventService.publishMainStream(me.id, 'meUpdated', await this.userEntityService.pack(me.id, me, {

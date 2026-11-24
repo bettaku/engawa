@@ -9,7 +9,6 @@ import { Endpoint } from '@/server/api/endpoint-base.js';
 import { UserEntityService } from '@/core/entities/UserEntityService.js';
 import { DI } from '@/di-symbols.js';
 import { ApiError } from '../error.js';
-import { CacheService } from '@/core/CacheService.js';
 
 export const meta = {
 	tags: ['account'],
@@ -46,7 +45,6 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 		private userProfilesRepository: UserProfilesRepository,
 
 		private userEntityService: UserEntityService,
-		private cacheService: CacheService,
 	) {
 		super(meta, paramDef, async (ps, user, token, flashToken) => {
 			const isSecure = token == null && flashToken == null;
@@ -69,7 +67,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			if (!userProfile.loggedInDates.includes(today)) {
 				this.userProfilesRepository.update({ userId: user.id }, {
 					loggedInDates: [...userProfile.loggedInDates, today],
-				}).then(() => this.cacheService.userProfileCache.delete(user.id));
+				});
 				userProfile.loggedInDates = [...userProfile.loggedInDates, today];
 			}
 

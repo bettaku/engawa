@@ -36,7 +36,6 @@ import { extractApHashtags } from './tag.js';
 import { ApMentionService } from './ApMentionService.js';
 import { ApQuestionService } from './ApQuestionService.js';
 import { ApEventService } from './ApEventService.js';
-import type { noteSearchableBy } from '@/types.js';
 import { ApImageService } from './ApImageService.js';
 import type { Resolver } from '../ApResolverService.js';
 import type { IObject, IPost } from '../type.js';
@@ -157,13 +156,13 @@ export class ApNoteService {
 			throw new Error('Refusing to create note without id');
 		}
 
-		if (!checkHttps(note.id, this.config.runtime.production.requireHttps)) {
+		if (!checkHttps(note.id)) {
 			throw new Error('unexpected schema of note.id: ' + note.id);
 		}
 
 		const url = getOneApHrefNullable(note.url);
 
-		if (url && !checkHttps(url, this.config.runtime.production.requireHttps)) {
+		if (url && !checkHttps(url)) {
 			throw new Error('unexpected schema of note url: ' + url);
 		}
 
@@ -232,15 +231,15 @@ export class ApNoteService {
 		}
 
 		const searchableActivity = toArray(note.searchableBy);
-		let searchable: typeof noteSearchableBy[number];
+		let searchable: string[] = [];
 		if (searchableActivity.includes('https://www.w3.org/ns/activitystreams#Public')) {
-			searchable = 'public';
+			searchable = ['public'];
 		} else if (searchableActivity.includes('kmyblue:Limited') || searchableActivity.includes('as:Limited')) {
-			searchable = 'limited';
+			searchable = ['limited'];
 		} else if (searchableActivity.includes('/followers')) {
-			searchable = 'followers';
+			searchable = ['followers'];
 		} else {
-			searchable = 'reacted';
+			searchable = ['reacted'];
 		}
 
 		// 添付ファイル
@@ -360,7 +359,7 @@ export class ApNoteService {
 				event,
 				uri: note.id,
 				url: url,
-				searchableBy: note.searchableBy ? searchable : 'public',
+				searchableBy: note.searchableBy ? searchable : ['public'],
 				deleteAt: note.deleteAt ? new Date(note.deleteAt) : null,
 			}, silent);
 		} catch (err: any) {

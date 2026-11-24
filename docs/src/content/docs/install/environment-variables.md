@@ -1,9 +1,9 @@
 ---
 title: バックエンドの環境変数
 description: バックエンドが参照する環境変数の用途、既定値、設定ファイルとの優先順位
-lastUpdated: 2026-11-22
+lastUpdated: 2026-09-20
 sidebar:
-  order: 6
+  order: 5
 ---
 
 バックエンドが直接参照する環境変数をまとめています。依存ライブラリやNode.js自体が解釈する変数、テストランナーやフロントエンドのビルド専用の変数は含みません。
@@ -42,16 +42,6 @@ systemdやコンテナから起動する場合も同じで、そのプロセス�
 
 この変数はマイグレーションやアセットのビルドでも使われます。同じ設定を使うコマンドすべてに渡してください。
 
-### 設定の検証
-
-バックエンドのビルド後に、リポジトリのルートで `pnpm check:config [path]` を実行できます。DB や Redis への接続は不要です。パスを省略すると起動時と同じファイルを読み込み、YAML の内容と環境変数で補完した後の値を検証します。`--json` で診断を JSON として取得できます。終了コードは正常時 0、エラー時 1、警告のみの場合は 2 です。`--strict` を指定すると警告のみでも 1 になります。
-
-起動時は `CHERRYPICK_CONFIG_VALIDATION` で動作を選べます。既定の `warn` は問題を警告し、従来の設定値で起動を試みます。`error` は型や必須項目の違反で起動を中止します。未知キーと非推奨キーは警告になります。`off` は検証を省略します。
-
-このページの環境変数も、同じ仕組みで検証します。値の形式が決まっている変数（`NODE_ENV`、`VITE_PORT`、`1` だけで有効になる変数など）に不正な値を渡すとエラー、`CP_*` フラグに `0` や `false` を渡すと警告（無効にはならないため）、`CP_` や `CHERRYPICK_` で始まる未知の変数は警告になります。変数の一覧と形式は、設定のJSONスキーマ（`packages/backend/config.schema.json`）の `$defs.environment` にあります。
-
-Docker の `healthcheck.sh` は固定の `.config/default.yml` にある行頭の `port:` を読みます。設定パスやポートを環境変数で上書きした場合、または YAML のフロー記法を使う場合はコンテナのヘルスチェックを合わせて変更してください。
-
 ### NODE_ENVによる動作の違い
 
 `pnpm start` 自体は `NODE_ENV=production` を設定しません。リポジトリのDockerfileでは設定されていますが、直接起動する場合は明示してください。
@@ -81,7 +71,7 @@ Docker の `healthcheck.sh` は固定の `.config/default.yml` にある行頭�
 | `DATABASE_USER` | `db.user` | 空文字列 | PostgreSQLのユーザー名 |
 | `DATABASE_PASSWORD` | `db.pass` | 空文字列 | PostgreSQLのパスワード |
 
-`PORT` は `3000` のような、1〜65535 の整数を10進数字だけで指定してください。UNIXソケットを使う場合は、YAMLの `socket` が使われます。
+`PORT` は10進数の `parseInt` で解釈されるため、`3000` のような整数を指定してください。UNIXソケットを使う場合は、YAMLの `socket` が使われます。
 
 DBについては、`db` オブジェクト自体がYAMLに必要です。`DATABASE_HOST`、`DATABASE_PORT`、`DATABASE_URL` はこの設定読み込み処理では解釈されません。接続先はYAMLの `db.host` と `db.port` で指定してください。レプリカの `dbSlaves` にも、このフォールバックは適用されません。
 
@@ -98,7 +88,6 @@ DBについては、`db` オブジェクト自体がYAMLに必要です。`DATAB
 | `CP_WITH_LOG_TIME` | バックエンドのLoggerが出力するログに時刻を付ける |
 | `CP_QUIET` | Loggerの出力や起動ロゴを抑制する |
 | `CP_NO_DAEMONS` | 値は保持されるが、現在は参照されていない（後述） |
-| `CP_NO_JOB_SCHEDULERS` | ジョブキューのプロセスの起動時に、定期ジョブを登録しない（後述） |
 
 :::caution[0やfalseでも有効になります]
 これらのフラグは、**空でない文字列であれば有効**と判定されます。`1` や `true` だけでなく、`0` や `false` でも有効になります。無効にするには、変数を未設定にするか空文字列にしてください。
@@ -109,16 +98,6 @@ DBについては、`db` オブジェクト自体がYAMLに必要です。`DATAB
 `CP_ONLY_SERVER` と `CP_ONLY_QUEUE` は併用しないでください。両方を有効にすると、Webサーバーのみが起動する一方で、起動完了のログにはキュー専用として表示されます。実際の動作とログが食い違うため、どちらか一方だけを指定してください。
 
 `CP_NO_DAEMONS` は現在どこからも参照されていません。有効にしてもデーモンは停止しません。
-
-### 定期ジョブの登録
-
-定期ジョブ（チャートの集計、期限切れのミュートの確認など）は、ジョブキューのプロセスが起動するときに登録されます。Webサーバーだけのプロセス（`CP_ONLY_SERVER`）は登録しません。登録するときは、定義にある定期ジョブを登録し直し、以前の版で使っていて今は使わない定期ジョブを削除します。知らない名前の定期ジョブは削除しません。
-
-`CP_NO_JOB_SCHEDULERS` を有効にしたプロセスは、定期ジョブを登録しません。版の異なるプロセスを同時に動かすときなど、登録するプロセスを限定したい場合に使います。すべてのジョブキューのプロセスで有効にした場合は、次のコマンドで登録してください。
-
-```sh
-pnpm --filter backend cli register-job-schedulers
-```
 
 `NODE_ENV=test` では、`CP_DISABLE_CLUSTERING`・`CP_QUIET`・`CP_NO_DAEMONS` に相当する設定が強制的に有効になります。対応する環境変数を空にしても解除できません。
 
@@ -149,8 +128,6 @@ NODE_ENV=production CHERRYPICK_MIGRATION_CREATE_INDEX_CONCURRENTLY=1 pnpm migrat
 
 これらはあくまで接続先の指定です。バックエンドがViteサーバーを起動するわけではありません。
 
-`API_RES_VALIDATION_REPORT` にファイルのパスを指定すると、`NODE_ENV` が `test` か `development` のときに、APIの応答がスキーマに違反した内容をそのファイルに追記します。
-
 ## テスト・ローカル検証用
 
 通常の本番運用では設定しません。`CP_*` フラグと違い、有効になる文字列が変数ごとに決まっています。
@@ -167,6 +144,4 @@ NODE_ENV=production CHERRYPICK_MIGRATION_CREATE_INDEX_CONCURRENTLY=1 pnpm migrat
 - `CHERRYPICK_WEBFINGER_USE_HTTP`: URL形式の問い合わせは元のプロトコルを使います。`NODE_ENV` による限定はありません。
 - `FORCE_FOLLOW_REMOTE_USER_FOR_TESTING`: 鍵アカウントなど、他の保留条件は残ります。`NODE_ENV` による限定はありません。
 - `MISSKEY_TEST_CHECK_DUPLICATED_TOTP` と `CHERRYPICK_TEST_CHECK_IP_RANGE`: どちらも `NODE_ENV=test` のときだけ意味があります。テスト以外では、変数にかかわらず検証・チェックが行われます。後者は、HTTPリクエスト処理全体を本番相当にするフラグではありません。
-
-これらの変数は起動時に一度だけ読みます。起動後に値を変えても反映されません。バックエンドのe2eテストでは、テストサーバーの `/runtime` で同じ設定（`config.runtime.test`）を切り替えます。
 

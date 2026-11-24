@@ -66,8 +66,7 @@ export class HashtagService {
 
 		if (index != null) {
 			const q = this.hashtagsRepository.createQueryBuilder('tag').update()
-				.where('name = :name', { name: tag })
-				.setParameter('hashtagUserId', user.id);
+				.where('name = :name', { name: tag });
 
 			const set = {} as any;
 
@@ -75,44 +74,44 @@ export class HashtagService {
 				if (inc) {
 				// 自分が初めてこのタグを使ったなら
 					if (!index.attachedUserIds.some(id => id === user.id)) {
-						set.attachedUserIds = () => 'array_append("attachedUserIds", :hashtagUserId)';
+						set.attachedUserIds = () => `array_append("attachedUserIds", '${user.id}')`;
 						set.attachedUsersCount = () => '"attachedUsersCount" + 1';
 					}
 					// 自分が(ローカル内で)初めてこのタグを使ったなら
 					if (this.userEntityService.isLocalUser(user) && !index.attachedLocalUserIds.some(id => id === user.id)) {
-						set.attachedLocalUserIds = () => 'array_append("attachedLocalUserIds", :hashtagUserId)';
+						set.attachedLocalUserIds = () => `array_append("attachedLocalUserIds", '${user.id}')`;
 						set.attachedLocalUsersCount = () => '"attachedLocalUsersCount" + 1';
 					}
 					// 自分が(リモートで)初めてこのタグを使ったなら
 					if (this.userEntityService.isRemoteUser(user) && !index.attachedRemoteUserIds.some(id => id === user.id)) {
-						set.attachedRemoteUserIds = () => 'array_append("attachedRemoteUserIds", :hashtagUserId)';
+						set.attachedRemoteUserIds = () => `array_append("attachedRemoteUserIds", '${user.id}')`;
 						set.attachedRemoteUsersCount = () => '"attachedRemoteUsersCount" + 1';
 					}
 				} else {
-					set.attachedUserIds = () => 'array_remove("attachedUserIds", :hashtagUserId)';
+					set.attachedUserIds = () => `array_remove("attachedUserIds", '${user.id}')`;
 					set.attachedUsersCount = () => '"attachedUsersCount" - 1';
 					if (this.userEntityService.isLocalUser(user)) {
-						set.attachedLocalUserIds = () => 'array_remove("attachedLocalUserIds", :hashtagUserId)';
+						set.attachedLocalUserIds = () => `array_remove("attachedLocalUserIds", '${user.id}')`;
 						set.attachedLocalUsersCount = () => '"attachedLocalUsersCount" - 1';
 					} else {
-						set.attachedRemoteUserIds = () => 'array_remove("attachedRemoteUserIds", :hashtagUserId)';
+						set.attachedRemoteUserIds = () => `array_remove("attachedRemoteUserIds", '${user.id}')`;
 						set.attachedRemoteUsersCount = () => '"attachedRemoteUsersCount" - 1';
 					}
 				}
 			} else {
 				// 自分が初めてこのタグを使ったなら
 				if (!index.mentionedUserIds.some(id => id === user.id)) {
-					set.mentionedUserIds = () => 'array_append("mentionedUserIds", :hashtagUserId)';
+					set.mentionedUserIds = () => `array_append("mentionedUserIds", '${user.id}')`;
 					set.mentionedUsersCount = () => '"mentionedUsersCount" + 1';
 				}
 				// 自分が(ローカル内で)初めてこのタグを使ったなら
 				if (this.userEntityService.isLocalUser(user) && !index.mentionedLocalUserIds.some(id => id === user.id)) {
-					set.mentionedLocalUserIds = () => 'array_append("mentionedLocalUserIds", :hashtagUserId)';
+					set.mentionedLocalUserIds = () => `array_append("mentionedLocalUserIds", '${user.id}')`;
 					set.mentionedLocalUsersCount = () => '"mentionedLocalUsersCount" + 1';
 				}
 				// 自分が(リモートで)初めてこのタグを使ったなら
 				if (this.userEntityService.isRemoteUser(user) && !index.mentionedRemoteUserIds.some(id => id === user.id)) {
-					set.mentionedRemoteUserIds = () => 'array_append("mentionedRemoteUserIds", :hashtagUserId)';
+					set.mentionedRemoteUserIds = () => `array_append("mentionedRemoteUserIds", '${user.id}')`;
 					set.mentionedRemoteUsersCount = () => '"mentionedRemoteUsersCount" + 1';
 				}
 			}

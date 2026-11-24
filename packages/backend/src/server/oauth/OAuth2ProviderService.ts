@@ -44,7 +44,7 @@ import type { FastifyInstance } from 'fastify';
 // Follows https://indieauth.spec.indieweb.org/#client-identifier
 // This is also mostly similar to https://developers.google.com/identity/protocols/oauth2/web-server#uri-validation
 // although Google has stricter rule.
-function validateClientId(raw: string, allowHttp: boolean): URL {
+function validateClientId(raw: string): URL {
 	// "Clients are identified by a [URL]."
 	const url = ((): URL => {
 		try {
@@ -57,7 +57,7 @@ function validateClientId(raw: string, allowHttp: boolean): URL {
 	// https://datatracker.ietf.org/doc/html/rfc6749.html#section-3.1.2.1
 	// 'The redirection endpoint SHOULD require the use of TLS as described
 	// in Section 1.6 when the requested response type is "code" or "token"'
-	const allowedProtocols = allowHttp ? ['http:', 'https:'] : ['https:'];
+	const allowedProtocols = process.env.NODE_ENV === 'test' ? ['http:', 'https:'] : ['https:'];
 	if (!allowedProtocols.includes(url.protocol)) {
 		throw new AuthorizationError('client_id must be a valid HTTPS URL', 'invalid_request');
 	}
@@ -420,13 +420,13 @@ export class OAuth2ProviderService {
 
 				this.#logger.info(`Validating authorization parameters, with client_id: ${clientID}, redirect_uri: ${redirectURI}, scope: ${scope}`);
 
-				const clientUrl = validateClientId(clientID, this.config.runtime.test.allowHttpOAuthClient);
+				const clientUrl = validateClientId(clientID);
 
 				// https://indieauth.spec.indieweb.org/#client-information-discovery
 				// "the server may want to resolve the domain name first and avoid fetching the document
 				// if the IP address is within the loopback range defined by [RFC5735]
 				// or any other implementation-specific internal IP address."
-				if (!this.config.runtime.test.skipOAuthClientIpCheck) {
+				if (process.env.NODE_ENV !== 'test' || process.env.CHERRYPICK_TEST_CHECK_IP_RANGE === '1') {
 					const lookup = await dns.lookup(clientUrl.hostname);
 					if (ipaddr.parse(lookup.address).range() !== 'unicast') {
 						throw new AuthorizationError('client_id resolves to disallowed IP range.', 'invalid_request');

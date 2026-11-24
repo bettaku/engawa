@@ -4,8 +4,8 @@
  */
 
 import type { Config } from '@/config.js';
-import endpoints, { IEndpoint, IEndpointMeta } from '../endpoints.js';
-import { errorBody, httpErrors, statusOf } from '../http-errors.js';
+import endpoints, { IEndpoint } from '../endpoints.js';
+import { errors as basicErrors } from './errors.js';
 import { getSchemas, convertSchemaToOpenApiSchema } from './schemas.js';
 
 export function genOpenapiSpec(config: Config, includeSelfRef = false) {
@@ -43,6 +43,18 @@ export function genOpenapiSpec(config: Config, includeSelfRef = false) {
 	// 書き換えたりするのでディープコピーしておく。そのまま編集するとメモリ上の値が汚れて次回以降の出力に影響する
 	const copiedEndpoints = JSON.parse(JSON.stringify(endpoints)) as IEndpoint[];
 	for (const endpoint of copiedEndpoints) {
+		const errors = {} as any;
+
+		if (endpoint.meta.errors) {
+			for (const e of Object.values(endpoint.meta.errors)) {
+				errors[e.code] = {
+					value: {
+						error: e,
+					},
+				};
+			}
+		}
+
 		const resSchema = endpoint.meta.res ? convertSchemaToOpenApiSchema(endpoint.meta.res, 'res', includeSelfRef) : {};
 
 		let desc = (endpoint.meta.description ? endpoint.meta.description : 'No description provided.') + '\n\n';
@@ -126,25 +138,82 @@ export function genOpenapiSpec(config: Config, includeSelfRef = false) {
 						description: 'OK (without any results)',
 					},
 				} : {}),
-				...errorResponses([...commonErrors(endpoint), ...Object.values(endpoint.meta.errors ?? {})]),
+				'400': {
+					description: 'Client error',
+					content: {
+						'application/json': {
+							schema: {
+								$ref: '#/components/schemas/Error',
+							},
+							examples: { ...errors, ...basicErrors['400'] },
+						},
+					},
+				},
+				'401': {
+					description: 'Authentication error',
+					content: {
+						'application/json': {
+							schema: {
+								$ref: '#/components/schemas/Error',
+							},
+							examples: basicErrors['401'],
+						},
+					},
+				},
+				'403': {
+					description: 'Forbidden error',
+					content: {
+						'application/json': {
+							schema: {
+								$ref: '#/components/schemas/Error',
+							},
+							examples: basicErrors['403'],
+						},
+					},
+				},
+				'418': {
+					description: 'I\'m Ai',
+					content: {
+						'application/json': {
+							schema: {
+								$ref: '#/components/schemas/Error',
+							},
+							examples: basicErrors['418'],
+						},
+					},
+				},
+				...(endpoint.meta.limit ? {
+					'429': {
+						description: 'Too many requests',
+						content: {
+							'application/json': {
+								schema: {
+									$ref: '#/components/schemas/Error',
+								},
+								examples: basicErrors['429'],
+							},
+						},
+					},
+				} : {}),
+				'500': {
+					description: 'Internal server error',
+					content: {
+						'application/json': {
+							schema: {
+								$ref: '#/components/schemas/Error',
+							},
+							examples: basicErrors['500'],
+						},
+					},
+				},
 			},
 		};
 
-		// GETは本文を読まずにクエリ文字列を読み、真偽値・数値だけをJSONとして変換する（ApiCallService.call）
-		const { requestBody: _, ...getInfo } = info as typeof info & { requestBody?: unknown };
 		spec.paths['/' + endpoint.name] = {
 			...(endpoint.meta.allowGet ? {
 				get: {
-					...getInfo,
+					...info,
 					operationId: 'get___' + info.operationId,
-					...(schema.properties && Object.keys(schema.properties).length > 0 ? {
-						parameters: Object.entries(schema.properties).map(([name, property]) => ({
-							name,
-							in: 'query',
-							required: (schema.required ?? []).includes(name),
-							schema: property,
-						})),
-					} : {}),
 				},
 			} : {}),
 			post: {
@@ -155,83 +224,4 @@ export function genOpenapiSpec(config: Config, includeSelfRef = false) {
 	}
 
 	return spec;
-}
-
-type ErrorLike = { message: string; code: string; id: string; kind?: string; httpStatusCode?: number };
-
-/**
- * エンドポイントの外（ApiCallService・endpoint-base・/apiのプラグイン）で、そのエンドポイントについて起きうるエラー
- */
-function commonErrors(endpoint: IEndpoint): ErrorLike[] {
-	const meta: IEndpointMeta = endpoint.meta;
-	const errors: ErrorLike[] = [
-		httpErrors.invalidRequest,
-		httpErrors.invalidCredentialFormat,
-		httpErrors.authenticationFailed,
-		httpErrors.payloadTooLarge,
-		httpErrors.unsupportedMediaType,
-		httpErrors.internalError,
-	];
-	const requireUser = meta.requireCredential || meta.requireModerator || meta.requireAdmin;
-	if (meta.secure) errors.push(httpErrors.accessDenied);
-	if (meta.limit) errors.push(httpErrors.rateLimitExceeded);
-	if (requireUser) errors.push(httpErrors.credentialRequired, httpErrors.accountSuspended);
-	if (meta.prohibitMoved) errors.push(httpErrors.accountMoved);
-	if (meta.requireModerator) errors.push(httpErrors.notModerator);
-	if (meta.requireAdmin) errors.push(httpErrors.notAdministrator);
-	if (meta.requiredRolePolicy != null) errors.push(httpErrors.requiredRolePolicy);
-	if (meta.kind || requireUser) errors.push(httpErrors.permissionDenied);
-	if (meta.kind) errors.push(httpErrors.flashPermissionDenied);
-	if (meta.requireFile) errors.push(httpErrors.fileRequired);
-	const properties = Object.values(endpoint.params.properties ?? {});
-	if (properties.length > 0) errors.push(httpErrors.invalidParam);
-	if ((meta.requireFile || meta.allowGet) && properties.some(p => ['boolean', 'number', 'integer'].includes(p.type ?? ''))) {
-		errors.push(httpErrors.invalidParamCast);
-	}
-	return errors;
-}
-
-const statusDescriptions: Record<number, string> = {
-	400: 'Client error',
-	401: 'Authentication error',
-	403: 'Forbidden error',
-	404: 'Not found',
-	409: 'Conflict',
-	413: 'Payload too large',
-	415: 'Unsupported media type',
-	422: 'Unprocessable content',
-	429: 'Too many requests',
-	500: 'Internal server error',
-};
-
-/**
- * エラーを、実行時に返すHTTPステータスごとにまとめる
- */
-function errorResponses(errors: ErrorLike[]) {
-	const byStatus = new Map<number, ErrorLike[]>();
-	for (const e of errors) {
-		const status = statusOf(e);
-		const list = byStatus.get(status) ?? [];
-		if (!list.some(x => x.id === e.id && x.code === e.code && x.message === e.message)) list.push(e);
-		byStatus.set(status, list);
-	}
-	return Object.fromEntries([...byStatus].sort(([a], [b]) => a - b).map(([status, list]) => {
-		const examples: Record<string, { value: unknown }> = {};
-		for (const e of list) {
-			// 同じコードで別のidのエラーがある（ROLE_PERMISSION_DENIEDなど）
-			const key = list.filter(x => x.code === e.code).length > 1 ? `${e.code} (${e.id})` : e.code;
-			examples[key] = { value: errorBody({ ...e, kind: e.kind ?? 'client' } as Parameters<typeof errorBody>[0]) };
-		}
-		return [String(status), {
-			description: statusDescriptions[status] ?? 'Error',
-			content: {
-				'application/json': {
-					schema: {
-						$ref: '#/components/schemas/Error',
-					},
-					examples,
-				},
-			},
-		}];
-	}));
 }

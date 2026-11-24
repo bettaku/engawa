@@ -6,7 +6,6 @@
 import { comparePassword } from '@/misc/password.js';
 import { Inject, Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
-import { ApiError } from '@/server/api/error.js';
 import type { UsersRepository, UserProfilesRepository } from '@/models/_.js';
 import { generateNativeUserToken } from '@/misc/token.js';
 import { GlobalEventService } from '@/core/GlobalEventService.js';
@@ -16,14 +15,6 @@ export const meta = {
 	requireCredential: true,
 
 	secure: true,
-
-	errors: {
-		incorrectPassword: {
-			message: 'Incorrect password.',
-			code: 'INCORRECT_PASSWORD',
-			id: '71482f82-068e-40e9-8c5a-57842a715373',
-		},
-	},
 } as const;
 
 export const paramDef = {
@@ -55,7 +46,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			const same = await comparePassword(ps.password, profile.password!);
 
 			if (!same) {
-				throw new ApiError(meta.errors.incorrectPassword);
+				throw new Error('incorrect password');
 			}
 
 			const newToken = generateNativeUserToken();

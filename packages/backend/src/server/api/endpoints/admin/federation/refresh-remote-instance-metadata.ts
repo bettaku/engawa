@@ -5,7 +5,6 @@
 
 import { Inject, Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
-import { ApiError } from '@/server/api/error.js';
 import type { InstancesRepository } from '@/models/_.js';
 import { FetchInstanceMetadataService } from '@/core/FetchInstanceMetadataService.js';
 import { UtilityService } from '@/core/UtilityService.js';
@@ -17,14 +16,6 @@ export const meta = {
 	requireCredential: true,
 	requireModerator: true,
 	kind: 'write:admin:federation',
-
-	errors: {
-		noSuchInstance: {
-			message: 'No such instance.',
-			code: 'NO_SUCH_INSTANCE',
-			id: '7de9f145-2084-4012-b98b-d95a52eddfbc',
-		},
-	},
 } as const;
 
 export const paramDef = {
@@ -48,7 +39,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			const instance = await this.instancesRepository.findOneBy({ host: this.utilityService.toPuny(ps.host) });
 
 			if (instance == null) {
-				throw new ApiError(meta.errors.noSuchInstance);
+				throw new Error('instance not found');
 			}
 
 			this.fetchInstanceMetadataService.fetchInstanceMetadata(instance, true);

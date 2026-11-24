@@ -33,27 +33,22 @@ export const meta = {
 			nullable: false,
 			properties: {
 				id: {
-					optional: false,
 					type: 'string',
 					format: 'misskey:id',
 				},
 				createdAt: {
-					optional: false,
 					type: 'string',
 					format: 'date-time',
 				},
 				userId: {
-					optional: false,
 					type: 'string',
 					format: 'misskey:id',
 				},
 				user: {
-					optional: false,
 					type: 'object',
 					ref: 'UserLite',
 				},
 				withReplies: {
-					optional: false,
 					type: 'boolean',
 				},
 			},
