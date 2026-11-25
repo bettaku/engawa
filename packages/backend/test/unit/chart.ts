@@ -10,6 +10,7 @@ import { type Mocked } from 'vitest';
 import * as lolex from '@sinonjs/fake-timers';
 import { DataSource } from 'typeorm';
 import type { AppLockService } from '@/core/AppLockService.js';
+import { mergeChartDiffs } from '@/core/chart/core.js';
 import TestChart from '@/core/chart/charts/test.js';
 import TestGroupedChart from '@/core/chart/charts/test-grouped.js';
 import TestUniqueChart from '@/core/chart/charts/test-unique.js';
@@ -23,6 +24,8 @@ import Logger from '@/logger.js';
 
 // 偽のタイマーに置き換えられる前の、本物のsetImmediate（データベースの応答を待つため）
 const realSetImmediate = globalThis.setImmediate;
+// 偽のタイマーに置き換えられる前の、本物のperformance.now（処理時間を測るため）
+const realPerformanceNow = performance.now.bind(performance);
 
 describe('Chart', () => {
 	const config = loadConfig();
@@ -490,6 +493,34 @@ describe('Chart', () => {
 			});
 		});
 
+		test('同じ値を大量に積んでも、重複を除いた数になる', async () => {
+			// 既に保存されている値と、保存までに何度も積まれた値が混ざっている
+			await testUniqueChart.uniqueIncrement('user0');
+			await testUniqueChart.save();
+
+			for (let i = 0; i < 50000; i++) {
+				await testUniqueChart.uniqueIncrement(`user${i % 100}`);
+			}
+			await testUniqueChart.save();
+
+			const chartHours = await testUniqueChart.getChart('hour', 3, null);
+			const chartDays = await testUniqueChart.getChart('day', 3, null);
+
+			assert.deepStrictEqual(chartHours, {
+				foo: [100, 0, 0],
+			});
+
+			assert.deepStrictEqual(chartDays, {
+				foo: [100, 0, 0],
+			});
+
+			// 一時カラムにも重複を積まない
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const [log] = await db!.query('SELECT "unique_temp___foo" AS "items" FROM "__chart__test_unique" ORDER BY "date" DESC LIMIT 1');
+			assert.strictEqual(log.items.length, 100);
+			assert.strictEqual(new Set(log.items).size, 100);
+		});
+
 		describe('Intersection', () => {
 			test('条件が満たされていない場合はカウントされない', async () => {
 				await testIntersectionChart.addA('alice');
@@ -535,6 +566,67 @@ describe('Chart', () => {
 					aAndB: [1, 0, 0],
 				});
 			});
+
+			test('同じ値を大量に積んでも、重複を除いて共通部分を数える', async () => {
+				await testIntersectionChart.addA('alice');
+				await testIntersectionChart.save();
+
+				for (let i = 0; i < 20000; i++) {
+					await testIntersectionChart.addA(`user${i % 50}`);
+					await testIntersectionChart.addB(`user${i % 10}`);
+				}
+				await testIntersectionChart.addB('alice');
+				await testIntersectionChart.save();
+
+				const chartHours = await testIntersectionChart.getChart('hour', 3, null);
+				const chartDays = await testIntersectionChart.getChart('day', 3, null);
+
+				assert.deepStrictEqual(chartHours, {
+					a: [51, 0, 0],
+					b: [11, 0, 0],
+					aAndB: [11, 0, 0],
+				});
+
+				assert.deepStrictEqual(chartDays, {
+					a: [51, 0, 0],
+					b: [11, 0, 0],
+					aAndB: [11, 0, 0],
+				});
+			});
+		});
+	});
+
+	describe('差分の集計 (mergeChartDiffs)', () => {
+		test('数値は足し、ユニークインクリメントの値は重複を除いて積む', () => {
+			const merged = mergeChartDiffs([
+				{ count: 1, users: ['a'] },
+				{ count: -3, users: ['b', 'a'] },
+				{ count: 5, users: ['a'], other: ['x'] },
+				{ count: undefined },
+			]);
+
+			assert.strictEqual(merged.get('count'), 3);
+			assert.deepStrictEqual(merged.get('users'), new Set(['a', 'b']));
+			assert.deepStrictEqual(merged.get('other'), new Set(['x']));
+		});
+
+		test('積まれた件数に比例する時間で終わる', () => {
+			// 以前の実装（配列の連結）は件数の2乗の時間がかかり、4キーで40,000件に4秒以上かかっていた
+			const diffs = Array.from({ length: 200000 }, (_, i) => ({
+				read: [`user${i % 1000}`],
+				registeredWithinWeek: [`user${i % 1000}`],
+				registeredWithinMonth: [`user${i % 1000}`],
+				registeredWithinYear: [`user${i % 1000}`],
+				count: 1,
+			}));
+
+			const start = realPerformanceNow();
+			const merged = mergeChartDiffs(diffs);
+			const elapsed = realPerformanceNow() - start;
+
+			assert.strictEqual((merged.get('read') as Set<string>).size, 1000);
+			assert.strictEqual(merged.get('count'), 200000);
+			assert.ok(elapsed < 2000, `took ${elapsed}ms`);
 		});
 	});
 

@@ -35,6 +35,31 @@ export function toSqlVarcharArray(items: string[]): string {
 }
 const COLUMN_DELIMITER = '_' as const;
 
+/**
+ * バッファに積まれた差分を、キーごとに1つにまとめる。数値は足し、ユニークインクリメントの値は重複を除いて積む。
+ * 認証付きのタイムラインなどは要求ごとに同じ利用者IDを積むので、保存までに数万件になる。
+ * 件数に比例する時間で終わるよう、配列の連結（件数の2乗の時間がかかる）ではなくSetに積む。
+ */
+export function mergeChartDiffs(diffs: Iterable<Record<string, number | string[] | undefined>>): Map<string, number | Set<string>> {
+	const merged = new Map<string, number | Set<string>>();
+	for (const diff of diffs) {
+		for (const [k, v] of Object.entries(diff)) {
+			if (v == null) continue;
+			const current = merged.get(k);
+			if (Array.isArray(v)) {
+				if (current instanceof Set) {
+					for (const item of v) current.add(item);
+				} else {
+					merged.set(k, new Set(v));
+				}
+			} else {
+				merged.set(k, (typeof current === 'number' ? current : 0) + v);
+			}
+		}
+	}
+	return merged;
+}
+
 type Schema = Record<string, {
 	uniqueIncrement?: boolean;
 
@@ -73,8 +98,6 @@ type RawRecord<S extends Schema> = {
 const camelToSnake = (str: string): string => {
 	return str.replace(/([A-Z])/g, s => '_' + s.charAt(0).toLowerCase());
 };
-
-const removeDuplicates = (array: any[]) => Array.from(new Set(array));
 
 /** waitForSaveで待っている差分の保存に失敗したとき、保存し直すまでの時間 */
 const SAVE_RETRY_DELAY = 1000 * 10;
@@ -506,49 +529,61 @@ export default abstract class Chart<T extends Schema> {
 		// これを回避するための実装は複雑になりそうなため、一旦保留。
 
 		const update = async (entries: typeof this.buffer, logHour: RawRecord<T>, logDay: RawRecord<T>): Promise<void> => {
-			const finalDiffs = {} as Record<string, number | string[]>;
+			const finalDiffs = mergeChartDiffs(entries.map(q => q.diff as Record<string, number | string[] | undefined>));
 
-			for (const diff of entries.map(q => q.diff)) {
-				for (const [k, v] of Object.entries(diff)) {
-					if (finalDiffs[k] == null) {
-						finalDiffs[k] = v;
-					} else {
-						if (typeof finalDiffs[k] === 'number') {
-							(finalDiffs[k] as number) += v as number;
-						} else {
-							(finalDiffs[k] as string[]) = (finalDiffs[k] as string[]).concat(v);
-						}
-					}
+			const tempColumnNameOf = (k: string) => UNIQUE_TEMP_COLUMN_PREFIX + k.replaceAll('.', COLUMN_DELIMITER) as string & keyof TempColumnsForUnique<T>;
+
+			// ユニークインクリメントのキーごとの、保存後の値の集合（既存の値と差分の和集合）。cardinality と intersection の計算に使う
+			const unionCache = new Map<string, { hour: Set<string>; day: Set<string> }>();
+			const unionOf = (k: string) => {
+				let union = unionCache.get(k);
+				if (union == null) {
+					const tempColumnName = tempColumnNameOf(k);
+					union = {
+						hour: new Set(logHour[tempColumnName] as unknown as string[]),
+						day: new Set(logDay[tempColumnName] as unknown as string[]),
+					};
+					unionCache.set(k, union);
 				}
-			}
+				return union;
+			};
 
 			const queryForHour: Record<keyof RawRecord<T>, number | (() => string)> = {} as any;
 			const queryForDay: Record<keyof RawRecord<T>, number | (() => string)> = {} as any;
-			for (const [k, v] of Object.entries(finalDiffs)) {
+			for (const [k, v] of finalDiffs) {
 				if (typeof v === 'number') {
 					const name = COLUMN_PREFIX + k.replaceAll('.', COLUMN_DELIMITER) as string & keyof Columns<T>;
 					if (v > 0) queryForHour[name] = () => `"${name}" + ${v}`;
 					if (v < 0) queryForHour[name] = () => `"${name}" - ${Math.abs(v)}`;
 					if (v > 0) queryForDay[name] = () => `"${name}" + ${v}`;
 					if (v < 0) queryForDay[name] = () => `"${name}" - ${Math.abs(v)}`;
-				} else if (Array.isArray(v) && v.length > 0) { // ユニークインクリメント
-					const tempColumnName = UNIQUE_TEMP_COLUMN_PREFIX + k.replaceAll('.', COLUMN_DELIMITER) as string & keyof TempColumnsForUnique<T>;
-					const itemsForHour = v.filter(item => !(logHour[tempColumnName] as unknown as string[]).includes(item));
-					const itemsForDay = v.filter(item => !(logDay[tempColumnName] as unknown as string[]).includes(item));
+				} else if (v.size > 0) { // ユニークインクリメント
+					const tempColumnName = tempColumnNameOf(k);
+					const union = unionOf(k);
+					const itemsForHour: string[] = [];
+					const itemsForDay: string[] = [];
+					for (const item of v) {
+						if (!union.hour.has(item)) {
+							itemsForHour.push(item);
+							union.hour.add(item);
+						}
+						if (!union.day.has(item)) {
+							itemsForDay.push(item);
+							union.day.add(item);
+						}
+					}
 					if (itemsForHour.length > 0) queryForHour[tempColumnName] = () => `array_cat("${tempColumnName}", ${toSqlVarcharArray(itemsForHour)})`;
 					if (itemsForDay.length > 0) queryForDay[tempColumnName] = () => `array_cat("${tempColumnName}", ${toSqlVarcharArray(itemsForDay)})`;
 				}
 			}
 
 			// bake cardinality
-			for (const [k, v] of Object.entries(finalDiffs)) {
+			for (const k of finalDiffs.keys()) {
 				if (this.schema[k].uniqueIncrement) {
 					const name = COLUMN_PREFIX + k.replaceAll('.', COLUMN_DELIMITER) as keyof Columns<T>;
-					const tempColumnName = UNIQUE_TEMP_COLUMN_PREFIX + k.replaceAll('.', COLUMN_DELIMITER) as keyof TempColumnsForUnique<T>;
-					const cardinalityOfHour = new Set([...(v as string[]), ...(logHour[tempColumnName] as unknown as string[])]).size;
-					const cardinalityOfDay = new Set([...(v as string[]), ...(logDay[tempColumnName] as unknown as string[])]).size;
-					queryForHour[name] = cardinalityOfHour;
-					queryForDay[name] = cardinalityOfDay;
+					const union = unionOf(k);
+					queryForHour[name] = union.hour.size;
+					queryForDay[name] = union.day.size;
 				}
 			}
 
@@ -558,22 +593,16 @@ export default abstract class Chart<T extends Schema> {
 				const intersection = v.intersection;
 				if (intersection) {
 					const name = COLUMN_PREFIX + k.replaceAll('.', COLUMN_DELIMITER) as keyof Columns<T>;
-					const firstKey = intersection[0];
-					const firstTempColumnName = UNIQUE_TEMP_COLUMN_PREFIX + firstKey.replaceAll('.', COLUMN_DELIMITER) as keyof TempColumnsForUnique<T>;
-					const firstValues = finalDiffs[firstKey] as string[] | undefined;
-					const currentValuesForHour = new Set([...(firstValues ?? []), ...(logHour[firstTempColumnName] as unknown as string[])]);
-					const currentValuesForDay = new Set([...(firstValues ?? []), ...(logDay[firstTempColumnName] as unknown as string[])]);
+					const first = unionOf(intersection[0]);
+					const currentValuesForHour = new Set(first.hour);
+					const currentValuesForDay = new Set(first.day);
 					for (let i = 1; i < intersection.length; i++) {
-						const targetKey = intersection[i];
-						const targetTempColumnName = UNIQUE_TEMP_COLUMN_PREFIX + targetKey.replaceAll('.', COLUMN_DELIMITER) as keyof TempColumnsForUnique<T>;
-						const targetValues = finalDiffs[targetKey] as string[] | undefined;
-						const targetValuesForHour = new Set([...(targetValues ?? []), ...(logHour[targetTempColumnName] as unknown as string[])]);
-						const targetValuesForDay = new Set([...(targetValues ?? []), ...(logDay[targetTempColumnName] as unknown as string[])]);
+						const target = unionOf(intersection[i]);
 						currentValuesForHour.forEach(v => {
-							if (!targetValuesForHour.has(v)) currentValuesForHour.delete(v);
+							if (!target.hour.has(v)) currentValuesForHour.delete(v);
 						});
 						currentValuesForDay.forEach(v => {
-							if (!targetValuesForDay.has(v)) currentValuesForDay.delete(v);
+							if (!target.day.has(v)) currentValuesForDay.delete(v);
 						});
 					}
 					queryForHour[name] = currentValuesForHour.size;
@@ -598,7 +627,18 @@ export default abstract class Chart<T extends Schema> {
 			this.logger.info(`${this.name + (logHour.group ? `:${logHour.group}` : '')}: Updated`);
 		};
 
-		const groups: (string | null)[] = removeDuplicates(buffer.map(log => log.group));
+		// グループごとの差分（グループを指定しない差分は、すべてのグループに足す）。グループの数×バッファの件数にならないよう、1回の走査で振り分ける
+		const ungrouped = buffer.filter(q => q.group == null);
+		const entriesByGroup = new Map<string | null, typeof buffer>();
+		for (const q of buffer) {
+			let entries = entriesByGroup.get(q.group);
+			if (entries == null) {
+				entries = q.group == null ? ungrouped : [...ungrouped];
+				entriesByGroup.set(q.group, entries);
+			}
+			if (q.group != null) entries.push(q);
+		}
+		const groups = [...entriesByGroup.keys()];
 
 		const results = await Promise.allSettled(
 			groups.map(async group => {
@@ -609,17 +649,17 @@ export default abstract class Chart<T extends Schema> {
 				]);
 				if (logHour.status === 'rejected') throw logHour.reason;
 				if (logDay.status === 'rejected') throw logDay.reason;
-				await update(buffer.filter(q => q.group == null || q.group === group), logHour.value, logDay.value);
+				await update(entriesByGroup.get(group) ?? [], logHour.value, logDay.value);
 			}));
 
-		const failedGroups = groups.filter((_, i) => results[i].status === 'rejected');
-		if (failedGroups.length === 0) {
+		const failedGroups = new Set(groups.filter((_, i) => results[i].status === 'rejected'));
+		if (failedGroups.size === 0) {
 			for (const resolve of waiters) resolve();
 			return;
 		}
 
 		// 保存できなかったグループの差分をバッファに戻す。待っている呼び出しは、保存し直せたときに解決する
-		this.buffer = [...buffer.filter(q => failedGroups.includes(q.group)), ...this.buffer];
+		this.buffer = [...buffer.filter(q => failedGroups.has(q.group)), ...this.buffer];
 		if (waiters.length > 0) {
 			this.saveWaiters = [...waiters, ...this.saveWaiters];
 			if (this.saveRetryTimer == null) {
