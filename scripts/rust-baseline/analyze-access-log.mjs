@@ -3,7 +3,9 @@
 //
 // 個人情報を残さない: 読むのはメソッド・パス・状態コード・時刻・応答時間だけで、
 // IPアドレス、User-Agent、Referer、クエリの値は出力にも中間データにも保持しない。
-// パスはルートの形（/notes/:id など）に正規化してから数える。
+// パスはルートの形（/notes/:id など）に正規化してから数える。/api 配下は、このリポジトリの
+// endpoint-list.ts から読んだエンドポイントの名前に一致するものだけを残し、それ以外は '/api (other)' にまとめる
+// （そのため、リポジトリを checkout した場所で実行する。対象の本番と同じ版の checkout が望ましい）。
 //
 // 使い方:
 //   node scripts/rust-baseline/analyze-access-log.mjs [--format combined|json] [--out DIR] access.log [access.log.1.gz ...]
@@ -14,7 +16,7 @@
 //   json      1行1JSON。method / uri（または request_uri, path）/ status / request_time / time（ISO8601かepoch秒）
 
 import { createReadStream } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createInterface } from 'node:readline';
 import { createGunzip } from 'node:zlib';
 import { join } from 'node:path';
@@ -32,17 +34,24 @@ if (files.length === 0) {
 	process.exit(1);
 }
 
+// ---- API の許可リスト ----
+// エンドポイントの名前は packages/backend/src/server/api/endpoint-list.ts から読む（export * as 'name' from ...）
+const ENDPOINT_LIST = new URL('../../packages/backend/src/server/api/endpoint-list.ts', import.meta.url);
+const API_NAMES = new Set([...(await readFile(ENDPOINT_LIST, 'utf8')).matchAll(/export \* as '([^']+)'/g)].map(m => m[1]));
+if (API_NAMES.size === 0) throw new Error(`no endpoint names found in ${ENDPOINT_LIST.pathname}`);
+// ApiServerService.ts が、エンドポイントとは別に直接定義するパス
+for (const name of ['signup', 'signin-flow', 'signin-with-passkey', 'signup-pending', 'v1/instance/peers', 'clear-browser-cache']) API_NAMES.add(name);
+const API_DYNAMIC = [[/^miauth\/[^/]+\/check$/, 'miauth/:id/check']];
+
 // ---- パスの正規化。上から順に最初に一致したものを使う ----
 const ID = '[0-9a-z]{8,32}';
-// 英字と数字が混ざった8文字以上、または UUID・16進の長い列。エンドポイント名（notes、local-timeline など）は当たらない
-const isIdLike = (seg) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(seg)
-	|| (seg.length >= 8 && /\d/.test(seg) && /^[0-9a-z]+$/i.test(seg));
 const ROUTES = [
-	// API の名前は英小文字・数字・ハイフン・下線の区切り。ID や UUID を含む区切り（例: /api/miauth/<uuid>/check）は
-	// 値を出力に残さないよう :id にする。それ以外の形は (other) にまとめる
-	[/^\/api\/([a-z0-9\-_/]+?)\/?$/i, m => {
-		const segs = m[1].split('/').map(seg => (isIdLike(seg) ? ':id' : seg));
-		return segs.every(seg => seg === ':id' || /^[a-z][a-z0-9\-_]*$/.test(seg)) ? `/api/${segs.join('/')}` : '(other)';
+	// API は許可リスト（エンドポイントの名前と、ApiServerService が直接定義するパス）に一致するものだけを名前で数え、
+	// それ以外は値を出力に残さないよう '/api (other)' にまとめる。パスの中の ID（miauth の session）は :id にする
+	[/^\/api\/(.+?)\/?$/, m => {
+		if (API_NAMES.has(m[1])) return `/api/${m[1]}`;
+		for (const [re, shape] of API_DYNAMIC) if (re.test(m[1])) return `/api/${shape}`;
+		return '/api (other)';
 	}],
 	[/^\/api\/?$/, () => '/api'],
 	[/^\/streaming\/?$/, () => '/streaming'],
