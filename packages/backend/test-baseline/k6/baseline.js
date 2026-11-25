@@ -32,10 +32,14 @@ function loadWeights() {
 	}
 }
 
-const rnd = (arr) => arr[Math.floor(Math.random() * arr.length)];
-// 認証付きの要求は、毎回ランダムな利用者で送る。仮想利用者の番号で固定すると、到着率が低いときに
+// 選び方は乱数を使わず、全体の通し番号から決める（同じ到着率・長さなら毎回同じ要求の列になる）。
+// 無理数倍の小数部（Weyl 列）は [0, 1) にほぼ均等に散らばる。用途ごとに係数を変えて相関させない
+const iter = () => exec.scenario.iterationInTest;
+const frac = (mult) => ((iter() + 1) * mult) % 1;
+const rnd = (arr) => arr[Math.floor(frac(Math.SQRT2 - 1) * arr.length)];
+// 認証付きの要求は、全体の通し番号で利用者を順に回す。仮想利用者の番号で固定すると、到着率が低いときに
 // 少数の利用者へ要求が集中し、利用者ごとのレート制限（i/notifications の 30回/30秒）にかかる
-const user = () => rnd(fixture.users);
+const user = () => fixture.users[iter() % fixture.users.length];
 const json = (body) => ({ body: JSON.stringify(body), contentType: 'application/json' });
 
 // 仮想利用者ごとに別のIPに見せ、IP単位のレート制限が全要求にかからないようにする
@@ -83,7 +87,7 @@ for (const [k, w] of Object.entries(weights)) {
 	table.push([acc, k]);
 }
 const choose = () => {
-	const r = Math.random();
+	const r = frac((Math.sqrt(5) - 1) / 2);
 	return (table.find(([c]) => r < c) ?? table[table.length - 1])[1];
 };
 

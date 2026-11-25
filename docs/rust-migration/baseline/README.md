@@ -59,6 +59,8 @@
 | medium | 200 | 20,000 | 40 | 600 | 20,000 |
 | large | 1,000 | 100,000 | 80 | 1,500 | 100,000 |
 
+スナップショットは PostgreSQL のダンプ（`snapshots/<規模>.dump`）と Redis の RDB（`snapshots/<規模>.rdb`）の組で、ホームタイムラインの fan-out の一覧やキャッシュも含めて戻す。
+
 ノートは投稿者の偏り（少数の利用者が多く投稿する）、公開範囲（public 70%・home 15%・followers 12%・specified 3%）、返信・Renote・メンション・ハッシュタグ・カスタム絵文字・CWを混ぜる。乱数は固定するが、並行に投入するためIDと順序は実行ごとに変わる。比べる計測は、投入後に取ったDBのスナップショット（`snapshots/<規模>.dump`）から戻して行う。
 
 規模はまだ本番に合わせていない。本番の件数が分かったら比率を合わせる（[test-baseline/README.md](../../../packages/backend/test-baseline/README.md)「規模を合わせる」）。
@@ -73,6 +75,8 @@
 - ドライブ・画像処理・検索
 
 ## 4. 結果
+
+> **注意（2026-11-25 に判明）:** §4.1〜§4.4 の計測は、スナップショットから PostgreSQL だけを戻し、Redis を空のまま始めていた。そのため、ホームタイムラインなどの fan-out の一覧が Redis になく、`htl_auth` は DB へのフォールバック（`enableFanoutTimelineDbFallback`）の経路で測られていた。Redis も戻すように直した後の `htl_auth` 50rps は、DB 実行が 1要求あたり 0.36〜0.41ms で、§4.2 の 5.29ms の1割以下になった。§4.2 の `htl_auth`・`mix` の値と、§4.4 の CPU の内訳は、本番の通常の経路の値ではない。匿名の参照（`emojis_anon`・`meta_anon`・`notes_show_anon`・`users_show_anon`）と `ltl_anon` は fan-out の一覧を使わないので影響は小さいが、Redis のキャッシュが空から始まった点は同じである。基準値はチャートの修正後にすべて取り直す。
 
 ### 4.1 初回（2026-11-24、合成負荷・small）
 
@@ -226,7 +230,7 @@
 | その他の依存 | 1.2% |
 | Redis クライアント | 0.6% |
 
-idle を除いたサンプルでの割合。`htl_auth` は1要求で約13文の SQL を実行し、master の CPU の約6割が TypeORM と pg ドライバで使われている。Engawa 自身のコードは1割に満たない。関数単位で多いのは pg の `parseRow`（10.2%）、TypeORM の `transformColumns`・`transformRawResultsGroup`（合わせて10.5%）、`replacePropertyNamesForTheWholeQuery`（3.7%）。Rust 版で同じ要求を処理するとき、改善が見込めるのは主にこの部分である（言語よりも、ORM を通さずに必要な列だけを読むかどうかの影響が大きい可能性がある。移行計画 §1 の「既存実装の改善案とも比較する」に当たる）。
+idle を除いたサンプルでの割合。**Redis が空で DB へのフォールバックの経路を通った計測である（§4 冒頭の注意）。** `htl_auth` は1要求で約13文の SQL を実行し、master の CPU の約6割が TypeORM と pg ドライバで使われている。Engawa 自身のコードは1割に満たない。関数単位で多いのは pg の `parseRow`（10.2%）、TypeORM の `transformColumns`・`transformRawResultsGroup`（合わせて10.5%）、`replacePropertyNamesForTheWholeQuery`（3.7%）。Rust 版で同じ要求を処理するとき、改善が見込めるのは主にこの部分である（言語よりも、ORM を通さずに必要な列だけを読むかどうかの影響が大きい可能性がある。移行計画 §1 の「既存実装の改善案とも比較する」に当たる）。
 
 この現象は、Rust 移行の比較の前に原因を確かめる。HTTP を1プロセスで受けている以上、そのプロセスを数秒止める処理は、どの入口の応答時間にも出る。Rust 版と比べるとき、この張り付きが Node 版の p99 を決めている可能性がある。
 

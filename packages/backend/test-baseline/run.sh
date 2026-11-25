@@ -38,6 +38,23 @@ wait_healthy() {
 	log "web did not become healthy"; "${COMPOSE[@]}" logs --tail 50 web; exit 1
 }
 
+# 初期化中の一時サーバーにはソケットでつながるので、TCP で確かめる
+wait_db() {
+	for _ in $(seq 1 60); do
+		docker exec "$(cid db)" pg_isready -h 127.0.0.1 -U engawa -d engawa >/dev/null 2>&1 && return 0
+		sleep 1
+	done
+	log "db did not become ready"; exit 1
+}
+
+wait_redis() {
+	for _ in $(seq 1 60); do
+		[ "$(docker exec "$(cid redis)" redis-cli ping 2>/dev/null)" = PONG ] && return 0
+		sleep 1
+	done
+	log "redis did not become ready"; exit 1
+}
+
 cmd_build() {
 	log "building $IMAGE from $SHA"
 	docker build -t "$IMAGE" -t "engawa-baseline:$SHA" "$REPO_ROOT"
@@ -57,8 +74,11 @@ cmd_seed() {
 	log "waiting for queues to drain"
 	sleep 20
 	"${COMPOSE[@]}" stop web
-	log "taking snapshot snapshots/$scale.dump"
+	log "taking snapshot snapshots/$scale.dump and snapshots/$scale.rdb"
 	docker exec "$(cid db)" pg_dump -U engawa -d engawa -Fc -f "/snapshots/$scale.dump"
+	# Redis（ホームタイムラインの fan-out など）も残す。残さないと、タイムラインが DB へのフォールバックの経路で測られる
+	docker exec "$(cid redis)" redis-cli SAVE >/dev/null
+	docker cp "$(cid redis):/data/dump.rdb" "snapshots/$scale.rdb"
 	cp fixture/fixture.json "snapshots/$scale.fixture.json"
 	{
 		echo "commit=$SHA"
@@ -73,12 +93,18 @@ cmd_seed() {
 cmd_restore() {
 	local scale=${1:-small}
 	[ -f "snapshots/$scale.dump" ] || { log "no snapshot for $scale; run ./run.sh seed $scale"; exit 1; }
+	[ -f "snapshots/$scale.rdb" ] || { log "no Redis snapshot for $scale (taken since 2026-11-25); run ./run.sh seed $scale"; exit 1; }
 	cmd_down
 	"${COMPOSE[@]}" up -d db redis
-	sleep 2
+	wait_db
 	log "restoring snapshots/$scale.dump"
 	docker exec "$(cid db)" pg_restore -U engawa -d engawa --no-owner "/snapshots/$scale.dump"
 	docker exec "$(cid db)" psql -U engawa -d engawa -qc 'CREATE EXTENSION IF NOT EXISTS pg_stat_statements' >/dev/null
+	# Redis は起動時に /data/dump.rdb を読む。コンテナを作り直さない再起動（cold の計測）でも同じ状態から始まる
+	log "restoring snapshots/$scale.rdb"
+	docker cp "snapshots/$scale.rdb" "$(cid redis):/data/dump.rdb"
+	"${COMPOSE[@]}" restart redis >/dev/null
+	wait_redis
 	cp "snapshots/$scale.fixture.json" fixture/fixture.json
 	echo "$scale" > fixture/scale
 	BASELINE_NODE_ENV=production "${COMPOSE[@]}" up -d web
@@ -118,8 +144,6 @@ cmd_measure() {
 		run_k6 "$scenario" "$rate" "${BASELINE_WARMUP:-20s}" "${name}.warmup" >/dev/null
 	fi
 
-	docker exec "$db" psql -U engawa -d engawa -qtc 'SELECT pg_stat_statements_reset()' >/dev/null
-
 	local samples="results/${name}.samples.tsv"
 	printf 'ts\tlabel\tcontainer\tcpu_usec\tanon_bytes\n' > "$samples"
 	"${COMPOSE[@]}" --profile tools up -d sampler >/dev/null 2>&1
@@ -134,12 +158,20 @@ cmd_measure() {
 
 	log "measure: $scenario at $rate rps for $duration ($cache)"
 	local log_since; log_since=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+	# pg_stat_statements は計測区間だけを集計する（待機区間の DB 実行を、成功要求あたりの値に混ぜない）
+	docker exec "$db" psql -U engawa -d engawa -qtc 'SELECT pg_stat_statements_reset()' >/dev/null
 	sample measure_start
 	docker exec -d "$sampler_id" sh /sampler.sh loop "$SAMPLE_INTERVAL" "/results/${name}.samples.tsv" "${targets[@]}"
 	local k6_status=0
 	run_k6 "$scenario" "$rate" "$duration" "$name" || k6_status=$?
 	docker exec "$sampler_id" pkill -f 'sampler.sh loop' || true
 	sample measure_end
+	docker exec "$db" psql -U engawa -d engawa -qAt -F $'\t' -c "
+		SELECT calls, round(total_exec_time::numeric, 3), round(mean_exec_time::numeric, 4), rows,
+			shared_blks_hit, shared_blks_read, regexp_replace(left(query, 300), '\s+', ' ', 'g')
+		FROM pg_stat_statements
+		WHERE dbid = (SELECT oid FROM pg_database WHERE datname = 'engawa')
+		ORDER BY total_exec_time DESC LIMIT 40" > "results/${name}.pgss.tsv"
 	# 計測区間の web のログ。異常値が出たときに、その間に何が動いていたかを追うために残す
 	docker logs --since "$log_since" "$web" > "results/${name}.web.log" 2>&1 || true
 
@@ -156,12 +188,6 @@ cmd_measure() {
 		printf "%s\t%s\t%s\n" "$rss" "$hwm" "$(tr "\0" " " < "$p/cmdline" | cut -c1-80)"
 	done' > "results/${name}.procs.tsv" || true
 
-	docker exec "$db" psql -U engawa -d engawa -qAt -F $'\t' -c "
-		SELECT calls, round(total_exec_time::numeric, 3), round(mean_exec_time::numeric, 4), rows,
-			shared_blks_hit, shared_blks_read, regexp_replace(left(query, 300), '\s+', ' ', 'g')
-		FROM pg_stat_statements
-		WHERE dbid = (SELECT oid FROM pg_database WHERE datname = 'engawa')
-		ORDER BY total_exec_time DESC LIMIT 40" > "results/${name}.pgss.tsv"
 
 	{
 		echo "commit=$SHA"

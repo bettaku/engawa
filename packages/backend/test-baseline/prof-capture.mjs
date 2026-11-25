@@ -5,7 +5,8 @@
 //
 // --port 9229 が master（HTTP を受ける）、9230 が worker（ジョブキュー）。
 
-import { writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { dirname } from 'node:path';
 import { parseArgs } from 'node:util';
 
 const { values: opts } = parseArgs({
@@ -17,6 +18,8 @@ const { values: opts } = parseArgs({
 	},
 });
 if (!opts.out) throw new Error('--out is required');
+// 取得が終わってから書けないと、取得したプロファイルを失うので、先に作っておく
+await mkdir(dirname(opts.out), { recursive: true });
 
 const list = await (await fetch(`http://127.0.0.1:${opts.port}/json/list`)).json();
 const url = list[0].webSocketDebuggerUrl.replace(/\/\/[^/]+\//, `//127.0.0.1:${opts.port}/`);

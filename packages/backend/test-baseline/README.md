@@ -16,13 +16,13 @@ Docker のコンテナで CPU とメモリに上限をかけ、Engawa・PostgreS
 cd packages/backend/test-baseline
 cp env.example .env           # 必要なら上限を変える
 ./run.sh build                # 現在のコミットから engawa-baseline:local を作る（10〜20分）
-./run.sh seed small           # API でデータを投入し、snapshots/small.dump を取る
+./run.sh seed small           # API でデータを投入し、snapshots/small.dump（PostgreSQL）と small.rdb（Redis）を取る
 ./run.sh measure emojis_anon 50 60s warm
 ./run.sh matrix 25 50 100     # 全シナリオ × 到着率。50rps と cold は3回ずつ。最後に results/summary.md（中央値）と runs.md（1回ずつ）を作る（約1時間50分）
 ./run.sh down
 ```
 
-一度 `seed` したら、次からは `./run.sh restore small` でスナップショットから戻す。コミットを変えて比べるときは、`build` だけやり直して同じスナップショットを使う（マイグレーションが増えた場合は `restore` の後の起動で当たる）。
+一度 `seed` したら、次からは `./run.sh restore small` でスナップショットから戻す。Redis も戻すので、タイムラインは本番と同じく fan-out の一覧から読まれる（Redis を戻さないと DB へのフォールバックの経路で測ることになる）。コミットを変えて比べるときは、`build` だけやり直して同じスナップショットを使う（マイグレーションが増えた場合は `restore` の後の起動で当たる）。
 
 ## シナリオ
 

@@ -215,10 +215,12 @@ async function main() {
 	// リアクション（Unicode絵文字とカスタム絵文字）
 	const publicNotes = targets;
 	const reactions = ['👍', '❤️', '😆', '🎉', '🍵', ...emojiNames.slice(0, 20).map(n => `:${n}:`)];
+	let reactionsCreated = 0;
 	const reactionPlan = Array.from({ length: scale.reactions }, () => [zipfIndex(publicNotes.length, 0.8), Math.floor(rand() * users.length), pick(reactions)]);
 	await pool(reactionPlan, async function reactions_([n, u, reaction]) {
 		try {
 			await api('notes/reactions/create', { noteId: publicNotes[n].id, reaction }, users[u].token);
+			reactionsCreated++;
 		} catch (e) {
 			if (e.apiError?.code !== 'ALREADY_REACTED') throw e;
 		}
@@ -228,7 +230,7 @@ async function main() {
 		generatedAt: new Date().toISOString(),
 		scale: args.scale,
 		seed: Number(args.seed),
-		counts: { users: users.length, notes: notes.length, publicNotes: publicNotes.length, emojis: emojiNames.length, follows: followPairs.length, reactions: scale.reactions },
+		counts: { users: users.length, notes: notes.length, publicNotes: publicNotes.length, emojis: emojiNames.length, follows: followPairs.length, reactions: reactionsCreated, reactionsAttempted: scale.reactions },
 		// 計測環境の中だけで有効なトークン。fixture/ は git に入れない
 		users,
 		publicNoteIds: publicNotes.map(n => n.id),

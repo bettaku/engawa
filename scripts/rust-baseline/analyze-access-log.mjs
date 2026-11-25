@@ -34,8 +34,16 @@ if (files.length === 0) {
 
 // ---- パスの正規化。上から順に最初に一致したものを使う ----
 const ID = '[0-9a-z]{8,32}';
+// 英字と数字が混ざった8文字以上、または UUID・16進の長い列。エンドポイント名（notes、local-timeline など）は当たらない
+const isIdLike = (seg) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(seg)
+	|| (seg.length >= 8 && /\d/.test(seg) && /^[0-9a-z]+$/i.test(seg));
 const ROUTES = [
-	[/^\/api\/([a-z0-9\-_/]+?)\/?$/i, m => `/api/${m[1]}`],
+	// API の名前は英小文字・数字・ハイフン・下線の区切り。ID や UUID を含む区切り（例: /api/miauth/<uuid>/check）は
+	// 値を出力に残さないよう :id にする。それ以外の形は (other) にまとめる
+	[/^\/api\/([a-z0-9\-_/]+?)\/?$/i, m => {
+		const segs = m[1].split('/').map(seg => (isIdLike(seg) ? ':id' : seg));
+		return segs.every(seg => seg === ':id' || /^[a-z][a-z0-9\-_]*$/.test(seg)) ? `/api/${segs.join('/')}` : '(other)';
+	}],
 	[/^\/api\/?$/, () => '/api'],
 	[/^\/streaming\/?$/, () => '/streaming'],
 	[/^\/inbox\/?$/, () => '/inbox'],
@@ -156,7 +164,10 @@ if (total === 0) {
 }
 
 const spanSec = Math.max(1, (lastT - firstT) / 1000);
-const minuteCounts = [...perMinute.values()].sort((a, b) => a - b);
+// 要求がなかった分も 0 件として含める（含めないと、断続的なトラフィックの通常の到着率を過大に見積もる）
+const minuteCounts = [];
+for (let m = Math.floor(firstT / 60000); m <= Math.floor(lastT / 60000); m++) minuteCounts.push(perMinute.get(m) ?? 0);
+minuteCounts.sort((a, b) => a - b);
 const pctOf = (arr, q) => arr[Math.min(arr.length - 1, Math.floor(q * arr.length))];
 const overview = {
 	files: files.length,

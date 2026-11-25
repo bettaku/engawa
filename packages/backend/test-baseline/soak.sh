@@ -32,6 +32,15 @@ curl -fs http://127.0.0.1:9229/json/list >/dev/null || { echo "inspector not rea
 	done
 ) &
 capture=$!
+# 計測が途中で失敗して set -e で抜けた場合も、取得のループと取得中のプロセスを止める
+stop_capture() {
+	local status=$?
+	kill "$capture" 2>/dev/null || true
+	pkill -f "prof-capture.mjs --seconds 600 --out $OUT" 2>/dev/null || true
+	wait "$capture" 2>/dev/null || true
+	return "$status"
+}
+trap stop_capture EXIT
 
 scenarios=(emojis_anon meta_anon ltl_anon notes_show_anon users_show_anon htl_auth i_auth notifications_auth mix)
 for c in $(seq 1 "$CYCLES"); do
@@ -44,7 +53,5 @@ for c in $(seq 1 "$CYCLES"); do
 	done
 done
 
-# 最後の区切りまで取り終えるのを待たず、取得中のプロファイルは捨てる
-kill "$capture" 2>/dev/null || true
-pkill -f "prof-capture.mjs --seconds 600 --out $OUT" 2>/dev/null || true
+# 最後の区切りまで取り終えるのを待たず、取得中のプロファイルは捨てる（EXIT の trap で止める）
 echo "soak done: $OUT" >&2
