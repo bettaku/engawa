@@ -1,0 +1,6 @@
+# 計測環境の中だけで有効なトークンを含む
+fixture/
+# DBのダンプと計測結果は大きく、環境ごとに違う。残す結果は docs/rust-migration/baseline/ に転記する
+snapshots/
+results/
+.env

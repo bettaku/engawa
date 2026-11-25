@@ -1,0 +1,29 @@
+# RUST-02 計測環境の設定。compose.yml の web コンテナが読む。
+# 計測専用。setupPassword は計測環境の外では使わない。
+
+url: http://engawa.baseline.test:3000/
+port: 3000
+
+db:
+  host: db
+  port: 5432
+  db: engawa
+  user: engawa
+  pass: engawa
+
+redis:
+  host: redis
+  port: 6379
+
+id: aidx
+
+# k6 が X-Forwarded-For で仮想利用者ごとに別のIPを送り、IP単位のレート制限を本番と同じく働かせる
+trustProxy: true
+
+# 計測を単純にするため1プロセスにする。複数プロセスの計測は README の「条件を変える」を参照
+clusterLimit: 1
+
+setupPassword: baseline-setup-password
+
+proxyRemoteFiles: true
+signToActivityPubGet: true
