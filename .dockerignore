@@ -33,3 +33,6 @@ packages/*/.vscode/
 packages/backend/test/compose.yml
 
 .pnpm-store/
+
+# Claude Code のワークツリー・ローカル設定（.git は submodule 取得に使うため除外しない）
+.claude/
