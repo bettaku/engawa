@@ -1,0 +1,10 @@
+# 調査用の上書き。GC のログを出す。
+#   docker compose -f compose.yml -f compose.gc.yml up -d web
+# pnpm の起動ラッパーを通さずに node を直接起動する（--trace-gc は NODE_OPTIONS では渡せない）。
+# cluster の worker は process.execArgv を引き継ぐので、master と worker の両方でログが出る。
+services:
+  web:
+    command:
+      - sh
+      - -c
+      - pnpm run migrate && cd packages/backend && exec node --trace-gc ${BASELINE_NODE_ARGS:-} ./built/boot/entry.js
