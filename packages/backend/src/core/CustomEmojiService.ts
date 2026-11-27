@@ -14,10 +14,10 @@ import { UtilityService } from '@/core/UtilityService.js';
 import { bindThis } from '@/decorators.js';
 import { DI } from '@/di-symbols.js';
 import { MemoryKVCache, RedisSingleCache } from '@/misc/cache.js';
+import { type ColumnKinds, type JsonCodec, arrayCodec, objectCodec, redisConverters } from '@/misc/cache-codec.js';
 import { sqlLikeEscape } from '@/misc/sql-like-escape.js';
 import type { DriveFilesRepository, EmojisRepository, MiMeta, MiRole, MiUser } from '@/models/_.js';
 import type { MiEmoji } from '@/models/Emoji.js';
-import type { Serialized } from '@/types.js';
 import { DriveService } from '@/core/DriveService.js';
 import Logger from '@/logger.js';
 import { LoggerService } from './LoggerService.js';
@@ -61,6 +61,36 @@ export const fetchEmojisSortKeys = [
 ] as const;
 export type FetchEmojisSortKeys = typeof fetchEmojisSortKeys[number];
 
+/** `localEmojis`のキャッシュに保存する列（P2-1）。すべての列を保存する */
+const EMOJI_CACHE_COLUMNS: ColumnKinds<MiEmoji> = {
+	id: 'value',
+	updatedAt: 'date',
+	name: 'value',
+	host: 'value',
+	category: 'value',
+	originalUrl: 'value',
+	publicUrl: 'value',
+	uri: 'value',
+	type: 'value',
+	aliases: 'value',
+	license: 'value',
+	localOnly: 'value',
+	isSensitive: 'value',
+	roleIdsThatCanBeUsedThisEmojiAsReaction: 'value',
+};
+
+/** 名前ごとのローカルの絵文字。絵文字の配列として保存する */
+const localEmojisCodec: JsonCodec<Map<string, MiEmoji>> = (() => {
+	const emojis = arrayCodec(objectCodec<MiEmoji>(EMOJI_CACHE_COLUMNS));
+	return {
+		encode: (value) => emojis.encode(Array.from(value.values())),
+		decode: (json) => {
+			const decoded = emojis.decode(json);
+			return decoded && new Map(decoded.map(emoji => [emoji.name, emoji]));
+		},
+	};
+})();
+
 @Injectable()
 export class CustomEmojiService implements OnApplicationShutdown {
 	private emojisCache: MemoryKVCache<MiEmoji | null>;
@@ -95,13 +125,7 @@ export class CustomEmojiService implements OnApplicationShutdown {
 			lifetime: 1000 * 60 * 30, // 30m
 			memoryCacheLifetime: 1000 * 60 * 3, // 3m
 			fetcher: () => this.emojisRepository.find({ where: { host: IsNull() } }).then(emojis => new Map(emojis.map(emoji => [emoji.name, emoji]))),
-			toRedisConverter: (value) => JSON.stringify(Array.from(value.values())),
-			fromRedisConverter: (value) => {
-				return new Map(JSON.parse(value).map((x: Serialized<MiEmoji>) => [x.name, {
-					...x,
-					updatedAt: x.updatedAt ? new Date(x.updatedAt) : null,
-				}]));
-			},
+			...redisConverters(localEmojisCodec),
 			invalidation: this.cacheInvalidationService,
 		});
 

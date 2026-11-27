@@ -55,8 +55,10 @@ jobs:
     - name: Setup pnpm
       uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
     - name: Install FFmpeg
+      # ランナーイメージのパッケージ一覧が古いと、差し替えられた依存の .deb が 404 になる（2026-11-25 の pipewire）
       run: |
-        sudo apt install -y ffmpeg
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
     - name: Use Node.js
       uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
       with:

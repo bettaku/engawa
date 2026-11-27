@@ -12,7 +12,7 @@ import { DI } from '@/di-symbols.js';
 import { NoteEntityService } from '@/core/entities/NoteEntityService.js';
 import { IdService } from '@/core/IdService.js';
 import { FanoutTimelineService } from '@/core/FanoutTimelineService.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
+import { GlobalEventService, toInternalEventRef } from '@/core/GlobalEventService.js';
 import { trackPromise } from '@/misc/promise-tracker.js';
 import { ApiError } from '../../error.js';
 
@@ -88,10 +88,12 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			antenna.isActive = true;
 			antenna.lastUsedAt = new Date();
-			trackPromise(this.antennasRepository.update(antenna.id, antenna));
-
 			if (needPublishEvent) {
-				this.globalEventService.publishInternalEvent('antennaUpdated', antenna);
+				// 受信側はイベントを受けてDBから読み直すので、更新を書き込んでから発行する
+				await this.antennasRepository.update(antenna.id, antenna);
+				this.globalEventService.publishInternalEvent('antennaUpdated', toInternalEventRef(antenna));
+			} else {
+				trackPromise(this.antennasRepository.update(antenna.id, antenna));
 			}
 
 			let noteIds = await this.fanoutTimelineService.get(`antennaTimeline:${antenna.id}`, untilId, sinceId);

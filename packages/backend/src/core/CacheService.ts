@@ -16,6 +16,46 @@ import type { StoredFlashToken } from '@/misc/flash-token.js';
 import type { OnApplicationShutdown } from '@nestjs/common';
 import { CacheInvalidationService } from '@/core/CacheInvalidationService.js';
 import { onRedisReconnected } from '@/misc/redis-reconnected.js';
+import { type ColumnKinds, type JsonCodec, idSetCodec, objectCodec, pickColumns, redisConverters } from '@/misc/cache-codec.js';
+
+/**
+ * `userProfile`のキャッシュに保存する列（P2-1）。キャッシュから読む処理が使う列だけにする。
+ * パスワードのハッシュ・二段階認証の秘密・メールアドレスの確認コードなどは保存しない（アドバイザリ[A5]）。
+ * これ以外の列が必要なときは、キャッシュを使わずにDBから読む。
+ */
+export const CACHED_USER_PROFILE_COLUMNS = {
+	userId: 'value',
+	userHost: 'value',
+	mutedInstances: 'value',
+	followedMessage: 'value',
+	notificationRecieveConfig: 'value',
+} as const satisfies Partial<Record<keyof MiUserProfile, 'value' | 'date'>>;
+
+export type CachedUserProfile = Pick<MiUserProfile, keyof typeof CACHED_USER_PROFILE_COLUMNS>;
+
+const cachedUserProfileColumns: ColumnKinds<CachedUserProfile> = CACHED_USER_PROFILE_COLUMNS;
+const cachedUserProfileCodec = objectCodec<CachedUserProfile>(cachedUserProfileColumns);
+
+/** `userProfile`のキャッシュに入れる値にする（保存しない列を落とす） */
+export function toCachedUserProfile(profile: CachedUserProfile): CachedUserProfile {
+	return pickColumns(cachedUserProfileColumns, profile);
+}
+
+/** `userFollowings`の値。フォローしている相手のIDごとの設定 */
+type UserFollowingsCacheValue = Record<string, Pick<MiFollowing, 'withReplies'> | undefined>;
+
+const userFollowingsCodec: JsonCodec<UserFollowingsCacheValue> = {
+	encode: (value) => value,
+	decode: (json) => {
+		if (typeof json !== 'object' || json == null || Array.isArray(json)) return undefined;
+		const out: UserFollowingsCacheValue = {};
+		for (const [followeeId, v] of Object.entries(json)) {
+			if (typeof v !== 'object' || v == null || typeof (v as { withReplies?: unknown }).withReplies !== 'boolean') return undefined;
+			out[followeeId] = { withReplies: (v as { withReplies: boolean }).withReplies };
+		}
+		return out;
+	},
+};
 
 @Injectable()
 export class CacheService implements OnApplicationShutdown {
@@ -24,7 +64,7 @@ export class CacheService implements OnApplicationShutdown {
 	public localUserByNativeTokenCache: MemoryKVCache<MiLocalUser | null>;
 	public localUserByIdCache: MemoryKVCache<MiLocalUser>;
 	public uriPersonCache: MemoryKVCache<MiUser | null>;
-	public userProfileCache: RedisKVCache<MiUserProfile>;
+	public userProfileCache: RedisKVCache<CachedUserProfile>;
 	public flashAccessTokensCache: RedisKVCache<StoredFlashToken | null>;
 	public userMutingsCache: RedisKVCache<Set<string>>;
 	public userBlockingCache: RedisKVCache<Set<string>>;
@@ -67,12 +107,14 @@ export class CacheService implements OnApplicationShutdown {
 		this.localUserByIdCache = new MemoryKVCache<MiLocalUser>(1000 * 60 * 5); // 5m
 		this.uriPersonCache = new MemoryKVCache<MiUser | null>(1000 * 60 * 5); // 5m
 
-		this.userProfileCache = new RedisKVCache<MiUserProfile>(this.redisClient, 'userProfile', {
+		this.userProfileCache = new RedisKVCache<CachedUserProfile>(this.redisClient, 'userProfile', {
 			lifetime: 1000 * 60 * 30, // 30m
 			memoryCacheLifetime: 1000 * 60, // 1m
-			fetcher: (key) => this.userProfilesRepository.findOneByOrFail({ userId: key }),
-			toRedisConverter: (value) => JSON.stringify(value),
-			fromRedisConverter: (value) => JSON.parse(value), // TODO: date型の考慮
+			fetcher: (key) => this.userProfilesRepository.findOneOrFail({
+				where: { userId: key },
+				select: Object.keys(CACHED_USER_PROFILE_COLUMNS) as (keyof CachedUserProfile)[],
+			}).then(toCachedUserProfile),
+			...redisConverters(cachedUserProfileCodec),
 			invalidation: this.cacheInvalidationService,
 		});
 
@@ -80,8 +122,7 @@ export class CacheService implements OnApplicationShutdown {
 			lifetime: 1000 * 60 * 30, // 30m
 			memoryCacheLifetime: 1000 * 60, // 1m
 			fetcher: (key) => this.mutingsRepository.find({ where: { muterId: key }, select: ['muteeId'] }).then(xs => new Set(xs.map(x => x.muteeId))),
-			toRedisConverter: (value) => JSON.stringify(Array.from(value)),
-			fromRedisConverter: (value) => new Set(JSON.parse(value)),
+			...redisConverters(idSetCodec),
 			invalidation: this.cacheInvalidationService,
 		});
 
@@ -89,8 +130,7 @@ export class CacheService implements OnApplicationShutdown {
 			lifetime: 1000 * 60 * 30, // 30m
 			memoryCacheLifetime: 1000 * 60, // 1m
 			fetcher: (key) => this.blockingsRepository.find({ where: { blockerId: key }, select: ['blockeeId'] }).then(xs => new Set(xs.map(x => x.blockeeId))),
-			toRedisConverter: (value) => JSON.stringify(Array.from(value)),
-			fromRedisConverter: (value) => new Set(JSON.parse(value)),
+			...redisConverters(idSetCodec),
 			invalidation: this.cacheInvalidationService,
 		});
 
@@ -98,8 +138,7 @@ export class CacheService implements OnApplicationShutdown {
 			lifetime: 1000 * 60 * 30, // 30m
 			memoryCacheLifetime: 1000 * 60, // 1m
 			fetcher: (key) => this.blockingsRepository.find({ where: { blockeeId: key }, select: ['blockerId'] }).then(xs => new Set(xs.map(x => x.blockerId))),
-			toRedisConverter: (value) => JSON.stringify(Array.from(value)),
-			fromRedisConverter: (value) => new Set(JSON.parse(value)),
+			...redisConverters(idSetCodec),
 			invalidation: this.cacheInvalidationService,
 		});
 
@@ -107,12 +146,11 @@ export class CacheService implements OnApplicationShutdown {
 			lifetime: 1000 * 60 * 30, // 30m
 			memoryCacheLifetime: 1000 * 60, // 1m
 			fetcher: (key) => this.renoteMutingsRepository.find({ where: { muterId: key }, select: ['muteeId'] }).then(xs => new Set(xs.map(x => x.muteeId))),
-			toRedisConverter: (value) => JSON.stringify(Array.from(value)),
-			fromRedisConverter: (value) => new Set(JSON.parse(value)),
+			...redisConverters(idSetCodec),
 			invalidation: this.cacheInvalidationService,
 		});
 
-		this.userFollowingsCache = new RedisKVCache<Record<string, Pick<MiFollowing, 'withReplies'> | undefined>>(this.redisClient, 'userFollowings', {
+		this.userFollowingsCache = new RedisKVCache<UserFollowingsCacheValue>(this.redisClient, 'userFollowings', {
 			lifetime: 1000 * 60 * 30, // 30m
 			memoryCacheLifetime: 1000 * 60, // 1m
 			fetcher: (key) => this.followingsRepository.find({ where: { followerId: key }, select: ['followeeId', 'withReplies'] }).then(xs => {
@@ -122,8 +160,7 @@ export class CacheService implements OnApplicationShutdown {
 				}
 				return obj;
 			}),
-			toRedisConverter: (value) => JSON.stringify(value),
-			fromRedisConverter: (value) => JSON.parse(value),
+			...redisConverters(userFollowingsCodec),
 			invalidation: this.cacheInvalidationService,
 		});
 

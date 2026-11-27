@@ -10,7 +10,7 @@ import { bindThis } from '@/decorators.js';
  * Redisに保存するキャッシュの値の形式の版（namespace）。
  *
  * - 1: `kvcache:<name>:<key>`、`singlecache:<name>`。値は呼び出し側の変換関数（多くはエンティティのJSON）
- * - 2: `kvcache:v2:<name>:<key>`、`singlecache:v2:<name>`。値はキャッシュごとに定義したDTO（予定）
+ * - 2: `kvcache:v2:<name>:<key>`、`singlecache:v2:<name>`。値はキャッシュごとに定義したDTO（misc/cache-codec.ts）
  *
  * 版を切り替える期間は、新旧の版のプロセスが同じキーを共有する。どちらの版のプロセスが値を更新・削除しても、
  * もう一方の版のプロセスが古い値を読まないように、書き込み・削除のたびに**すべての版の**キーを消す。
@@ -20,8 +20,8 @@ import { bindThis } from '@/decorators.js';
 export const CACHE_KEY_VERSIONS = [1, 2] as const;
 export type CacheKeyVersion = typeof CACHE_KEY_VERSIONS[number];
 
-/** 読み書きに使う版。第2リリースで2にする */
-export const CURRENT_CACHE_KEY_VERSION: CacheKeyVersion = 1;
+/** 読み書きに使う版。第2リリースで2にした（値はキャッシュごとに定義したDTO。misc/cache-codec.ts） */
+export const CURRENT_CACHE_KEY_VERSION: CacheKeyVersion = 2;
 
 /**
  * 版付けのキー。`version`が`null`のキャッシュは版を持たない（認証状態などDBから再生成できないもの）。

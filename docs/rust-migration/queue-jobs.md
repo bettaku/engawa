@@ -15,8 +15,9 @@ pre-rust-tech-debt.md の P2-4（ジョブpayloadの版と形）で、BullMQの�
 
 形を変える種別は、新しい形に新しい版（`v: 2`）を付け、次の順で切り替える。
 
-1. **第1リリース（このリリース）**: 処理側が新旧両方の版を受け付ける。生成側は旧い形（`v: 1`）のまま。
-2. **第2リリース**: 生成側を新しい形に切り替える。
+1. **第1リリース**: 処理側が新旧両方の版を受け付ける。生成側は旧い形（`v: 1`）のまま。
+2. **第2リリース（このリリース）**: 生成側を新しい形に切り替える。
+   - **開始条件**: ジョブを処理するプロセス（キューのワーカーのすべて）が第1リリース以降の版に切り替わっていること。第1リリースより前の処理側は`v: 2`を知らない版として失敗にする（失敗として残るので、処理側を更新した後に再実行できる）。
 3. **第3リリース**: 旧い形のジョブが残っていないことを確かめてから、旧い形の処理を削除する。
 
 ロールバック:
@@ -26,10 +27,10 @@ pre-rust-tech-debt.md の P2-4（ジョブpayloadの版と形）で、BullMQの�
 
 | キュー | ジョブ | v1（旧） | v2（新） | 状態 |
 | --- | --- | --- | --- | --- |
-| `inbox` | （ジョブ名はactivityのid） | `{ activity, signature: IParsedSignature }`（`@peertube/http-signature`の解析結果） | `{ v: 2, activity, signature: { keyId, algorithm, headers, signature, signingString }, request: { method, target, digest } }` | 第1リリース |
-| `userWebhookDeliver` | （ジョブ名はwebhookのid） | `{ type, content, webhookId, userId, to, secret, createdAt, eventId }` | `{ v: 2, type, content, webhookId, userId, createdAt, eventId }` | 第1リリース |
-| `systemWebhookDeliver` | （ジョブ名はwebhookのid） | `{ type, content, webhookId, to, secret, createdAt, eventId }` | `{ v: 2, type, content, webhookId, createdAt, eventId }` | 第1リリース |
-| `db` | `importAntennas` | `{ user, antenna: Antenna[] }`（利用者がアップロードしたファイルの中身） | `{ v: 2, user, fileId }` | 第1リリース |
+| `inbox` | （ジョブ名はactivityのid） | `{ activity, signature: IParsedSignature }`（`@peertube/http-signature`の解析結果） | `{ v: 2, activity, signature: { keyId, algorithm, headers, signature, signingString }, request: { method, target, digest } }` | 第2リリース（生成側はv2） |
+| `userWebhookDeliver` | （ジョブ名はwebhookのid） | `{ type, content, webhookId, userId, to, secret, createdAt, eventId }` | `{ v: 2, type, content, webhookId, userId, createdAt, eventId }` | 第2リリース（生成側はv2。テスト送信だけv1） |
+| `systemWebhookDeliver` | （ジョブ名はwebhookのid） | `{ type, content, webhookId, to, secret, createdAt, eventId }` | `{ v: 2, type, content, webhookId, createdAt, eventId }` | 第2リリース（生成側はv2。テスト送信だけv1） |
+| `db` | `importAntennas` | `{ user, antenna: Antenna[] }`（利用者がアップロードしたファイルの中身） | `{ v: 2, user, fileId }` | 第2リリース（生成側はv2） |
 
 ### inbox
 
@@ -38,17 +39,17 @@ pre-rust-tech-debt.md の P2-4（ジョブpayloadの版と形）で、BullMQの�
 - digestの検証: 受信時（ActivityPubServerService）。ジョブに入るのは検証済みのdigestである。
 - 署名の暗号的な検証: worker（InboxProcessorService）。v2は`toParsedSignature`で`IParsedSignature`の形に組み立て直して検証する。
 
-v2の`signature.algorithm`は、`parseRequest`が小文字にした値（`params.algorithm`）である。`signingString`は受信時に組み立てたものをそのまま持つ。`request.method`・`request.target`・`request.digest`は、署名の検証には使わないが、別の実装が受信時と同じ材料で検証し直せるように持つ。v2の組み立ては`buildInboxJobDataV2`で行う（第2リリースでActivityPubServerServiceから使う）。
+v2の`signature.algorithm`は、`parseRequest`が小文字にした値（`params.algorithm`）である。`signingString`は受信時に組み立てたものをそのまま持つ。`request.method`・`request.target`・`request.digest`は、署名の検証には使わないが、別の実装が受信時と同じ材料で検証し直せるように持つ。v2の組み立ては`buildInboxJobDataV2`で行い、`QueueService.inbox`が受信時の値（`parseRequest`の結果、生のメソッドとrequest-target、`digest`ヘッダー）から作る。
 
 ### webhook
 
 v2は送信先と`secret`を持たず、処理時にDBから読む。webhookが削除・無効化されていれば送らずに完了する（ユーザーのwebhookは、所有者が`userId`と異なる場合も送らない）。v1は登録した時点の送信先と`secret`で送り、処理時の有効・無効を見ない。
 
-テスト送信（WebhookTestService）は、保存前の送信先と`secret`で送り、有効・無効の設定も無視するので、第2リリース以降もv1の形を使う。テスト送信は試行1回で、`secret`は送信者が入力した値である。
+保存済みのwebhookへの送信（`QueueService.userWebhookDeliver`・`systemWebhookDeliver`）はv2を書く。テスト送信（WebhookTestService）は、保存前の送信先と`secret`で送り、有効・無効の設定も無視するので、第2リリース以降もv1の形を使う（`userWebhookTestDeliver`・`systemWebhookTestDeliver`）。テスト送信は試行1回で、`secret`は送信者が入力した値である。そのため、第3リリースでもwebhookのv1の処理は削除しない。
 
 ### importAntennas
 
-v2はファイルのIDだけを持ち、中身は処理時に利用者のドライブから読む。ファイルが削除されていれば何もせずに完了する。アンテナの数の上限は、これまでどおり受付時（`i/import-antennas`）に確かめる。
+v2はファイルのIDだけを持ち、中身は処理時に利用者のドライブから読む（`i/import-antennas`は第2リリースからv2を登録する）。ファイルが削除されていれば何もせずに完了する。アンテナの数の上限は、これまでどおり受付時（`i/import-antennas`）に確かめる。
 
 ## 形を変えない種別
 

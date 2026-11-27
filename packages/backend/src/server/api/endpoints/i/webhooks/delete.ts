@@ -6,7 +6,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import type { WebhooksRepository } from '@/models/_.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
+import { GlobalEventService, toInternalEventRef } from '@/core/GlobalEventService.js';
 import { DI } from '@/di-symbols.js';
 import { ApiError } from '../../../error.js';
 
@@ -56,7 +56,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			await this.webhooksRepository.delete(webhook.id);
 
-			this.globalEventService.publishInternalEvent('webhookDeleted', webhook);
+			this.globalEventService.publishInternalEvent('webhookDeleted', toInternalEventRef(webhook));
 		});
 	}
 }

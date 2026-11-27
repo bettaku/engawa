@@ -1,0 +1,14 @@
+# 調査用の上書き。web を --inspect 付きで起動し、prof-capture.mjs から CPU プロファイルを取る。
+#   docker compose -f compose.yml -f compose.prof.yml up -d web
+#   node prof-capture.mjs --seconds 600 --out results/prof/master.cpuprofile
+# --cpu-prof は終了時にしか書かず、長い負荷の後は終了処理が60秒以内に終わらなかった（2026-11-25）ので使わない。
+# インスペクタは 127.0.0.1 にだけ公開する。master が 9229、cluster の worker は 9230 を使う。
+services:
+  web:
+    command:
+      - sh
+      - -c
+      - pnpm run migrate && cd packages/backend && exec node --inspect=0.0.0.0:9229 --trace-gc ${BASELINE_NODE_ARGS:-} ./built/boot/entry.js
+    ports:
+      - '127.0.0.1:9229:9229'
+      - '127.0.0.1:9230:9230'

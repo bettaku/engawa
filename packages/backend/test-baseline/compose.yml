@@ -1,0 +1,99 @@
+# RUST-02: 基準負荷の計測環境
+# 使い方は README.md を参照する。CPU・メモリの上限は .env（env.example）で変える。
+
+name: engawa-baseline
+
+services:
+  web:
+    image: ${BASELINE_WEB_IMAGE:-engawa-baseline:local}
+    # 投入（seed）時は development にしてレート制限を外し、計測時は production にする
+    environment:
+      NODE_ENV: ${BASELINE_NODE_ENV:-production}
+      CP_WITH_LOG_TIME: '1'
+    volumes:
+      - ./config:/cherrypick/.config:ro
+    # ドライブの保存先。名前付きボリュームはrootの所有になり、イメージのcherrypickユーザーが書けない。
+    # 計測はファイルの中身を読まないので、再起動で消えるtmpfsでよい
+    tmpfs:
+      - /cherrypick/files:mode=1777
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - '127.0.0.1:${BASELINE_WEB_PORT:-61900}:3000'
+    cpus: ${BASELINE_WEB_CPUS:-2}
+    mem_limit: ${BASELINE_WEB_MEM:-2g}
+    networks:
+      baseline:
+        # 設定の url。絵文字の追加などでサーバーが自分のURLからファイルを取得する
+        aliases: [engawa.baseline.test]
+
+  db:
+    image: postgres:${BASELINE_PG_VERSION:-15}-alpine
+    environment:
+      POSTGRES_DB: engawa
+      POSTGRES_USER: engawa
+      POSTGRES_PASSWORD: engawa
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - pg_stat_statements.track=top
+      - -c
+      - shared_buffers=${BASELINE_PG_SHARED_BUFFERS:-256MB}
+      - -c
+      - max_connections=200
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./snapshots:/snapshots
+    healthcheck:
+      test: pg_isready -U engawa -d engawa
+      interval: 2s
+      retries: 30
+    cpus: ${BASELINE_DB_CPUS:-2}
+    mem_limit: ${BASELINE_DB_MEM:-2g}
+    networks: [baseline]
+
+  redis:
+    image: redis:7-alpine
+    command: ['redis-server', '--save', '', '--appendonly', 'no']
+    healthcheck:
+      test: redis-cli ping
+      interval: 2s
+      retries: 30
+    cpus: ${BASELINE_REDIS_CPUS:-1}
+    mem_limit: ${BASELINE_REDIS_MEM:-512m}
+    networks: [baseline]
+
+  k6:
+    image: grafana/k6:${BASELINE_K6_VERSION:-2.4.0}
+    profiles: [tools]
+    volumes:
+      - ./k6:/scripts:ro
+      - ./results:/results
+      - ./fixture:/fixture:ro
+    cpus: ${BASELINE_K6_CPUS:-2}
+    networks: [baseline]
+
+  # cgroup の読み取り専用。計測対象に docker exec を繰り返さないために置く（sampler.sh）
+  sampler:
+    image: alpine:latest
+    profiles: [tools]
+    cgroup: host
+    command: ['sleep', 'infinity']
+    init: true
+    volumes:
+      - /sys/fs/cgroup:/hostcg:ro
+      - ./sampler.sh:/sampler.sh:ro
+      - ./results:/results
+    cpus: 0.25
+    networks: [baseline]
+
+volumes:
+  db-data:
+
+networks:
+  baseline:

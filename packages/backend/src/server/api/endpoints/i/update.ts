@@ -26,7 +26,7 @@ import { UtilityService } from '@/core/UtilityService.js';
 import { HashtagService } from '@/core/HashtagService.js';
 import { DI } from '@/di-symbols.js';
 import { RolePolicies, RoleService } from '@/core/RoleService.js';
-import { CacheService } from '@/core/CacheService.js';
+import { CacheService, toCachedUserProfile } from '@/core/CacheService.js';
 import { RemoteUserResolveService } from '@/core/RemoteUserResolveService.js';
 import { DriveFileEntityService } from '@/core/entities/DriveFileEntityService.js';
 import { HttpRequestService } from '@/core/HttpRequestService.js';
@@ -544,7 +544,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 
 			const updatedProfile = await this.userProfilesRepository.findOneByOrFail({ userId: user.id });
 
-			this.cacheService.userProfileCache.set(user.id, updatedProfile);
+			this.cacheService.userProfileCache.set(user.id, toCachedUserProfile(updatedProfile));
 
 			// Publish meUpdated event
 			this.globalEventService.publishMainStream(user.id, 'meUpdated', iObj);

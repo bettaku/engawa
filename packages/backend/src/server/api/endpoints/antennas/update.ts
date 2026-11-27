@@ -6,7 +6,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Endpoint } from '@/server/api/endpoint-base.js';
 import type { AntennasRepository, UserListsRepository, UserGroupJoiningsRepository } from '@/models/_.js';
-import { GlobalEventService } from '@/core/GlobalEventService.js';
+import { GlobalEventService, toInternalEventRef } from '@/core/GlobalEventService.js';
 import { AntennaEntityService } from '@/core/entities/AntennaEntityService.js';
 import { DI } from '@/di-symbols.js';
 import { ApiError } from '../../error.js';
@@ -156,7 +156,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 				lastUsedAt: new Date(),
 			});
 
-			this.globalEventService.publishInternalEvent('antennaUpdated', await this.antennasRepository.findOneByOrFail({ id: antenna.id }));
+			this.globalEventService.publishInternalEvent('antennaUpdated', toInternalEventRef(await this.antennasRepository.findOneByOrFail({ id: antenna.id })));
 
 			return await this.antennaEntityService.pack(antenna.id);
 		});

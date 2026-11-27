@@ -21,9 +21,9 @@ import { DI } from '@/di-symbols.js';
 import { bindThis } from '@/decorators.js';
 import { LoggerService } from '@/core/LoggerService.js';
 import type Logger from '@/logger.js';
-import type { Antenna } from '@/server/api/endpoints/i/import-antennas.js';
 import { ApRequestCreator } from '@/core/activitypub/ApRequestService.js';
 import { JOB_DATA_VERSION } from '@/queue/job-version.js';
+import { buildInboxJobDataV2 } from '@/queue/inbox-job-data.js';
 import { type SystemWebhookPayload } from '@/core/SystemWebhookService.js';
 import type { Packed } from '@/misc/json-schema.js';
 import { type UserWebhookPayload } from './UserWebhookService.js';
@@ -307,13 +307,15 @@ export class QueueService {
 		return;
 	}
 
+	/**
+	 * 受信したactivityを登録する。payloadは新形式（v2）で、外部ライブラリの型を持たない（pre-rust-tech-debt.md P2-4）。
+	 *
+	 * @param signature `httpSignature.parseRequest`の結果
+	 * @param request 受信したリクエストの生の値。`digest`は受信時に検証済みのもの
+	 */
 	@bindThis
-	public inbox(activity: IActivity, signature: httpSignature.IParsedSignature) {
-		const data: InboxJobData = {
-			v: JOB_DATA_VERSION,
-			activity: activity,
-			signature,
-		};
+	public inbox(activity: IActivity, signature: httpSignature.IParsedSignature, request: { method: string; url: string; digest: string | null; }) {
+		const data: InboxJobData = buildInboxJobDataV2(activity, signature, request);
 
 		const label = (activity.id ?? '').replace('https://', '').replace('/activity', '');
 
@@ -630,12 +632,15 @@ export class QueueService {
 		});
 	}
 
+	/**
+	 * アンテナの取り込み。payloadは新形式（v2）で、ファイルのIDだけを持つ。中身は処理時にドライブから読む（pre-rust-tech-debt.md P2-4）。
+	 */
 	@bindThis
-	public createImportAntennasJob(user: ThinUser, antenna: Antenna) {
+	public createImportAntennasJob(user: ThinUser, fileId: MiDriveFile['id']) {
 		return this.dbQueue.add('importAntennas', {
-			v: JOB_DATA_VERSION,
+			v: 2,
 			user: { id: user.id },
-			antenna,
+			fileId,
 		}, {
 			removeOnComplete: {
 				age: 3600 * 24 * 7, // keep up to 7 days
@@ -884,15 +889,40 @@ export class QueueService {
 	}
 
 	/**
+	 * 保存済みのwebhookへ送る。payloadは新形式（v2）で、送信先と`secret`を持たない。処理時にDBから読む（pre-rust-tech-debt.md P2-4）。
+	 *
 	 * @see UserWebhookDeliverJobData
 	 * @see UserWebhookDeliverProcessorService
 	 */
 	@bindThis
 	public userWebhookDeliver<T extends WebhookEventTypes>(
-		webhook: MiWebhook,
+		webhook: Pick<MiWebhook, 'id' | 'userId'>,
 		type: T,
 		content: UserWebhookPayload<T>,
-		opts?: { attempts?: number },
+	) {
+		const data: UserWebhookDeliverJobData = {
+			v: 2,
+			type,
+			content,
+			webhookId: webhook.id,
+			userId: webhook.userId,
+			createdAt: Date.now(),
+			eventId: randomUUID(),
+		};
+
+		return this.addUserWebhookDeliverJob(webhook.id, data, 4);
+	}
+
+	/**
+	 * テスト送信。保存前の送信先と`secret`で送り、有効・無効の設定も無視するので、旧形式（v1）を使う。試行は1回。
+	 *
+	 * @see WebhookTestService
+	 */
+	@bindThis
+	public userWebhookTestDeliver<T extends WebhookEventTypes>(
+		webhook: Pick<MiWebhook, 'id' | 'userId' | 'url' | 'secret'>,
+		type: T,
+		content: UserWebhookPayload<T>,
 	) {
 		const data: UserWebhookDeliverJobData = {
 			v: JOB_DATA_VERSION,
@@ -906,8 +936,12 @@ export class QueueService {
 			eventId: randomUUID(),
 		};
 
-		return this.userWebhookDeliverQueue.add(webhook.id, data, {
-			attempts: opts?.attempts ?? 4,
+		return this.addUserWebhookDeliverJob(webhook.id, data, 1);
+	}
+
+	private addUserWebhookDeliverJob(name: string, data: UserWebhookDeliverJobData, attempts: number) {
+		return this.userWebhookDeliverQueue.add(name, data, {
+			attempts,
 			backoff: {
 				type: 'custom',
 			},
@@ -923,15 +957,39 @@ export class QueueService {
 	}
 
 	/**
+	 * 保存済みのwebhookへ送る。payloadは新形式（v2）で、送信先と`secret`を持たない。処理時にDBから読む（pre-rust-tech-debt.md P2-4）。
+	 *
 	 * @see SystemWebhookDeliverJobData
 	 * @see SystemWebhookDeliverProcessorService
 	 */
 	@bindThis
 	public systemWebhookDeliver<T extends SystemWebhookEventType>(
-		webhook: MiSystemWebhook,
+		webhook: Pick<MiSystemWebhook, 'id'>,
 		type: T,
 		content: SystemWebhookPayload<T>,
-		opts?: { attempts?: number },
+	) {
+		const data: SystemWebhookDeliverJobData = {
+			v: 2,
+			type,
+			content,
+			webhookId: webhook.id,
+			createdAt: Date.now(),
+			eventId: randomUUID(),
+		};
+
+		return this.addSystemWebhookDeliverJob(webhook.id, data, 4);
+	}
+
+	/**
+	 * テスト送信。保存前の送信先と`secret`で送り、有効・無効の設定も無視するので、旧形式（v1）を使う。試行は1回。
+	 *
+	 * @see WebhookTestService
+	 */
+	@bindThis
+	public systemWebhookTestDeliver<T extends SystemWebhookEventType>(
+		webhook: Pick<MiSystemWebhook, 'id' | 'url' | 'secret'>,
+		type: T,
+		content: SystemWebhookPayload<T>,
 	) {
 		const data: SystemWebhookDeliverJobData = {
 			v: JOB_DATA_VERSION,
@@ -944,8 +1002,12 @@ export class QueueService {
 			eventId: randomUUID(),
 		};
 
-		return this.systemWebhookDeliverQueue.add(webhook.id, data, {
-			attempts: opts?.attempts ?? 4,
+		return this.addSystemWebhookDeliverJob(webhook.id, data, 1);
+	}
+
+	private addSystemWebhookDeliverJob(name: string, data: SystemWebhookDeliverJobData, attempts: number) {
+		return this.systemWebhookDeliverQueue.add(name, data, {
+			attempts,
 			backoff: {
 				type: 'custom',
 			},
