@@ -1,0 +1,141 @@
+{
+	"$comment": "RUST-03: 絵文字のHTTP契約の要求。応答は responses.json に保存し、同じ id の応答と完全に一致させる。request.auth: none（認証情報なし）・native（Authorizationヘッダーにユーザーのtoken）・native-param（GETはクエリ、POSTは本文の i）・native-lowercase（`bearer`と小文字で送る）・app（MiAuthで発行した権限なしのtoken）・suspended（凍結したユーザーのtoken）・invalid（存在しないtoken）・non-string-param（本文の i が数値）。request.body があれば JSON で送り、rawBody があれば contentType を付けてそのまま送り、どちらもなければ本文も Content-Type も付けない。apiJson: false は api.json に載らない要求（応答の型を検査しない）",
+	"cases": [
+		{
+			"id": "emojis/get/anonymous",
+			"name": "匿名のGETは一覧を返し、公開キャッシュを許す",
+			"request": { "method": "GET", "path": "emojis", "auth": "none" }
+		},
+		{
+			"id": "emojis/get/unknown-param",
+			"name": "定義にないクエリは無視する",
+			"request": { "method": "GET", "path": "emojis", "query": { "foo": "bar" }, "auth": "none" }
+		},
+		{
+			"id": "emojis/post/anonymous",
+			"name": "匿名のPOSTは同じ一覧を返すが、キャッシュはさせない（cacheSecはGETだけ）",
+			"request": { "method": "POST", "path": "emojis", "body": {}, "auth": "none" }
+		},
+		{
+			"id": "emojis/get/native",
+			"name": "ユーザーのtokenを付けたGETは同じ一覧を返し、キャッシュはさせない",
+			"request": { "method": "GET", "path": "emojis", "auth": "native" }
+		},
+		{
+			"id": "emojis/get/native-param",
+			"name": "クエリの i で認証したGETもキャッシュはさせない",
+			"request": { "method": "GET", "path": "emojis", "auth": "native-param" }
+		},
+		{
+			"id": "emojis/post/native-param",
+			"name": "本文の i で認証したPOST",
+			"request": { "method": "POST", "path": "emojis", "body": {}, "auth": "native-param" }
+		},
+		{
+			"id": "emojis/get/native-lowercase",
+			"name": "Authorizationの`bearer`（小文字）はtokenと見なさず、匿名として公開キャッシュを許す",
+			"request": { "method": "GET", "path": "emojis", "auth": "native-lowercase" }
+		},
+		{
+			"id": "emojis/get/app",
+			"name": "権限なしのアプリのtokenでも呼べる（kindのないエンドポイント）",
+			"request": { "method": "GET", "path": "emojis", "auth": "app" }
+		},
+		{
+			"id": "emojis/get/suspended",
+			"name": "凍結したユーザーのtokenでも呼べる（requireCredentialがないので凍結を確かめない）",
+			"request": { "method": "GET", "path": "emojis", "auth": "suspended" }
+		},
+		{
+			"id": "emojis/get/invalid-token",
+			"name": "存在しないtokenは、認証の要らないエンドポイントでも401",
+			"request": { "method": "GET", "path": "emojis", "auth": "invalid" }
+		},
+		{
+			"id": "emojis/post/non-string-param",
+			"name": "本文の i が文字列でなければ400（WWW-Authenticateは付けない）",
+			"request": { "method": "POST", "path": "emojis", "body": {}, "auth": "non-string-param" }
+		},
+		{
+			"id": "emojis/post/no-body",
+			"name": "本文のないPOSTは引数がオブジェクトでないとして400",
+			"request": { "method": "POST", "path": "emojis", "auth": "none" }
+		},
+		{
+			"id": "emojis/post/empty-json",
+			"name": "Content-TypeがJSONで本文が空なら400 INVALID_REQUEST",
+			"request": { "method": "POST", "path": "emojis", "rawBody": "", "contentType": "application/json", "auth": "none" }
+		},
+		{
+			"id": "emojis/post/broken-json",
+			"name": "JSONとして読めない本文は400 INVALID_REQUEST",
+			"request": { "method": "POST", "path": "emojis", "rawBody": "{", "contentType": "application/json", "auth": "none" }
+		},
+		{
+			"id": "emojis/post/text-plain",
+			"name": "text/plainは文字列として読まれ、引数がオブジェクトでないとして400",
+			"request": { "method": "POST", "path": "emojis", "rawBody": "hello", "contentType": "text/plain", "auth": "none" }
+		},
+		{
+			"id": "emojis/post/unsupported-media-type",
+			"name": "読めないContent-Typeは415",
+			"request": { "method": "POST", "path": "emojis", "rawBody": "<a/>", "contentType": "application/xml", "auth": "none" }
+		},
+		{
+			"id": "emoji/get/anonymous",
+			"name": "名前で引くと、同名のリモートの絵文字ではなくローカルのものを返す",
+			"request": { "method": "GET", "path": "emoji", "query": { "name": "blobcat" }, "auth": "none" }
+		},
+		{
+			"id": "emoji/get/flags",
+			"name": "詳細ではfalseや空配列も省略しない",
+			"request": { "method": "GET", "path": "emoji", "query": { "name": "warning" }, "auth": "none" }
+		},
+		{
+			"id": "emoji/get/roles-native",
+			"name": "ロール指定のある絵文字をユーザーのtokenで引く",
+			"request": { "method": "GET", "path": "emoji", "query": { "name": "vip" }, "auth": "native" }
+		},
+		{
+			"id": "emoji/post/fallback-url",
+			"name": "publicUrlが空ならoriginalUrlを返す",
+			"request": { "method": "POST", "path": "emoji", "body": { "name": "blobfox" }, "auth": "none" }
+		},
+		{
+			"id": "emoji/get/not-found",
+			"name": "ない名前は400 NO_SUCH_EMOJI",
+			"request": { "method": "GET", "path": "emoji", "query": { "name": "nosuch" }, "auth": "none" }
+		},
+		{
+			"id": "emoji/get/remote-only",
+			"name": "リモートにしかない名前も400 NO_SUCH_EMOJI",
+			"request": { "method": "GET", "path": "emoji", "query": { "name": "remoteonly" }, "auth": "none" }
+		},
+		{
+			"id": "emoji/get/empty-name",
+			"name": "空文字の名前は引数として受け付け、見つからないので400 NO_SUCH_EMOJI",
+			"request": { "method": "GET", "path": "emoji", "query": { "name": "" }, "auth": "none" }
+		},
+		{
+			"id": "emoji/get/missing-name",
+			"name": "nameを省略すると400 INVALID_PARAM",
+			"request": { "method": "GET", "path": "emoji", "auth": "none" }
+		},
+		{
+			"id": "emoji/post/null-name",
+			"name": "nameがnullなら400 INVALID_PARAM",
+			"request": { "method": "POST", "path": "emoji", "body": { "name": null }, "auth": "none" }
+		},
+		{
+			"id": "emoji/get/invalid-token",
+			"name": "存在しないtokenは、絵文字が見つかる要求でも401",
+			"request": { "method": "GET", "path": "emoji", "query": { "name": "blobcat" }, "auth": "invalid" }
+		},
+		{
+			"id": "unknown-endpoint/get",
+			"name": "ないエンドポイントは404 UNKNOWN_API_ENDPOINT",
+			"request": { "method": "GET", "path": "emojiz", "auth": "none" },
+			"apiJson": false
+		}
+	]
+}
