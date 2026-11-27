@@ -95,6 +95,11 @@ async function summarizeOne(prefix) {
 	if (containers.web.singleCorePinnedSec >= 10) suspect.push(`web pinned at 1 core for ${containers.web.singleCorePinnedSec}s`);
 	if (k6.total.droppedIterations > k6.total.reqs * 0.01) suspect.push(`dropped ${k6.total.droppedIterations} (>1%)`);
 	if ((k6.total.failedRate ?? 0) > 0.01) suspect.push(`failed ${round(k6.total.failedRate * 100, 2)}%`);
+	// 待機区間に web が 1コア近く動いていた（チャートの保存など）と、待機分の差し引きが計測区間の CPU を超えて 0 になる。
+	// 2026-11-27 の i_auth 100rps で、待機区間が 1.10 コアになり、web CPU が 0 と出た
+	for (const [label, v] of [['before', containers.web.idleCoresBefore], ['after', containers.web.idleCoresAfter]]) {
+		if (v != null && v >= 0.5) suspect.push(`web busy ${v} cores in the idle window (${label})`);
+	}
 
 	const d = k6.total.durationMs ?? {};
 	const out = {

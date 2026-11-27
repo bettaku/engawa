@@ -89,7 +89,7 @@ SELECT (SELECT count(*) FROM "user" WHERE host IS NULL) AS local_users,
 - **Engawa RSS**: `.procs.tsv` のうち `Engawa (master)` と `Engawa (worker)` の RSS の合計。Rust 版と比べるときはこちらを使う（起動ラッパーの分は Node 版の配布方法の費用として別に記す）。
 - **DB 実行ms/要求**: `pg_stat_statements` の上位40文の実行時間の合計を成功要求数で割る（下限値）。
 - **cold**: web・db・redis を再起動した直後に、ウォームアップなしで測る。待機時の CPU は計測後の10秒の区間から取る。
-- **疑わしい計測**: web が 1コアに張り付いた秒数の合計が10秒以上、取りこぼしが1%超、失敗が1%超のどれか。`summary.md` の中央値からは除く。原因を追うときは、その計測の `.web.log` と `.samples.tsv` を見る。
+- **疑わしい計測**: web が 1コアに張り付いた秒数の合計が10秒以上、取りこぼしが1%超、失敗が1%超、待機区間（計測の前後）に web が 0.5 コア以上動いていた、のどれか。`summary.md` の中央値からは除く。原因を追うときは、その計測の `.web.log` と `.samples.tsv` を見る。
 - **利用者ごとのレート制限**: `i/notifications` は 1人 1回/秒。k6 は認証付きの要求を毎回ランダムな利用者で送り、1人あたり制限の80%を超える到着率では始める前に止まる。
 
 ## 制約
