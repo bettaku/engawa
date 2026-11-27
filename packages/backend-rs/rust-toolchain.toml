@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# ツールチェーンは安定版の特定の版に固定する（ADR-0007）。
+# 上げるときは専用のPRで行い、Clippyの新しい指摘に対応する。
+[toolchain]
+channel = "1.100.0"
+components = ["rustfmt", "clippy"]
+profile = "minimal"

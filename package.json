@@ -47,6 +47,12 @@
 		"test": "pnpm -r test",
 		"test-and-coverage": "pnpm -r test-and-coverage",
 		"clean": "node ./scripts/clean.js",
+		"backend-rs:dev": "cd packages/backend-rs && cargo run",
+		"backend-rs:build": "cd packages/backend-rs && cargo build --locked",
+		"backend-rs:check": "cd packages/backend-rs && cargo check --all-targets --locked",
+		"backend-rs:test": "cd packages/backend-rs && cargo test --locked",
+		"backend-rs:fmt": "cd packages/backend-rs && cargo fmt",
+		"backend-rs:clippy": "cd packages/backend-rs && cargo clippy --all-targets --locked -- -D warnings",
 		"clean-all": "node ./scripts/clean-all.js",
 		"cleanall": "pnpm clean-all",
 		"schema:sync": "cd packages/backend && pnpm typeorm schema:sync -d ormconfig.js"

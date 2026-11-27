@@ -1,0 +1,99 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+
+[package]
+name = "engawa-backend"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.100.0"
+license = "AGPL-3.0-only"
+description = "Engawa (CherryPick) backend in Rust. RUST-05 foundation: minimal server, DB/Redis, config, logging, shutdown."
+homepage = "https://github.com/bettaku/engawa"
+publish = false
+
+# rustfmt/clippy設定は rustfmt.toml / clippy.toml。
+
+# 単一パッケージ。HTTP・業務処理・DB/外部接続をモジュールで分ける（ADR-0001）。
+# クレートへの分割は、実際に必要になった時点で別のADRにする。
+[[bin]]
+name = "engawa-backend"
+path = "src/main.rs"
+
+[lib]
+name = "engawa_backend"
+path = "src/lib.rs"
+
+[features]
+default = []
+
+# 有効にする機能は使うものだけにする。`full`は使わない。
+[dependencies]
+# 非同期ランタイム（ADR-0002）
+tokio = { version = "1.54.1", default-features = false, features = ["macros", "rt-multi-thread", "signal", "net", "time", "sync", "io-util"] }
+
+# HTTP（ADR-0002）。`ws`はフェーズ3まで有効にしない。`multipart`はRUST-05の範囲外。
+axum = { version = "0.8.9", default-features = false, features = ["http1", "tokio", "json", "query", "matched-path"] }
+tower = { version = "0.5.3", default-features = false }
+tower-http = { version = "0.6.8", default-features = false, features = ["cors", "trace", "request-id", "set-header", "timeout", "catch-panic", "util"] }
+
+# シリアライズ（ADR-0004）
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = { version = "1.0.154", features = ["preserve_order"] }
+
+# 設定ファイル（YAML）。`serde_yaml`は非推奨。詳細はADR-0009。
+serde-saphyr = "2.1.1"
+
+# `config.schema.json`による検証（ADR-0009。検証自体はADR-0004 #1で別途決める範囲のうち、設定ファイル検証部分）
+jsonschema = { version = "0.63.2", default-features = false }
+
+# PostgreSQL（ADR-0003）。`migrate`は有効にしない。DDLはTypeORMのマイグレーションが唯一の管理元。
+sqlx = { version = "0.9.1", default-features = false, features = [
+    "runtime-tokio",
+    "postgres",
+    "json",
+    "chrono",
+    "macros",
+    "derive",
+    "tls-rustls-aws-lc-rs-native-roots",
+] }
+
+# Redis（ADR-0005）。用途別の小さなadapterに閉じ込める。`r2d2`は使わない。接続プールは`ConnectionManager`。
+redis = { version = "1.8.1", default-features = false, features = [
+    "tokio-comp",
+    "connection-manager",
+    "tls-rustls",
+    "tls-rustls-insecure",
+    "tls-rustls-webpki-roots",
+    "json",
+] }
+
+# 構造化ログ（ADR-0002 / 計画§3.2「ログ・計測」）。trace IDをリクエスト・ジョブをまたいで付ける。
+tracing = { version = "0.1.44" }
+tracing-subscriber = { version = "0.3.23", default-features = false, features = ["env-filter", "fmt", "json", "std", "time", "registry", "ansi"] }
+
+# エラー型（thiserror=ライブラリ、anyhow=バイナリ）
+thiserror = { version = "2.0.21" }
+anyhow = { version = "1.0" }
+
+# 日時。`chrono`でJSの`toISOString()`相当（ミリ秒3桁・UTC・Z）を出せるかを検証する（ADR-0003 #1、ADR-0004）。
+chrono = { version = "0.4.45", default-features = false, features = ["clock", "std", "serde"] }
+
+# TLS統一（ADR-0007）。暗号の実装はプロセス全体でaws-lc-rs1つにする。
+rustls = { version = "0.23", default-features = false, features = ["std", "tls12", "aws_lc_rs"] }
+
+# trace ID
+uuid = { version = "1", features = ["v4", "serde"] }
+
+# URL（Node.jsの`URL`の`origin`/`host`/`hostname`相当）
+url = { version = "2" }
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+# `unsafe`は禁止（ADR-0001）。Clippyの警告はCIで`-D warnings`にする。
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"
+
+[dev-dependencies]
+http-body-util = "0.1"
