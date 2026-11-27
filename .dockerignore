@@ -39,4 +39,3 @@ packages/backend/test/compose.yml
 
 # Cargo
 **/target/
-packages/backend-rs/target/

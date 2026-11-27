@@ -84,12 +84,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@e4f2d8d1d5ab9a7e2f8b8dcdcb1d62a41bd0dcc4 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable (branch)
         with:
           toolchain: "1.100.0"
           components: rustfmt, clippy
       - name: Cache
-        uses: Swatinem/rust-cache@9d47c2199c62ab2c48c635b8cd5f8f9ff78f8995 # v2.7.8
+        uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # v2.7.8
         with:
           workspaces: ${{ env.WORKDIR }}
       - name: Run
@@ -105,11 +105,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@e4f2d8d1d5ab9a7e2f8b8dcdcb1d62a41bd0dcc4 # stable
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable (branch)
         with:
           toolchain: "1.100.0"
       - name: cargo deny
-        uses: EmbarkStudios/cargo-deny-action@3f4a78637f4b96a7ba0f5d55d5b3e4e4f17c68bd # v2.0.4
+        uses: EmbarkStudios/cargo-deny-action@e2f4ede4a4e60ea15ff31bc0647485d80c66cfba # v2.0.4
         with:
           command: check advisories licenses bans sources
           arguments: --all-features

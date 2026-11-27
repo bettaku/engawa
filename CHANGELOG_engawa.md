@@ -26,7 +26,10 @@
 - 
 
 ### Misc
-- Rustバックエンド移行（RUST-05）の基盤を `packages/backend-rs/` に追加: 最小サーバー（`POST /api/ping`・`GET /healthz`）、PostgreSQL（SQLx）/Redis 接続、既存設定スキーマ読み取り、構造化ログ、SIGTERM による graceful shutdown、ライブラリ選定 ADR（`docs/adr/0009-rust-05-library-selection.md`）。既存Node.jsバックエンドは変更なし。Cargo パッケージ `engawa-backend`、`rust-toolchain.toml`(Rust 1.100.0)、`Cargo.lock`、`cargo-deny`、`.github/workflows/rust-backend.yml` を追加
+- Rustバックエンド移行（RUST-05）の基盤を `packages/backend-rs/` に追加（既存のNode.jsバックエンドは変更なし）
+  - 最小サーバー（`POST /api/ping`・`GET /healthz`）、PostgreSQL（SQLx）/Redis接続、既存設定スキーマの読み取り、構造化ログ、SIGTERMによるgraceful shutdown
+  - ライブラリ選定ADR（`docs/adr/0009-rust-05-library-selection.md`）
+  - Cargoパッケージ `engawa-backend`、`rust-toolchain.toml`（Rust 1.100.0）、`Cargo.lock`、`cargo-deny`、`.github/workflows/rust-backend.yml`
 
 ## 2.0.1
 

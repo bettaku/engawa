@@ -90,7 +90,5 @@ vite.config.local-dev.ts.timestamp-*
 
 docs/design/
 
-# Rust
-packages/backend-rs/target/
-# Cargo
+# Rust (Cargo)
 **/target/

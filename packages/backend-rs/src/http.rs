@@ -133,7 +133,11 @@ pub fn app(state: AppState) -> Router {
     let api = Router::new()
         .route(
             "/ping",
+            // Node版は`fastify.all`で、GETだけを405にする（`allowGet`なし）。PUT・PATCH・DELETEも本体を処理する。
             post(api_ping)
+                .put(api_ping)
+                .patch(api_ping)
+                .delete(api_ping)
                 .get(api_ping_get)
                 .fallback(api_method_not_allowed),
         )

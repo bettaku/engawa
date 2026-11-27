@@ -220,18 +220,21 @@ async fn get_ping_is_405_method_not_allowed() {
 }
 
 #[tokio::test]
-async fn put_ping_is_405() {
-    let app = build_app(true).await;
-    let resp = app
-        .oneshot(req(
-            "PUT",
-            "/api/ping",
-            Body::from("{}"),
-            Some("application/json"),
-        ))
-        .await
-        .unwrap();
-    assert_eq!(resp.status(), StatusCode::METHOD_NOT_ALLOWED);
+async fn put_patch_delete_ping_return_pong() {
+    // Node版は`fastify.all`で登録し、GETだけを405にする。
+    for method in ["PUT", "PATCH", "DELETE"] {
+        let app = build_app(true).await;
+        let resp = app
+            .oneshot(req(
+                method,
+                "/api/ping",
+                Body::from("{}"),
+                Some("application/json"),
+            ))
+            .await
+            .unwrap();
+        assert_eq!(resp.status(), StatusCode::OK, "{method}");
+    }
 }
 
 // ---- unknown api ----
