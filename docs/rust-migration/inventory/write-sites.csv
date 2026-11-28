@@ -45,7 +45,7 @@ avatar_decoration,insertOne,repository,AvatarDecorationService.create,packages/b
 avatar_decoration,delete,repository,AvatarDecorationService.delete,packages/backend/src/core/AvatarDecorationService.ts,246,1,0,0,0,,,admin/avatar-decorations/delete,0,
 avatar_decoration,update,repository,AvatarDecorationService.update,packages/backend/src/core/AvatarDecorationService.ts,115,2,1,0,0,db/resolveRemoteUser,,admin/avatar-decorations/copy; admin/avatar-decorations/update,0,
 blocking,insert,repository,UserBlockingService.block,packages/backend/src/core/UserBlockingService.ts,84,1,2,0,0,inbox/(単一); relationship/block,,blocking/create,0,
-blocking,delete,repository,UserBlockingService.unblock,packages/backend/src/core/UserBlockingService.ts,177,2,3,0,0,inbox/(単一); relationship/follow; relationship/unblock,,blocking/delete; following/create,0,
+blocking,delete,repository,UserBlockingService.unblock,packages/backend/src/core/UserBlockingService.ts,177,2,2,0,0,inbox/(単一); relationship/follow,,blocking/delete; following/create,0,
 chat_approval,insertOne,repository,ChatService.createMessageToUser,packages/backend/src/core/ChatService.ts,213,1,1,0,0,inbox/(単一),,chat/messages/create-to-user,0,
 chat_message,insertOne,repository,ChatService.createMessageToRoom,packages/backend/src/core/ChatService.ts,366,1,1,0,0,inbox/(単一),,chat/messages/create-to-room,0,
 chat_message,insertOne,repository,ChatService.createMessageToUser,packages/backend/src/core/ChatService.ts,209,1,1,0,0,inbox/(単一),,chat/messages/create-to-user,0,

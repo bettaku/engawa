@@ -1,5 +1,5 @@
 {
-	"generatedFrom": "862a00ca70",
+	"generatedFrom": "bc26517d3b",
 	"misskeyRef": "2025.10.2",
 	"cherrypickRef": "upstream/develop",
 	"endpoints": {
@@ -540,7 +540,7 @@
 	],
 	"channels": 16,
 	"jobs": {
-		"total": 54,
+		"total": 53,
 		"queues": 11,
 		"scheduled": 14
 	},
@@ -561,12 +561,12 @@
 		"RedisKVCache": 10,
 		"RedisSingleCache": 1
 	},
-	"internalEvents": 34,
+	"internalEvents": 31,
 	"timers": {
 		"setImmediate": 4,
 		"setInterval": 10,
 		"setTimeout": 6
 	},
 	"classes": 806,
-	"methods": 2066
+	"methods": 2064
 }
