@@ -68,6 +68,7 @@ fn req(method: &str, uri: &str, body: Body, content_type: Option<&str>) -> Reque
 #[tokio::test]
 async fn request_id_is_in_span_and_matches_response_header() {
     use std::sync::{Arc, Mutex};
+    use tracing_subscriber::Layer as _;
     use tracing_subscriber::layer::SubscriberExt;
 
     #[derive(Clone, Default)]
@@ -96,7 +97,12 @@ async fn request_id_is_in_span_and_matches_response_header() {
     }
 
     let captured = Captured::default();
-    let subscriber = tracing_subscriber::registry().with(captured.clone());
+    // 通常設定（`CP_VERBOSE`なし）と同じ`info`フィルターを通ったスパンだけを集める。
+    let subscriber = tracing_subscriber::registry().with(
+        captured
+            .clone()
+            .with_filter(tracing_subscriber::EnvFilter::new("info")),
+    );
     let _guard = tracing::subscriber::set_default(subscriber);
 
     let app = build_app(true).await;
