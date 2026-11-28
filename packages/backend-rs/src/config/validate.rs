@@ -117,16 +117,19 @@ pub fn apply_env(
         let parsed = if strict && !raw.bytes().all(|b| b.is_ascii_digit()) {
             Value::String(raw.clone())
         } else {
-            // Node版`parseInt(raw, 10)`: 先頭の空白を飛ばし、先頭の数字列だけを読む（`"3000 "`→3000、`"3000abc"`→3000）。
-            // 数字で始まらなければNaN→無視（Rust版は後段のPORT検証で弾く）。
-            let digits: String = raw
-                .trim_start()
-                .chars()
-                .take_while(char::is_ascii_digit)
-                .collect();
+            // Node版`parseInt(raw, 10)`: 先頭の空白を飛ばし、符号（`+`/`-`）を読み、先頭の数字列だけを読む
+            // （`"3000 "`→3000、`"+3000"`→3000、`"3000abc"`→3000）。
+            // 数字で始まらなければNaN→無視（Rust版は後段のPORT検証で弾く）。負の値はポートにならないので無視する。
+            let trimmed = raw.trim_start();
+            let (negative, rest) = match trimmed.as_bytes().first() {
+                Some(b'+') => (false, &trimmed[1..]),
+                Some(b'-') => (true, &trimmed[1..]),
+                _ => (false, trimmed),
+            };
+            let digits: String = rest.chars().take_while(char::is_ascii_digit).collect();
             match digits.parse::<u64>() {
-                Ok(n) => Value::Number(n.into()),
-                Err(_) => Value::Null,
+                Ok(n) if !negative => Value::Number(n.into()),
+                _ => Value::Null,
             }
         };
         result.insert("port".into(), parsed);

@@ -158,7 +158,7 @@ pub fn app(state: AppState) -> Router {
                 .get(TRACE_ID_HEADER)
                 .and_then(|v| v.to_str().ok())
                 .unwrap_or("");
-            tracing::debug_span!(
+            tracing::info_span!(
                 "request",
                 method = %req.method(),
                 path = %req.uri().path(),

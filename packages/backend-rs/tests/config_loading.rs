@@ -350,6 +350,14 @@ fn port_env_follows_parse_int_in_warn_mode() {
     )
     .unwrap();
     assert_eq!(cfg.port, Some(3000));
+    // 符号付き。`parseInt("+3000", 10)`は3000。
+    let cfg = config::load_config(
+        &env_with(&[("PORT", "+3000")], &p),
+        &schema(),
+        &std::env::temp_dir(),
+    )
+    .unwrap();
+    assert_eq!(cfg.port, Some(3000));
     // 通常の値。
     let cfg = config::load_config(
         &env_with(&[("PORT", "4000")], &p),
