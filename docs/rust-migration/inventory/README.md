@@ -12,7 +12,7 @@
 
 - 表の本体はCSVで、`packages/backend/src`から機械的に生成する。手で編集しない。
 - この文書には、CSVの読み方、集計、担当単位の案、未確定の項目を書く。
-- 対象コミット: `05518ad068`（`summary.json`の`generatedFrom`）。
+- 対象コミット: `d9859e6332`（`summary.json`の`generatedFrom`）。CSVと§2の行数はこのコミットで生成し直した。§3以降の集計・担当単位の案・未確定一覧の根拠は、初版の`05518ad068`の時点のままである。
 
 ### 再生成
 
@@ -36,16 +36,17 @@ INVENTORY_TRACE='EP:following/create>note.insert' node scripts/rust-inventory/ge
 | [api-endpoints.csv](api-endpoints.csv) | 446 | `/api/*`のエンドポイント。認証、権限、レート制限、GET可否、キャッシュ秒数、由来、到達する書き込み・ジョブ・イベント・外部通信、参照しているテスト |
 | [http-routes.csv](http-routes.csv) | 91 | エンドポイント表の外で登録しているHTTPルート（ActivityPub、Web画面、ファイル、OAuth、well-knownなど） |
 | [stream-channels.csv](stream-channels.csv) | 16 | Streamingのチャンネル。購読するイベント、クライアントから受けるメッセージ |
-| [queue-jobs.csv](queue-jobs.csv) | 45 | キューとジョブ。cron、並列度、制限、到達する副作用、登録元 |
-| [write-sites.csv](write-sites.csv) | 365 | DBへ書き込むコード上の位置と、そこへ届く入口の数 |
-| [tables.csv](tables.csv) | 79 | テーブルごとの書き込み元クラスと、届く入口の数 |
+| [queue-jobs.csv](queue-jobs.csv) | 53 | キューとジョブ。cron、並列度、制限、到達する副作用、登録元 |
+| [write-sites.csv](write-sites.csv) | 366 | DBへ書き込むコード上の位置と、そこへ届く入口の数 |
+| [tables.csv](tables.csv) | 81 | テーブルごとの書き込み元クラスと、届く入口の数 |
 | [hubs.csv](hubs.csv) | 4 | ハブ層（§3.2）自体の副作用 |
-| [config-keys.csv](config-keys.csv) | 368 | 設定スキーマのキー、型、既定値、対応する環境変数 |
-| [env-vars.csv](env-vars.csv) | 20 | 環境変数と参照箇所 |
-| [redis-commands.csv](redis-commands.csv) | 108 | Redisクライアントを直接呼ぶ箇所（接続、コマンド、第1引数） |
+| [config-keys.csv](config-keys.csv) | 359 | 設定スキーマのキー、型、既定値、対応する環境変数 |
+| [env-vars.csv](env-vars.csv) | 24 | 環境変数と参照箇所 |
+| [runtime-options.csv](runtime-options.csv) | 26 | DIで渡す実行時の設定（`config.runtime`）と参照箇所 |
+| [redis-commands.csv](redis-commands.csv) | 113 | Redisクライアントを直接呼ぶ箇所（接続、コマンド、第1引数） |
 | [caches.csv](caches.csv) | 31 | Redis・メモリのキャッシュ定義とTTL |
-| [internal-events.csv](internal-events.csv) | 33 | 内部イベントの型、発行箇所、購読箇所 |
-| [timers.csv](timers.csv) | 25 | プロセス内のタイマーと`CollapsedQueue` |
+| [internal-events.csv](internal-events.csv) | 31 | 内部イベントの型、発行箇所、購読箇所 |
+| [timers.csv](timers.csv) | 20 | プロセス内のタイマーと`CollapsedQueue` |
 | [summary.json](summary.json) | — | 集計値 |
 
 ## 3. 抽出の方法と限界
@@ -203,9 +204,9 @@ engawaで追加した4つは、`admin/index/full`、`admin/index/reindex`、`adm
 | # | 項目 | 根拠 | 判断すること |
 | --- | --- | --- | --- |
 | 1 | `db/reportAbuse`ジョブ | `createReportAbuseJob`の呼び出し元がない | 削除するか（技術的負債の設計書 P2-4と同じ結論） |
-| 2 | `relationship/unblock`ジョブ | `createUnblockJob`の呼び出し元がない | 削除するか、上流の意図を確認する |
+| 2 | `relationship/unblock`ジョブ | `createUnblockJob`の呼び出し元がない（上流のMisskeyも同じ） | 対応済み（削除した） |
 | 3 | `objectStorage/autoDeleteNotes`の分岐 | cronは`system`キューにだけ登録される | 削除する（P1-3に含まれる） |
-| 4 | 内部イベント`mute`・`unmute`・`updateUserProfile` | 型はあるが発行箇所がない | 型を削除するか |
+| 4 | 内部イベント`mute`・`unmute`・`updateUserProfile` | 型はあるが発行箇所がない | 対応済み（型を削除した） |
 | 5 | 内部イベント`unfollow`・`blockingCreated`・`blockingDeleted`・`policiesUpdated` | 発行するが購読箇所がない | 発行をやめるか。Rust側で購読する予定があるなら残す |
 | 6 | `scheduledNoteDelete`キュー | `QUEUE_TYPES`にないので管理画面から見えない | 対応済み（P1-1で登録した）。CSVは対象コミットの時点のままである |
 

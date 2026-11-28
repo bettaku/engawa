@@ -1,5 +1,5 @@
 {
-	"generatedFrom": "05518ad068",
+	"generatedFrom": "d9859e6332",
 	"misskeyRef": "2025.10.2",
 	"cherrypickRef": "upstream/develop",
 	"endpoints": {
@@ -22,8 +22,8 @@
 			"write(Redisのみ)": 2
 		},
 		"allowGet": 26,
-		"noResSchema": 165,
-		"noTests": 318,
+		"noResSchema": 162,
+		"noTests": 316,
 		"anonymousPureRead": [
 			"announcements",
 			"announcements/show",
@@ -528,34 +528,35 @@
 	"httpRoutes": 91,
 	"channels": 16,
 	"jobs": {
-		"total": 45,
+		"total": 53,
 		"queues": 11,
-		"scheduled": 11
+		"scheduled": 14
 	},
-	"writeSites": 365,
+	"writeSites": 366,
 	"tables": {
-		"entities": 75,
+		"entities": 77,
 		"written": 78,
 		"neverWrittenBySites": [
-			"abuse_report_notification_recipient"
+			"abuse_report_notification_recipient",
+			"note_outbox",
+			"reaction_bake_ledger"
 		]
 	},
-	"configKeys": 368,
-	"envVars": 20,
-	"redisCommandSites": 108,
+	"configKeys": 359,
+	"envVars": 24,
+	"redisCommandSites": 113,
 	"caches": {
-		"MemoryKVCache": 12,
+		"MemoryKVCache": 13,
 		"MemorySingleCache": 7,
-		"RedisKVCache": 11,
+		"RedisKVCache": 10,
 		"RedisSingleCache": 1
 	},
-	"internalEvents": 33,
+	"internalEvents": 31,
 	"timers": {
-		"setImmediate": 6,
-		"setInterval": 9,
-		"setTimeout": 8,
-		"CollapsedQueue": 2
+		"setImmediate": 4,
+		"setInterval": 10,
+		"setTimeout": 6
 	},
-	"classes": 798,
-	"methods": 1943
+	"classes": 806,
+	"methods": 2064
 }

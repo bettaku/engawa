@@ -1,6 +1,6 @@
 channel,class,requireCredential,kind,shouldShare,subscribes,clientMessages,writes,events,hubs,testFileCount,file
 admin,AdminChannel,true,read:admin:stream,true,`adminStream:${this.user!.id}`,,,,,3,packages/backend/src/server/api/stream/channels/admin.ts
-antenna,AntennaChannel,true,read:account,false,`antennaStream:${this.antennaId}`,,,,pack,0,packages/backend/src/server/api/stream/channels/antenna.ts
+antenna,AntennaChannel,true,read:account,false,`antennaStream:${this.antennaId}`,,,,pack,2,packages/backend/src/server/api/stream/channels/antenna.ts
 bubbleTimeline,BubbleTimelineChannel,false,,false,'notesStream',,,,lazyInit; pack,0,packages/backend/src/server/api/stream/channels/bubble-timeline.ts
 chatRoom,ChatRoomChannel,true,read:chat,false,`chatRoomStream:${this.roomId}`,read,,,,0,packages/backend/src/server/api/stream/channels/chat-room.ts
 chatUser,ChatUserChannel,true,read:chat,false,`chatUserStream:${this.user.id}-${this.otherId}`,read,,,,0,packages/backend/src/server/api/stream/channels/chat-user.ts
