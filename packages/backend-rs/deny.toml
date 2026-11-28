@@ -1,0 +1,41 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# `cargo deny check`。脆弱性の告知と、ライセンス（本体AGPL-3.0-only）の両立を検査する（ADR-0007 #6）。
+# 依存監査はCIで`cargo deny check advisories licenses bans sources`を実行する。
+
+[advisories]
+unmaintained = "none"
+yanked = "warn"
+
+[licenses]
+# 本体はAGPL-3.0-only。依存はこれと両立するライセンスのみ。
+allow = [
+    "Apache-2.0",
+    "MIT",
+    "MIT-0",
+    "BSD-3-Clause",
+    "BSD-2-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    "Zlib",
+    "CC0-1.0",
+    "AGPL-3.0-only",
+    "AGPL-3.0-or-later",
+    "GPL-3.0-or-later",
+    "MPL-2.0",
+    "BSL-1.0",
+    "OpenSSL",
+    "CDLA-Permissive-2.0",
+    # aws-lc-rs / ring
+    "LicenseRef-aws-lc-sys",
+]
+exceptions = []
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
