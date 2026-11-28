@@ -129,3 +129,60 @@ async fn request_id_is_in_span_and_matches_response_header() {
         "span ids {ids:?} vs header {header_id}"
     );
 }
+
+/// 通常設定の実際のJSONログで、リクエスト処理中のログの`trace_id`が、応答の`x-request-id`と一致する。
+#[tokio::test]
+async fn json_log_during_request_has_trace_id_matching_response_header() {
+    use std::io::Write;
+    use std::sync::{Arc, Mutex};
+
+    use engawa_backend::logging::{LoggingOptions, NodeEnv, build_subscriber_with_writer};
+
+    #[derive(Clone, Default)]
+    struct Buf(Arc<Mutex<Vec<u8>>>);
+    impl Write for Buf {
+        fn write(&mut self, b: &[u8]) -> std::io::Result<usize> {
+            self.0.lock().unwrap().extend_from_slice(b);
+            Ok(b.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    let buf = Buf::default();
+    let writer = buf.clone();
+    // 通常設定: quietでもverboseでもない。
+    let options = LoggingOptions {
+        quiet: false,
+        verbose: false,
+        with_log_time: false,
+        node_env: NodeEnv::Unset,
+    };
+    let subscriber = build_subscriber_with_writer(&options, move || writer.clone());
+    let _guard = tracing::subscriber::set_default(subscriber);
+
+    // readyでないアプリの`/healthz`は、処理中にinfo以上のログを出す。
+    let app = build_app(false).await;
+    let resp = app
+        .oneshot(req("GET", "/healthz", Body::empty(), None))
+        .await
+        .unwrap();
+    let header_id = resp
+        .headers()
+        .get("x-request-id")
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
+
+    let out = String::from_utf8(buf.0.lock().unwrap().clone()).unwrap();
+    let line = out
+        .lines()
+        .map(|l| serde_json::from_str::<serde_json::Value>(l).unwrap())
+        .find(|v| v["fields"]["message"] == "healthz reports not ready")
+        .unwrap_or_else(|| panic!("no log line during the request: {out}"));
+    assert_eq!(line["span"]["trace_id"], header_id.as_str(), "{line}");
+    // クエリ文字列を含まず、パスだけを持つ。
+    assert_eq!(line["span"]["path"], "/healthz");
+}

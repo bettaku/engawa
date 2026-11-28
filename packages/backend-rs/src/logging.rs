@@ -108,6 +108,19 @@ pub fn init_logging() -> LoggingOptions {
 
 /// 明示したオプションでログを初期化する。
 pub fn init_logging_with(options: &LoggingOptions) {
+    // 既にグローバルsubscriberが設定されていれば、エラーを握りつぶす（テストで複数回呼ばれる）。
+    let _ = build_subscriber_with_writer(options, std::io::stdout).try_init();
+}
+
+/// 初期化と同じ設定（フィルター・JSON形式・スパンのフィールド）の`Subscriber`を、出力先を指定して作る。
+/// 本番は標準出力。テストは出力を取り込んで、実際のJSONログを検証する。
+pub fn build_subscriber_with_writer<W>(
+    options: &LoggingOptions,
+    writer: W,
+) -> impl Subscriber + Send + Sync
+where
+    W: for<'w> tracing_subscriber::fmt::MakeWriter<'w> + Send + Sync + 'static,
+{
     let filter = if options.quiet {
         EnvFilter::new("off")
     } else if options.verbose {
@@ -116,9 +129,11 @@ pub fn init_logging_with(options: &LoggingOptions) {
         EnvFilter::new("info")
     };
 
-    // JSON構造化ログ。フィールド名は安定させる。trace_idはTowerのrequest-idから`tracing`スパンに入る。
+    // JSON構造化ログ。フィールド名は安定させる。`trace_id`はリクエストのスパン（`http.rs`）に入り、
+    // `with_current_span`で、そのリクエスト中のログの`span`に出る。
     let fmt_layer = tracing_subscriber::fmt::layer()
         .json()
+        .with_writer(writer)
         .with_current_span(true)
         .with_span_list(false)
         .with_timer(UtcTime::rfc_3339())
@@ -126,25 +141,7 @@ pub fn init_logging_with(options: &LoggingOptions) {
         .with_level(true)
         .with_filter(filter);
 
-    // 既にグローバルsubscriberが設定されていれば、エラーを握りつぶす（テストで複数回呼ばれる）。
-    let _ = Registry::default().with(fmt_layer).try_init();
-}
-
-/// `Subscriber`をそのまま返す場合のヘルパ（テスト用）。通常は[`init_logging_with`]。
-pub fn build_subscriber(options: &LoggingOptions) -> impl Subscriber + Send + Sync {
-    let filter = if options.quiet {
-        EnvFilter::new("off")
-    } else if options.verbose {
-        EnvFilter::new("debug")
-    } else {
-        EnvFilter::new("info")
-    };
-    Registry::default().with(
-        tracing_subscriber::fmt::layer()
-            .json()
-            .with_timer(UtcTime::rfc_3339())
-            .with_filter(filter),
-    )
+    Registry::default().with(fmt_layer)
 }
 
 /// trace IDのヘッダー名。

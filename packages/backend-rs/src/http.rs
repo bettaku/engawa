@@ -305,6 +305,9 @@ async fn healthz(State(state): State<AppState>) -> Response {
         .and_then(std::result::Result::ok)
         .is_some();
     let ok = ready && db_ok && redis_ok;
+    if !ok {
+        tracing::warn!(ready, db_ok, redis_ok, "healthz reports not ready");
+    }
     let status = if ok {
         StatusCode::OK
     } else {
