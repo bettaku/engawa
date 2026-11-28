@@ -50,5 +50,4 @@ pre-rust-tech-debt.md の P2-3（Pub/Subの内部イベントの本文とチャ�
 | `antennaCreated`・`antennaUpdated`・`antennaDeleted` | `MiAntenna` | `{ v: 2, id }` | `antennas/*`、AntennaService、ImportAntennasProcessorService | AntennaService: 有効なアンテナの一覧を更新する。新本文は一覧を捨てる | 旧本文の`antennaCreated`は無効なアンテナも一覧に加えていた（新本文では加えない） |
 | `avatarDecorationCreated`・`avatarDecorationUpdated`・`avatarDecorationDeleted` | `MiAvatarDecoration` | `{ v: 2, id }` | AvatarDecorationService | AvatarDecorationService: 一覧のキャッシュを捨てる（本文は使わない） | |
 | `metaUpdated` | `{ before?: MiMeta, after: MiMeta }` | `{ v: 2, changedKeys }` | MetaService、`reset-db` | GlobalModule（注入済みの`meta`）: 旧本文は`after`を展開、新本文はDBから読み直す。MetaService: 旧本文は`after`をキャッシュ、新本文はキャッシュを捨てる。SystemAccountService: サーバー名が変わったら、システムアカウントの名前を更新する（届いた順に1つずつ。新本文は順番が来てからDBから名前を読む） | 購読処理に副作用（システムアカウントの更新）がある。P2-3の段階4で移す |
-| `updateUserProfile` | `MiUserProfile` | — | なし | なし | 型だけが定義されていて、発行されていない |
 | `userListMemberAdded`・`userListMemberRemoved` | `{ userListId, memberId }` | 変更なし | UserListService | UserListService: メンバーのキャッシュを更新する | P2-2で無効化の方法を変える |

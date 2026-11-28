@@ -6,7 +6,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import * as Redis from 'ioredis';
 import type { MiUser } from '@/models/User.js';
-import type { MiUserProfile } from '@/models/UserProfile.js';
 import type { MiNote } from '@/models/Note.js';
 import type { MiAntenna } from '@/models/Antenna.js';
 import type { MiDriveFile } from '@/models/DriveFile.js';
@@ -273,9 +272,6 @@ export interface InternalEventTypes {
 	avatarDecorationDeleted: MiAvatarDecoration | InternalEventRef<MiAvatarDecoration>;
 	avatarDecorationUpdated: MiAvatarDecoration | InternalEventRef<MiAvatarDecoration>;
 	metaUpdated: { before?: MiMeta; after: MiMeta; } | MetaUpdatedEventRef;
-	updateUserProfile: MiUserProfile;
-	mute: { muterId: MiUser['id']; muteeId: MiUser['id']; };
-	unmute: { muterId: MiUser['id']; muteeId: MiUser['id']; };
 	userListMemberAdded: { userListId: MiUserList['id']; memberId: MiUser['id']; };
 	userListMemberRemoved: { userListId: MiUserList['id']; memberId: MiUser['id']; };
 	/**

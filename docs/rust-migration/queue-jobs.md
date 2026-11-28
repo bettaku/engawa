@@ -59,7 +59,7 @@ v2はファイルのIDだけを持ち、中身は処理時に利用者のドラ�
 | --- | --- | --- |
 | `system` | 定期ジョブすべて | `{ v }`（中身は使わない） |
 | `deliver` | （ジョブ名は送信先） | `{ user, content, digest, to, isSharedInbox }` |
-| `relationship` | `follow`・`unfollow`・`block`・`unblock` | `{ from, to, silent?, requestId?, withReplies? }` |
+| `relationship` | `follow`・`unfollow`・`block` | `{ from, to, silent?, requestId?, withReplies? }` |
 | `db` | `deleteDriveFiles`・`exportCustomEmojis`・`exportNotes`・`exportClips`・`exportFavorites`・`exportMuting`・`exportBlocking`・`exportUserLists`・`exportAntennas`・`autoDeleteUserNotes` | `{ user }` |
 | `db` | `exportFollowing` | `{ user, excludeMuting, excludeInactive }` |
 | `db` | `importFollowing`・`importMuting`・`importBlocking`・`importUserLists`・`importCustomEmojis` | `{ user, fileId, withReplies? }` |

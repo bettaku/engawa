@@ -822,13 +822,7 @@ export class QueueService {
 	}
 
 	@bindThis
-	public createUnblockJob(blockings: { from: ThinUser, to: ThinUser, silent?: boolean }[]) {
-		const jobs = blockings.map(rel => this.generateRelationshipJobData('unblock', rel));
-		return this.relationshipQueue.addBulk(jobs);
-	}
-
-	@bindThis
-	private generateRelationshipJobData(name: 'follow' | 'unfollow' | 'block' | 'unblock', data: RelationshipJobData, opts: Bull.JobsOptions = {}): {
+	private generateRelationshipJobData(name: 'follow' | 'unfollow' | 'block', data: RelationshipJobData, opts: Bull.JobsOptions = {}): {
 		name: string,
 		data: RelationshipJobData,
 		opts: Bull.JobsOptions,
