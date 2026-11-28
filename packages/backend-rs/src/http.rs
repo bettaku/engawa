@@ -148,13 +148,25 @@ pub fn app(state: AppState) -> Router {
         .nest("/api", api)
         .route("/healthz", get(healthz))
         .with_state(state)
-        // Towerレイヤー（ADR-0002）。順序は外側から。
-        .layer(PropagateRequestIdLayer::x_request_id())
-        .layer(SetRequestIdLayer::x_request_id(MakeRequestUuid))
+        // Towerレイヤー（ADR-0002）。`.layer`は後に足したものほど外側。
+        // 内側から: Trace → PropagateRequestId → SetRequestId。リクエストIDを先に付け（SetRequestId）、
+        // スパンに同じIDを記録し（Trace）、応答に返す（Propagate）。
         .layer(TraceLayer::new_for_http().make_span_with(|req: &Request| {
             // クエリ文字列（`?i=<token>`など）をログに残さない。パスだけを記録する。
-            tracing::debug_span!("request", method = %req.method(), path = %req.uri().path())
+            let trace_id = req
+                .headers()
+                .get(TRACE_ID_HEADER)
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("");
+            tracing::debug_span!(
+                "request",
+                method = %req.method(),
+                path = %req.uri().path(),
+                trace_id = %trace_id,
+            )
         }))
+        .layer(PropagateRequestIdLayer::x_request_id())
+        .layer(SetRequestIdLayer::x_request_id(MakeRequestUuid))
         .layer(CorsLayer::permissive())
         .layer(tower_http::timeout::TimeoutLayer::with_status_code(
             StatusCode::REQUEST_TIMEOUT,
