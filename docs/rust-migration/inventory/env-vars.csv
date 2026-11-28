@@ -1,21 +1,25 @@
-name,useCount,uses
-CHERRYPICK_CONFIG_VALIDATION,1,config.ts:100
-CHERRYPICK_TEST_CHECK_IP_RANGE,1,server/oauth/OAuth2ProviderService.ts:429
-CHERRYPICK_URL,1,config.schema.json (url)
-CHERRYPICK_WEBFINGER_USE_HTTP,2,core/WebfingerService.ts:49; core/WebfingerService.ts:49
-CP_DISABLE_CLUSTERING,1,env.ts (envOption)
-CP_NO_DAEMONS,1,env.ts (envOption)
-CP_ONLY_QUEUE,1,env.ts (envOption)
-CP_ONLY_SERVER,1,env.ts (envOption)
-CP_QUIET,1,env.ts (envOption)
-CP_VERBOSE,1,env.ts (envOption)
-CP_WITH_LOG_TIME,1,env.ts (envOption)
-DATABASE_DB,1,config.schema.json (db.db)
-DATABASE_PASSWORD,1,config.schema.json (db.pass)
-DATABASE_USER,1,config.schema.json (db.user)
-EMBED_VITE_PORT,1,server/web/ClientServerService.ts:246
-FORCE_FOLLOW_REMOTE_USER_FOR_TESTING,1,core/UserFollowingService.ts:172
-MISSKEY_TEST_CHECK_DUPLICATED_TOTP,1,core/UserAuthService.ts:47
-NODE_ENV,38,NestLogger.ts:41; NestLogger.ts:50; boot/common.ts:25; boot/master.ts:141; config.ts:105; core/AccountMoveService.ts:112; core/HttpRequestService.ts:47; core/HttpRequestService.ts:92; core/MetaService.ts:34; core/NoteCreateService.ts:232; core/UserAuthService.ts:47; core/chart/ChartManagementService.ts:71; core/chart/entities.ts:38; env.ts:20; env.ts:21; env.ts:22; logger.ts:136; misc/check-https.ts:8; misc/create-temp.ts:25; misc/promise-tracker.ts:13; postgres.ts:267; postgres.ts:299; postgres.ts:300; postgres.ts:301; queue/processors/CleanRemoteNotesProcessorService.ts:269; queue/processors/InboxProcessorService.ts:62; server/FileServerService.ts:65; server/ServerService.ts:126; server/api/RateLimiterService.ts:36; server/api/SigninApiService.ts:179; server/api/SignupApiService.ts:79; server/api/SignupApiService.ts:113; server/api/SignupApiService.ts:133; server/api/endpoints/notes/create.test.ts:6; server/api/endpoints/reset-db.ts:48; server/api/endpoints/users/show.test.ts:6; server/oauth/OAuth2ProviderService.ts:60; server/oauth/OAuth2ProviderService.ts:429
-PORT,1,config.schema.json (port)
-VITE_PORT,1,server/web/ClientServerService.ts:239
+name,scope,useCount,uses
+API_RES_VALIDATION_REPORT,development,1,config/environment.ts:202
+CHERRYPICK_CONFIG_VALIDATION,operation,0,
+CHERRYPICK_CONFIG_YML,operation,0,
+CHERRYPICK_MIGRATION_CREATE_INDEX_CONCURRENTLY,operation,0,
+CHERRYPICK_TEST_CHECK_IP_RANGE,test,1,config/environment.ts:213
+CHERRYPICK_URL,operation,1,config.schema.json (url)
+CHERRYPICK_WEBFINGER_USE_HTTP,test,1,config/environment.ts:215
+CP_DISABLE_CLUSTERING,operation,1,config/environment.ts:183
+CP_NO_DAEMONS,operation,1,config/environment.ts:181
+CP_NO_JOB_SCHEDULERS,operation,1,config/environment.ts:182
+CP_ONLY_QUEUE,operation,1,config/environment.ts:179
+CP_ONLY_SERVER,operation,1,config/environment.ts:180
+CP_QUIET,operation,1,config/environment.ts:186
+CP_VERBOSE,operation,1,config/environment.ts:184
+CP_WITH_LOG_TIME,operation,1,config/environment.ts:185
+DATABASE_DB,operation,1,config.schema.json (db.db)
+DATABASE_PASSWORD,operation,1,config.schema.json (db.pass)
+DATABASE_USER,operation,1,config.schema.json (db.user)
+EMBED_VITE_PORT,development,1,config/environment.ts:199
+FORCE_FOLLOW_REMOTE_USER_FOR_TESTING,test,1,config/environment.ts:214
+MISSKEY_TEST_CHECK_DUPLICATED_TOTP,test,1,config/environment.ts:211
+NODE_ENV,operation,3,config/environment.ts:169; server/api/endpoints/notes/create.test.ts:6; server/api/endpoints/users/show.test.ts:6
+PORT,operation,1,config.schema.json (port)
+VITE_PORT,development,1,config/environment.ts:198

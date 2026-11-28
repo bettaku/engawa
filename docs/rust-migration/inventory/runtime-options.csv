@@ -1,0 +1,27 @@
+option,useCount,uses
+development.allowCrossOriginFiles,1,server/FileServerService.ts:65
+development.apiResponseValidationReport,1,server/api/ApiCallService.ts:442
+development.embedVitePort,1,server/web/ClientServerService.ts:246
+development.validateApiResponses,1,server/api/ApiCallService.ts:61
+development.vitePort,1,server/web/ClientServerService.ts:239
+nodeEnv,5,NestLogger.ts:42; NestLogger.ts:51; config.ts:111; logger.ts:137; postgres.ts:272
+production.blockPrivateAddresses,2,core/HttpRequestService.ts:47; core/HttpRequestService.ts:92
+production.rateLimit,1,server/api/RateLimiterService.ts:40
+production.removeTempFiles,1,misc/create-temp.ts:26
+production.requireHttps,8,core/activitypub/models/ApImageService.ts:65; core/activitypub/models/ApNoteService.ts:160; core/activitypub/models/ApNoteService.ts:166; core/activitypub/models/ApPersonService.ts:323; core/activitypub/models/ApPersonService.ts:385; core/activitypub/models/ApPersonService.ts:633; misc/check-https.ts:7; server/ServerService.ts:126
+test.accountMoveUnfollowDelay,1,core/AccountMoveService.ts:118
+test.allowHttpOAuthClient,1,server/oauth/OAuth2ProviderService.ts:423
+test.allowSignupHost,1,server/api/SignupApiService.ts:115
+test.disableCleanRemoteNotesWait,1,queue/processors/CleanRemoteNotesProcessorService.ts:279
+test.disablePeriodicTasks,3,boot/common.ts:28; core/MetaService.ts:42; core/chart/ChartManagementService.ts:76
+test.disableQueryCache,1,postgres.ts:304
+test.followRemoteImmediately,1,core/UserFollowingService.ts:172
+test.resetDbEndpoint,1,server/api/endpoints/reset-db.ts:52
+test.resetSchema,2,postgres.ts:302; postgres.ts:303
+test.skipCaptcha,2,server/api/SigninApiService.ts:183; server/api/SignupApiService.ts:81
+test.skipOAuthClientIpCheck,1,server/oauth/OAuth2ProviderService.ts:429
+test.skipRegistrationRestriction,1,server/api/SignupApiService.ts:135
+test.skipTotpVerification,1,core/UserAuthService.ts:65
+test.testCharts,1,core/chart/entities.ts:39
+test.trackPromises,1,misc/promise-tracker.ts:15
+test.webfingerUseHttp,1,core/WebfingerService.ts:54

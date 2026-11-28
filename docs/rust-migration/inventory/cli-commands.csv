@@ -1,0 +1,7 @@
+command,calls,writes,queues,events,redisWrites,hubs
+check-counters|repair-counters,CounterConsistencyService.check; CounterConsistencyService.repair,(dynamic).update,,,,
+ping,CommandService.ping,,,,,
+reset-captcha,CommandService.resetCaptcha,meta.save; meta.update,,InternalEvent:metaUpdated,redisForPub.publish,
+bake-reactions,CommandService.bakeReactions,note.update; reaction_bake_ledger.insert,,,redisForReactions.eval; redisForReactions.srem,
+drain-note-outbox,NoteOutboxService.drain,following.update; hashtag.insert; hashtag.update; instance.decrement; instance.increment; instance.insertOne; note_outbox.delete; note_outbox.update; user.update,createSyncNoteIndexJob; deliverMany; endedPollNotificationQueue.add; syncScheduledNoteDelete; userWebhookDeliver,AntennaStream:note; MainStream:mention; MainStream:renote; MainStream:reply; NoteStream:deleted; NoteStream:updated; NotesStream; RoleTimelineStream:note,redisForPub.publish; redisForTimelines.lpush,notify; pack
+register-job-schedulers,QueueService.registerJobSchedulers,,,,,
