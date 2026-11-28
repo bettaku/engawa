@@ -237,6 +237,22 @@ async fn put_patch_delete_ping_return_pong() {
     }
 }
 
+#[tokio::test]
+async fn post_ping_text_plain_object_is_not_read_as_json() {
+    // JSON以外のContent-Typeでは本文を読まない。`{}`でもオブジェクトとは扱わず、INVALID_PARAM。
+    let app = build_app(true).await;
+    let resp = app
+        .oneshot(req(
+            "POST",
+            "/api/ping",
+            Body::from("{}"),
+            Some("text/plain"),
+        ))
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+}
+
 // ---- unknown api ----
 
 #[tokio::test]

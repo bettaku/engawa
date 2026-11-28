@@ -80,7 +80,7 @@ pub struct LoggingConfig {
 pub type TrustProxy = Value;
 
 /// 読み込んだ設定。
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Config {
     /// 公開URL派生値。
     pub public: PublicUrl,
@@ -128,6 +128,37 @@ pub struct Config {
     pub raw_source: Value,
     /// 解決した設定ファイルパス。
     pub config_path: PathBuf,
+}
+
+impl std::fmt::Debug for Config {
+    /// `raw_source`（`db.pass`やRedisのパスワードを含みうる）は出さない。
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Config")
+            .field("public", &self.public)
+            .field("port", &self.port)
+            .field("socket", &self.socket)
+            .field("chmod_socket", &self.chmod_socket)
+            .field("trust_proxy", &self.trust_proxy)
+            .field("disable_hsts", &self.disable_hsts)
+            .field("id", &self.id)
+            .field("db", &self.db)
+            .field("db_replications", &self.db_replications)
+            .field("db_slaves", &self.db_slaves)
+            .field("redis", &self.redis)
+            .field("redis_for_pubsub", &self.redis_for_pubsub)
+            .field("redis_for_job_queue", &self.redis_for_job_queue)
+            .field("redis_for_timelines", &self.redis_for_timelines)
+            .field("redis_for_reactions", &self.redis_for_reactions)
+            .field("pid_file", &self.pid_file)
+            .field("logging", &self.logging)
+            .field("options", &self.options)
+            .field("node_env", &self.node_env)
+            .field("diagnostics", &self.diagnostics)
+            .field("unsupported_keys", &self.unsupported_keys)
+            .field("raw_source", &"<redacted>")
+            .field("config_path", &self.config_path)
+            .finish()
+    }
 }
 
 /// `loadConfig()`相当。
@@ -229,8 +260,12 @@ pub fn load_config(
     };
 
     // `mode=error`では、sourceにeffectiveを使う（Node版と同じ）。`mode=off`/warnではprepared+env適用。
-    let source = effective.clone();
-    let _ = prepared;
+    // `warn`はstrictな検証の結果とは別に、非strict（Node版`parseInt`互換）のenv適用で実行設定を作る。
+    let source = if mode == ValidationMode::Warn {
+        validate::apply_env(&prepared, environment.raw_values(), false)
+    } else {
+        effective.clone()
+    };
 
     // 未対応キーの報告（黙って無視しない）。
     let unsupported_keys = schema::collect_unsupported(&source, schema);
@@ -521,33 +556,18 @@ fn build_redis(
         });
     };
 
-    // 省略時`redis`と同じ。提供されていれば、その値で完全に構築する（Node版`convertRedisOptions`はfallbackなし。スキーマがhost+port/pathを要求）。
+    // 省略時（上のearly return）は`redis`と同じ。提供されていれば親から何も継承せず、そのオブジェクトだけで構築する（Node版`convertRedisOptions`はfallbackなし）。
     let host = get_str_obj(obj, "host")
         .map(str::to_string)
-        .unwrap_or_else(|| {
-            fallback
-                .map(|f| f.host.clone())
-                .unwrap_or_else(|| "localhost".to_string())
-        });
-    let port = get_u16_obj(obj, "port")
-        .or_else(|| fallback.map(|f| f.port))
-        .unwrap_or(6379);
-    let path = get_str_obj(obj, "path")
-        .map(PathBuf::from)
-        .or_else(|| fallback.and_then(|f| f.path.clone()));
-    let username = get_str_obj(obj, "username")
-        .map(str::to_string)
-        .or_else(|| fallback.and_then(|f| f.username.clone()));
+        .unwrap_or_else(|| "localhost".to_string());
+    let port = get_u16_obj(obj, "port").unwrap_or(6379);
+    let path = get_str_obj(obj, "path").map(PathBuf::from);
+    let username = get_str_obj(obj, "username").map(str::to_string);
     let password = get_str_obj(obj, "pass")
         .map(str::to_string)
-        .or_else(|| get_str_obj(obj, "password").map(str::to_string))
-        .or_else(|| fallback.and_then(|f| f.password.clone()));
-    let db = get_u32_obj(obj, "db")
-        .or_else(|| fallback.map(|f| f.db))
-        .unwrap_or(0);
-    let prefix = get_str_obj(obj, "prefix")
-        .map(str::to_string)
-        .or_else(|| fallback.and_then(|f| f.prefix.clone()));
+        .or_else(|| get_str_obj(obj, "password").map(str::to_string));
+    let db = get_u32_obj(obj, "db").unwrap_or(0);
+    let prefix = get_str_obj(obj, "prefix").map(str::to_string);
 
     let key_prefix = match get_str_obj(obj, "keyPrefix") {
         Some(kp) => kp.to_string(),
@@ -555,12 +575,6 @@ fn build_redis(
             let base = prefix.clone().unwrap_or_else(|| instance_host.to_string());
             format!("{base}:")
         }
-    };
-    // fallback（redis省略時）のkeyPrefixを保持。
-    let key_prefix = if obj.contains_key("keyPrefix") || obj.contains_key("prefix") {
-        key_prefix
-    } else {
-        fallback.map(|f| f.key_prefix.clone()).unwrap_or(key_prefix)
     };
 
     let tls = match obj.get("tls") {

@@ -117,8 +117,14 @@ pub fn apply_env(
         let parsed = if strict && !raw.bytes().all(|b| b.is_ascii_digit()) {
             Value::String(raw.clone())
         } else {
-            // Node版parseInt。数値にできなければNaN→無視（Rust版は後段のPORT検証で弾く）。
-            match raw.parse::<u64>() {
+            // Node版`parseInt(raw, 10)`: 先頭の空白を飛ばし、先頭の数字列だけを読む（`"3000 "`→3000、`"3000abc"`→3000）。
+            // 数字で始まらなければNaN→無視（Rust版は後段のPORT検証で弾く）。
+            let digits: String = raw
+                .trim_start()
+                .chars()
+                .take_while(char::is_ascii_digit)
+                .collect();
+            match digits.parse::<u64>() {
                 Ok(n) => Value::Number(n.into()),
                 Err(_) => Value::Null,
             }
@@ -162,7 +168,8 @@ pub fn schema_errors(
                 DiagnosticLevel::Warning,
                 "Unknown configuration key.".to_string(),
             ),
-            _ => (DiagnosticLevel::Error, err.to_string()),
+            // 型違いなどのメッセージは入力値を含みうる（`db.pass`など）。値を伏せた表現を使う。
+            _ => (DiagnosticLevel::Error, err.masked().to_string()),
         };
         out.push(Diagnostic {
             level,

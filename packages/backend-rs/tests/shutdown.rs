@@ -26,7 +26,22 @@ fn shutdown_timeout_env_name_stable() {
 
 #[tokio::test]
 async fn axum_graceful_shutdown_drains_in_flight() {
-    let app = Router::new().route("/", get(|| async { "ok" }));
+    use tokio::sync::Notify;
+
+    let started = Arc::new(Notify::new());
+    let release = Arc::new(Notify::new());
+    let (started_h, release_h) = (started.clone(), release.clone());
+    let app = Router::new().route(
+        "/",
+        get(move || {
+            let (started, release) = (started_h.clone(), release_h.clone());
+            async move {
+                started.notify_one();
+                release.notified().await;
+                "ok"
+            }
+        }),
+    );
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();
 
@@ -39,15 +54,25 @@ async fn axum_graceful_shutdown_drains_in_flight() {
         ready2.store(false, Ordering::Release);
     });
 
-    let handle = tokio::spawn(serve.into_future());
+    let mut handle = tokio::spawn(serve.into_future());
 
-    // リクエスト1件。
+    // リクエストを送り、ハンドラーが処理を始めるのを待つ（応答は解放するまで返らない）。
     let url = format!("http://{addr}/");
-    let resp = reqwest_lite_get(&url).await;
-    assert_eq!(resp, "ok");
+    let request = tokio::spawn(async move { reqwest_lite_get(&url).await });
+    started.notified().await;
 
-    // シャットダウン開始→drain→解決。
+    // 処理中に終了を開始する。解放するまでserver taskは終わらない。
     tx.send(()).unwrap();
+    assert!(
+        tokio::time::timeout(std::time::Duration::from_millis(300), &mut handle)
+            .await
+            .is_err(),
+        "server finished while a request was still in flight"
+    );
+
+    // 解放すると、処理中のリクエストは応答を受け取り、server taskが正常に終わる。
+    release.notify_one();
+    assert_eq!(request.await.unwrap(), "ok");
     tokio::time::timeout(std::time::Duration::from_secs(5), handle)
         .await
         .unwrap()

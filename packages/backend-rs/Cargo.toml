@@ -58,7 +58,7 @@ sqlx = { version = "0.9.1", default-features = false, features = [
 
 # Redis（ADR-0005）。用途別の小さなadapterに閉じ込める。`r2d2`は使わない。接続プールは`ConnectionManager`。
 redis = { version = "1.8.1", default-features = false, features = [
-    "tokio-comp",
+    "tokio-rustls-comp",
     "connection-manager",
     "tls-rustls",
     "tls-rustls-insecure",

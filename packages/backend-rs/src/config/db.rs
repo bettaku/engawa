@@ -85,7 +85,7 @@ impl DbConfig {
 pub const DB_EXTRA_KNOWN_KEYS: &[&str] = RUST_SUPPORTED_DB_EXTRA_KEYS;
 
 /// `dbSlaves`の1要素。`dbReplications=true`のread replica。**Rust版RUST-05では接続しない**（未対応として報告）。
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct DbSlave {
     /// ホスト。
     pub host: String,
@@ -97,4 +97,16 @@ pub struct DbSlave {
     pub username: String,
     /// パスワード。ログに出さない。
     pub password: String,
+}
+
+impl std::fmt::Debug for DbSlave {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DbSlave")
+            .field("host", &self.host)
+            .field("port", &self.port)
+            .field("database", &self.database)
+            .field("username", &self.username)
+            .field("password", &"<redacted>")
+            .finish()
+    }
 }

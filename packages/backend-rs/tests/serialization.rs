@@ -71,7 +71,8 @@ fn chrono_datetime_serializes_rfc3339() {
     // JS toISOString(): `2025-01-01T00:00:00.000Z`. chronoのデフォルトserdeは精度可変なので、固定が必要かを確認する。
     eprintln!("chrono serde output: {out}");
     // パース可能でUTC `Z`であることだけを保証。ミリ秒3桁固定は呼び出し側で整える（ADR-0004）。
-    assert!(out.ends_with('Z') || out.contains('+') || out.contains('-'));
+    let text: String = serde_json::from_str(&out).unwrap();
+    assert!(text.ends_with('Z'), "not UTC `Z`: {text}");
     let back: chrono::DateTime<chrono::Utc> = serde_json::from_str(&out).unwrap();
     assert_eq!(back.timestamp_millis(), 1_735_689_600_000);
 }

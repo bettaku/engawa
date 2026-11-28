@@ -151,7 +151,10 @@ pub fn app(state: AppState) -> Router {
         // Towerレイヤー（ADR-0002）。順序は外側から。
         .layer(PropagateRequestIdLayer::x_request_id())
         .layer(SetRequestIdLayer::x_request_id(MakeRequestUuid))
-        .layer(TraceLayer::new_for_http())
+        .layer(TraceLayer::new_for_http().make_span_with(|req: &Request| {
+            // クエリ文字列（`?i=<token>`など）をログに残さない。パスだけを記録する。
+            tracing::debug_span!("request", method = %req.method(), path = %req.uri().path())
+        }))
         .layer(CorsLayer::permissive())
         .layer(tower_http::timeout::TimeoutLayer::with_status_code(
             StatusCode::REQUEST_TIMEOUT,
@@ -198,20 +201,18 @@ async fn api_ping(State(_state): State<AppState>, req: Request) -> Response {
         .unwrap_or(false);
 
     // 値（bodyが無ければ null）。
-    let body_value: Option<Value> = if trimmed.is_empty() {
+    // JSON以外のContent-Typeは本文を読まない（Node Fastifyと同じ。`text/plain`の`{}`もオブジェクトとは扱わない）。
+    let body_value: Option<Value> = if trimmed.is_empty() || !is_json_ct {
         None
     } else {
         match serde_json::from_slice::<Value>(trimmed) {
             Ok(v) => Some(v),
+            // invalid JSON（JSON Content-Typeのときだけここに来る）→INVALID_REQUEST。
             Err(_) => {
-                // invalid JSON。JSON CTならINVALID_REQUEST。（no-CTならFastifyはbodyを読まない→null→INVALID_PARAM。）
-                if is_json_ct {
-                    return json_response(
-                        StatusCode::BAD_REQUEST,
-                        error_body(api_errors::INVALID_REQUEST),
-                    );
-                }
-                None
+                return json_response(
+                    StatusCode::BAD_REQUEST,
+                    error_body(api_errors::INVALID_REQUEST),
+                );
             }
         }
     };

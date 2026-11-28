@@ -90,11 +90,17 @@ async fn run(_logging_options: logging::LoggingOptions) -> anyhow::Result<()> {
 
     // pidFile
     let pid_file = config.pid_file.clone();
-    if let Some(pf) = &pid_file
-        && let Err(e) = std::fs::write(pf, std::process::id().to_string())
-    {
-        tracing::warn!(path = %pf.display(), error = %e, "could not write pidFile");
-    }
+    // 書き込めたら、初期化の失敗（待受のbind失敗など）でも終了時に削除する。
+    let _pid_guard = match &pid_file {
+        Some(pf) => match std::fs::write(pf, std::process::id().to_string()) {
+            Ok(()) => Some(PidFileGuard(pf.clone())),
+            Err(e) => {
+                tracing::warn!(path = %pf.display(), error = %e, "could not write pidFile");
+                None
+            }
+        },
+        None => None,
+    };
 
     // DB（connect_lazy。起動をDB到達に依存させない）
     let db_pool = match db::connect_pool(&config.db).await {
@@ -119,10 +125,15 @@ async fn run(_logging_options: logging::LoggingOptions) -> anyhow::Result<()> {
             anyhow::bail!("cannot create Redis adapter: {err}");
         }
     };
-    match redis.ping().await {
-        Ok(()) => tracing::info!("redis reachable"),
-        Err(e) => {
+    match tokio::time::timeout(STARTUP_REDIS_PROBE_TIMEOUT, redis.ping()).await {
+        Ok(Ok(())) => tracing::info!("redis reachable"),
+        Ok(Err(e)) => {
             tracing::warn!(error = %e, "redis not reachable at startup; readiness will report 503 until it recovers")
+        }
+        Err(_) => {
+            tracing::warn!(
+                "redis probe timed out at startup; readiness will report 503 until it recovers"
+            )
         }
     }
 
@@ -161,6 +172,7 @@ async fn run(_logging_options: logging::LoggingOptions) -> anyhow::Result<()> {
         let _ = shutdown_rx.await;
     };
 
+    let deadline: tokio::time::Instant;
     if let Some(sock) = &config.socket {
         // Unix socket。`chmodSocket`適用。
         let _ = std::fs::remove_file(sock); // 古いsocketファイルを消す（Node版相当の掃除）。
@@ -178,7 +190,7 @@ async fn run(_logging_options: logging::LoggingOptions) -> anyhow::Result<()> {
         log_addr(None);
         let serve =
             axum::serve(listener, router.into_make_service()).with_graceful_shutdown(graceful);
-        run_until_signal(
+        deadline = run_until_signal(
             serve.into_future(),
             ready_for_shutdown,
             shutdown_tx,
@@ -195,7 +207,7 @@ async fn run(_logging_options: logging::LoggingOptions) -> anyhow::Result<()> {
         log_addr(local);
         let serve =
             axum::serve(listener, router.into_make_service()).with_graceful_shutdown(graceful);
-        run_until_signal(
+        deadline = run_until_signal(
             serve.into_future(),
             ready_for_shutdown,
             shutdown_tx,
@@ -206,10 +218,18 @@ async fn run(_logging_options: logging::LoggingOptions) -> anyhow::Result<()> {
 
     // 後始末: readiness off → DB close → Redis QUIT → pidFile削除.
     ready.store(false, Ordering::Release);
-    db::close(&db_pool).await;
-    redis.shutdown().await;
-    if let Some(pf) = &pid_file {
-        let _ = std::fs::remove_file(pf);
+    // 終了処理全体で、シグナル受信から数えた1つの期限を共有する。超えたらDB/Redisの待機を打ち切って片付けへ進む。
+    if tokio::time::timeout_at(deadline, db::close(&db_pool))
+        .await
+        .is_err()
+    {
+        tracing::warn!("PostgreSQL close timed out; continuing shutdown");
+    }
+    if tokio::time::timeout_at(deadline, redis.shutdown())
+        .await
+        .is_err()
+    {
+        tracing::warn!("Redis QUIT timed out; continuing shutdown");
     }
     if let Some(sock) = &config.socket {
         let _ = std::fs::remove_file(sock);
@@ -219,13 +239,26 @@ async fn run(_logging_options: logging::LoggingOptions) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// 書き込んだpidFileを、dropで削除する（正常終了でも初期化の失敗でも）。
+struct PidFileGuard(std::path::PathBuf);
+
+impl Drop for PidFileGuard {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_file(&self.0);
+    }
+}
+
+/// 起動時のRedis確認の待機上限。`maxRetriesPerRequest: null`でも起動を止めない。
+const STARTUP_REDIS_PROBE_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(5);
+
 /// シグナルを待って、drainを`shutdown_timeout`で打ち切る。
 async fn run_until_signal<F>(
     serve: F,
     ready: Arc<AtomicBool>,
     shutdown_tx: tokio::sync::oneshot::Sender<()>,
     shutdown_timeout: std::time::Duration,
-) where
+) -> tokio::time::Instant
+where
     F: std::future::Future<Output = std::io::Result<()>> + Send + 'static,
 {
     let mut serve_handle = tokio::spawn(serve);
@@ -240,8 +273,11 @@ async fn run_until_signal<F>(
     ready.store(false, Ordering::Release);
     let _ = shutdown_tx.send(());
 
+    // 終了処理全体の期限。drainの後のDB/Redisの終了も、この期限を共有する。
+    let deadline = tokio::time::Instant::now() + shutdown_timeout;
+
     // drainを待機上限付きで。
-    match tokio::time::timeout(shutdown_timeout, &mut serve_handle).await {
+    match tokio::time::timeout_at(deadline, &mut serve_handle).await {
         Ok(Ok(Ok(()))) => tracing::info!("drained in-flight requests"),
         Ok(Ok(Err(e))) => tracing::warn!(error = %e, "HTTP server ended with error after drain"),
         Ok(Err(join_err)) => tracing::warn!(error = %join_err, "serve task panicked"),
@@ -253,4 +289,5 @@ async fn run_until_signal<F>(
             serve_handle.abort();
         }
     }
+    deadline
 }

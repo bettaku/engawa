@@ -315,3 +315,85 @@ fn validation_mode_default_is_warn() {
     let env = env_with(&[], &p);
     assert_eq!(env.validation_mode, ValidationMode::Warn);
 }
+
+#[test]
+fn explicit_redis_for_x_does_not_inherit_connection_fields_from_redis() {
+    // 親がUnix socketでも、redisForXにTCPを明示したら、socketを引き継がない（Node版`convertRedisOptions`はfallbackなし）。
+    let yaml = BASE.replace(
+        "redis:\n  host: redis\n  port: 6379\n",
+        "redis:\n  path: /run/redis/base.sock\n  pass: parentpass\n  db: 3\n  prefix: parent\n",
+    ) + "\nredisForTimelines:\n  host: tlredis\n  port: 6380\n";
+    let p = write_tmp_config("redisx-noinherit.yml", &yaml);
+    let cfg = config::load_config(&env_with(&[], &p), &schema(), &std::env::temp_dir()).unwrap();
+    let tl = &cfg.redis_for_timelines;
+    assert_eq!(tl.host, "tlredis");
+    assert!(tl.path.is_none());
+    assert!(tl.password.is_none());
+    assert_eq!(tl.db, 0);
+    assert!(tl.prefix.is_none());
+    // 省略した側は親と同じ。
+    assert_eq!(
+        cfg.redis_for_reactions.path.as_deref(),
+        cfg.redis.path.as_deref()
+    );
+}
+
+#[test]
+fn port_env_follows_parse_int_in_warn_mode() {
+    // Node版`parseInt("3000 ", 10)`は3000。warnでは非strictの実行設定を使う。
+    let yaml = BASE.replace("port: 3000\n", "");
+    let p = write_tmp_config("port-warn.yml", &yaml);
+    let cfg = config::load_config(
+        &env_with(&[("PORT", "3000 ")], &p),
+        &schema(),
+        &std::env::temp_dir(),
+    )
+    .unwrap();
+    assert_eq!(cfg.port, Some(3000));
+    // 通常の値。
+    let cfg = config::load_config(
+        &env_with(&[("PORT", "4000")], &p),
+        &schema(),
+        &std::env::temp_dir(),
+    )
+    .unwrap();
+    assert_eq!(cfg.port, Some(4000));
+}
+
+#[test]
+fn port_env_with_trailing_junk_is_refused_in_error_mode() {
+    let yaml = BASE.replace("port: 3000\n", "");
+    let p = write_tmp_config("port-error.yml", &yaml);
+    let env = env_with(
+        &[("PORT", "3000 "), ("CHERRYPICK_CONFIG_VALIDATION", "error")],
+        &p,
+    );
+    config::load_config(&env, &schema(), &std::env::temp_dir()).unwrap_err();
+}
+
+#[test]
+fn secrets_are_not_in_debug_of_config_environment_and_slaves() {
+    let yaml = format!(
+        "{BASE}\ndbReplications: true\ndbSlaves:\n  - host: s1\n    port: 5432\n    db: cherrypick\n    user: cp\n    pass: slavesecret\n"
+    );
+    let p = write_tmp_config("dbg-all.yml", &yaml);
+    let env = env_with(&[("DATABASE_PASSWORD", "ENV_SECRET")], &p);
+    let env_dbg = format!("{env:?}");
+    assert!(!env_dbg.contains("ENV_SECRET"), "{env_dbg}");
+    let cfg = config::load_config(&env, &schema(), &std::env::temp_dir()).unwrap();
+    let dbg = format!("{cfg:?}");
+    for secret in ["secret", "slavesecret", "ENV_SECRET"] {
+        assert!(!dbg.contains(secret), "{secret} leaked: {dbg}");
+    }
+}
+
+#[test]
+fn schema_error_messages_do_not_echo_secret_values() {
+    // `db.pass`が文字列でない（型違い）。メッセージに値を出さない。
+    let yaml = BASE.replace("pass: secret", "pass: [SUPERSECRET]");
+    let p = write_tmp_config("masked.yml", &yaml);
+    let env = env_with(&[], &p);
+    let cfg = config::load_config(&env, &schema(), &std::env::temp_dir()).unwrap();
+    let all: String = cfg.diagnostics.iter().map(|d| d.format()).collect();
+    assert!(!all.contains("SUPERSECRET"), "{all}");
+}

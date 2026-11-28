@@ -94,7 +94,7 @@ impl Diagnostic {
 }
 
 /// 環境変数の読み取り結果。
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Environment {
     /// `CP_*`。
     pub options: EnvOption,
@@ -120,6 +120,28 @@ pub struct Environment {
     values: std::collections::BTreeMap<String, String>,
     /// 診断。
     pub diagnostics: Vec<Diagnostic>,
+}
+
+impl std::fmt::Debug for Environment {
+    /// 秘密（`DATABASE_PASSWORD`と、設定と無関係な値を含む環境変数の全体）は出さない。
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Environment")
+            .field("options", &self.options)
+            .field("node_env", &self.node_env)
+            .field("validation_mode", &self.validation_mode)
+            .field("config_yml", &self.config_yml)
+            .field("cherrypick_url", &self.cherrypick_url)
+            .field("port", &self.port)
+            .field("port_raw", &self.port_raw)
+            .field("database_db", &self.database_db)
+            .field("database_user", &self.database_user)
+            .field(
+                "database_password",
+                &self.database_password.as_ref().map(|_| "<redacted>"),
+            )
+            .field("diagnostics", &self.diagnostics)
+            .finish_non_exhaustive()
+    }
 }
 
 impl Environment {
