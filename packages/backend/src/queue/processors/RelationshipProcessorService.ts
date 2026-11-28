@@ -64,15 +64,4 @@ export class RelationshipProcessorService {
 		await this.userBlockingService.block(blockee, blocker, job.data.silent);
 		return 'ok';
 	}
-
-	@bindThis
-	public async processUnblock(job: Bull.Job<RelationshipJobData>): Promise<string> {
-		this.logger.info(`${job.data.from.id} is trying to unblock ${job.data.to.id}`);
-		const [blockee, blocker] = await Promise.all([
-			this.usersRepository.findOneByOrFail({ id: job.data.from.id }),
-			this.usersRepository.findOneByOrFail({ id: job.data.to.id }),
-		]);
-		await this.userBlockingService.unblock(blockee, blocker);
-		return 'ok';
-	}
 }

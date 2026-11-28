@@ -14,7 +14,7 @@
 
 - 表の本体はCSVで、`packages/backend/src`から機械的に生成する。手で編集しない。
 - この文書には、CSVの読み方、集計、担当単位の案、未確定の項目を書く。
-- 対象コミット: `862a00ca70`（`summary.json`の`generatedFrom`）。
+- 対象コミット: `bc26517d3b`（`summary.json`の`generatedFrom`）。
 - 参照コードは各CSVの`file`・`line`列、互換試験は`testFileCount`・`testFiles`列にある。互換試験が足りない範囲は、移行する単位ごとにRUST-03の契約fixtureで補う（§6.2の#12）。
 
 ### 再生成
@@ -39,7 +39,7 @@ INVENTORY_TRACE='EP:following/create>note.insert' node scripts/rust-inventory/ge
 | [api-endpoints.csv](api-endpoints.csv) | 446 | `/api/*`のエンドポイント。認証、権限、レート制限、GET可否、キャッシュ秒数、由来、到達する書き込み・ジョブ・イベント・外部通信、参照しているテスト、上流との差分（`forkDiff`） |
 | [http-routes.csv](http-routes.csv) | 91 | エンドポイント表の外で登録しているHTTPルート（ActivityPub、Web画面、ファイル、OAuth、well-knownなど） |
 | [stream-channels.csv](stream-channels.csv) | 16 | Streamingのチャンネル。購読するイベント、クライアントから受けるメッセージ |
-| [queue-jobs.csv](queue-jobs.csv) | 54 | キューとジョブ。cron、並列度、制限、到達する副作用、登録元 |
+| [queue-jobs.csv](queue-jobs.csv) | 53 | キューとジョブ。cron、並列度、制限、到達する副作用、登録元 |
 | [cli-commands.csv](cli-commands.csv) | 6 | `boot/cli.ts`の運用コマンドと、到達する副作用 |
 | [write-sites.csv](write-sites.csv) | 371 | DBへ書き込むコード上の位置と、そこへ届く入口の数 |
 | [tables.csv](tables.csv) | 79 | テーブルごとの書き込み元クラスと、届く入口の数 |
@@ -50,7 +50,7 @@ INVENTORY_TRACE='EP:following/create>note.insert' node scripts/rust-inventory/ge
 | [runtime-options.csv](runtime-options.csv) | 26 | 環境変数から作り、DIで渡す実行時の設定（`config.runtime`）の参照箇所 |
 | [redis-commands.csv](redis-commands.csv) | 113 | Redisクライアントを直接呼ぶ箇所（接続、コマンド、第1引数） |
 | [caches.csv](caches.csv) | 31 | Redis・メモリのキャッシュ定義とTTL |
-| [internal-events.csv](internal-events.csv) | 34 | 内部イベントの型、発行箇所、購読箇所 |
+| [internal-events.csv](internal-events.csv) | 31 | 内部イベントの型、発行箇所、購読箇所 |
 | [timers.csv](timers.csv) | 20 | プロセス内のタイマーと`CollapsedQueue` |
 | [summary.json](summary.json) | — | 集計値 |
 
@@ -103,7 +103,7 @@ INVENTORY_TRACE='EP:following/create>note.insert' node scripts/rust-inventory/ge
 | APIエンドポイント | 446 | 認証なし 103、ユーザー 252、モデレーター 71、管理者 20 |
 | エンドポイント表の外のHTTPルート | 91 | Web画面 42、ActivityPub 16、API直下 10、well-known 7、OAuth 4、ファイル 4、ほか 8 |
 | Streamingチャンネル | 16 | 認証なしで使えるもの 8 |
-| ジョブ | 54 | キューは11。cronで動くもの 14（すべて`system`キュー） |
+| ジョブ | 53 | キューは11。cronで動くもの 14（すべて`system`キュー） |
 | CLIコマンド | 6 | `check-counters`・`repair-counters`、`ping`、`reset-captcha`、`bake-reactions`、`drain-note-outbox`、`register-job-schedulers`（`boot/cli.ts`）。ほかに`check:config` |
 
 ### 4.2 APIエンドポイント
@@ -142,7 +142,7 @@ engawaで追加した4つは、`admin/index/full`、`admin/index/reindex`、`adm
 | 環境変数 | 24（サービスは`process.env`を読まず、DIの`config.runtime`を読む。参照箇所は[runtime-options.csv](runtime-options.csv)） |
 | Redisを直接呼ぶ箇所 | 113（`redisClient` 58、`redisForSub` 25、`redisForTimelines` 13、`redisForReactions` 12） |
 | キャッシュ定義 | 31（Redis 11、メモリだけ 20） |
-| 内部イベントの型 | 34（エンティティ全体を載せるもの 19） |
+| 内部イベントの型 | 31（エンティティ全体を載せるもの 18） |
 | プロセス内のタイマー | 20 |
 
 書き込み元のクラスが多いテーブルは、`user_profile`（21クラス）、`user`（20）、`note`（7）、`antenna`（7）、`following`（6）、`instance`（6）である。移行計画§5.1の「担当実装を一つに固定する」ときに、呼び出し元の整理がもっとも重くなるのは`user_profile`と`user`である。
@@ -237,9 +237,9 @@ engawaで追加した4つは、`admin/index/full`、`admin/index/reindex`、`adm
 | # | 項目 | 状態 | 判断 |
 | --- | --- | --- | --- |
 | 1 | `db/reportAbuse`ジョブ | 対応済み | P2-4で削除した |
-| 2 | `relationship/unblock`ジョブ | 判断済み・未実施 | 削除する。`createUnblockJob`の呼び出し元はなく（ジョブpayloadの単体テストだけが呼ぶ）、上流でも同じである。登録するコードがないので、キューに残っているジョブもない。Rust移行と別のPRで、`createUnblockJob`、ワーカーの`unblock`の分岐、`RelationshipProcessorService.processUnblock`、テストの該当箇所を消す |
+| 2 | `relationship/unblock`ジョブ | 対応済み | 削除した（`createUnblockJob`、ワーカーの`unblock`の分岐、`RelationshipProcessorService.processUnblock`、テストの該当箇所）。呼び出し元はなく、上流でも同じだった |
 | 3 | `objectStorage/autoDeleteNotes`の分岐 | 対応済み | P1-3で削除した |
-| 4 | 内部イベント`mute`・`unmute`・`updateUserProfile` | 判断済み・未実施 | 型を削除する。発行箇所も購読箇所もない。Rust側の契約（[internal-events.md](../internal-events.md)）にも載せない。#2と同じPRで消す |
+| 4 | 内部イベント`mute`・`unmute`・`updateUserProfile` | 対応済み | 型を削除した（#2と同じPR）。発行箇所も購読箇所もなかった。Rust側の契約（[internal-events.md](../internal-events.md)）にも載せない |
 | 5 | 内部イベント`unfollow`・`blockingCreated`・`blockingDeleted`・`policiesUpdated` | 判断済み | 残す。発行の費用は小さく、移行中にRust側がキャッシュの無効化に使う可能性がある。購読する予定がないことが決まった時点で、改めて発行をやめる |
 | 6 | `scheduledNoteDelete`キュー | 対応済み | P1-1で`QUEUE_TYPES`に登録した |
 | 13 | `db/deleteDriveFiles`ジョブ | 判断待ち | `createDeleteDriveFilesJob`の呼び出し元がない（今回の再生成で見つかった）。アカウントの削除は`deleteAccount`ジョブの中でドライブを消す。上流の状況を確認し、#2と同じく削除するか決める |
@@ -273,7 +273,7 @@ engawaで追加した4つは、`admin/index/full`、`admin/index/reindex`、`adm
 
 ## 7. 次の作業
 
-1. 未確定一覧の#2・#4（判断済み・未実施）を、Rust移行と別のPRで消す。#13は上流を確認して判断する。
+1. 未確定一覧の#13は上流を確認して判断する（#2・#4は削除済み）。
 2. `emojis`の契約fixture（RUST-03）は作成済み。`forkDiff`で差分のないエンドポイントを次の参照APIに選ぶと、上流のテストと挙動を流用しやすい。
 3. 技術的負債の設計書のP1-3・P1-4を進めるとき、[write-sites.csv](write-sites.csv)の`note`・`note_reaction`の行を、呼び出し元の一覧（同設計書の付録C）の元にする。
 4. 対象コミットを進めたときは、再生成して差分を見る。行数と集計がこの文書と食い違ったら、この文書を直す。

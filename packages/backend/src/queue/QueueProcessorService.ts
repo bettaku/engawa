@@ -473,7 +473,6 @@ export class QueueProcessorService implements OnApplicationShutdown {
 					case 'follow': return this.relationshipProcessorService.processFollow(job);
 					case 'unfollow': return this.relationshipProcessorService.processUnfollow(job);
 					case 'block': return this.relationshipProcessorService.processBlock(job);
-					case 'unblock': return this.relationshipProcessorService.processUnblock(job);
 					default: throw new Error(`unrecognized job type ${job.name} for relationship`);
 				}
 			};

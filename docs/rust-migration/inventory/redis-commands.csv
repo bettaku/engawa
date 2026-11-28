@@ -41,7 +41,7 @@ redisClient,multi,),FederatedInstanceService.flushRequestReceived,packages/backe
 redisClient,del,`fetchInstanceMetadata:mutex:${host}`);,FetchInstanceMetadataService.tryLock,packages/backend/src/core/FetchInstanceMetadataService.ts,58
 redisClient,set,,FetchInstanceMetadataService.tryLock,packages/backend/src/core/FetchInstanceMetadataService.ts,60
 redisClient,del,`fetchInstanceMetadata:mutex:v2:${host}`);,FetchInstanceMetadataService.unlock,packages/backend/src/core/FetchInstanceMetadataService.ts,70
-redisForPub,publish,"this.config.host, JSON.stringify({",GlobalEventService.publish,packages/backend/src/core/GlobalEventService.ts,380
+redisForPub,publish,"this.config.host, JSON.stringify({",GlobalEventService.publish,packages/backend/src/core/GlobalEventService.ts,376
 redisClient,sismember,"`hashtagUsers:${hashtag}`, userId);",HashtagService.updateHashtagsRanking,packages/backend/src/core/HashtagService.ts,174
 redisClient,pipeline,);,HashtagService.updateHashtagsRanking,packages/backend/src/core/HashtagService.ts,179
 redisClient,pipeline,);,HashtagService.getChart,packages/backend/src/core/HashtagService.ts,204

@@ -11,7 +11,7 @@ antenna,8,7,AntennaService; CleanProcessorService; EP:antennas/create; EP:antenn
 app,1,1,EP:app/create,1,0,0,0,,,0,
 auth_session,3,3,EP:auth/accept; EP:auth/session/generate; EP:auth/session/userkey,3,0,0,0,,,0,
 avatar_decoration,3,1,AvatarDecorationService,4,1,0,0,db/resolveRemoteUser,,0,
-blocking,2,1,UserBlockingService,3,4,0,0,inbox/(単一); relationship/block; relationship/follow; relationship/unblock,,0,
+blocking,2,1,UserBlockingService,3,3,0,0,inbox/(単一); relationship/block; relationship/follow,,0,
 chat_approval,1,1,ChatService,1,1,0,0,inbox/(単一),,0,
 chat_message,5,1,ChatService,5,1,0,0,inbox/(単一),,0,
 chat_room,4,2,ApInboxService; ChatService,3,1,0,0,inbox/(単一),,0,

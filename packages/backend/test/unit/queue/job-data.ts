@@ -137,7 +137,6 @@ describe('QueueServiceが登録するpayload', () => {
 		await service.createUnfollowJob([{ from: user, to: other }]);
 		await service.createDelayedUnfollowJob([{ from: user, to: other }], 1000);
 		await service.createBlockJob([{ from: user, to: other }]);
-		await service.createUnblockJob([{ from: user, to: other }]);
 		service.createDeleteObjectStorageFileJob('key');
 		service.createCleanRemoteFilesJob();
 		service.userWebhookDeliver(webhook, 'note', {} as never);
