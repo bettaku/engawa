@@ -128,6 +128,18 @@ jobs:
         run: pnpm build
       - name: Test
         run: pnpm --filter backend test-and-coverage:e2e
+        env:
+          # HTTP契約の試験（test/e2e/contract-*.ts）が、実際の応答をここに書く（RUST-03）
+          # 成果物を上げる行（下）と同じ条件のときだけ書く
+          CONTRACT_OUTPUT_DIR: ${{ matrix.node-version-file == '.node-version' && format('{0}/contract-actual', github.workspace) || '' }}
+      - name: Upload actual contract responses
+        # 保存した応答（test/fixtures/contract）との差分を、手元で再実行せずに確かめられるようにする
+        if: ${{ !cancelled() && matrix.node-version-file == '.node-version' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: contract-actual
+          path: contract-actual
+          if-no-files-found: ignore
       - name: Upload to Codecov
         uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac # v5.5.5
         with:
