@@ -1,0 +1,887 @@
+{
+	"$comment": "RUST-03: cases.json の要求に対する応答。CONTRACT_UPDATE=1 で contract-emojis.ts を実行して書き直す。手で編集しない。headers は記録対象（test/misc/contract.ts の RECORDED_HEADERS）のうち応答にあったものだけ",
+	"responses": {
+		"emojis/get/anonymous": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "public, max-age=3600",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"emojis": [
+					{
+						"aliases": [
+							"cat",
+							"blob"
+						],
+						"name": "blobcat",
+						"category": "animals",
+						"url": "https://media.contract.test/emoji/blobcat.webp"
+					},
+					{
+						"aliases": [],
+						"name": "blobfox",
+						"category": "animals",
+						"url": "https://files.contract.test/emoji/blobfox.png"
+					},
+					{
+						"aliases": [],
+						"name": "zebra",
+						"category": "animals",
+						"url": "https://media.contract.test/emoji/zebra.webp"
+					},
+					{
+						"aliases": [],
+						"name": "vip",
+						"category": "symbols",
+						"url": "https://media.contract.test/emoji/vip.webp",
+						"roleIdsThatCanBeUsedThisEmojiAsReaction": [
+							"contractrole01",
+							"contractrole02"
+						]
+					},
+					{
+						"aliases": [
+							"caution",
+							"注意"
+						],
+						"name": "warning",
+						"category": "symbols",
+						"url": "https://media.contract.test/emoji/warning.webp",
+						"localOnly": true,
+						"isSensitive": true
+					},
+					{
+						"aliases": [],
+						"name": "misc_one",
+						"category": null,
+						"url": "https://media.contract.test/emoji/misc_one.webp"
+					}
+				]
+			}
+		},
+		"emojis/get/unknown-param": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "public, max-age=3600",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"emojis": [
+					{
+						"aliases": [
+							"cat",
+							"blob"
+						],
+						"name": "blobcat",
+						"category": "animals",
+						"url": "https://media.contract.test/emoji/blobcat.webp"
+					},
+					{
+						"aliases": [],
+						"name": "blobfox",
+						"category": "animals",
+						"url": "https://files.contract.test/emoji/blobfox.png"
+					},
+					{
+						"aliases": [],
+						"name": "zebra",
+						"category": "animals",
+						"url": "https://media.contract.test/emoji/zebra.webp"
+					},
+					{
+						"aliases": [],
+						"name": "vip",
+						"category": "symbols",
+						"url": "https://media.contract.test/emoji/vip.webp",
+						"roleIdsThatCanBeUsedThisEmojiAsReaction": [
+							"contractrole01",
+							"contractrole02"
+						]
+					},
+					{
+						"aliases": [
+							"caution",
+							"注意"
+						],
+						"name": "warning",
+						"category": "symbols",
+						"url": "https://media.contract.test/emoji/warning.webp",
+						"localOnly": true,
+						"isSensitive": true
+					},
+					{
+						"aliases": [],
+						"name": "misc_one",
+						"category": null,
+						"url": "https://media.contract.test/emoji/misc_one.webp"
+					}
+				]
+			}
+		},
+		"emojis/post/anonymous": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "private, max-age=0, must-revalidate",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"emojis": [
+					{
+						"aliases": [
+							"cat",
+							"blob"
+						],
+						"name": "blobcat",
+						"category": "animals",
+						"url": "https://media.contract.test/emoji/blobcat.webp"
+					},
+					{
+						"aliases": [],
+						"name": "blobfox",
+						"category": "animals",
+						"url": "https://files.contract.test/emoji/blobfox.png"
+					},
+					{
+						"aliases": [],
+						"name": "zebra",
+						"category": "animals",
+						"url": "https://media.contract.test/emoji/zebra.webp"
+					},
+					{
+						"aliases": [],
+						"name": "vip",
+						"category": "symbols",
+						"url": "https://media.contract.test/emoji/vip.webp",
+						"roleIdsThatCanBeUsedThisEmojiAsReaction": [
+							"contractrole01",
+							"contractrole02"
+						]
+					},
+					{
+						"aliases": [
+							"caution",
+							"注意"
+						],
+						"name": "warning",
+						"category": "symbols",
+						"url": "https://media.contract.test/emoji/warning.webp",
+						"localOnly": true,
+						"isSensitive": true
+					},
+					{
+						"aliases": [],
+						"name": "misc_one",
+						"category": null,
+						"url": "https://media.contract.test/emoji/misc_one.webp"
+					}
+				]
+			}
+		},
+		"emojis/get/native": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "private, max-age=0, must-revalidate",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"emojis": [
+					{
+						"aliases": [
+							"cat",
+							"blob"
+						],
+						"name": "blobcat",
+						"category": "animals",
+						"url": "https://media.contract.test/emoji/blobcat.webp"
+					},
+					{
+						"aliases": [],
+						"name": "blobfox",
+						"category": "animals",
+						"url": "https://files.contract.test/emoji/blobfox.png"
+					},
+					{
+						"aliases": [],
+						"name": "zebra",
+						"category": "animals",
+						"url": "https://media.contract.test/emoji/zebra.webp"
+					},
+					{
+						"aliases": [],
+						"name": "vip",
+						"category": "symbols",
+						"url": "https://media.contract.test/emoji/vip.webp",
+						"roleIdsThatCanBeUsedThisEmojiAsReaction": [
+							"contractrole01",
+							"contractrole02"
+						]
+					},
+					{
+						"aliases": [
+							"caution",
+							"注意"
+						],
+						"name": "warning",
+						"category": "symbols",
+						"url": "https://media.contract.test/emoji/warning.webp",
+						"localOnly": true,
+						"isSensitive": true
+					},
+					{
+						"aliases": [],
+						"name": "misc_one",
+						"category": null,
+						"url": "https://media.contract.test/emoji/misc_one.webp"
+					}
+				]
+			}
+		},
+		"emojis/get/native-param": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "private, max-age=0, must-revalidate",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"emojis": [
+					{
+						"aliases": [
+							"cat",
+							"blob"
+						],
+						"name": "blobcat",
+						"category": "animals",
+						"url": "https://media.contract.test/emoji/blobcat.webp"
+					},
+					{
+						"aliases": [],
+						"name": "blobfox",
+						"category": "animals",
+						"url": "https://files.contract.test/emoji/blobfox.png"
+					},
+					{
+						"aliases": [],
+						"name": "zebra",
+						"category": "animals",
+						"url": "https://media.contract.test/emoji/zebra.webp"
+					},
+					{
+						"aliases": [],
+						"name": "vip",
+						"category": "symbols",
+						"url": "https://media.contract.test/emoji/vip.webp",
+						"roleIdsThatCanBeUsedThisEmojiAsReaction": [
+							"contractrole01",
+							"contractrole02"
+						]
+					},
+					{
+						"aliases": [
+							"caution",
+							"注意"
+						],
+						"name": "warning",
+						"category": "symbols",
+						"url": "https://media.contract.test/emoji/warning.webp",
+						"localOnly": true,
+						"isSensitive": true
+					},
+					{
+						"aliases": [],
+						"name": "misc_one",
+						"category": null,
+						"url": "https://media.contract.test/emoji/misc_one.webp"
+					}
+				]
+			}
+		},
+		"emojis/post/native-param": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "private, max-age=0, must-revalidate",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"emojis": [
+					{
+						"aliases": [
+							"cat",
+							"blob"
+						],
+						"name": "blobcat",
+						"category": "animals",
+						"url": "https://media.contract.test/emoji/blobcat.webp"
+					},
+					{
+						"aliases": [],
+						"name": "blobfox",
+						"category": "animals",
+						"url": "https://files.contract.test/emoji/blobfox.png"
+					},
+					{
+						"aliases": [],
+						"name": "zebra",
+						"category": "animals",
+						"url": "https://media.contract.test/emoji/zebra.webp"
+					},
+					{
+						"aliases": [],
+						"name": "vip",
+						"category": "symbols",
+						"url": "https://media.contract.test/emoji/vip.webp",
+						"roleIdsThatCanBeUsedThisEmojiAsReaction": [
+							"contractrole01",
+							"contractrole02"
+						]
+					},
+					{
+						"aliases": [
+							"caution",
+							"注意"
+						],
+						"name": "warning",
+						"category": "symbols",
+						"url": "https://media.contract.test/emoji/warning.webp",
+						"localOnly": true,
+						"isSensitive": true
+					},
+					{
+						"aliases": [],
+						"name": "misc_one",
+						"category": null,
+						"url": "https://media.contract.test/emoji/misc_one.webp"
+					}
+				]
+			}
+		},
+		"emojis/get/native-lowercase": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "public, max-age=3600",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"emojis": [
+					{
+						"aliases": [
+							"cat",
+							"blob"
+						],
+						"name": "blobcat",
+						"category": "animals",
+						"url": "https://media.contract.test/emoji/blobcat.webp"
+					},
+					{
+						"aliases": [],
+						"name": "blobfox",
+						"category": "animals",
+						"url": "https://files.contract.test/emoji/blobfox.png"
+					},
+					{
+						"aliases": [],
+						"name": "zebra",
+						"category": "animals",
+						"url": "https://media.contract.test/emoji/zebra.webp"
+					},
+					{
+						"aliases": [],
+						"name": "vip",
+						"category": "symbols",
+						"url": "https://media.contract.test/emoji/vip.webp",
+						"roleIdsThatCanBeUsedThisEmojiAsReaction": [
+							"contractrole01",
+							"contractrole02"
+						]
+					},
+					{
+						"aliases": [
+							"caution",
+							"注意"
+						],
+						"name": "warning",
+						"category": "symbols",
+						"url": "https://media.contract.test/emoji/warning.webp",
+						"localOnly": true,
+						"isSensitive": true
+					},
+					{
+						"aliases": [],
+						"name": "misc_one",
+						"category": null,
+						"url": "https://media.contract.test/emoji/misc_one.webp"
+					}
+				]
+			}
+		},
+		"emojis/get/app": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "private, max-age=0, must-revalidate",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"emojis": [
+					{
+						"aliases": [
+							"cat",
+							"blob"
+						],
+						"name": "blobcat",
+						"category": "animals",
+						"url": "https://media.contract.test/emoji/blobcat.webp"
+					},
+					{
+						"aliases": [],
+						"name": "blobfox",
+						"category": "animals",
+						"url": "https://files.contract.test/emoji/blobfox.png"
+					},
+					{
+						"aliases": [],
+						"name": "zebra",
+						"category": "animals",
+						"url": "https://media.contract.test/emoji/zebra.webp"
+					},
+					{
+						"aliases": [],
+						"name": "vip",
+						"category": "symbols",
+						"url": "https://media.contract.test/emoji/vip.webp",
+						"roleIdsThatCanBeUsedThisEmojiAsReaction": [
+							"contractrole01",
+							"contractrole02"
+						]
+					},
+					{
+						"aliases": [
+							"caution",
+							"注意"
+						],
+						"name": "warning",
+						"category": "symbols",
+						"url": "https://media.contract.test/emoji/warning.webp",
+						"localOnly": true,
+						"isSensitive": true
+					},
+					{
+						"aliases": [],
+						"name": "misc_one",
+						"category": null,
+						"url": "https://media.contract.test/emoji/misc_one.webp"
+					}
+				]
+			}
+		},
+		"emojis/get/suspended": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "private, max-age=0, must-revalidate",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"emojis": [
+					{
+						"aliases": [
+							"cat",
+							"blob"
+						],
+						"name": "blobcat",
+						"category": "animals",
+						"url": "https://media.contract.test/emoji/blobcat.webp"
+					},
+					{
+						"aliases": [],
+						"name": "blobfox",
+						"category": "animals",
+						"url": "https://files.contract.test/emoji/blobfox.png"
+					},
+					{
+						"aliases": [],
+						"name": "zebra",
+						"category": "animals",
+						"url": "https://media.contract.test/emoji/zebra.webp"
+					},
+					{
+						"aliases": [],
+						"name": "vip",
+						"category": "symbols",
+						"url": "https://media.contract.test/emoji/vip.webp",
+						"roleIdsThatCanBeUsedThisEmojiAsReaction": [
+							"contractrole01",
+							"contractrole02"
+						]
+					},
+					{
+						"aliases": [
+							"caution",
+							"注意"
+						],
+						"name": "warning",
+						"category": "symbols",
+						"url": "https://media.contract.test/emoji/warning.webp",
+						"localOnly": true,
+						"isSensitive": true
+					},
+					{
+						"aliases": [],
+						"name": "misc_one",
+						"category": null,
+						"url": "https://media.contract.test/emoji/misc_one.webp"
+					}
+				]
+			}
+		},
+		"emojis/get/invalid-token": {
+			"status": 401,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "private, max-age=0, must-revalidate",
+				"www-authenticate": "Bearer realm=\"Engawa\", error=\"invalid_token\", error_description=\"Authentication failed. Please ensure your token is correct.\"",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"error": {
+					"message": "Authentication failed. Please ensure your token is correct.",
+					"code": "AUTHENTICATION_FAILED",
+					"id": "b0a7f5f8-dc2f-4171-b91f-de88ad238e14",
+					"kind": "client"
+				}
+			}
+		},
+		"emojis/post/non-string-param": {
+			"status": 400,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "private, max-age=0, must-revalidate",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"error": {
+					"message": "Invalid param.",
+					"code": "INVALID_PARAM",
+					"id": "3d81ceae-475f-4600-b2a8-2bc116157532",
+					"kind": "client",
+					"info": {
+						"param": "i",
+						"reason": "must be a string"
+					}
+				}
+			}
+		},
+		"emojis/post/no-body": {
+			"status": 400,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "private, max-age=0, must-revalidate",
+				"www-authenticate": "Bearer realm=\"Engawa\", error=\"invalid_request\", error_description=\"Invalid param.\"",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"error": {
+					"message": "Invalid param.",
+					"code": "INVALID_PARAM",
+					"id": "3d81ceae-475f-4600-b2a8-2bc116157532",
+					"kind": "client",
+					"info": {
+						"param": "#/type",
+						"reason": "must be object"
+					}
+				}
+			}
+		},
+		"emojis/post/empty-json": {
+			"status": 400,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "private, max-age=0, must-revalidate",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"error": {
+					"message": "Invalid request.",
+					"code": "INVALID_REQUEST",
+					"id": "e14897ec-106a-4c0e-a57b-d5fdc893ee6e",
+					"kind": "client"
+				}
+			}
+		},
+		"emojis/post/broken-json": {
+			"status": 400,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "private, max-age=0, must-revalidate",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"error": {
+					"message": "Invalid request.",
+					"code": "INVALID_REQUEST",
+					"id": "e14897ec-106a-4c0e-a57b-d5fdc893ee6e",
+					"kind": "client"
+				}
+			}
+		},
+		"emojis/post/text-plain": {
+			"status": 400,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "private, max-age=0, must-revalidate",
+				"www-authenticate": "Bearer realm=\"Engawa\", error=\"invalid_request\", error_description=\"Invalid param.\"",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"error": {
+					"message": "Invalid param.",
+					"code": "INVALID_PARAM",
+					"id": "3d81ceae-475f-4600-b2a8-2bc116157532",
+					"kind": "client",
+					"info": {
+						"param": "#/type",
+						"reason": "must be object"
+					}
+				}
+			}
+		},
+		"emojis/post/unsupported-media-type": {
+			"status": 415,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "private, max-age=0, must-revalidate",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"error": {
+					"message": "Unsupported content type.",
+					"code": "UNSUPPORTED_MEDIA_TYPE",
+					"id": "5b2b8fff-de7b-4d11-b63d-d933de7f2481",
+					"kind": "client"
+				}
+			}
+		},
+		"emoji/get/anonymous": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "public, max-age=3600",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"id": "contractemoji03",
+				"aliases": [
+					"cat",
+					"blob"
+				],
+				"name": "blobcat",
+				"category": "animals",
+				"host": null,
+				"url": "https://media.contract.test/emoji/blobcat.webp",
+				"license": "CC-BY-4.0",
+				"isSensitive": false,
+				"localOnly": false,
+				"roleIdsThatCanBeUsedThisEmojiAsReaction": []
+			}
+		},
+		"emoji/get/flags": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "public, max-age=3600",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"id": "contractemoji02",
+				"aliases": [
+					"caution",
+					"注意"
+				],
+				"name": "warning",
+				"category": "symbols",
+				"host": null,
+				"url": "https://media.contract.test/emoji/warning.webp",
+				"license": null,
+				"isSensitive": true,
+				"localOnly": true,
+				"roleIdsThatCanBeUsedThisEmojiAsReaction": []
+			}
+		},
+		"emoji/get/roles-native": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "private, max-age=0, must-revalidate",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"id": "contractemoji06",
+				"aliases": [],
+				"name": "vip",
+				"category": "symbols",
+				"host": null,
+				"url": "https://media.contract.test/emoji/vip.webp",
+				"license": null,
+				"isSensitive": false,
+				"localOnly": false,
+				"roleIdsThatCanBeUsedThisEmojiAsReaction": [
+					"contractrole01",
+					"contractrole02"
+				]
+			}
+		},
+		"emoji/post/fallback-url": {
+			"status": 200,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "private, max-age=0, must-revalidate",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"id": "contractemoji05",
+				"aliases": [],
+				"name": "blobfox",
+				"category": "animals",
+				"host": null,
+				"url": "https://files.contract.test/emoji/blobfox.png",
+				"license": null,
+				"isSensitive": false,
+				"localOnly": false,
+				"roleIdsThatCanBeUsedThisEmojiAsReaction": []
+			}
+		},
+		"emoji/get/not-found": {
+			"status": 400,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "private, max-age=0, must-revalidate",
+				"www-authenticate": "Bearer realm=\"Engawa\", error=\"invalid_request\", error_description=\"No such emoji.\"",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"error": {
+					"message": "No such emoji.",
+					"code": "NO_SUCH_EMOJI",
+					"id": "556b6eb3-6f4e-4f4d-b638-8a4909d695bd",
+					"kind": "client"
+				}
+			}
+		},
+		"emoji/get/remote-only": {
+			"status": 400,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "private, max-age=0, must-revalidate",
+				"www-authenticate": "Bearer realm=\"Engawa\", error=\"invalid_request\", error_description=\"No such emoji.\"",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"error": {
+					"message": "No such emoji.",
+					"code": "NO_SUCH_EMOJI",
+					"id": "556b6eb3-6f4e-4f4d-b638-8a4909d695bd",
+					"kind": "client"
+				}
+			}
+		},
+		"emoji/get/empty-name": {
+			"status": 400,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "private, max-age=0, must-revalidate",
+				"www-authenticate": "Bearer realm=\"Engawa\", error=\"invalid_request\", error_description=\"No such emoji.\"",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"error": {
+					"message": "No such emoji.",
+					"code": "NO_SUCH_EMOJI",
+					"id": "556b6eb3-6f4e-4f4d-b638-8a4909d695bd",
+					"kind": "client"
+				}
+			}
+		},
+		"emoji/get/missing-name": {
+			"status": 400,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "private, max-age=0, must-revalidate",
+				"www-authenticate": "Bearer realm=\"Engawa\", error=\"invalid_request\", error_description=\"Invalid param.\"",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"error": {
+					"message": "Invalid param.",
+					"code": "INVALID_PARAM",
+					"id": "3d81ceae-475f-4600-b2a8-2bc116157532",
+					"kind": "client",
+					"info": {
+						"param": "#/required",
+						"reason": "must have required property 'name'"
+					}
+				}
+			}
+		},
+		"emoji/post/null-name": {
+			"status": 400,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "private, max-age=0, must-revalidate",
+				"www-authenticate": "Bearer realm=\"Engawa\", error=\"invalid_request\", error_description=\"Invalid param.\"",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"error": {
+					"message": "Invalid param.",
+					"code": "INVALID_PARAM",
+					"id": "3d81ceae-475f-4600-b2a8-2bc116157532",
+					"kind": "client",
+					"info": {
+						"param": "#/properties/name/type",
+						"reason": "must be string"
+					}
+				}
+			}
+		},
+		"emoji/get/invalid-token": {
+			"status": 401,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "private, max-age=0, must-revalidate",
+				"www-authenticate": "Bearer realm=\"Engawa\", error=\"invalid_token\", error_description=\"Authentication failed. Please ensure your token is correct.\"",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"error": {
+					"message": "Authentication failed. Please ensure your token is correct.",
+					"code": "AUTHENTICATION_FAILED",
+					"id": "b0a7f5f8-dc2f-4171-b91f-de88ad238e14",
+					"kind": "client"
+				}
+			}
+		},
+		"unknown-endpoint/get": {
+			"status": 404,
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "private, max-age=0, must-revalidate",
+				"access-control-allow-origin": "*"
+			},
+			"body": {
+				"error": {
+					"message": "Unknown API endpoint.",
+					"code": "UNKNOWN_API_ENDPOINT",
+					"id": "2ca3b769-540a-4f08-9dd5-b5a825b6d0f1",
+					"kind": "client"
+				}
+			}
+		}
+	}
+}

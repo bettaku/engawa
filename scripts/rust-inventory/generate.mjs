@@ -57,14 +57,16 @@ function git(...args) {
 const entityTable = new Map(); // MiNote -> note
 for (const f of walk(join(src, 'models'))) {
 	const text = readFileSync(f, 'utf8');
-	for (const m of text.matchAll(/@Entity\('([^']+)'\)[\s\S]*?export class (Mi\w+)/g)) entityTable.set(m[2], m[1]);
+	// 名前のない @Entity() は、TypeORMの既定の命名（クラス名のスネークケース）になる
+	for (const m of text.matchAll(/@Entity\((?:'([^']+)')?\)[\s\S]*?export class (\w+)/g)) entityTable.set(m[2], m[1] ?? m[2].replace(/(?<=[a-z0-9])([A-Z])/g, '_$1').toLowerCase());
 }
 const repoEntity = new Map(); // NotesRepository -> MiNote
 {
 	const text = readFileSync(join(src, 'models/_.ts'), 'utf8');
-	for (const m of text.matchAll(/export type (\w+Repository) = Repository<(Mi\w+)>/g)) repoEntity.set(m[1], m[2]);
+	for (const m of text.matchAll(/export type (\w+Repository) =\s*Repository<(\w+)>/g)) repoEntity.set(m[1], m[2]);
 }
-const tableOfRepo = (type) => entityTable.get(repoEntity.get(type)) ?? type.replace(/Repository$/, '');
+// 型が`Repository<T>`そのもの（チャートの基底クラス）は、テーブルを実行時に決めるので「(dynamic)」とする
+const tableOfRepo = (type) => entityTable.get(repoEntity.get(type)) ?? (type.replace(/Repository$/, '') || '(dynamic)');
 const tableOfEntity = (e) => entityTable.get(e) ?? e;
 //#endregion
 
@@ -94,6 +96,7 @@ const redisUses = [];
 const timers = [];
 const caches = [];
 const eventPublishes = [];
+const handlerRegistrations = []; // this.noteOutboxService.registerHandler('created', this.handleCreated) のように、メソッドを値として渡す登録
 
 const endpointFile = new Map(); // endpoint name -> abs path
 {
@@ -155,10 +158,38 @@ function analyseBody(cls, name, body, text, offset, file) {
 	for (const m of body.matchAll(/this\s*\.\s*\w+\s*\.\s*(\w+Queue)\s*\.\s*(add|addBulk|remove)\(/g)) node.queues.add(`${m[1]}.${m[2]}`);
 	// this.<method>(
 	for (const m of body.matchAll(/this\s*\.\s*(#?\w+)\s*(?:<[^<>()]*>)?\(/g)) node.calls.add(`${cls.name}.${m[1]}`);
+	// this.<prop>.registerHandler(<種類>, this.<method>)
+	for (const m of body.matchAll(/this\s*\.\s*(\w+)\s*\.\s*registerHandler\(\s*[^,]+,\s*this\s*\.\s*(\w+)\s*\)/g)) {
+		const type = cls.props.get(m[1]);
+		if (type != null) handlerRegistrations.push({ registry: type, handler: `${cls.name}.${m[2]}` });
+	}
 	// entity manager: x.insert(MiNote, ...)
 	for (const m of body.matchAll(new RegExp(`\\b\\w+\\s*\\.\\s*(${WRITE_OPS})\\(\\s*(Mi[A-Z]\\w+)`, 'g'))) addSite(tableOfEntity(m[2]), m[1], m.index, 'entityManager');
-	// raw SQL
-	for (const m of body.matchAll(/this\s*\.\s*db\s*\.\s*query\(/g)) addSite('(raw SQL)', 'query', m.index, 'raw');
+	// entity manager のクエリビルダー: em.createQueryBuilder().update(MiNote) / .delete().from(MiNote) / .insert().into(MiNote)
+	for (const m of body.matchAll(/\.\s*createQueryBuilder\(\s*\)\s*\.\s*(?:(update)\(\s*(Mi[A-Z]\w+)|(delete|insert)\(\s*\)\s*\.\s*(?:from|into)\(\s*(Mi[A-Z]\w+))/g)) {
+		addSite(tableOfEntity(m[2] ?? m[4]), m[1] ?? m[3], m.index, 'queryBuilder');
+	}
+	// raw SQL（DataSource・EntityManager・リポジトリの query）。SQLが文字列で書いてあれば、書き込みの文とテーブルを読む。
+	// 文字列でない（変数で渡す）ものは、this.db のときだけ「(raw SQL)」として数える
+	for (const m of body.matchAll(/(this\s*\.\s*db|\b(?:db|manager|em|transactionalEntityManager|queryRunner)|this\s*\.\s*\w+Repository)\s*\.\s*query\(\s*/g)) {
+		const rest = body.slice(m.index + m[0].length, m.index + m[0].length + 600).replace(/^(?:\/\/[^\n]*\n\s*)+/, '');
+		const quote = rest[0];
+		if (!['\'', '"', '`'].includes(quote)) {
+			if (/^this\s*\.\s*db$/.test(m[1])) addSite('(raw SQL)', 'query', m.index, 'raw');
+			continue;
+		}
+		const end = rest.indexOf(quote, 1);
+		const sql = rest.slice(1, end < 0 ? undefined : end);
+		const seen = new Set();
+		// 「FOR UPDATE」「DO UPDATE」は書き込み先ではない。テーブル名を式で組み立てるものは「(dynamic)」とする
+		for (const w of sql.matchAll(/(?<!(?:FOR|DO)\s+)\b(INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+("?\$\{[^}]*\}"?|"?\w+"?)/gi)) {
+			const op = w[1].split(/\s+/)[0].toLowerCase();
+			const table = w[2].includes('${') ? '(dynamic)' : w[2].replaceAll('"', '');
+			if (seen.has(`${table}.${op}`)) continue;
+			seen.add(`${table}.${op}`);
+			addSite(table, op, m.index, 'raw');
+		}
+	}
 	// events
 	for (const m of body.matchAll(/\.\s*publish(\w+)\(([^)]{0,160})/g)) {
 		const type = m[2].match(/['`]([\w:-]+)['`]/)?.[1] ?? '';
@@ -219,6 +250,15 @@ for (const file of walk(src)) {
 //#endregion
 
 //#region reachability
+// 登録したハンドラーを呼ぶメソッド。値として渡したメソッドは呼び出しとして拾えないので、ここで辺を足す
+const HANDLER_DISPATCHERS = {
+	NoteOutboxService: 'NoteOutboxService.run',
+};
+for (const r of handlerRegistrations) {
+	const dispatcher = methods.get(HANDLER_DISPATCHERS[r.registry]);
+	if (dispatcher != null) dispatcher.calls.add(r.handler);
+}
+
 // 多数の入口から到達し、それ自体が広い副作用を持つ層（ハブ）。入口ごとの閉包はここで打ち切り、
 // 「どのハブに触れるか」だけを記録する。ハブ自体の副作用は hubs.csv に1回だけ出す。
 const HUBS = {
@@ -315,6 +355,24 @@ const originOf = (name) => {
 	if (cherrypickEps.has(name)) return 'cherrypick';
 	return 'engawa';
 };
+
+// 上流と同名のエンドポイントのうち、フォークが中身を変えたもの。由来の上流との差分の行数を `+追加/-削除` で返す
+function endpointDiffs(ref) {
+	const out = git('diff', '--numstat', ref, '--', 'packages/backend/src/server/api/endpoints');
+	if (out == null) return null;
+	const map = new Map();
+	for (const line of out.split('\n')) {
+		const [add, del, path] = line.split('\t');
+		if (path) map.set(path, `+${add}/-${del}`);
+	}
+	return map;
+}
+const diffsFrom = { misskey: endpointDiffs(misskeyRef), cherrypick: endpointDiffs(cherrypickRef) };
+const forkDiffOf = (origin, file) => {
+	if (file == null || !(origin in diffsFrom)) return '';
+	if (diffsFrom[origin] == null) return '?';
+	return diffsFrom[origin].get(rel(file)) ?? '';
+};
 //#endregion
 
 //#region tests referencing a name
@@ -349,13 +407,13 @@ for (const ep of endpoints) {
 		meta.allowGet ? 'yes' : '', meta.cacheSec ?? '', meta.requireFile ? 'yes' : '', meta.prohibitMoved ? 'yes' : '', limit,
 		meta.res ? 'yes' : '', Object.keys(meta.errors ?? {}).length, effect,
 		fx.writes, fx.queues, fx.events, fx.externals, fx.redisWrites, fx.hubs,
-		tests.length, tests.slice(0, 5), file ? rel(file) : '',
+		tests.length, tests.slice(0, 5), file ? rel(file) : '', forkDiffOf(originOf(ep.name), file),
 	]);
 }
 csv('api-endpoints.csv', [
 	'endpoint', 'group', 'origin', 'auth', 'kind', 'secure', 'rolePolicy', 'allowGet', 'cacheSec', 'requireFile', 'prohibitMoved', 'rateLimit',
 	'hasResSchema', 'errorCount', 'effect', 'writes', 'queues', 'events', 'externals', 'redisWrites', 'hubs',
-	'testFileCount', 'testFiles', 'file',
+	'testFileCount', 'testFiles', 'file', 'forkDiff',
 ], apiRows);
 //#endregion
 
@@ -389,6 +447,37 @@ for (const cls of classes.values()) {
 }
 //#endregion
 
+//#region 2b. CLI commands (boot/cli.ts)
+const cliRows = [];
+{
+	const text = readFileSync(join(src, 'boot/cli.ts'), 'utf8');
+	const vars = new Map([...text.matchAll(/const (\w+) = app\.get\((\w+)\)/g)].map(m => [m[1], m[2]]));
+	const switchBody = text.slice(text.indexOf('switch (command)'));
+	// 続けて書いた case（フォールスルー）は1つの入口にまとめる
+	const blocks = [];
+	for (const part of switchBody.split(/\n\t(?=case )/).slice(1)) {
+		if (blocks.length > 0 && !/\{/.test(blocks.at(-1))) blocks[blocks.length - 1] += `\n\t${part}`;
+		else blocks.push(part);
+	}
+	for (const block of blocks) {
+		const head = block.match(/^(?:case '[^']+':\s*)+/)?.[0] ?? '';
+		const cmds = [...head.matchAll(/case '([^']+)':/g)].map(m => m[1]);
+		if (cmds.length === 0 || cmds.includes('help')) continue;
+		const local = new Map([...vars, ...[...block.matchAll(/const (\w+) = app\.get\((\w+)\)/g)].map(m => [m[1], m[2]])]);
+		const calls = [
+			...[...block.matchAll(/app\.get\((\w+)\)\.(\w+)\(/g)].map(m => `${m[1]}.${m[2]}`),
+			...[...block.matchAll(/\b(\w+)\.(\w+)\(/g)].filter(m => local.has(m[1])).map(m => `${local.get(m[1])}.${m[2]}`),
+		];
+		const startIds = uniq(calls).filter(id => methods.has(id));
+		const fx = effects(startIds);
+		const name = cmds.join('|');
+		entries.push({ kind: 'cli', name, fx });
+		cliRows.push([name, startIds, fx.writes, fx.queues, fx.events, fx.redisWrites, fx.hubs]);
+	}
+}
+csv('cli-commands.csv', ['command', 'calls', 'writes', 'queues', 'events', 'redisWrites', 'hubs'], cliRows);
+//#endregion
+
 //#region 3. streaming channels
 const channelRows = [];
 for (const file of walk(join(src, 'server/api/stream/channels'))) {
@@ -415,6 +504,14 @@ const qs = readFileSync(join(src, 'core/QueueService.ts'), 'utf8');
 const schedulers = new Map([...qs.matchAll(/name: '(\w+)',\s*(?:\/\/[^\n]*\n\s*)?pattern: '([^']+)'/g)].map(m => [m[1], m[2]]));
 const queueConst = new Map([...readFileSync(join(src, 'queue/const.ts'), 'utf8').matchAll(/(\w+): '(\w+)',/g)].map(m => [m[1], m[2]]));
 const adminVisible = new Set([...qs.match(/QUEUE_TYPES = \[([\s\S]*?)\]/)[1].matchAll(/'(\w+)'/g)].map(m => m[1]));
+// QueueServiceのメソッドの本体。同じクラスの別メソッド（`this.ensureNotePostScheduled(`など）を経由して登録するものがあるので、その本体も連結する
+const qsBodies = new Map([...qs.matchAll(/\n\t(?:public |private |protected )?(?:static )?(?:async )?(\w+)(?:<[^\n]*>)?\([\s\S]*?\n\t\}/g)].map(m => [m[1], m[0]]));
+function qsExpanded(name, seen = new Set()) {
+	if (seen.has(name)) return '';
+	seen.add(name);
+	const body = qsBodies.get(name) ?? '';
+	return [body, ...[...body.matchAll(/this\.(\w+)\(/g)].map(m => qsExpanded(m[1], seen))].join('\n');
+}
 
 const jobRows = [];
 const workerBlocks = [...qps.matchAll(/new Bull\.Worker\(QUEUE\.(\w+)/g)];
@@ -436,9 +533,11 @@ for (const [i, w] of workerBlocks.entries()) {
 		const fx = effects([`${clsName}.${j.method}`]);
 		entries.push({ kind: 'job', name: `${queue}/${j.job}`, fx });
 		const enq = uniq([...methods.values()].filter(n => [...n.queues].some(q => {
-			if (j.job === '(単一)') return q.toLowerCase().startsWith(queue.toLowerCase()) || new RegExp(`^${queue}Queue\\.`, 'i').test(q);
-			const body = qs.match(new RegExp(`public (?:async )?${q}\\([\\s\\S]*?\\n\\t\\}`))?.[0] ?? '';
-			return body.includes(`'${j.job}'`);
+			if (new RegExp(`^${queue}Queue\\.`, 'i').test(q)) return j.job === '(単一)';
+			const body = qsExpanded(q);
+			if (!body.includes(`this.${queue}Queue.`)) return false;
+			// ジョブ名は呼ばれたメソッド自身の本体で見る（共通の補助メソッドは全ジョブ名を型に持つことがある）
+			return j.job === '(単一)' || (qsBodies.get(q) ?? '').includes(`'${j.job}'`);
 		})).map(n => n.id));
 		jobRows.push([
 			queue, j.job, `${clsName}.${j.method}`, schedulers.get(j.job) ?? '', adminVisible.has(queue) ? 'yes' : 'no',
@@ -460,22 +559,22 @@ csv('hubs.csv', ['hub', 'classes', 'writes', 'queues', 'events', 'externals', 'r
 //#endregion
 
 //#region 5. write sites and who reaches them
-const reachers = sites.map(() => ({ api: new Set(), job: new Set(), stream: new Set(), server: new Set() }));
+const reachers = sites.map(() => ({ api: new Set(), job: new Set(), stream: new Set(), server: new Set(), cli: new Set() }));
 for (const e of entries) for (const s of e.fx.core.sites) reachers[s][e.kind].add(e.name);
-csv('write-sites.csv', ['table', 'op', 'via', 'method', 'file', 'line', 'apiCount', 'jobCount', 'streamCount', 'serverCount', 'jobs', 'serverClasses', 'apis'],
+csv('write-sites.csv', ['table', 'op', 'via', 'method', 'file', 'line', 'apiCount', 'jobCount', 'streamCount', 'serverCount', 'jobs', 'serverClasses', 'apis', 'cliCount', 'cliCommands'],
 	sites.map((s, i) => [s.table, s.op, s.via, s.method, s.file, s.line, reachers[i].api.size, reachers[i].job.size, reachers[i].stream.size, reachers[i].server.size,
-		uniq(reachers[i].job), uniq(reachers[i].server), uniq(reachers[i].api).slice(0, 15)])
+		uniq(reachers[i].job), uniq(reachers[i].server), uniq(reachers[i].api).slice(0, 15), reachers[i].cli.size, uniq(reachers[i].cli)])
 		.sort((a, b) => String(a[0]).localeCompare(String(b[0])) || String(a[3]).localeCompare(String(b[3]))));
 
 const tableRows = [];
 for (const table of uniq([...entityTable.values(), ...sites.map(s => s.table)])) {
 	const ss = sites.filter(s => s.table === table);
-	const agg = { api: new Set(), job: new Set(), stream: new Set(), server: new Set() };
+	const agg = { api: new Set(), job: new Set(), stream: new Set(), server: new Set(), cli: new Set() };
 	for (const s of ss) for (const k of Object.keys(agg)) for (const v of reachers[s.id][k]) agg[k].add(v);
 	tableRows.push([table, ss.length, uniq(ss.map(s => s.method.split('.')[0])).length, uniq(ss.map(s => s.method.split('.')[0])),
-		agg.api.size, agg.job.size, agg.stream.size, agg.server.size, uniq(agg.job), uniq(agg.server)]);
+		agg.api.size, agg.job.size, agg.stream.size, agg.server.size, uniq(agg.job), uniq(agg.server), agg.cli.size, uniq(agg.cli)]);
 }
-csv('tables.csv', ['table', 'writeSiteCount', 'writerClassCount', 'writerClasses', 'apiCount', 'jobCount', 'streamCount', 'serverCount', 'jobs', 'serverClasses'], tableRows);
+csv('tables.csv', ['table', 'writeSiteCount', 'writerClassCount', 'writerClasses', 'apiCount', 'jobCount', 'streamCount', 'serverCount', 'jobs', 'serverClasses', 'cliCount', 'cliCommands'], tableRows);
 //#endregion
 
 //#region 6. config and environment variables
@@ -543,9 +642,35 @@ const internalTypes = [...(ges.match(/export interface InternalEventTypes \{([\s
 const subscriberFiles = walk(src).map(f => ({ f, text: readFileSync(f, 'utf8') })).filter(x => /redisForSub\s*\.\s*on\(\s*'message'|onMessage|onRedisMessage/.test(x.text) && !x.f.includes('/stream/'));
 csv('internal-events.csv', ['event', 'payload', 'carriesEntity', 'publisherCount', 'publishers', 'subscriberCount', 'subscribers'], internalTypes.map(t => {
 	const pubs = eventPublishes.filter(p => p.stream === 'InternalEvent' && p.type === t.name).map(p => `${p.file.replace('packages/backend/src/', '')}:${p.line}`);
-	const subs = subscriberFiles.filter(x => x.text.includes(`case '${t.name}'`)).map(x => rel(x.f).replace('packages/backend/src/', ''));
+	// `case 'x':` のほか、`message.type !== 'x'` のように1種類だけを見る購読もある
+	const subs = subscriberFiles.filter(x => x.text.includes(`case '${t.name}'`) || new RegExp(`\\.type\\s*[!=]==\\s*'${t.name}'`).test(x.text)).map(x => rel(x.f).replace('packages/backend/src/', ''));
 	return [t.name, t.payload, /\bMi[A-Z]\w+(?!\[)/.test(t.payload.replace(/Mi\w+\['\w+'\]/g, '')) ? 'yes' : '', pubs.length, pubs, subs.length, subs];
 }));
+
+// チャート。テーブルは名前から動的に決まる（core/chart/core.ts の schemaToEntity）ので、write-sites.csv には出ない。
+// update系のメソッドはメモリ上のバッファに積むだけで、DBへは ChartManagementService の20分おきの save と終了時、tick・clean・resync のジョブで書く
+const chartRows = [];
+const CHART_BASE_METHODS = new Set(['constructor', 'save', 'waitForSave', 'tick', 'resync', 'clean', 'getChartRaw', 'getChart', 'tickMajor', 'tickMinor']);
+for (const file of walk(join(src, 'core/chart/charts'))) {
+	if (file.includes('/entities/') || /\/test[-.]/.test(file)) continue;
+	const text = readFileSync(file, 'utf8');
+	const clsName = text.match(/export default class (\w+) extends Chart/)?.[1];
+	const entityFile = text.match(/from '\.\/entities\/([\w-]+)\.js'/)?.[1];
+	if (clsName == null || entityFile == null) continue;
+	const entityText = readFileSync(join(src, 'core/chart/charts/entities', `${entityFile}.ts`), 'utf8');
+	const name = entityText.match(/export const name = '(\w+)'/)?.[1] ?? '';
+	const snake = name.replace(/[A-Z]/g, c => `_${c.toLowerCase()}`);
+	const columns = [...(entityText.match(/export const schema = \{([\s\S]*?)\n\}/)?.[1] ?? '').matchAll(/^\t'([^']+)':/gm)].length;
+	const grouped = /super\([^\n]*,\s*true\);/.test(text);
+	const own = (classes.get(clsName)?.methodNames ?? []).filter(m => !CHART_BASE_METHODS.has(m));
+	const callers = (pred) => uniq([...methods.values()].filter(n => n.cls !== clsName && [...n.calls].some(c => c.startsWith(`${clsName}.`) && pred(c.slice(clsName.length + 1)))).map(n => n.id));
+	const updaters = callers(m => own.includes(m));
+	chartRows.push([
+		name, clsName, `__chart__${snake}; __chart_day__${snake}`, grouped ? 'yes' : '', columns, own,
+		updaters.length, updaters.slice(0, 15), callers(m => m === 'getChart' || m === 'getChartRaw'), rel(file),
+	]);
+}
+csv('charts.csv', ['chart', 'class', 'tables', 'grouped', 'columnCount', 'updateMethods', 'updaterCount', 'updaters', 'readers', 'file'], chartRows);
 
 csv('timers.csv', ['kind', 'method', 'file', 'line'], timers.sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line).map(t => [t.kind, t.method, t.file, t.line]));
 //#endregion
@@ -564,15 +689,19 @@ const summary = {
 		allowGet: apiRows.filter(r => r[7]).length,
 		noResSchema: apiRows.filter(r => !r[12]).length,
 		noTests: apiRows.filter(r => r[21] === 0).length,
+		forkModified: count(apiRows.filter(r => r[24] !== ''), r => r[2]),
 		anonymousPureRead: apiRows.filter(r => r[3] === 'none' && r[14] === 'read').map(r => r[0]),
 		byGroup: Object.fromEntries(Object.entries(count(apiRows, r => r[1])).sort((a, b) => b[1] - a[1])),
 		groupEffect: Object.fromEntries(uniq(apiRows.map(r => r[1])).map(g => [g, count(apiRows.filter(r => r[1] === g), r => r[14].startsWith('write') ? 'write' : 'read')])),
 		groupOrigin: Object.fromEntries(uniq(apiRows.map(r => r[1])).map(g => [g, count(apiRows.filter(r => r[1] === g), r => r[2])])),
 	},
 	httpRoutes: routeRows.length,
+	cliCommands: cliRows.map(r => r[0]),
 	channels: channelRows.length,
 	jobs: { total: jobRows.length, queues: uniq(jobRows.map(r => r[0])).length, scheduled: jobRows.filter(r => r[3]).length },
 	writeSites: sites.length,
+	charts: chartRows.length,
+	unreachedWriteSites: reachers.filter(r => Object.values(r).every(x => x.size === 0)).length,
 	tables: { entities: entityTable.size, written: tableRows.filter(r => r[1] > 0).length, neverWrittenBySites: tableRows.filter(r => r[1] === 0).map(r => r[0]) },
 	configKeys: seenKey.size,
 	envVars: envUse.size,

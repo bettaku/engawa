@@ -27,6 +27,9 @@ avatarDecorationCreated,MiAvatarDecoration | InternalEventRef<MiAvatarDecoration
 avatarDecorationDeleted,MiAvatarDecoration | InternalEventRef<MiAvatarDecoration>,yes,1,core/AvatarDecorationService.ts:247,1,core/AvatarDecorationService.ts
 avatarDecorationUpdated,MiAvatarDecoration | InternalEventRef<MiAvatarDecoration>,yes,1,core/AvatarDecorationService.ts:121,1,core/AvatarDecorationService.ts
 metaUpdated,{ before?: MiMeta; after: MiMeta; } | MetaUpdatedEventRef,yes,2,core/MetaService.ts:166; server/api/endpoints/reset-db.ts:63,3,GlobalModule.ts; core/MetaService.ts; core/SystemAccountService.ts
+updateUserProfile,MiUserProfile,yes,0,,0,
+mute,{ muterId: MiUser['id']; muteeId: MiUser['id']; },,0,,0,
+unmute,{ muterId: MiUser['id']; muteeId: MiUser['id']; },,0,,0,
 userListMemberAdded,{ userListId: MiUserList['id']; memberId: MiUser['id']; },,1,core/UserListService.ts:105,1,core/UserListService.ts
 userListMemberRemoved,{ userListId: MiUserList['id']; memberId: MiUser['id']; },,1,core/UserListService.ts:123,1,core/UserListService.ts
-cacheInvalidated,{ cache: string; key: string | null; origin: string; },,1,core/CacheInvalidationService.ts:43,0,
+cacheInvalidated,{ cache: string; key: string | null; origin: string; },,1,core/CacheInvalidationService.ts:43,1,core/CacheInvalidationService.ts

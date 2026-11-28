@@ -1,5 +1,5 @@
 {
-	"generatedFrom": "d9859e6332",
+	"generatedFrom": "862a00ca70",
 	"misskeyRef": "2025.10.2",
 	"cherrypickRef": "upstream/develop",
 	"endpoints": {
@@ -16,14 +16,18 @@
 			"user": 252
 		},
 		"byEffect": {
-			"write": 234,
-			"read": 199,
+			"write": 231,
+			"read": 202,
 			"write(kindのみ)": 11,
 			"write(Redisのみ)": 2
 		},
 		"allowGet": 26,
 		"noResSchema": 162,
 		"noTests": 316,
+		"forkModified": {
+			"misskey": 117,
+			"cherrypick": 14
+		},
 		"anonymousPureRead": [
 			"announcements",
 			"announcements/show",
@@ -177,8 +181,8 @@
 		},
 		"groupEffect": {
 			"admin": {
-				"write": 86,
-				"read": 25
+				"write": 83,
+				"read": 28
 			},
 			"announcements": {
 				"read": 2
@@ -526,21 +530,27 @@
 		}
 	},
 	"httpRoutes": 91,
+	"cliCommands": [
+		"check-counters|repair-counters",
+		"ping",
+		"reset-captcha",
+		"bake-reactions",
+		"drain-note-outbox",
+		"register-job-schedulers"
+	],
 	"channels": 16,
 	"jobs": {
-		"total": 53,
+		"total": 54,
 		"queues": 11,
 		"scheduled": 14
 	},
-	"writeSites": 366,
+	"writeSites": 371,
+	"charts": 12,
+	"unreachedWriteSites": 22,
 	"tables": {
-		"entities": 77,
-		"written": 78,
-		"neverWrittenBySites": [
-			"abuse_report_notification_recipient",
-			"note_outbox",
-			"reaction_bake_ledger"
-		]
+		"entities": 78,
+		"written": 79,
+		"neverWrittenBySites": []
 	},
 	"configKeys": 359,
 	"envVars": 24,
@@ -551,12 +561,12 @@
 		"RedisKVCache": 10,
 		"RedisSingleCache": 1
 	},
-	"internalEvents": 31,
+	"internalEvents": 34,
 	"timers": {
 		"setImmediate": 4,
 		"setInterval": 10,
 		"setTimeout": 6
 	},
 	"classes": 806,
-	"methods": 2064
+	"methods": 2066
 }

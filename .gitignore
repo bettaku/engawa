@@ -89,3 +89,6 @@ vite.config.local-dev.ts.timestamp-*
 .serena
 
 docs/design/
+
+# Rust (Cargo)
+**/target/

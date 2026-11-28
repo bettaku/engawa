@@ -36,3 +36,6 @@ packages/backend/test/compose.yml
 
 # Claude Code のワークツリー・ローカル設定（.git は submodule 取得に使うため除外しない）
 .claude/
+
+# Cargo
+**/target/

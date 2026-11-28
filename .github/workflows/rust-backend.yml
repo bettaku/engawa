@@ -1,0 +1,126 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+#
+# Rustバックエンド（packages/backend-rs）のCI。pnpmのジョブとは別（ADR-0001 #5）。
+# workflowそのものはすべてのPRで起動し、Rust関連の変更がないPRでは重い処理を省いて必須チェックを成功で終える。
+name: rust-backend
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
+  CARGO_INCREMENTAL: 0
+  # `--locked`でCargo.lockと違う依存でビルドしない。
+  WORKDIR: packages/backend-rs
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      rust: ${{ steps.check.outputs.rust }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        with:
+          fetch-depth: 0
+      - name: Detect Rust changes
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "rust=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          base="${{ github.event.pull_request.base.sha }}"
+          if git diff --quiet "$base" -- packages/backend-rs packages/backend/config.schema.json .github/workflows/rust-backend.yml; then
+            echo "rust=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "rust=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  rust:
+    name: cargo ${{ matrix.name }}
+    needs: detect-changes
+    if: needs.detect-changes.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: fmt
+            cmd: cargo fmt --all -- --check
+          - name: clippy
+            cmd: cargo clippy --all-targets --locked -- -D warnings
+          - name: test
+            cmd: cargo test --locked
+          - name: release-build
+            cmd: cargo build --release --locked
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: test-cherrypick
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports: ["54312:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+      redis:
+        image: redis:7
+        ports: ["56312:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      ENGAWA_TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:54312/test-cherrypick
+      ENGAWA_TEST_REDIS_URL: 127.0.0.1:56312
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable (branch)
+        with:
+          toolchain: "1.100.0"
+          components: rustfmt, clippy
+      - name: Cache
+        uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # v2.7.8
+        with:
+          workspaces: ${{ env.WORKDIR }}
+      - name: Run
+        working-directory: ${{ env.WORKDIR }}
+        run: ${{ matrix.cmd }}
+
+  cargo-deny:
+    name: cargo deny
+    needs: detect-changes
+    if: needs.detect-changes.outputs.rust == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable (branch)
+        with:
+          toolchain: "1.100.0"
+      - name: cargo deny
+        uses: EmbarkStudios/cargo-deny-action@bb119f768ea239e765aeaef5769558d4f21213aa # v2.1.5
+        with:
+          command: check advisories licenses bans sources
+          arguments: --all-features
+          manifest-path: ${{ env.WORKDIR }}/Cargo.toml
+
+  # 必須チェックを、Rust未変更のPRでも成功で終える。
+  rust-noop:
+    name: rust (noop)
+    needs: detect-changes
+    if: needs.detect-changes.outputs.rust != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip
+        run: echo "No Rust changes; skipping heavy checks."
